@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<info>
+    <id>sciencemesh</id>
+    <name>Science Mesh</name>
+    <description>This apps connects the site to the Science Mesh</description>
+    <licence>MIT</licence>
+    <author>Hugo Gonzalez Labrador</author>
+    <version>1.0.0</version>
+    <namespace>ScienceMesh</namespace>
+    <category>productivity</category>
+    <dependencies>
+        <owncloud min-version="9.0" />
+        <owncloud max-version="11.0" />
+    </dependencies>
+</info>
