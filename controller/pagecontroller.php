@@ -14,15 +14,19 @@ use OCP\IRequest;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Controller;
+use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\IDBConnection;
 
 class PageController extends Controller {
 
 
 	private $userId;
+	protected $connection;
 
-	public function __construct($AppName, IRequest $request, $UserId){
+	public function __construct($AppName, IRequest $request, $UserId, IDBConnection $connection){
 		parent::__construct($AppName, $request);
 		$this->userId = $UserId;
+		$this->connection = $connection;
 	}
 
 	/**
@@ -46,6 +50,27 @@ class PageController extends Controller {
 	 */
 	public function doEcho($echo) {
 		return new DataResponse(['echo' => $echo]);
+	}
+
+	/**
+	 * @PublicPage
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
+	public function getInternalMetrics() {
+		$payload = $this->getMetrics();
+		return new DataResponse($payload);
+	}
+
+	private function getMetrics() {
+		$queryBuilder = $this->connection->getQueryBuilder();
+		$queryBuilder->select($queryBuilder->createFunction('count(*)'))
+			->from('users');
+		$result = $queryBuilder->execute();
+		$count = $result->fetchColumn();
+
+		$params = ['total_users' => $count];
+		return $params;
 	}
 
 
