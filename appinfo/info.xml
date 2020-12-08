@@ -12,4 +12,7 @@
         <owncloud min-version="9.0" />
         <owncloud max-version="11.0" />
     </dependencies>
-</info>
+    <settings>
+	<admin>OCA\Sciencemesh\AdminSettings</admin>
+    </settings>
+    </info>

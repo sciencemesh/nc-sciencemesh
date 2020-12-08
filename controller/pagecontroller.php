@@ -68,10 +68,43 @@ class PageController extends Controller {
 			->from('users');
 		$result = $queryBuilder->execute();
 		$count = $result->fetchColumn();
-
-		$params = ['total_users' => $count];
+		$hostname = \OCP\Util::getServerHostName();
+		$params = [
+			'total_users' => $count,
+			'hostname' => $hostname,
+			'country_code' => 'CH',
+			'latitude' => '',
+			'longitude' => '',
+			'name' =>  'Test site',
+			'host' => "$hostname",
+			'url' => "$hostname/index.php/apps/sciencemesh/metrics"
+		];
 		return $params;
 	}
 
+
+/*
+    {
+        "Name": "OC-Test@WWU",
+        "FullName": "ownCloud Test at University of Muenster",
+        "Homepage": "http://oc-test.uni-muenster.de",            
+        "Description": "ownCloud Test Instance of University of Muenster",
+        "CountryCode": "DE",
+        "Services": [
+            {
+                "Type": {
+                    "Name": "REVAD"
+                },
+                "Name": "oc-test.uni-muenster.de - REVAD",
+                "URL": "https://oc-test.uni-muenster.de/revad",
+                "IsMonitored": true,
+                "Properties": {
+                    "METRICS_PATH": "/revad/metrics"
+                },
+                "Host": "octest-test.uni-muenster.de"
+            }
+        ]
+    }
+*/
 
 }
