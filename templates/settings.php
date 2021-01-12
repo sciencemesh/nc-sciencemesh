@@ -10,16 +10,14 @@
     <h3><?php p($l->t("Settings")) ?></h3>
 
     <div id="sciencemeshAddrSettings">
-        <p><?php p($l->t("IOP Service Address")) ?></p>
-        <p><input id="sciencemeshIopUrl" value="<?php p($_["iopurl"]) ?>" placeholder="http://<IOP URL>/" type="text"></p>
         <p><?php p($l->t("Site Name")) ?></p>
-        <p><input id="sciencemeshSiteName" value="<?php p($_["iopurl"]) ?>" placeholder="CERN" type="text"></p>
-        <p><?php p($l->t("Homepage")) ?></p>
-        <p><input id="sciencemeshSiteName" value="<?php p($_["iopurl"]) ?>" placeholder="example.org" type="text"></p>
+        <p><input id="sciencemeshSitename" value="<?php p($_["site_name"]) ?>" placeholder="CERN" type="text"></p>
         <p><?php p($l->t("Country Code")) ?></p>
-        <p><input id="sciencemeshCountryCode" value="<?php p($_["countrycode"]) ?>" placeholder="CH" type="text"></p>
+        <p><input id="sciencemeshCountryCode" value="<?php p($_["country"]) ?>" placeholder="CH" type="text"></p>
         <p><?php p($l->t("Hostname")) ?></p>
         <p><input id="sciencemeshHostname" value="<?php p($_["hostname"]) ?>" placeholder="example.org/xcloud/" type="text"></p>
+        <p><?php p($l->t("IOP Service Address")) ?></p>
+        <p><input id="sciencemeshIopUrl" value="<?php p($_["iop_url"]) ?>" placeholder="http://<IOP URL>/" type="text"></p>
     </div>
 
     <div>

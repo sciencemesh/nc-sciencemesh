@@ -9,19 +9,26 @@
         $("#sciencemeshSave").click(function () {
             $(".section-sciencemesh").addClass("icon-loading");
             var iopUrl = $("#sciencemeshIopUrl").val().trim();
+            var countryCode = $("#sciencemeshCountryCode").val().trim();
+            var siteName = $("#sciencemeshSitename").val().trim();
+            var hostName = $("#sciencemeshHostname").val().trim();
 
-            if (!iopUrl.length) {
-                $("#sciencemeshApiKey").val("");
-            }
+	    //
+            // if (!iopUrl.length) {
+            //    $("#sciencemeshApiKey").val("");
+            // }
             
-	    var apiKey = $("#sciencemeshApiKey").val().trim();
+	    // TODO(labkode): add API key
+	    // var apiKey = $("#sciencemeshApiKey").val().trim();
 
             $.ajax({
                 method: "PUT",
                 url: OC.generateUrl("apps/" + OCA.ScienceMesh.AppName + "/ajax/settings/address"),
                 data: {
                     iopurl: iopUrl,
-                    apikey: apiKey,
+		    country: countryCode,
+	            sitename: siteName,
+		    hostname: hostName
                 },
                 success: function onSuccess(response) {
                     $(".section-sciencemesh").removeClass("icon-loading");
