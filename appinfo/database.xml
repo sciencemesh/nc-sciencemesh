@@ -8,7 +8,7 @@
     <name>*dbprefix*sciencemesh</name>
     <declaration>
       <field>
-        <name>iop_address</name>
+        <name>iopurl</name>
         <type>text</type>
 	<default>http://localhost:10999</default>
         <notnull>true</notnull>
@@ -27,6 +27,13 @@
 	<default>example.org</default>
         <notnull>true</notnull>
         <comments>Public hostname of the server</comments>
+      </field>
+      <field>
+        <name>sitename</name>
+        <type>text</type>
+	<default>CERNBox</default>
+        <notnull>true</notnull>
+        <comments>Name of the site</comments>
       </field>
     </declaration>
   </table>

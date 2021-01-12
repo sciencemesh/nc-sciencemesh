@@ -60,13 +60,12 @@ class SettingsController extends Controller {
      * @return TemplateResponse
      */
     public function index() {
+	$data = $this->loadSettings();
+	if (!$data) {
+		// settings has not been set
+		$data = [];
 
-        $data = [
-		"iop_url" => "http://localhost:10999",
-		"country" => "ES",
-		"hostname" => "example.org",
-		"site_name" => "CERN"
-        ];
+	}
         return new TemplateResponse($this->appName, "settings", $data, "blank");
     }
 
@@ -75,8 +74,54 @@ class SettingsController extends Controller {
 	 * @NoAdminRequired
 	 */
 	public function saveSettings($iopurl, $country, $hostname, $sitename) {
-		return new DataResponse(['iopurl' => $iopurl, 'country' => $country, 'hostname' => $hostname, 'sitename' => $sitename]);
+		// store settings in DB
+		$this->deleteSettings();
+		$ok = $this->storeSettings($iopurl, $country, $hostname, $sitename);
+		if (!$ok) {
+			return new DataResponse([
+				'error' => 'error storing settings, check server logs'
+			]);
+		}
+
+		return new DataResponse([
+			'iopurl' => $iopurl,
+			'country' => $country,
+			'hostname' => $hostname,
+			'sitename' => $sitename
+		]);
 	}
+
+	private function storeSettings($iopurl, $country, $hostname, $sitename){
+		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+		$query->insert('sciencemesh')
+			->setValue('iopurl', $query->createNamedParameter($iopurl))
+			->setValue('country', $query->createNamedParameter($country))
+			->setValue('sitename', $query->createNamedParameter($sitename))
+			->setValue('hostname', $query->createNamedParameter($hostname));
+		$result = $query->execute();
+		if (!$result) {
+			\OC::$server->getLogger()->error('sciencemesh database cound not be updated', 
+				['app' => 'sciencemesh']);
+			return false;
+		}
+		return true;
+	}
+
+	private function deleteSettings(){
+		$deleteQuery = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+		$deleteQuery->delete('sciencemesh');
+		$deleteQuery->execute();
+	}
+
+	private function loadSettings(){
+		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+		$query->select('*')->from('sciencemesh');
+		$result = $query->execute();
+		$row = $result->fetch();
+		$result->closeCursor();
+		return $row;
+	}
+	
 
 
     /**
