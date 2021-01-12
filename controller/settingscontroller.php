@@ -63,7 +63,8 @@ class SettingsController extends Controller {
 	$data = $this->loadSettings();
 	if (!$data) {
 		// settings has not been set
-		$data = [];
+		$hostname = \OCP\Util::getServerHostName();
+		$data = ["hostname" => $hostname];
 
 	}
         return new TemplateResponse($this->appName, "settings", $data, "blank");

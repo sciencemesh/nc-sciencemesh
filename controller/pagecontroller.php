@@ -58,8 +58,23 @@ class PageController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function getInternalMetrics() {
-		$payload = $this->getMetrics();
+		$metrics = $this->getMetrics();
+		$settings = $this->loadSettings();
+		if (!$settings) {
+			return new DataResponse([]);
+		}
+
+		$payload = ["metrics" => $metrics, "settings" => $settings];
 		return new DataResponse($payload);
+	}
+
+	private function loadSettings(){
+		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+		$query->select('*')->from('sciencemesh');
+		$result = $query->execute();
+		$row = $result->fetch();
+		$result->closeCursor();
+		return $row;
 	}
 
 	private function getMetrics() {
@@ -71,13 +86,6 @@ class PageController extends Controller {
 		$hostname = \OCP\Util::getServerHostName();
 		$params = [
 			'total_users' => $count,
-			'hostname' => $hostname,
-			'country_code' => 'CH',
-			'latitude' => '',
-			'longitude' => '',
-			'name' =>  'Test site',
-			'host' => "$hostname",
-			'url' => "$hostname/index.php/apps/sciencemesh/metrics"
 		];
 		return $params;
 	}
