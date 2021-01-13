@@ -65,8 +65,12 @@ class SettingsController extends Controller {
 		// settings has not been set
 		$hostname = \OCP\Util::getServerHostName();
 		$data = ["hostname" => $hostname];
-
+		$data["iopurl"] = "";
+		$data["country"] = "";
+		$data["sitename"] = "";
 	}
+
+
         return new TemplateResponse($this->appName, "settings", $data, "blank");
     }
 
