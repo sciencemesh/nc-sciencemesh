@@ -13,6 +13,7 @@ namespace OCA\ScienceMesh\Controller;
 use OCP\IRequest;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\DataResponse;
+use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Controller;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
@@ -61,11 +62,11 @@ class PageController extends Controller {
 		$metrics = $this->getMetrics();
 		$settings = $this->loadSettings();
 		if (!$settings) {
-			return new DataResponse([]);
+			return new JSONResponse([]);
 		}
 
 		$payload = ["metrics" => $metrics, "settings" => $settings];
-		return new DataResponse($payload);
+		return new JSONResponse($payload);
 	}
 
 	private function loadSettings(){
@@ -85,7 +86,7 @@ class PageController extends Controller {
 		$count = $result->fetchColumn();
 		$hostname = \OCP\Util::getServerHostName();
 		$params = [
-			'total_users' => $count,
+			'total_users' => intval($count),
 		];
 		return $params;
 	}
