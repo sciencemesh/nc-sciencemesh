@@ -75,9 +75,15 @@ class PageController extends Controller {
 		// for localhost requests is needed to add
 		// 'allow_local_remote_servers' => true,
 		// to config.php
+		$settings = $this->loadSettings();
+		if (!$settings) {
+			return new JSONResponse(["error" => "error loading settings"]);
+		}
+
 		$client = $this->httpClientService->newClient();
 		try {
-			$response = $client->get("http://localhost:5550/metrics", [
+			$iopurl = $settings['iopurl'];
+			$response = $client->get("$iopurl/metrics", [
 				'timeout' => 10,
 				'connect_timeout' => 10,
 			]);
@@ -87,9 +93,13 @@ class PageController extends Controller {
 				//return (is_array($result)) ? $result : [];
 				echo($response->getBody());
 				return new Http\Response();
+			} else {
+				$this->logger->error("sciencemesh: error getting metrics from iop");
+				return new DataResponse(['error' => 'error getting metrics from iop'], Http::STATUS_INTERNAL_SERVER_ERROR);
 			}
 		} catch (\Exception $e) {
 			$this->logger->error($e->getMessage());
+			return new DataResponse(['error' => 'error getting metrics from iop'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 	}
 
