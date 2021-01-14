@@ -22,7 +22,7 @@ return [
 	   ['name' => 'page#do_echo', 'url' => '/echo', 'verb' => 'POST'],
 
 	   ['name' => 'page#get_internal_metrics', 'url' => '/internal_metrics', 'verb' => 'GET'],
-	   ['name' => 'page#forward_metrics', 'url' => '/metrics', 'verb' => 'GET'],
+	   ['name' => 'page#get_metrics', 'url' => '/metrics', 'verb' => 'GET'],
 
            ["name" => "settings#save_settings", "url" => "/ajax/settings/address", "verb" => "PUT"],
            ["name" => "settings#get_settings", "url" => "/ajax/settings", "verb" => "GET"]

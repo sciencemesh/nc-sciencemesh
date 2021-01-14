@@ -14,20 +14,33 @@ use OCP\IRequest;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\ILogger;
 use OCP\AppFramework\Controller;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
+use OCP\Http\Client\IClientService;
+use OCP\AppFramework\Http;
 
 class PageController extends Controller {
-
-
+    	private $logger;
 	private $userId;
 	protected $connection;
 
-	public function __construct($AppName, IRequest $request, $UserId, IDBConnection $connection){
+	/** @var IClientService */
+	private $httpClientService;
+
+	public function __construct($AppName, 
+		IRequest $request,
+		$UserId,
+		IDBConnection $connection, 
+		IClientService $httpClientService,
+                ILogger $logger) {
+
 		parent::__construct($AppName, $request);
 		$this->userId = $UserId;
-		$this->connection = $connection;
+		$this->connection = $connection; 
+		$this->httpClientService = $httpClientService;
+		$this->logger = $logger;
 	}
 
 	/**
@@ -58,8 +71,35 @@ class PageController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
+	public function getMetrics() {
+		// for localhost requests is needed to add
+		// 'allow_local_remote_servers' => true,
+		// to config.php
+		$client = $this->httpClientService->newClient();
+		try {
+			$response = $client->get("http://localhost:5550/metrics", [
+				'timeout' => 10,
+				'connect_timeout' => 10,
+			]);
+
+			if ($response->getStatusCode() === Http::STATUS_OK) {
+				//$result = json_decode($response->getBody(), true);
+				//return (is_array($result)) ? $result : [];
+				echo($response->getBody());
+				return new Http\Response();
+			}
+		} catch (\Exception $e) {
+			$this->logger->error($e->getMessage());
+		}
+	}
+
+	/**
+	 * @PublicPage
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
 	public function getInternalMetrics() {
-		$metrics = $this->getMetrics();
+		$metrics = $this->getInternal();
 		$settings = $this->loadSettings();
 		if (!$settings) {
 			return new JSONResponse([]);
@@ -78,7 +118,7 @@ class PageController extends Controller {
 		return $row;
 	}
 
-	private function getMetrics() {
+	private function getInternal() {
 		$queryBuilder = $this->connection->getQueryBuilder();
 		$queryBuilder->select($queryBuilder->createFunction('count(*)'))
 			->from('users');
