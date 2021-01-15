@@ -68,6 +68,7 @@ class SettingsController extends Controller {
 		$data["iopurl"] = "";
 		$data["country"] = "";
 		$data["sitename"] = "";
+		$data["siteurl"] = "";
 	}
 
 
@@ -78,10 +79,10 @@ class SettingsController extends Controller {
 	 * Simply method that posts back the payload of the request
 	 * @NoAdminRequired
 	 */
-	public function saveSettings($iopurl, $country, $hostname, $sitename) {
+	public function saveSettings($iopurl, $country, $hostname, $sitename, $siteurl) {
 		// store settings in DB
 		$this->deleteSettings();
-		$ok = $this->storeSettings($iopurl, $country, $hostname, $sitename);
+		$ok = $this->storeSettings($iopurl, $country, $hostname, $sitename, $siteurl);
 		if (!$ok) {
 			return new DataResponse([
 				'error' => 'error storing settings, check server logs'
@@ -92,16 +93,18 @@ class SettingsController extends Controller {
 			'iopurl' => $iopurl,
 			'country' => $country,
 			'hostname' => $hostname,
-			'sitename' => $sitename
+			'sitename' => $sitename,
+			'siteurl' => $siteurl
 		]);
 	}
 
-	private function storeSettings($iopurl, $country, $hostname, $sitename){
+	private function storeSettings($iopurl, $country, $hostname, $sitename, $siteurl){
 		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
 		$query->insert('sciencemesh')
 			->setValue('iopurl', $query->createNamedParameter($iopurl))
 			->setValue('country', $query->createNamedParameter($country))
 			->setValue('sitename', $query->createNamedParameter($sitename))
+			->setValue('siteurl', $query->createNamedParameter($siteurl))
 			->setValue('hostname', $query->createNamedParameter($hostname));
 		$result = $query->execute();
 		if (!$result) {

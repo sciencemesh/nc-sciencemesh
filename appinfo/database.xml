@@ -35,6 +35,13 @@
         <notnull>true</notnull>
         <comments>Name of the site</comments>
       </field>
+      <field>
+        <name>siteurl</name>
+        <type>text</type>
+	<default>http://localhost</default>
+        <notnull>true</notnull>
+        <comments>URL of the site</comments>
+      </field>
     </declaration>
   </table>
 </database>

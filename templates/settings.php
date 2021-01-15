@@ -12,6 +12,8 @@
     <div id="sciencemeshAddrSettings">
         <p><?php p($l->t("Site Name")) ?></p>
         <p><input id="sciencemeshSitename" value="<?php p($_["sitename"]) ?>" placeholder="CERN" type="text"></p>
+        <p><?php p($l->t("Site URL")) ?></p>
+        <p><input id="sciencemeshSiteurl" value="<?php p($_["siteurl"]) ?>" placeholder="http://localhost" type="text"></p>
         <p><?php p($l->t("Country Code")) ?></p>
         <p><input id="sciencemeshCountryCode" value="<?php p($_["country"]) ?>" placeholder="CH" type="text"></p>
         <p><?php p($l->t("Hostname")) ?></p>
