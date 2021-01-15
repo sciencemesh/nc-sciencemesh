@@ -12,6 +12,7 @@
             var countryCode = $("#sciencemeshCountryCode").val().trim();
             var siteName = $("#sciencemeshSitename").val().trim();
             var hostName = $("#sciencemeshHostname").val().trim();
+            var siteURL= $("#sciencemeshSiteurl").val().trim();
 
 	    //
             // if (!iopUrl.length) {
@@ -28,7 +29,8 @@
                     iopurl: iopUrl,
 		    country: countryCode,
 	            sitename: siteName,
-		    hostname: hostName
+		    hostname: hostName,
+		    siteurl: siteURL
                 },
                 success: function onSuccess(response) {
                     $(".section-sciencemesh").removeClass("icon-loading");
