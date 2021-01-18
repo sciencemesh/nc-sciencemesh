@@ -131,6 +131,9 @@ class PageController extends Controller {
 		$result = $query->execute();
 		$row = $result->fetch();
 		$result->closeCursor();
+		$row['numusers'] = intval($row['numusers']);
+		$row['numfiles'] = intval($row['numfiles']);
+		$row['numstorage'] = intval($row['numstorage']);
 		return $row;
 	}
 
