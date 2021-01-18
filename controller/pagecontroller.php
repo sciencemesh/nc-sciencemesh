@@ -109,11 +109,17 @@ class PageController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function getInternalMetrics() {
-		$metrics = $this->getInternal();
+		//$metrics = $this->getInternal();
 		$settings = $this->loadSettings();
 		if (!$settings) {
 			return new JSONResponse([]);
 		}
+
+		$metrics = [
+			"numusers" => $settings['numusers'],
+			"numfiles" => $settings['numfiles'],
+			"numstorage" => $settings['numstorage']
+		];
 
 		$payload = ["metrics" => $metrics, "settings" => $settings];
 		return new JSONResponse($payload);
@@ -128,6 +134,8 @@ class PageController extends Controller {
 		return $row;
 	}
 
+	/* to get them from system rathen than manual input */
+	/*
 	private function getInternal() {
 		$queryBuilder = $this->connection->getQueryBuilder();
 		$queryBuilder->select($queryBuilder->createFunction('count(*)'))
@@ -140,30 +148,6 @@ class PageController extends Controller {
 		];
 		return $params;
 	}
-
-
-/*
-    {
-        "Name": "OC-Test@WWU",
-        "FullName": "ownCloud Test at University of Muenster",
-        "Homepage": "http://oc-test.uni-muenster.de",            
-        "Description": "ownCloud Test Instance of University of Muenster",
-        "CountryCode": "DE",
-        "Services": [
-            {
-                "Type": {
-                    "Name": "REVAD"
-                },
-                "Name": "oc-test.uni-muenster.de - REVAD",
-                "URL": "https://oc-test.uni-muenster.de/revad",
-                "IsMonitored": true,
-                "Properties": {
-                    "METRICS_PATH": "/revad/metrics"
-                },
-                "Host": "octest-test.uni-muenster.de"
-            }
-        ]
-    }
-*/
+	 */
 
 }

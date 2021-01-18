@@ -13,6 +13,9 @@
             var siteName = $("#sciencemeshSitename").val().trim();
             var hostName = $("#sciencemeshHostname").val().trim();
             var siteURL= $("#sciencemeshSiteurl").val().trim();
+            var numUsers = $("#sciencemeshNumusers").val().trim();
+            var numFiles = $("#sciencemeshNumfiles").val().trim();
+            var numStorage = $("#sciencemeshNumstorage").val().trim();
 
 	    //
             // if (!iopUrl.length) {
@@ -30,7 +33,10 @@
 		    country: countryCode,
 	            sitename: siteName,
 		    hostname: hostName,
-		    siteurl: siteURL
+		    siteurl: siteURL,
+		    numusers: numUsers,
+		    numfiles: numFiles,
+		    numstorage: numStorage
                 },
                 success: function onSuccess(response) {
                     $(".section-sciencemesh").removeClass("icon-loading");
