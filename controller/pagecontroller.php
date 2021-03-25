@@ -21,24 +21,26 @@ use OCP\IDBConnection;
 use OCP\Http\Client\IClientService;
 use OCP\AppFramework\Http;
 
-class PageController extends Controller {
-    	private $logger;
+class PageController extends Controller
+{
+	private $logger;
 	private $userId;
 	protected $connection;
 
 	/** @var IClientService */
 	private $httpClientService;
 
-	public function __construct($AppName, 
-		IRequest $request,
-		$UserId,
-		IDBConnection $connection, 
-		IClientService $httpClientService,
-                ILogger $logger) {
+	public function __construct($AppName,
+	                            IRequest $request,
+	                            $UserId,
+	                            IDBConnection $connection,
+	                            IClientService $httpClientService,
+	                            ILogger $logger)
+	{
 
 		parent::__construct($AppName, $request);
 		$this->userId = $UserId;
-		$this->connection = $connection; 
+		$this->connection = $connection;
 		$this->httpClientService = $httpClientService;
 		$this->logger = $logger;
 	}
@@ -53,7 +55,8 @@ class PageController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
-	public function index() {
+	public function index()
+	{
 		$params = ['user' => $this->userId];
 		return new TemplateResponse('sciencemesh', 'main', $params);  // templates/main.php
 	}
@@ -62,7 +65,8 @@ class PageController extends Controller {
 	 * Simply method that posts back the payload of the request
 	 * @NoAdminRequired
 	 */
-	public function doEcho($echo) {
+	public function doEcho($echo)
+	{
 		return new DataResponse(['echo' => $echo]);
 	}
 
@@ -71,7 +75,8 @@ class PageController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
-	public function getMetrics() {
+	public function getMetrics()
+	{
 		// for localhost requests is needed to add
 		// 'allow_local_remote_servers' => true,
 		// to config.php
@@ -108,7 +113,8 @@ class PageController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
-	public function getInternalMetrics() {
+	public function getInternalMetrics()
+	{
 		//$metrics = $this->getInternal();
 		$settings = $this->loadSettings();
 		if (!$settings) {
@@ -125,7 +131,8 @@ class PageController extends Controller {
 		return new JSONResponse($payload);
 	}
 
-	private function loadSettings(){
+	private function loadSettings()
+	{
 		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
 		$query->select('*')->from('sciencemesh');
 		$result = $query->execute();
@@ -134,6 +141,7 @@ class PageController extends Controller {
 		$row['numusers'] = intval($row['numusers']);
 		$row['numfiles'] = intval($row['numfiles']);
 		$row['numstorage'] = intval($row['numstorage']);
+		unset($row['apikey']); // Remove the private API key from the exposed settings
 		return $row;
 	}
 
