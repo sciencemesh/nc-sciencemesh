@@ -44,6 +44,9 @@ class Version010000Date20210118175358 extends SimpleMigrationStep {
 			$table->addColumn('siteurl', 'string', [
 				'notnull' => true,
 			]);
+			$table->addColumn('siteid', 'string', [
+				'notnull' => false,
+			]);
 			$table->addColumn('country', 'string', [
 				'notnull' => true,
 				'length' => 3,

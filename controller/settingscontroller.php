@@ -72,6 +72,7 @@ class SettingsController extends Controller
 				"apikey" => "",
 				"sitename" => "",
 				"siteurl" => "",
+				"siteid" => "",
 				"country" => "",
 				"iopurl" => "",
 				"numusers" => 0,
@@ -88,35 +89,40 @@ class SettingsController extends Controller
 	 */
 	public function saveSettings($apikey, $sitename, $siteurl, $country, $iopurl, $numusers, $numfiles, $numstorage)
 	{
-		// store settings in DB
-		$this->deleteSettings();
-		$ok = $this->storeSettings($apikey, $sitename, $siteurl, $country, $iopurl, $numusers, $numfiles, $numstorage);
-		if (!$ok) {
-			return new DataResponse([
-				'error' => 'error storing settings, check server logs'
-			]);
-		}
+		$siteid = null;
 
 		// submit settings to Mentix (if they are valid)
 		if ($apikey !== "" && $sitename !== "" && $siteurl !== "" && $iopurl !== "") {
-			$err = $this->submitSettings($apikey, $sitename, $siteurl, $country, $iopurl);
-			if ($err != null) {
+			try {
+				$siteid = $this->submitSettings($apikey, $sitename, $siteurl, $country, $iopurl);
+			} catch (\Exception $e) {
 				return new DataResponse([
-					'error' => $err
+					'error' => $e->getMessage()
 				]);
 			}
 		}
 
-		return new DataResponse([]);
+		// store settings in DB
+		$this->deleteSettings();
+		try {
+			$this->storeSettings($apikey, $sitename, $siteurl, $siteid, $country, $iopurl, $numusers, $numfiles, $numstorage);
+		} catch (\Exception $e) {
+			return new DataResponse([
+				'error' => 'error storing settings: ' . $e->getMessage()
+			]);
+		}
+
+		return new DataResponse(["siteid" => $siteid]);
 	}
 
-	private function storeSettings($apikey, $sitename, $siteurl, $country, $iopurl, $numusers, $numfiles, $numstorage)
+	private function storeSettings($apikey, $sitename, $siteurl, $siteid, $country, $iopurl, $numusers, $numfiles, $numstorage)
 	{
 		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
 		$query->insert('sciencemesh')
 			->setValue('apikey', $query->createNamedParameter($apikey))
 			->setValue('sitename', $query->createNamedParameter($sitename))
 			->setValue('siteurl', $query->createNamedParameter($siteurl))
+			->setValue('siteid', $query->createNamedParameter($siteid))
 			->setValue('country', $query->createNamedParameter($country))
 			->setValue('iopurl', $query->createNamedParameter($iopurl))
 			->setValue('numusers', $query->createNamedParameter($numusers))
@@ -125,11 +131,9 @@ class SettingsController extends Controller
 		$result = $query->execute();
 
 		if (!$result) {
-			\OC::$server->getLogger()->error('sciencemesh database cound not be updated',
-				['app' => 'sciencemesh']);
-			return false;
+			\OC::$server->getLogger()->error('sciencemesh database cound not be updated', ['app' => 'sciencemesh']);
+			throw new \Exception('sciencemesh database cound not be updated');
 		}
-		return true;
 	}
 
 	private function deleteSettings()
@@ -172,19 +176,15 @@ class SettingsController extends Controller
 		curl_setopt($curl, CURLOPT_POST, true);
 		curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
 		$response = curl_exec($curl);
+		$respData = json_decode($response, true);
 		$status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 		curl_close($curl);
 
-		if ($status != 200) {
-			try {
-				$respData = json_decode($response, true);
-				return $respData["error"];
-			} catch (\Exception $e) {
-				return $e->getMessage();
-			}
+		if ($status == 200) {
+			return $respData["id"];
+		} else {
+			throw new \Exception($respData["error"]);
 		}
-
-		return null;
 	}
 
 	/**
