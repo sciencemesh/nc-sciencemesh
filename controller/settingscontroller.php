@@ -91,6 +91,16 @@ class SettingsController extends Controller
 	{
 		$siteid = null;
 
+		if ($numusers == null) {
+			$numusers = 0;
+		}
+		if ($numfiles == null) {
+			$numfiles = 0;
+		}
+		if ($numstorage == null) {
+			$numstorage = 0;
+		}
+
 		// submit settings to Mentix (if they are valid)
 		if ($apikey !== "" && $sitename !== "" && $siteurl !== "" && $iopurl !== "") {
 			try {
