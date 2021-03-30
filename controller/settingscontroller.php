@@ -18,119 +18,143 @@ use OCP\IDBConnection;
 /**
  * Settings controller for the administration page
  */
-class SettingsController extends Controller {
-    private $logger;
-    private $config;
-    private $urlGenerator;
+class SettingsController extends Controller
+{
+	private $logger;
+	private $config;
+	private $urlGenerator;
 
-    /**
-     * @param string $AppName - application name
-     * @param IRequest $request - request object
-     * @param IURLGenerator $urlGenerator - url generator service
-     * @param IL10N $trans - l10n service
-     * @param ILogger $logger - logger
-     * @param AppConfig $config - application configuration
-     */
-    public function __construct($AppName,
-                                    IRequest $request,
-                                    IURLGenerator $urlGenerator,
-                                    IL10N $trans,
-                                    ILogger $logger,
-                                    AppConfig $config
-                                    ) {
-        parent::__construct($AppName, $request);
+	const CATALOG_URL = "https://sciencemesh-test.uni-muenster.de/api/mentix/sitereg";
 
-        $this->urlGenerator = $urlGenerator;
-        $this->logger = $logger;
-        $this->config = $config;
+	/**
+	 * @param string $AppName - application name
+	 * @param IRequest $request - request object
+	 * @param IURLGenerator $urlGenerator - url generator service
+	 * @param IL10N $trans - l10n service
+	 * @param ILogger $logger - logger
+	 * @param AppConfig $config - application configuration
+	 */
+	public function __construct($AppName,
+	                            IRequest $request,
+	                            IURLGenerator $urlGenerator,
+	                            IL10N $trans,
+	                            ILogger $logger,
+	                            AppConfig $config
+	)
+	{
+		parent::__construct($AppName, $request);
 
-	$eventDispatcher = \OC::$server->getEventDispatcher();
-	$eventDispatcher->addListener(
-	'OCA\Files::loadAdditionalScripts',
-	function() {
-		\OCP\Util::addScript('sciencemesh', 'settings');
-		\OCP\Util::addStyle('sciencemesh', 'style');
-	}
-);
-    }
+		$this->urlGenerator = $urlGenerator;
+		$this->logger = $logger;
+		$this->config = $config;
 
-    /**
-     * Print config section
-     *
-     * @return TemplateResponse
-     */
-    public function index() {
-	$data = $this->loadSettings();
-	if (!$data) {
-		// settings has not been set
-		$hostname = \OCP\Util::getServerHostName();
-		$data = ["hostname" => $hostname];
-		$data["iopurl"] = "";
-		$data["country"] = "";
-		$data["sitename"] = "";
-		$data["siteurl"] = "";
-		$data["numusers"] = 0;
-		$data["numfiles"] = 0;
-		$data["numstorage"] = 0;
+		$eventDispatcher = \OC::$server->getEventDispatcher();
+		$eventDispatcher->addListener(
+			'OCA\Files::loadAdditionalScripts',
+			function () {
+				\OCP\Util::addScript('sciencemesh', 'settings');
+				\OCP\Util::addStyle('sciencemesh', 'style');
+			}
+		);
 	}
 
-
-        return new TemplateResponse($this->appName, "settings", $data, "blank");
-    }
+	/**
+	 * Print config section
+	 *
+	 * @return TemplateResponse
+	 */
+	public function index()
+	{
+		$data = $this->loadSettings();
+		if (!$data) {
+			// settings has not been set
+			$data = [
+				"apikey" => "",
+				"sitename" => "",
+				"siteurl" => "",
+				"siteid" => "",
+				"country" => "",
+				"iopurl" => "",
+				"numusers" => 0,
+				"numfiles" => 0,
+				"numstorage" => 0
+			];
+		}
+		return new TemplateResponse($this->appName, "settings", $data, "blank");
+	}
 
 	/**
 	 * Simply method that posts back the payload of the request
 	 * @NoAdminRequired
 	 */
-	public function saveSettings($iopurl, $country, $hostname, $sitename, $siteurl, $numusers, $numfiles, $numstorage) {
+	public function saveSettings($apikey, $sitename, $siteurl, $country, $iopurl, $numusers, $numfiles, $numstorage)
+	{
+		$siteid = null;
+
+		if ($numusers == null) {
+			$numusers = 0;
+		}
+		if ($numfiles == null) {
+			$numfiles = 0;
+		}
+		if ($numstorage == null) {
+			$numstorage = 0;
+		}
+
+		// submit settings to Mentix (if they are valid)
+		if ($apikey !== "" && $sitename !== "" && $siteurl !== "" && $iopurl !== "") {
+			try {
+				$siteid = $this->submitSettings($apikey, $sitename, $siteurl, $country, $iopurl);
+			} catch (\Exception $e) {
+				return new DataResponse([
+					'error' => $e->getMessage()
+				]);
+			}
+		}
+
 		// store settings in DB
 		$this->deleteSettings();
-		$ok = $this->storeSettings($iopurl, $country, $hostname, $sitename, $siteurl, $numusers, $numfiles, $numstorage);
-		if (!$ok) {
+		try {
+			$this->storeSettings($apikey, $sitename, $siteurl, $siteid, $country, $iopurl, $numusers, $numfiles, $numstorage);
+		} catch (\Exception $e) {
 			return new DataResponse([
-				'error' => 'error storing settings, check server logs'
+				'error' => 'error storing settings: ' . $e->getMessage()
 			]);
 		}
 
-		return new DataResponse([
-			'iopurl' => $iopurl,
-			'country' => $country,
-			'hostname' => $hostname,
-			'sitename' => $sitename,
-			'siteurl' => $siteurl,
-			'numusers' => $numusers,
-			'numfiles' => $numfiles,
-			'numstorage' => $numstorage
-		]);
+		return new DataResponse(["siteid" => $siteid]);
 	}
 
-	private function storeSettings($iopurl, $country, $hostname, $sitename, $siteurl, $numusers, $numfiles, $numstorage){
+	private function storeSettings($apikey, $sitename, $siteurl, $siteid, $country, $iopurl, $numusers, $numfiles, $numstorage)
+	{
 		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
 		$query->insert('sciencemesh')
-			->setValue('iopurl', $query->createNamedParameter($iopurl))
-			->setValue('country', $query->createNamedParameter($country))
+			->setValue('apikey', $query->createNamedParameter($apikey))
 			->setValue('sitename', $query->createNamedParameter($sitename))
 			->setValue('siteurl', $query->createNamedParameter($siteurl))
+			->setValue('siteid', $query->createNamedParameter($siteid))
+			->setValue('country', $query->createNamedParameter($country))
+			->setValue('iopurl', $query->createNamedParameter($iopurl))
 			->setValue('numusers', $query->createNamedParameter($numusers))
 			->setValue('numfiles', $query->createNamedParameter($numfiles))
-			->setValue('numstorage', $query->createNamedParameter($numstorage))
-			->setValue('hostname', $query->createNamedParameter($hostname));
+			->setValue('numstorage', $query->createNamedParameter($numstorage));
 		$result = $query->execute();
+
 		if (!$result) {
-			\OC::$server->getLogger()->error('sciencemesh database cound not be updated', 
-				['app' => 'sciencemesh']);
-			return false;
+			\OC::$server->getLogger()->error('sciencemesh database cound not be updated', ['app' => 'sciencemesh']);
+			throw new \Exception('sciencemesh database cound not be updated');
 		}
-		return true;
 	}
 
-	private function deleteSettings(){
+	private function deleteSettings()
+	{
 		$deleteQuery = \OC::$server->getDatabaseConnection()->getQueryBuilder();
 		$deleteQuery->delete('sciencemesh');
 		$deleteQuery->execute();
 	}
 
-	private function loadSettings(){
+	private function loadSettings()
+	{
 		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
 		$query->select('*')->from('sciencemesh');
 		$result = $query->execute();
@@ -138,23 +162,56 @@ class SettingsController extends Controller {
 		$result->closeCursor();
 		return $row;
 	}
-	
 
+	private function submitSettings($apikey, $sitename, $siteurl, $country, $iopurl)
+	{
+		// fill out a data object as needed by Mentix
+		$iopPath = parse_url($iopurl, PHP_URL_PATH);
+		$data = json_encode([
+			"name" => $sitename,
+			"url" => $siteurl,
+			"countryCode" => $country,
+			"reva" => [
+				"url" => $iopurl,
+				"metricsPath" => rtrim($iopPath, "/") . "/metrics"
+			]
+		]);
+		$url = self::CATALOG_URL . "?action=register&apiKey=" . urlencode($apikey);
 
-    /**
-     * Get app settings
-     *
-     * @return array
-     *
-     * @NoAdminRequired
-     * @PublicPage
-     */
-    public function GetSettings() {
-        $result = [
-            "formats" => $this->config->FormatsSetting(),
-            "sameTab" => $this->config->GetSameTab(),
-            "shareAttributesVersion" => $this->config->ShareAttributesVersion()
-        ];
-        return $result;
-    }
+		// use CURL to send the request to Mentix
+		$curl = curl_init($url);
+		curl_setopt($curl, CURLOPT_HEADER, false);
+		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($curl, CURLOPT_HTTPHEADER, array("Content-type: application/json"));
+		curl_setopt($curl, CURLOPT_POST, true);
+		curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+		$response = curl_exec($curl);
+		$respData = json_decode($response, true);
+		$status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+		curl_close($curl);
+
+		if ($status == 200) {
+			return $respData["id"];
+		} else {
+			throw new \Exception($respData["error"]);
+		}
+	}
+
+	/**
+	 * Get app settings
+	 *
+	 * @return array
+	 *
+	 * @NoAdminRequired
+	 * @PublicPage
+	 */
+	public function GetSettings()
+	{
+		$result = [
+			"formats" => $this->config->FormatsSetting(),
+			"sameTab" => $this->config->GetSameTab(),
+			"shareAttributesVersion" => $this->config->ShareAttributesVersion()
+		];
+		return $result;
+	}
 }

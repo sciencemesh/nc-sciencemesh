@@ -34,42 +34,38 @@ class Version010000Date20210118175358 extends SimpleMigrationStep {
 		$schema = $schemaClosure();
 
 		if (!$schema->hasTable('sciencemesh')) {
-			$table = $schema->createTable('sciencemesh');
-			$table->addColumn('iopurl', 'string', [
+			$table = $schema->createTable("sciencemesh");
+			$table->addColumn('apikey', 'string', [
 				'notnull' => true,
-				'default' => 'http://localhost:10999',
-			]);
-			$table->addColumn('country', 'string', [
-				'notnull' => true,
-				'length' => 2,
-			]);
-			$table->addColumn('hostname', 'string', [
-				'notnull' => true,
-				'default' => 'example.org',
 			]);
 			$table->addColumn('sitename', 'string', [
 				'notnull' => true,
-				'default' => 'CERNBox',
 			]);
 			$table->addColumn('siteurl', 'string', [
 				'notnull' => true,
-				'default' => 'http://localhost',
+			]);
+			$table->addColumn('siteid', 'string', [
+				'notnull' => false,
+			]);
+			$table->addColumn('country', 'string', [
+				'notnull' => true,
+				'length' => 3,
+			]);
+			$table->addColumn('iopurl', 'string', [
+				'notnull' => true,
 			]);
 			$table->addColumn('numusers', Type::BIGINT, [
 				'notnull' => true,
-				'notnull' => false,
 				'default' => 0,
 				'unsigned' => true,
 			]);
 			$table->addColumn('numfiles', Type::BIGINT, [
 				'notnull' => true,
-				'notnull' => false,
 				'default' => 0,
 				'unsigned' => true,
 			]);
 			$table->addColumn('numstorage', Type::BIGINT, [
 				'notnull' => true,
-				'notnull' => false,
 				'default' => 0,
 				'unsigned' => true,
 			]);
