@@ -24,7 +24,7 @@ class SettingsController extends Controller
 	private $config;
 	private $urlGenerator;
 
-	const CATALOG_URL = "https://sciencemesh-test.uni-muenster.de/api/mentix/sitereg";
+	const CATALOG_URL = "https://iop.sciencemesh.uni-muenster.de/iop/mentix/sitereg";
 
 	/**
 	 * @param string $AppName - application name

@@ -39,7 +39,7 @@ script("sciencemesh", "settings");
     <h3><?php p($l->t("API Key")) ?></h3>
     <div id="sciencemeshAPIKeySettings">
         <p><?php p($l->t("API Key")) ?></p>
-        <p><input id="sciencemeshAPIKey" value="<?php p($_["apikey"]) ?>" placeholder="" type="text"><em>An API key is needed to register your site with ScienceMesh. If you do not have a key yet, you can register for a free ScienceMesh account using <a href="https://sciencemesh-test.uni-muenster.de/api/siteacc/register" target="_blank">this link</a>.</em></p>
+        <p><input id="sciencemeshAPIKey" value="<?php p($_["apikey"]) ?>" placeholder="" type="text"><em>An API key is needed to register your site with ScienceMesh. If you do not have a key yet, you can register for a free ScienceMesh account using <a href="https://iop.sciencemesh.uni-muenster.de/iop/siteacc/register" target="_blank">this link</a>.</em></p>
     </div>
 
     <div>&nbsp;</div>
