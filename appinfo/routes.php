@@ -9,6 +9,7 @@
  */
 return [
     'routes' => [
+        ['name' => 'reva#Authenticate', 'url' => '/~{userId}/api/Authenticate', 'verb' => 'POST'],
         ['name' => 'reva#AddGrant', 'url' => '/~{userId}/api/AddGrant', 'verb' => 'POST'],
         ['name' => 'reva#CreateDir', 'url' => '/~{userId}/api/CreateDir', 'verb' => 'POST'],
         ['name' => 'reva#CreateHome', 'url' => '/~{userId}/api/CreateHome', 'verb' => 'POST'],

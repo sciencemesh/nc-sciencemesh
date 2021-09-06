@@ -96,6 +96,23 @@ class RevaController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
+	public function Authenticate($userId) {
+		$password = $this->request->getParam("password");
+		// Try e.g.:
+		// curl -v -H 'Content-Type:application/json' -d'{"password":"relativity"}' http://localhost/apps/sciencemesh/~einstein/api/Authenticate
+		// FIXME: https://github.com/pondersource/nc-sciencemesh/issues/3
+		if (($userId == "einstein") && ($password == "relativity")) {
+			return new JSONResponse("Logged in", 200);
+		} else {
+			return new JSONResponse("Username / password not recognized", 401);
+		}
+	}
+
+	/**
+	 * @PublicPage
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
 	public function CreateDir($userId) {
 		$this->initializeStorage($userId);
 		$path = $this->request->getParam("path") ?: "/";
