@@ -1,22 +1,15 @@
 <?php
-/**
- * ownCloud - sciencemesh
- *
- * This file is licensed under the MIT License. See the COPYING file.
- *
- * @author Hugo Gonzalez Labrador <github@hugo.labkode.com>
- * @copyright Hugo Gonzalez Labrador 2020
- */
 
-namespace OCA\ScienceMesh\Controller;
+namespace OCA\ScienceMesh\Tests\Unit\Controller;
 
 use PHPUnit_Framework_TestCase;
 
 use OCP\AppFramework\Http\TemplateResponse;
 
+use OCA\ScienceMesh\Controller\PageController;
+
 
 class PageControllerTest extends PHPUnit_Framework_TestCase {
-
 	private $controller;
 	private $userId = 'john';
 
@@ -28,20 +21,11 @@ class PageControllerTest extends PHPUnit_Framework_TestCase {
 		);
 	}
 
-
 	public function testIndex() {
 		$result = $this->controller->index();
 
-		$this->assertEquals(['user' => 'john'], $result->getParams());
-		$this->assertEquals('main', $result->getTemplateName());
+		$this->assertEquals('index', $result->getTemplateName());
 		$this->assertTrue($result instanceof TemplateResponse);
 	}
-
-
-	public function testEcho() {
-		$result = $this->controller->doEcho('hi');
-		$this->assertEquals(['echo' => 'hi'], $result->getData());
-	}
-
 
 }

@@ -1,12 +1,6 @@
 <?php
-/**
- * ownCloud - sciencemesh
- *
- * This file is licensed under the MIT License. See the COPYING file.
- *
- * @author Hugo Gonzalez Labrador <github@hugo.labkode.com>
- * @copyright Hugo Gonzalez Labrador 2020
- */
+
+namespace OCA\PDSInterop\Tests\Integration\Controller;
 
 use OCP\AppFramework\App;
 use Test\TestCase;

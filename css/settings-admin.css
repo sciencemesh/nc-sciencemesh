@@ -1,0 +1,14 @@
+#sciencemesh-admin label {
+	width: 160px;
+	vertical-align: top;
+	display: block;
+}
+#sciencemesh-admin input {
+	width: 480px;
+}
+#sciencemesh-admin textarea {
+	width: 480px;
+	height: 240px;
+	font-size: 12px;
+	font-family: monospace;
+}

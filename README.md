@@ -1,5 +1,5 @@
-# Science Mesh
-Place this app in **owncloud/apps/**
+# ScienceMesh
+Place this app in **nextcloud/apps/**
 
 ## Building the app
 
@@ -28,7 +28,7 @@ The make command will install or update Composer dependencies if a composer.json
 
 ## Publish to App Store
 
-First get an account for the [App Store](http://apps.owncloud.com/) then run:
+First get an account for the [App Store](http://apps.nextcloud.com/) then run:
 
     make && make appstore
 
