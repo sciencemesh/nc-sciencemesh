@@ -97,7 +97,9 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function Authenticate($userId) {
-		$pwd = $this->request->getParam("password");
+		$password = $this->request->getParam("password");
+		// Try e.g.:
+		// curl -v -H 'Content-Type:application/json' -d'{"password":"relativity"}' http://localhost/apps/sciencemesh/~einstein/api/Authenticate
 		// FIXME: https://github.com/pondersource/nc-sciencemesh/issues/3
 		if (($userId == "einstein") && ($password == "relativity")) {
 			return new JSONResponse("Logged in", 200);
