@@ -45,6 +45,11 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	public function testAuthenticateOK() {
 		$this->request->method('getParam')
 						 ->willReturn('relativity');
+
+	 $user =  $this->getMockBuilder('OCP\IUser')->getMock();
+	 $this->userManager->method('checkPassword')
+						 ->willReturn($user);
+
 		$this->controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
@@ -56,6 +61,9 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	public function testAuthenticateWrong() {
 		$this->request->method('getParam')
 						 ->willReturn('wrong');
+
+	  $this->userManager->method('checkPassword')
+						 ->willReturn(false);
 		$this->controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,

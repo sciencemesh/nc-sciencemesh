@@ -29,8 +29,8 @@ class RevaController extends Controller {
 
 	/* @var ISession */
 	private $session;
-	
-	public function __construct($AppName, IRootFolder $rootFolder, IRequest $request, ISession $session, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IConfig $config, \OCA\ScienceMesh\Service\UserService $UserService, ITrashManager $trashManager) 
+
+	public function __construct($AppName, IRootFolder $rootFolder, IRequest $request, ISession $session, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IConfig $config, \OCA\ScienceMesh\Service\UserService $UserService, ITrashManager $trashManager)
 	{
 		parent::__construct($AppName, $request);
 		require_once(__DIR__.'/../../vendor/autoload.php');
@@ -65,7 +65,7 @@ class RevaController extends Controller {
 		$this->filesystem = $this->getFileSystem();
 		$this->baseUrl = $this->getStorageUrl($userId);
 	}
-	
+
 	private function respond($responseBody, $statusCode, $headers=array()) {
 		$result = new PlainResponse($body);
 		foreach ($headers as $header => $values) {
@@ -78,7 +78,7 @@ class RevaController extends Controller {
 	}
 
 	/* Reva handlers */
-	
+
 	/**
 	 * @PublicPage
 	 * @NoAdminRequired
@@ -101,7 +101,8 @@ class RevaController extends Controller {
 		// Try e.g.:
 		// curl -v -H 'Content-Type:application/json' -d'{"password":"relativity"}' http://localhost/apps/sciencemesh/~einstein/api/Authenticate
 		// FIXME: https://github.com/pondersource/nc-sciencemesh/issues/3
-		if (($userId == "einstein") && ($password == "relativity")) {
+		$auth = $this->userManager->checkPassword($userId,$password);
+		if ($auth) {
 			return new JSONResponse("Logged in", 200);
 		} else {
 			return new JSONResponse("Username / password not recognized", 401);
@@ -251,7 +252,7 @@ class RevaController extends Controller {
 		$path = $this->request->getParam("path") ?: "/";
 		return new JSONResponse("Not implemented", 200);
 	}
-	
+
 	/**
 	 * @PublicPage
 	 * @NoAdminRequired
