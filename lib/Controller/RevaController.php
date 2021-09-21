@@ -172,8 +172,9 @@ class RevaController extends Controller {
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
 
-		$result = [];
+		$result = []; // Where is used?
 		foreach ($trashItems as $node) {
+			#getOriginalLocation : returns string
 			if (preg_match("/^sciencemesh/", $node->getOriginalLocation())) {
 				$this->trashManager->removeItem($node);
 			}
@@ -189,8 +190,10 @@ class RevaController extends Controller {
 	public function GetMD($userId) {
 		$this->initializeStorage($userId);
 		$path = $this->request->getParam("path") ?: "/";
-		if ($this->filesystem->has($path)) {
-			$metadata = $filesystem->getMetaData($path);
+		$success = $this->filesystem->has($path);
+		if ($success) {
+			// var_dump($path); -> '/test'
+			$metadata = $this->filesystem->getMetaData($path);
 			return new JSONResponse($metadata, 200);
 		} else {
 			return new JSONResponse(["error" => "File not found"], 404);
