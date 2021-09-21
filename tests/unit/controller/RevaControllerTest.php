@@ -49,12 +49,12 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 						 ->willReturn("whatever");
 	  $this->userManager->method("checkPassword")
 						 ->willReturn($user);
-		$this->controller = new RevaController(
+		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager
 		);
-		$result = $this->controller->Authenticate($this->userId);
+		$result = $controller->Authenticate($this->userId);
 		$this->assertEquals($result->getData(), "Logged in");
 	}
 
@@ -65,12 +65,12 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 						 ->willReturn("whatever");
 	  $this->userManager->method("checkPassword")
 						 ->willReturn(false);
-		$this->controller = new RevaController(
+		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager
 		);
-		$result = $this->controller->Authenticate($this->userId);
+		$result = $controller->Authenticate($this->userId);
 		$this->assertEquals($result->getData(), "Username / password not recognized");
 	}
 
@@ -87,15 +87,15 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 									->willReturn($userFolder);
 		$this->request->method("getParam")
 									->willReturn("/test");
-		$this->controller = new RevaController(
+		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager
 		);
 		$sciencemeshFolder->expects($this->once())
-		     ->method('newFolder')
+				 ->method('newFolder')
 				 ->with($this->equalTo('test'));;
-		$result = $this->controller->createDir($this->userId);
+		$result = $controller->createDir($this->userId);
 		$this->assertEquals($result->getData(), "OK");
 	}
 
@@ -121,7 +121,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 
 	public function testCreateReference(){
 
-
 		$userFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$sciencemeshFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$this->rootFolder->method("getUserFolder")
@@ -139,5 +138,36 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		);
  		$result = $this->controller->CreateReference($this->userId);
 		$this->assertEquals($result->getData(), "Not implemented");
+	}
+
+	public function testDelete(){
+
+		$userFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$sciencemeshFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$userFolder->method("nodeExists")
+									->willReturn(true);
+		$userFolder->method("get")
+									->willReturn($sciencemeshFolder);
+		$sciencemeshFolder->method("get")
+									->willReturn($testFolder);
+		$sciencemeshFolder->method("nodeExists")
+							->willReturn(true);
+		$this->rootFolder->method("getUserFolder")
+									->willReturn($userFolder);
+		$this->request->method("getParam")
+									->willReturn("/test");
+		$this->controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+		$sciencemeshFolder->expects($this->once())
+				 ->method('get')
+				 ->with($this->equalTo('test'));
+	 $testFolder->expects($this->once())
+					->method('delete');
+		$result = $this->controller->Delete($this->userId);
+		$this->assertEquals($result->getData(), "OK");
 	}
 }
