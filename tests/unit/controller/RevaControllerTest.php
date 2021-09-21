@@ -102,4 +102,15 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $this->controller->createDir($this->userId);
 		$this->assertEquals($result->getData(), "OK");
 	}
+
+	public function testCreateHome(){
+
+		$this->controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+		$result = $this->controller->CreateHome($this->userId);
+		$this->assertEquals($result->getData(), "OK");
+	}
 }
