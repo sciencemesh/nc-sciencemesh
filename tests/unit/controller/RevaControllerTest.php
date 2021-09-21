@@ -13,13 +13,13 @@ use OCA\ScienceMesh\Service\UserService;
 class RevaControllerTest extends PHPUnit_Framework_TestCase {
 
 	private $controller;
-	private $appName = 'sciencemesh';
+	private $appName = "sciencemesh";
 	private $rootFolder;
 	private $request;
 	private $session;
 	private $userManager;
 	private $urlGenerator;
-	private $userId = 'einstein';
+	private $userId = "einstein";
 	private $config;
 	private $userService;
 	private $trashManager;
@@ -30,24 +30,24 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		// IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IConfig $config,
 		// \OCA\ScienceMesh\Service\UserService $UserService, ITrashManager $trashManager)
 
-		$this->rootFolder = $this->getMockBuilder('OCP\Files\IRootFolder')->getMock();
-		$this->request = $this->getMockBuilder('OCP\IRequest')->getMock();
-		$this->session =  $this->getMockBuilder('OCP\ISession')->getMock();
-		$this->userManager =  $this->getMockBuilder('OCP\IUserManager')->getMock();
-		$this->urlGenerator =  $this->getMockBuilder('OCP\IURLGenerator')->getMock();
-		$this->config =  $this->getMockBuilder('OCP\IConfig')->getMock();
+		$this->rootFolder = $this->getMockBuilder("OCP\Files\IRootFolder")->getMock();
+		$this->request = $this->getMockBuilder("OCP\IRequest")->getMock();
+		$this->session =  $this->getMockBuilder("OCP\ISession")->getMock();
+		$this->userManager =  $this->getMockBuilder("OCP\IUserManager")->getMock();
+		$this->urlGenerator =  $this->getMockBuilder("OCP\IURLGenerator")->getMock();
+		$this->config =  $this->getMockBuilder("OCP\IConfig")->getMock();
 		$this->userService  =  new UserService($this->session);
 
-		$this->trashManager =  $this->getMockBuilder('OCA\Files_Trashbin\Trash\ITrashManager')->getMock();
+		$this->trashManager =  $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashManager")->getMock();
 
 	}
 
 	public function testAuthenticateOK() {
-		$this->request->method('getParam')
-						 ->willReturn('relativity');
+		$this->request->method("getParam")
+						 ->willReturn("whatever");
 
-	 $user =  $this->getMockBuilder('OCP\IUser')->getMock();
-	 $this->userManager->method('checkPassword')
+	 $user =  $this->getMockBuilder("OCP\IUser")->getMock();
+	 $this->userManager->method("checkPassword")
 						 ->willReturn($user);
 
 		$this->controller = new RevaController(
@@ -59,10 +59,10 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getData(), "Logged in");
 	}
 	public function testAuthenticateWrong() {
-		$this->request->method('getParam')
-						 ->willReturn('wrong');
+		$this->request->method("getParam")
+						 ->willReturn("whatever");
 
-	  $this->userManager->method('checkPassword')
+	  $this->userManager->method("checkPassword")
 						 ->willReturn(false);
 		$this->controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
@@ -73,4 +73,33 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getData(), "Username / password not recognized");
 	}
 
+	public function testCreateDir(){
+
+		$this->request->method("getParam")
+									->willReturn("/test");
+
+		$userFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$sciencemeshFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+
+		$userFolder->method("nodeExists")
+									->willReturn(true);
+
+		$userFolder->method("get")
+									->willReturn($sciencemeshFolder);
+
+		$this->rootFolder->method("getUserFolder")
+									->willReturn($userFolder);
+
+		$this->controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+		$sciencemeshFolder->expects($this->once())
+		     ->method('newFolder')
+				 ->with($this->equalTo('test'));;
+
+		$result = $this->controller->createDir($this->userId);
+		$this->assertEquals($result->getData(), "OK");
+	}
 }
