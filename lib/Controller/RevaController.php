@@ -61,9 +61,9 @@ class RevaController extends Controller {
 		if (!$this->userFolder->nodeExists("sciencemesh")) {
 			$this->userFolder->newFolder("sciencemesh"); // Create the Sciencemesh directory for storage if it doesn't exist.
 		}
-		$this->sciencemeshFolder = $this->userFolder->get("sciencemesh");
+		$this->sciencemeshFolder = $this->userFolder->get("sciencemesh"); // used by getFileSystem
 		$this->filesystem = $this->getFileSystem();
-		$this->baseUrl = $this->getStorageUrl($userId);
+		$this->baseUrl = $this->getStorageUrl($userId); // Where is that used?
 	}
 
 	private function respond($responseBody, $statusCode, $headers=array()) {
