@@ -47,7 +47,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->sciencemeshFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$userFolder->method("nodeExists")->willReturn(true);
 		$userFolder->method("get")
-		  ->with($this->equalTo("sciencemesh"))
+			->with($this->equalTo("sciencemesh"))
 			->willReturn($this->sciencemeshFolder);
 		$this->sciencemeshFolder->method("nodeExists")->willReturn(true);
 		$this->sciencemeshFolder->method("getPath")->willReturn("/sciencemesh");
@@ -56,7 +56,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	public function testAuthenticateOK() {
 		$user =  $this->getMockBuilder("OCP\IUser")->getMock();
 		$this->request->method("getParam")->willReturn("whatever");
-	  $this->userManager->method("checkPassword")->willReturn($user);
+		$this->userManager->method("checkPassword")->willReturn($user);
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
@@ -69,7 +69,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 
 	public function testAuthenticateWrong() {
 		$this->request->method("getParam")->willReturn("whatever");
-	  $this->userManager->method("checkPassword")->willReturn(false);
+		$this->userManager->method("checkPassword")->willReturn(false);
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
@@ -119,7 +119,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	public function testDelete(){
 		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$this->sciencemeshFolder->method("get")
-		  ->with($this->equalTo("test"))
+			->with($this->equalTo("test"))
 			->willReturn($testFolder);
 		$this->request->method("getParam")->willReturn("/test");
 		$controller = new RevaController(
@@ -130,7 +130,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->sciencemeshFolder->expects($this->once())
 			->method("get")
 			->with($this->equalTo("test"));
-	  $testFolder->expects($this->once())->method("delete");
+		$testFolder->expects($this->once())->method("delete");
 		$result = $controller->Delete($this->userId);
 		$this->assertEquals($result->getData(), "OK");
 	}
@@ -147,7 +147,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			->willReturn("somethingElse/bla.json");
 	
 		$trashItems = [
-      $item1,
+			$item1,
 			$item2
 		];
 		$this->trashManager->method("listTrashRoot")
@@ -172,7 +172,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	public function testGetMDFolder(){
 		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$this->sciencemeshFolder->method("get")
-		  ->with($this->equalTo("test"))
+			->with($this->equalTo("test"))
 			->willReturn($testFolder);
 		$testFolder->method("getType")->willReturn(\OCP\Files\FileInfo::TYPE_FOLDER);
 		$testFolder->method("getPath")->willReturn("/sciencemesh/test");
@@ -202,8 +202,8 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	public function testGetMDFile(){
 		$testFile = $this->getMockBuilder("OCP\Files\File")->getMock();
 		$this->sciencemeshFolder->method("get")
-		  ->with($this->equalTo("test.json"))
-		  ->willReturn($testFile);
+			->with($this->equalTo("test.json"))
+			->willReturn($testFile);
 		$testFile->method("getType")->willReturn(\OCP\Files\FileInfo::TYPE_FILE);
 		$testFile->method("getMimetype")->willReturn("application/json");
 		$testFile->method("getPath")->willReturn("/sciencemesh/test.json");
