@@ -355,4 +355,35 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->RemoveGrant($this->userId);
 		$this->assertEquals($result->getData(),"Not implemented");
 	}
+
+	public function testRestoreRecycleItem(){
+		$this->request->method("getParam")->willReturn("/file1.json");
+		$user =  $this->getMockBuilder("OCP\IUser")->getMock();
+		$this->userManager->method("get")->willReturn($user);
+		$item1 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
+		$item1->method("getOriginalLocation")
+			->willReturn("sciencemesh/file1.json");
+		$item2 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
+		$item2->method("getOriginalLocation")
+			->willReturn("somethingElse/file2.json");
+		$trashItems = [
+			$item1,
+			$item2
+		];
+		$this->trashManager->method("listTrashRoot")
+			->willReturn($trashItems);
+		$this->trashManager->method("restoreItem")
+			->willReturn(null);
+		$this->trashManager
+			->expects($this->once())
+			->method("restoreItem");
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+
+		$result = $controller->RestoreRecycleItem($this->userId);
+		$this->assertEquals($result->getData(),"OK");
+	}
 }
