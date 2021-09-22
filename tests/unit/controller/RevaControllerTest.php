@@ -244,4 +244,19 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->GetPathByID($this->userId);
 		$this->assertEquals($result->getData(),'/foo');
 	}
+
+	public function testInitiateUpload(){
+
+		$response = [
+			"simple" => "yes",
+			"tus" => "yes"
+		];
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+		$result = $controller->InitiateUpload($this->userId);
+		$this->assertEquals($result->getData(),$response);
+	}
 }
