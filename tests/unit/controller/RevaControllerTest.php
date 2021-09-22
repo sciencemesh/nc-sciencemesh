@@ -304,4 +304,25 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->ListGrants($this->userId);
 		$this->assertEquals($result->getData(),"Not implemented");
 	}
+
+	// public function testListRecycle(){
+	// 	$controller = new RevaController(
+	// 		$this->appName, $this->rootFolder, $this->request, $this->session,
+	// 		$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+	// 		$this->userService, $this->trashManager
+	// 	);
+	// 	$result = $controller->ListRecycle($this->userId);
+	// 	$this->assertEquals($result->getData(),$result);
+	// }
+
+	public function testListRevisions(){
+		$this->request->method("getParam")->willReturn("/test.json");
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+		$result = $controller->ListRevisions($this->userId);
+		$this->assertEquals($result->getData(),"Not implemented");
+	}
 }
