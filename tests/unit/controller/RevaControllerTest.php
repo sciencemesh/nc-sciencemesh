@@ -325,4 +325,34 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->ListRevisions($this->userId);
 		$this->assertEquals($result->getData(),"Not implemented");
 	}
+
+	// public function testMove(){
+	// 	$testFile = $this->getMockBuilder("OCP\Files\File")->getMock();
+	// 	$this->sciencemeshFolder->method("get")
+	// 		->willReturn($testFile);
+	// 	$paramsMap = [
+	// 		["from",NULL,"/sciencemesh/test"],
+	// 		["to",NULL,"sciencemesh/production"]
+	// 	];
+	// 	$this->request->method("getParam")
+	// 							->will($this->returnValueMap($paramsMap));
+	// 	$controller = new RevaController(
+	// 		$this->appName, $this->rootFolder, $this->request, $this->session,
+	// 		$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+	// 		$this->userService, $this->trashManager
+	// 	);
+	// 	$result = $controller->Move($this->userId);
+	// 	$this->assertEquals($result->getData(),"OK");
+	// }
+
+	public function testRemoveGrant(){
+		$this->request->method("getParam")->willReturn("/test.json");
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+		$result = $controller->RemoveGrant($this->userId);
+		$this->assertEquals($result->getData(),"Not implemented");
+	}
 }
