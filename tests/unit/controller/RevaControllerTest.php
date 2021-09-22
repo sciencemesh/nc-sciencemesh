@@ -145,7 +145,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$item2 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
 		$item2->method("getOriginalLocation")
 			->willReturn("somethingElse/bla.json");
-	
+
 		$trashItems = [
 			$item1,
 			$item2
@@ -160,7 +160,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager
 		);
-	
+
 		$this->trashManager
 			->expects($this->once())
 			->method("removeItem")
@@ -223,11 +223,25 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			"type"=>"file",
 			"visibility"=>"public"
 		];
-
-
 		$this->request->method("getParam")->willReturn("/test.json");
 		$result = $controller->GetMD($this->userId);
 		$this->assertEquals($result->getData(),$metadata);
+	}
 
+	public function testGetPathByID(){
+
+		$paramsMap = [
+			["storage_id",NULL,"some-storage-id"],
+			["opaque_id",NULL,"some-opaque-id"]
+		];
+		$this->request->method("getParam")
+								->will($this->returnValueMap($paramsMap));
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+		$result = $controller->GetPathByID($this->userId);
+		$this->assertEquals($result->getData(),'/foo');
 	}
 }
