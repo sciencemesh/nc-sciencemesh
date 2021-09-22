@@ -138,14 +138,12 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	public function testEmptyRecycle(){
 		$user =  $this->getMockBuilder("OCP\IUser")->getMock();
 		$this->userManager->method("get")->willReturn($user);
-
 		$item1 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
 		$item1->method("getOriginalLocation")
 			->willReturn("sciencemesh/something/a-file.json");
 		$item2 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
 		$item2->method("getOriginalLocation")
 			->willReturn("somethingElse/bla.json");
-
 		$trashItems = [
 			$item1,
 			$item2
@@ -160,11 +158,12 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager
 		);
-
 		$this->trashManager
 			->expects($this->once())
 			->method("removeItem")
-			->with($this->equalTo($item1));
+			->with($this->callback(function($subject){
+				return ($subject->getOriginalLocation() == 'sciencemesh/something/a-file.json');
+			}));
 		$result = $controller->EmptyRecycle($this->userId);
 		$this->assertEquals($result->getData(), "OK");
 	}
