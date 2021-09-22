@@ -259,4 +259,49 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->InitiateUpload($this->userId);
 		$this->assertEquals($result->getData(),$response);
 	}
+
+	// public function testListFolder(){
+	// 	$testFile = $this->getMockBuilder("OCP\Files\File")->getMock();
+	// 	$this->request->method("getParam")->willReturn("/test.json");
+	// 	$folderContents = [
+	// 	"data"=>[],
+	// 	"headers"=>[
+	// 		"Cache-Control"=>"no-cache, no-store, must-revalidate",
+	// 		"Content-Type"=>"application/json; charset=utf-8"
+	// 	],
+	// 	"cookies"=>[],
+	// 	"status"=>123,
+	// 	"lastModified"=>NULL,
+	// 	"ETag"=>NULL,
+	// 	"contentSecurityPolicy"=>NULL,
+	// 	"featurePolicy"=>NULL,
+	// 	"throttled"=>false,
+	// 	"throttleMetadata"=>[]
+	// 	];
+	// 	$this->sciencemeshFolder->method("get")
+	// 		->with($this->equalTo("/test.json"))
+	// 		->willReturn($testFile);
+	// 	$this->sciencemeshFolder->method("getDirectoryListing")
+	// 		->with($this->equalTo("/test.json"))
+	// 		->willReturn($folderContents);
+	// 	$controller = new RevaController(
+	// 		$this->appName, $this->rootFolder, $this->request, $this->session,
+	// 		$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+	// 		$this->userService, $this->trashManager
+	// 	);
+	//
+	// 	$result = $controller->ListFolder($this->userId);
+	// 	var_dump($result);
+	// 	//$this->assertEquals($result->getData(),$folderContents);
+	// }
+	public function testListGrants(){
+		$this->request->method("getParam")->willReturn("/test.json");
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+		$result = $controller->ListGrants($this->userId);
+		$this->assertEquals($result->getData(),"Not implemented");
+	}
 }
