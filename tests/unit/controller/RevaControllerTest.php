@@ -171,7 +171,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	// 	$this->assertEquals($result->getData(), "OK");
 	// }
 
-	public function testGetMD(){
+	public function testGetMDFolder(){
 		$userFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$sciencemeshFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
@@ -180,22 +180,62 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$userFolder->method("get")->willReturn($sciencemeshFolder);
 		$sciencemeshFolder->method("get")->willReturn($testFolder);
 		$sciencemeshFolder->method("nodeExists")->willReturn(true);
-		$sciencemeshFolder->method("getPath")->willReturn("/test");
-		$testFolder->method("getPath")->willReturn('/test');
+		$sciencemeshFolder->method("getPath")->willReturn("/sciencemesh");
+		$testFolder->method("getType")->willReturn(\OCP\Files\FileInfo::TYPE_FOLDER);
+		$testFolder->method("getPath")->willReturn("/sciencemesh/test");
+		$testFolder->method("getSize")->willReturn(1234);
+		$testFolder->method("getMTime")->willReturn(1234567890); // should this be seconds or milliseconds?
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager
 		);
 		$metadata =[
-			"mimetype"=>NULL,
-			"path"=>false,
-			"size"=>NULL,
+			"mimetype"=>"directory",
+			"path"=>"test",
+			"size"=>1234,
 			"basename"=>"test",
-			"timestamp"=>NULL,
-			"type"=>NULL,
+			"timestamp"=>1234567890,
+			"type"=>"dir",
 			"visibility"=>"public"
 		];
+
+		$this->request->method("getParam")->willReturn("/test");
+		$result = $controller->GetMD($this->userId);
+		$this->assertEquals($result->getData(),$metadata);
+
+	}
+
+	public function testGetMDFile(){
+		$userFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$sciencemeshFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$userFolder->method("nodeExists")->willReturn(true);
+		$this->rootFolder->method("getUserFolder")->willReturn($userFolder);
+		$userFolder->method("get")->willReturn($sciencemeshFolder);
+		$sciencemeshFolder->method("get")->willReturn($testFolder);
+		$sciencemeshFolder->method("nodeExists")->willReturn(true);
+		$sciencemeshFolder->method("getPath")->willReturn("/sciencemesh");
+		$testFolder->method("getType")->willReturn(\OCP\Files\FileInfo::TYPE_FILE);
+		$testFolder->method("getMimetype")->willReturn("application/json");
+		$testFolder->method("getPath")->willReturn("/sciencemesh/test.json");
+		$testFolder->method("getSize")->willReturn(1234);
+		$testFolder->method("getMTime")->willReturn(1234567890); // should this be seconds or milliseconds?
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+		$metadata =[
+			"mimetype"=>"application/json",
+			"path"=>"test.json",
+			"size"=>1234,
+			"basename"=>"test.json",
+			"timestamp"=>1234567890,
+			"type"=>"file",
+			"visibility"=>"public"
+		];
+
 
 		$this->request->method("getParam")->willReturn("/test");
 		$result = $controller->GetMD($this->userId);
