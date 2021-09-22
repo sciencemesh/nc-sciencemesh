@@ -93,8 +93,8 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->userService, $this->trashManager
 		);
 		$sciencemeshFolder->expects($this->once())
-				 ->method('newFolder')
-				 ->with($this->equalTo('test'));;
+				 ->method("newFolder")
+				 ->with($this->equalTo("test"));;
 		$result = $controller->createDir($this->userId);
 		$this->assertEquals($result->getData(), "OK");
 	}
@@ -110,12 +110,12 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 									->willReturn($userFolder);
 		$userFolder->method("get")
 									->willReturn($sciencemeshFolder);
-		$this->controller = new RevaController(
+		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager
 		);
-		$result = $this->controller->CreateHome($this->userId);
+		$result = $controller->CreateHome($this->userId);
 		$this->assertEquals($result->getData(), "OK");
 	}
 
@@ -131,12 +131,12 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 									->willReturn($sciencemeshFolder);
 		$this->request->method("getParam")
 									->willReturn("/test");
-		$this->controller = new RevaController(
+		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager
 		);
- 		$result = $this->controller->CreateReference($this->userId);
+ 		$result = $controller->CreateReference($this->userId);
 		$this->assertEquals($result->getData(), "Not implemented");
 	}
 
@@ -157,17 +157,84 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 									->willReturn($userFolder);
 		$this->request->method("getParam")
 									->willReturn("/test");
-		$this->controller = new RevaController(
+		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager
 		);
 		$sciencemeshFolder->expects($this->once())
-				 ->method('get')
-				 ->with($this->equalTo('test'));
-	 $testFolder->expects($this->once())
-					->method('delete');
-		$result = $this->controller->Delete($this->userId);
+				 ->method("get")
+				 ->with($this->equalTo("test"));
+	  $testFolder->expects($this->once())
+					->method("delete");
+		$result = $controller->Delete($this->userId);
 		$this->assertEquals($result->getData(), "OK");
+	}
+
+	// public function testEmptyRecycle(){
+	//
+	// 	$userFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+	// 	$sciencemeshFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+	// 	$user =  $this->getMockBuilder("OCP\IUser")->getMock();
+	// 	$trashItems = ?????????????
+	// 	$userFolder->method("nodeExists")
+	// 								->willReturn(true);
+	// 	$userFolder->method("get")
+	// 								->willReturn($sciencemeshFolder);
+	// 	$sciencemeshFolder->method("get")
+	// 								->willReturn($testFolder);
+	// 	$this->rootFolder->method("getUserFolder")
+	// 								->willReturn($userFolder);
+	// 	$controller = new RevaController(
+	// 		$this->appName, $this->rootFolder, $this->request, $this->session,
+	// 		$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+	// 		$this->userService, $this->trashManager
+	// 	);
+	//
+	// 	$this->userManager->method("get")
+	// 										->willReturn($user);
+	// 	$this->trashManager->method("listTrashRoot")
+	// 										->willReturn($trashItems);
+	// 	$result = $controller->EmptyRecycle($this->userId);
+	// 	$this->assertEquals($result->getData(), "OK");
+	// }
+
+	public function testGetMD(){
+
+		$userFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$sciencemeshFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$userFolder->method("nodeExists")
+									->willReturn(true);
+		$this->rootFolder->method("getUserFolder")
+									->willReturn($userFolder);
+		$userFolder->method("get")
+									->willReturn($sciencemeshFolder);
+		$sciencemeshFolder->method("get")
+									->willReturn($testFolder);
+		$sciencemeshFolder->method("nodeExists")
+							->willReturn(true);
+		$sciencemeshFolder->method("getPath")
+							->willReturn("/test");
+		$testFolder->method("getPath")
+							->willReturn('/test');
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+		$metadata =["mimetype"=>NULL,
+								  "path"=>false,
+								  "size"=>NULL,
+								  "basename"=>"test",
+								  "timestamp"=>NULL,
+								  "type"=>NULL,
+								  "visibility"=>"public"];
+
+		$this->request->method("getParam")
+									->willReturn("/test");
+		$result = $controller->GetMD($this->userId);
+		$this->assertEquals($result->getData(),$metadata);
+
 	}
 }
