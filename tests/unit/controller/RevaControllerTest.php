@@ -397,4 +397,15 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->RestoreRevision($this->userId);
 		$this->assertEquals($result->getData(),"Not implemented");
 	}
+
+	public function testSetArbitraryMetadatan(){
+		$this->request->method("getParam")->willReturn("/test.json");
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+		$result = $controller->SetArbitraryMetadata($this->userId);
+		$this->assertEquals($result->getData(),"Not implemented");
+	}
 }
