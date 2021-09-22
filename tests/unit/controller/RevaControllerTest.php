@@ -138,14 +138,12 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	public function testEmptyRecycle(){
 		$user =  $this->getMockBuilder("OCP\IUser")->getMock();
 		$this->userManager->method("get")->willReturn($user);
-
 		$item1 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
 		$item1->method("getOriginalLocation")
 			->willReturn("sciencemesh/something/a-file.json");
 		$item2 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
 		$item2->method("getOriginalLocation")
 			->willReturn("somethingElse/bla.json");
-
 		$trashItems = [
 			$item1,
 			$item2
@@ -160,11 +158,12 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager
 		);
-
 		$this->trashManager
 			->expects($this->once())
 			->method("removeItem")
-			->with($this->equalTo($item1));
+			->with($this->callback(function($subject){
+				return ($subject->getOriginalLocation() == 'sciencemesh/something/a-file.json');
+			}));
 		$result = $controller->EmptyRecycle($this->userId);
 		$this->assertEquals($result->getData(), "OK");
 	}
@@ -304,4 +303,193 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->ListGrants($this->userId);
 		$this->assertEquals($result->getData(),"Not implemented");
 	}
+
+		//
+		// public function testListRecycle(){
+		//
+		// 	$metadata =[
+		// 		"mimetype"=>"application/json",
+		// 		"path"=>"file1.json",
+		// 		"size"=>1234,
+		// 		"basename"=>"",
+		// 		"timestamp"=>1234567890,
+		// 		'deleted'=>1234567890,
+		// 		"type"=>"file",
+		// 		"visibility"=>"public"
+		// 	];
+		// 	$user =  $this->getMockBuilder("OCP\IUser")->getMock();
+		// 	$this->userManager->method("get")->willReturn($user);
+		// 	$item1 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
+		// 	$item1->method("getOriginalLocation")
+		// 		->willReturn("sciencemesh/file1.json");
+		// 	$item2 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
+		// 	$item2->method("getOriginalLocation")
+		// 		->willReturn("somethingElse/file2.json");
+		// 	$trashItems = [
+		// 		$item1,
+		// 		$item2
+		// 	];
+		// 	$this->trashManager->method("listTrashRoot")
+		// 		->willReturn($trashItems);
+		// 	$item1->method("getMimetype")->willReturn("application/json");
+		// 	$item1->method("getPath")->willReturn("file1.json");
+		// 	$item1->method("getSize")->willReturn(1234);
+		// 	$item1->method("getMTime")->willReturn(1234567890); // should this be seconds or milliseconds?
+		// 	$item1->method("getDeletedTime")->willReturn(1234567890);
+		// 	$item1->method("getType")->willReturn(\OCP\Files\FileInfo::TYPE_FILE);
+		// 	$controller = new RevaController(
+		// 		$this->appName, $this->rootFolder, $this->request, $this->session,
+		// 		$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+		// 		$this->userService, $this->trashManager
+		// 	);
+		// 	$result = $controller->ListRecycle($this->userId);
+		// 	var_dump($result,$metadata);
+		// 	$this->assertEquals($result->getData(),$metadata);
+		// }
+
+	public function testListRevisions(){
+		$this->request->method("getParam")->willReturn("/test.json");
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+		$result = $controller->ListRevisions($this->userId);
+		//$this->assertEquals($result->getData(),"Not implemented");
+	}
+
+	// FIX ISSUE # 20
+	// public function testMove(){
+	// 	$testFile = $this->getMockBuilder("OCP\Files\File")->getMock();
+	// 	$this->sciencemeshFolder->method("get")
+	// 		->willReturn($testFile);
+	// 	$paramsMap = [
+	// 		["from",NULL,"/sciencemesh/test"],
+	// 		["to",NULL,"sciencemesh/production"]
+	// 	];
+	// 	$this->request->method("getParam")
+	// 							->will($this->returnValueMap($paramsMap));
+	// 	$controller = new RevaController(
+	// 		$this->appName, $this->rootFolder, $this->request, $this->session,
+	// 		$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+	// 		$this->userService, $this->trashManager
+	// 	);
+	// 	$result = $controller->Move($this->userId);
+	// 	$this->assertEquals($result->getData(),"OK");
+	// }
+
+	public function testRemoveGrant(){
+		$this->request->method("getParam")->willReturn("/test.json");
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+		$result = $controller->RemoveGrant($this->userId);
+		$this->assertEquals($result->getData(),"Not implemented");
+	}
+
+	public function testRestoreRecycleItem(){
+		$this->request->method("getParam")->willReturn("/file1.json");
+		$user =  $this->getMockBuilder("OCP\IUser")->getMock();
+		$this->userManager->method("get")->willReturn($user);
+		$item1 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
+		$item1->method("getOriginalLocation")
+			->willReturn("sciencemesh/file1.json");
+		$item2 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
+		$item2->method("getOriginalLocation")
+			->willReturn("somethingElse/file2.json");
+		$trashItems = [
+			$item1,
+			$item2
+		];
+		$this->trashManager->method("listTrashRoot")
+			->willReturn($trashItems);
+		$this->trashManager->method("restoreItem")
+			->willReturn(null);
+		$this->trashManager
+			->expects($this->once())
+			->method("restoreItem");
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+
+		$result = $controller->RestoreRecycleItem($this->userId);
+		$this->assertEquals($result->getData(),"OK");
+	}
+
+	public function testRestoretRevision(){
+		$this->request->method("getParam")->willReturn("/test.json");
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+		$result = $controller->RestoreRevision($this->userId);
+		$this->assertEquals($result->getData(),"Not implemented");
+	}
+
+	public function testSetArbitraryMetadatan(){
+		$this->request->method("getParam")->willReturn("/test.json");
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+		$result = $controller->SetArbitraryMetadata($this->userId);
+		$this->assertEquals($result->getData(),"Not implemented");
+	}
+
+	public function testUnsetArbitraryMetadata(){
+		$this->request->method("getParam")->willReturn("/test.json");
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+		$result = $controller->UnsetArbitraryMetadata($this->userId);
+		$this->assertEquals($result->getData(),"Not implemented");
+	}
+
+	public function testUpdateGrant(){
+		$this->request->method("getParam")->willReturn("/test.json");
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+		$result = $controller->UpdateGrant($this->userId);
+		$this->assertEquals($result->getData(),"Not implemented");
+	}
+
+	public function testUpload(){
+		$testFile = $this->getMockBuilder("OCP\Files\File")->getMock();
+		$this->sciencemeshFolder->method("get")
+			->with($this->equalTo("test.json"))
+			->willReturn($testFile);
+		$this->sciencemeshFolder->method("nodeExists")
+			->with($this->equalTo("test.json"))
+			->willReturn(true);
+		$testFile->method("getContent")
+			->willReturn("some-content");
+		$testFile->method("getPath")
+			->willReturn("/sciencemesh/test.json");
+		$testFile->method('putContent')->willReturn(null);
+		$this->request->method("getParam")->willReturn("/test.json");
+		$this->request->put = "some-content";
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+		$testFile->expects($this->once())
+			->method('putContent')
+			->with($this->equalTo("some-content"));;
+
+		$result = $controller->Upload($this->userId, "/test.json");
+		$this->assertEquals($result->getData(),"OK");
+	}
+
 }

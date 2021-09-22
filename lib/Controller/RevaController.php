@@ -288,7 +288,6 @@ class RevaController extends Controller {
 				];
 			}
 		}
-
 		return new JSONResponse($result, 200);
 	}
 
@@ -340,7 +339,6 @@ class RevaController extends Controller {
 	public function RestoreRecycleItem($userId) {
 		$this->initializeStorage($userId);
 		$path = $this->request->getParam("path") ?: "/";
-		$this->initializeStorage($userId);
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
 
@@ -353,7 +351,7 @@ class RevaController extends Controller {
 				}
 			}
 		}
-		return new JSONResponse(["error" => "Not found."], 404);
+		return new JSONResponse('["error" => "Not found."]', 404);
 	}
 
 	/**
