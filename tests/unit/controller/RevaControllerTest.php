@@ -131,16 +131,11 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$sciencemeshFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$userFolder->method("nodeExists")->willReturn(true);
-		$userFolder->method("get")
-									->willReturn($sciencemeshFolder);
-		$sciencemeshFolder->method("get")
-									->willReturn($testFolder);
-		$sciencemeshFolder->method("nodeExists")
-							->willReturn(true);
-		$this->rootFolder->method("getUserFolder")
-									->willReturn($userFolder);
-		$this->request->method("getParam")
-									->willReturn("/test");
+		$userFolder->method("get")->willReturn($sciencemeshFolder);
+		$sciencemeshFolder->method("get")->willReturn($testFolder);
+		$sciencemeshFolder->method("nodeExists")->willReturn(true);
+		$this->rootFolder->method("getUserFolder")->willReturn($userFolder);
+		$this->request->method("getParam")->willReturn("/test");
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
