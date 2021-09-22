@@ -172,7 +172,7 @@ class RevaController extends Controller {
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
 
-		$result = []; // Where is used?
+		$result = []; // Where is this used?
 		foreach ($trashItems as $node) {
 			#getOriginalLocation : returns string
 			if (preg_match("/^sciencemesh/", $node->getOriginalLocation())) {
