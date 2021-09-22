@@ -288,6 +288,7 @@ class RevaController extends Controller {
 				];
 			}
 		}
+		var_dump($result);
 		return new JSONResponse($result, 200);
 	}
 
