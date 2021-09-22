@@ -25,8 +25,8 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	private $trashManager;
 
 	public function setUp() {
-
-		// arg names: $AppName, IRootFolder $rootFolder, IRequest $request, ISession $session,
+		// Controller constructor arg names:
+		// $AppName, IRootFolder $rootFolder, IRequest $request, ISession $session,
 		// IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IConfig $config,
 		// \OCA\ScienceMesh\Service\UserService $UserService, ITrashManager $trashManager)
 
@@ -43,7 +43,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testAuthenticateOK() {
-
 		$user =  $this->getMockBuilder("OCP\IUser")->getMock();
 		$this->request->method("getParam")->willReturn("whatever");
 	  $this->userManager->method("checkPassword")->willReturn($user);
@@ -58,7 +57,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 
 
 	public function testAuthenticateWrong() {
-
 		$this->request->method("getParam")->willReturn("whatever");
 	  $this->userManager->method("checkPassword")->willReturn(false);
 		$controller = new RevaController(
@@ -72,7 +70,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 
 
 	public function testCreateDir(){
-
 		$userFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$sciencemeshFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$userFolder->method("nodeExists")->willReturn(true);
@@ -93,7 +90,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 
 
 	public function testCreateHome(){
-
 		$userFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$sciencemeshFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$userFolder->method("nodeExists")->willReturn(true);
@@ -109,7 +105,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testCreateReference(){
-
 		$userFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$sciencemeshFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$this->rootFolder->method("getUserFolder")->willReturn($userFolder);
@@ -126,7 +121,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testDelete(){
-
 		$userFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$sciencemeshFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
@@ -178,7 +172,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	// }
 
 	public function testGetMD(){
-
 		$userFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$sciencemeshFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
