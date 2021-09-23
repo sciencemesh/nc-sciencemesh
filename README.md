@@ -27,9 +27,9 @@ The make command will install or update Composer dependencies if a composer.json
 
 ## Test with Reva
 * add this app to your Nextcloud instance as /apps/sciencemesh
+* run `php -S localhost:8080` in the root of your nextcloud folder (or run it with Apache / nginx / MAMP / etc)
 * create a user 'tester' (password e.g. '123')
 * log in and enable the 'sciencemesh' app
-* run `php -S localhost:8080` in the root of your nextcloud folder (or run it with Apache / nginx / MAMP / etc)
 * in your local reva checkout, run:
 ```sh
 NEXTCLOUD=http://tester:123@localhost:8080/index.php go test -v github.com/cs3org/reva/pkg/storage/fs/nextcloud/...
