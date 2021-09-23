@@ -209,18 +209,7 @@ class RevaController extends Controller {
 		$success = $this->filesystem->has($ref["path"]);
 		if ($success) {
 		//	$metadata = $this->filesystem->getMetaData($ref["path"]);
-		$metadata =   json_decode(
- `{
- 	"opaque":{},"type":1,"id":{
- 		"opaque_id":"fileid-/some/path"
- 		},"checksum":{},"etag":"deadbeef","mime_type":"text/plain","mtime":{
- 										"seconds":1234567890
- 										}
- 		,"path":"/some/path","permission_set":{},"size":12345,"canonical_metadata":{},"arbitrary_metadata":
- 		{"metadata":
- 			{"da":"ta","some":"arbi","trary":"meta"}
- 		}
- 	}`);
+		$metadata =   json_decode('{"opaque":{},"type":1,"id":{"opaque_id":"fileid-/some/path"},"checksum":{},"etag":"deadbeef","mime_type":"text/plain","mtime":{"seconds":1234567890},"path":"/some/path","permission_set":{},"size":12345,"canonical_metadata":{},"arbitrary_metadata":{"metadata":{"da":"ta","some":"arbi","trary":"meta"}}}');
 			error_log(json_encode($metadata));
 			return new JSONResponse($metadata, 200);
 		} else {
