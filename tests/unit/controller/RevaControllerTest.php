@@ -304,48 +304,48 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getData(),"Not implemented");
 	}
 
-		//
-		// public function testListRecycle(){
-		//
-		// 	$metadata =[
-		// 		"mimetype"=>"application/json",
-		// 		"path"=>"file1.json",
-		// 		"size"=>1234,
-		// 		"basename"=>"",
-		// 		"timestamp"=>1234567890,
-		// 		'deleted'=>1234567890,
-		// 		"type"=>"file",
-		// 		"visibility"=>"public"
-		// 	];
-		// 	$user =  $this->getMockBuilder("OCP\IUser")->getMock();
-		// 	$this->userManager->method("get")->willReturn($user);
-		// 	$item1 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
-		// 	$item1->method("getOriginalLocation")
-		// 		->willReturn("sciencemesh/file1.json");
-		// 	$item2 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
-		// 	$item2->method("getOriginalLocation")
-		// 		->willReturn("somethingElse/file2.json");
-		// 	$trashItems = [
-		// 		$item1,
-		// 		$item2
-		// 	];
-		// 	$this->trashManager->method("listTrashRoot")
-		// 		->willReturn($trashItems);
-		// 	$item1->method("getMimetype")->willReturn("application/json");
-		// 	$item1->method("getPath")->willReturn("file1.json");
-		// 	$item1->method("getSize")->willReturn(1234);
-		// 	$item1->method("getMTime")->willReturn(1234567890); // should this be seconds or milliseconds?
-		// 	$item1->method("getDeletedTime")->willReturn(1234567890);
-		// 	$item1->method("getType")->willReturn(\OCP\Files\FileInfo::TYPE_FILE);
-		// 	$controller = new RevaController(
-		// 		$this->appName, $this->rootFolder, $this->request, $this->session,
-		// 		$this->userManager, $this->urlGenerator, $this->userId, $this->config,
-		// 		$this->userService, $this->trashManager
-		// 	);
-		// 	$result = $controller->ListRecycle($this->userId);
-		// 	var_dump($result,$metadata);
-		// 	$this->assertEquals($result->getData(),$metadata);
-		// }
+
+		public function testListRecycle(){
+
+			$data =[[
+				"mimetype"=>"application/json",
+				"path"=>"/file1.json",
+				"size"=>1234,
+				"basename"=>"file1.json",
+				"timestamp"=>1234567890,
+				'deleted'=>1234567890,
+				"type"=>"file",
+				"visibility"=>"public"
+			]];
+			$user =  $this->getMockBuilder("OCP\IUser")->getMock();
+			$this->userManager->method("get")->willReturn($user);
+			$item1 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
+			$item1->method("getOriginalLocation")
+				->willReturn("sciencemesh/file1.json");
+			$item2 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
+			$item2->method("getOriginalLocation")
+				->willReturn("somethingElse/file2.json");
+			$trashItems = [
+				$item1,
+				$item2
+			];
+			$this->trashManager->method("listTrashRoot")
+				->willReturn($trashItems);
+			$item1->method("getMimetype")->willReturn("application/json");
+			$item1->method("getPath")->willReturn("file1.json");
+			$item1->method("getSize")->willReturn(1234);
+			$item1->method("getMTime")->willReturn(1234567890); // should this be seconds or milliseconds?
+			$item1->method("getDeletedTime")->willReturn(1234567890);
+			$item1->method("getType")->willReturn(\OCP\Files\FileInfo::TYPE_FILE);
+			$controller = new RevaController(
+				$this->appName, $this->rootFolder, $this->request, $this->session,
+				$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+				$this->userService, $this->trashManager
+			);
+			$result = $controller->ListRecycle($this->userId);
+		#	var_dump($result);
+			$this->assertEquals($result->getData(),$data);
+		}
 
 	public function testListRevisions(){
 		$this->request->method("getParam")->willReturn("/test.json");

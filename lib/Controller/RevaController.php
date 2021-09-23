@@ -192,7 +192,6 @@ class RevaController extends Controller {
 		$path = $this->request->getParam("path") ?: "/";
 		$success = $this->filesystem->has($path);
 		if ($success) {
-			// var_dump($path); -> '/test'
 			$metadata = $this->filesystem->getMetaData($path);
 			return new JSONResponse($metadata, 200);
 		} else {
