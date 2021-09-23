@@ -32,6 +32,9 @@ The make command will install or update Composer dependencies if a composer.json
 * log in and enable the 'sciencemesh' app
 * in your local reva checkout, run:
 ```sh
+git remote add michielbdejong https://github.com/michielbdejong/reva
+git fetch michielbdejong
+git checkout nextcloud-test-improvements
 NEXTCLOUD=http://tester:123@localhost:8080/index.php go test -v github.com/cs3org/reva/pkg/storage/fs/nextcloud/...
 ```
 * you should see it run lots of tests, most of which fail in various ways
