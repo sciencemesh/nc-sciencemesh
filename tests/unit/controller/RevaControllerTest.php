@@ -259,39 +259,88 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getData(),$response);
 	}
 
-	public function testListFolder(){
+	public function testListFolderRoot(){
+		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$this->request->method("getParam")->willReturn("/");
 		$testFile = $this->getMockBuilder("OCP\Files\File")->getMock();
-		$this->request->method("getParam")->willReturn("/test.json");
-		$folderContents = [
-		"data"=>[],
-		"headers"=>[
-			"Cache-Control"=>"no-cache, no-store, must-revalidate",
-			"Content-Type"=>"application/json; charset=utf-8"
-		],
-		"cookies"=>[],
-		"status"=>123,
-		"lastModified"=>NULL,
-		"ETag"=>NULL,
-		"contentSecurityPolicy"=>NULL,
-		"featurePolicy"=>NULL,
-		"throttled"=>false,
-		"throttleMetadata"=>[]
+		$testFile->method("getType")->willReturn(\OCP\Files\FileInfo::TYPE_FILE);
+		$testFile->method("getMimetype")->willReturn("application/json");
+		$testFile->method("getPath")->willReturn("/sciencemesh/test.json");
+		$testFile->method("getSize")->willReturn(1234);
+		$testFile->method("getMTime")->willReturn(1234567890); // should this be seconds or milliseconds?
+
+		$folderContentsJSONData = [
+			[
+				'mimetype' => 'application/json',
+				'path' => 'test.json',
+				'size' => 1234,
+				'basename' => 'test.json',
+				'timestamp' => 1234567890,
+				'type' => 'file',
+				'visibility' => 'public',
+				'dirname' => '',
+				'extension' => 'json',
+				'filename' => 'test',
+			],
 		];
+	  $folderContentsObjects = [ $testFile ];
+ 
 		$this->sciencemeshFolder->method("get")
-			->with($this->equalTo("/test.json"))
-			->willReturn($testFile);
-		$this->sciencemeshFolder->method("getDirectoryListing")
-			->with($this->equalTo("/test.json"))
-			->willReturn($folderContents);
+			->with($this->equalTo("/"))
+			->willReturn($testFolder);
+		$testFolder->method("getPath")
+			->willReturn("yes its me");
+		$testFolder->method("getDirectoryListing")
+			->willReturn($folderContentsObjects);
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager
 		);
-	
+
 		$result = $controller->ListFolder($this->userId);
-		var_dump($result);
-		//$this->assertEquals($result->getData(),$folderContents);
+		$this->assertEquals($result->getData(),$folderContentsJSONData);
+	}
+
+	public function testListFolderOther(){
+		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$this->request->method("getParam")->willReturn("/test");
+		$testFile = $this->getMockBuilder("OCP\Files\File")->getMock();
+		$testFile->method("getType")->willReturn(\OCP\Files\FileInfo::TYPE_FILE);
+		$testFile->method("getMimetype")->willReturn("application/json");
+		$testFile->method("getPath")->willReturn("/sciencemesh/test/test.json");
+		$testFile->method("getSize")->willReturn(1234);
+		$testFile->method("getMTime")->willReturn(1234567890); // should this be seconds or milliseconds?
+
+		$folderContentsJSONData = [
+			[
+				'mimetype' => 'application/json',
+				'path' => 'test/test.json',
+				'size' => 1234,
+				'basename' => 'test.json',
+				'timestamp' => 1234567890,
+				'type' => 'file',
+				'visibility' => 'public',
+				'dirname' => 'test',
+				'extension' => 'json',
+				'filename' => 'test',
+			],
+		];
+	  $folderContentsObjects = [ $testFile ];
+ 
+		$this->sciencemeshFolder->method("get")
+			->with($this->equalTo("/test"))
+			->willReturn($testFolder);
+		$testFolder->method("getDirectoryListing")
+			->willReturn($folderContentsObjects);
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+
+		$result = $controller->ListFolder($this->userId);
+		$this->assertEquals($result->getData(),$folderContentsJSONData);
 	}
 
 	public function testListGrants(){
@@ -307,16 +356,18 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 
 	public function testListRecycle(){
 
-		$data =[[
-			"mimetype"=>"application/json",
-			"path"=>"/file1.json",
-			"size"=>1234,
-			"basename"=>"file1.json",
-			"timestamp"=>1234567890,
-			'deleted'=>1234567890,
-			"type"=>"file",
-			"visibility"=>"public"
-		]];
+		$data =[
+			[
+				"mimetype"=>"application/json",
+				"path"=>"/file1.json",
+				"size"=>1234,
+				"basename"=>"file1.json",
+				"timestamp"=>1234567890,
+				'deleted'=>1234567890,
+				"type"=>"file",
+				"visibility"=>"public"
+			]
+		];
 		$user =  $this->getMockBuilder("OCP\IUser")->getMock();
 		$this->userManager->method("get")->willReturn($user);
 		$item1 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
