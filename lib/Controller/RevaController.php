@@ -189,8 +189,10 @@ class RevaController extends Controller {
 	 */
 	public function GetMD($userId) {
 		$this->initializeStorage($userId);
-		$path = $this->request->getParam("path") ?: "/";
-		$success = $this->filesystem->has($path);
+		$ref = $this->request->getParam("ref") ?: "/";
+		error_log("hi in GetMD!");
+		error_log(json_encode($ref["path"]));
+		$success = $this->filesystem->has($ref["path"]);
 		if ($success) {
 			$metadata = $this->filesystem->getMetaData($path);
 			return new JSONResponse($metadata, 200);
