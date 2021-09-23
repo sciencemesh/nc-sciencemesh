@@ -455,6 +455,7 @@ class NextcloudAdapter implements AdapterInterface
             'size' => $node->getSize(),
             'basename' => basename($node->getPath()),
             'timestamp' => $node->getMTime(),
+            // 'type' => Reva needs an integer as type
             'type' => $node->getType(),
             // @FIXME: Use $node->getPermissions() to set private or public
             //         as soon as we figure out what Nextcloud permissions mean in this context
