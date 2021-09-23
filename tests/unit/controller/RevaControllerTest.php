@@ -359,7 +359,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$data =[
 			[
 				"mimetype"=>"application/json",
-				"path"=>"/file1.json",
+				"path"=>"/some/path/to/file1.json",
 				"size"=>1234,
 				"basename"=>"file1.json",
 				"timestamp"=>1234567890,
@@ -372,10 +372,10 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->userManager->method("get")->willReturn($user);
 		$item1 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
 		$item1->method("getOriginalLocation")
-			->willReturn("sciencemesh/file1.json");
+			->willReturn("sciencemesh/some/path/to/file1.json");
 		$item2 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
 		$item2->method("getOriginalLocation")
-			->willReturn("somethingElse/file2.json");
+			->willReturn("somethingElse/some/path/to/file2.json");
 		$trashItems = [
 			$item1,
 			$item2
