@@ -332,10 +332,10 @@ class RevaController extends Controller {
 		} else {
 			$nodeInfos = $this->filesystem->listContents($path);
 		}
-		$resourceInfos = array_map(function($nodeInfo) {
-			return $this->nodeInfoToCS3ResourceInfo($nodeInfo);
-		}, $nodeInfos);
-		if ($resourceInfos !== false) {
+		if ($nodeInfos !== false) {
+			$resourceInfos = array_map(function($nodeInfo) {
+				return $this->nodeInfoToCS3ResourceInfo($nodeInfo);
+			}, $nodeInfos);
 			return new JSONResponse($resourceInfos, 200);
 		} else {
 			return new JSONResponse(["error" => "Folder not found"], 400);
