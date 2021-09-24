@@ -485,7 +485,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		);
 
 		$result = $controller->ListFolder($this->userId);
-		$this->assertEquals($result->getData(),$folderContentsJSONData);
+		$this->assertEquals($result->getData(), []);
 	}
 
 	public function testListFolderOther(){
