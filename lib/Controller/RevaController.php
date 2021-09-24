@@ -189,12 +189,16 @@ class RevaController extends Controller {
 	 */
 	public function GetMD($userId) {
 		$this->initializeStorage($userId);
-		$path = $this->request->getParam("path") ?: "/";
+		$ref = $this->request->getParam("ref") ?: "/";
+		$path = $ref["path"];
 		$success = $this->filesystem->has($path);
+		
 		if ($success) {
-			$metadata = $this->filesystem->getMetaData($path);
+  		$metadata = $this->filesystem->getMetaData($ref["path"]);
+			error_log(json_encode($metadata));
 			return new JSONResponse($metadata, 200);
 		} else {
+			var_dump('ELSEEE');
 			return new JSONResponse(["error" => "File not found"], 404);
 		}
 	}
