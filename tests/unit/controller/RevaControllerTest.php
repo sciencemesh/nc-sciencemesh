@@ -458,6 +458,36 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getData(),$folderContentsJSONData);
 	}
 
+	public function testListFolderNotFound(){
+		$this->request->method("getParam")
+			->with(($this->equalTo("ref")))
+			->willReturn([
+				"resource_id" => [
+					"storage_id" => "storage-id",
+					"opaque_id" => "opaque-id"
+				],
+				"path" => "/not/found"
+			]);
+	
+		$paramsMap = [
+			["/",$this->sciencemeshFolder],
+			["/not/found", NULL]
+		];
+		$this->sciencemeshFolder->method("get")
+								->will($this->returnValueMap($paramsMap));
+
+		$this->sciencemeshFolder->method("getDirectoryListing")
+			->willReturn(false);
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager
+		);
+
+		$result = $controller->ListFolder($this->userId);
+		$this->assertEquals($result->getData(),$folderContentsJSONData);
+	}
+
 	public function testListFolderOther(){
 		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$this->request->method("getParam")
