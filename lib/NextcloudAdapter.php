@@ -208,15 +208,16 @@ class NextcloudAdapter implements AdapterInterface
         } catch (\OCP\Files\NotFoundException $exception) {
             return [];
         }
-
+        //var_dump("directory: ",$directory);
         if (method_exists($node, 'getDirectoryListing')) {
             $nodes = $node->getDirectoryListing();
-
+          //  var_dump("nodes: ",$nodes);
             $result = array_map(function (\OCP\Files\Node $node) {
-                return $this->normalizeNodeInfo($node);
+               $nodeInfo = $this->normalizeNodeInfo($node);
+                return $this->nodeInfoToCS3ResourceInfo($nodeInfo);
             }, $nodes);
         }
-
+      //  var_dump("result: ",$result);
         return $result;
     }
 
@@ -471,7 +472,7 @@ class NextcloudAdapter implements AdapterInterface
 
     /**
      * @param array $nodeInfo
-     * 
+     *
      * Returns the data of a CS3 provider.ResourceInfo object https://github.com/cs3org/cs3apis/blob/a86e5cb/cs3/storage/provider/v1beta1/resources.proto#L35-L93
      * @return array
      *

@@ -192,13 +192,12 @@ class RevaController extends Controller {
 		$ref = $this->request->getParam("ref") ?: "/";
 		$path = $ref["path"];
 		$success = $this->filesystem->has($path);
-		
+
 		if ($success) {
   		$metadata = $this->filesystem->getMetaData($ref["path"]);
 			error_log(json_encode($metadata));
 			return new JSONResponse($metadata, 200);
 		} else {
-			var_dump('ELSEEE');
 			return new JSONResponse(["error" => "File not found"], 404);
 		}
 	}
@@ -233,16 +232,43 @@ class RevaController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
+
+	 // `POST /apps/sciencemesh/~tester/api/storage/ListFolder
+	 // {"ref":{
+	 //	"resource_id":{
+	 			//"storage_id":"storage-id","opaque_id":"opaque-id"
+	//		},
+	// 	"path":"/some/path"
+//		},
+//		"mdKeys":["val1","val2","val3"]}`: {
+//			200,
+//		`[
+//				{"opaque":{},"type":1,"id":{
+//					"opaque_id":"fileid-/some/path"
+//					}
+//					,"checksum":{},"etag":"deadbeef","mime_type":"text/plain","mtime":{
+//						"seconds":1234567890
+//						},
+//						"path":"/some/path","permission_set":{},"size":12345,"canonical_metadata":{},"arbitrary_metadata":{
+//							"metadata":
+//								{"da":"ta","some":"arbi","trary":"meta"
+//							}
+//						}
+//				}
+//		]`,
+//	 serverStateEmpty},
+
 	public function ListFolder($userId) {
 		$this->initializeStorage($userId);
-		$path = $this->request->getParam("path") ?: "/";
+		$ref = $this->request->getParam("ref") ?: "/";
+		$path = $ref["path"];
 		if ($path == "/") {
-			$folderContents = $this->filesystem->listContents(".");
+			$resourceInfos = $this->filesystem->listContents(".");
 		} else {
-			$folderContents = $this->filesystem->listContents($path);
+			$resourceInfos = $this->filesystem->listContents($path);
 		}
-		if ($folderContents !== false) {
-			return new JSONResponse($folderContents, 200);
+		if ($resourceInfos !== false) {
+			return new JSONResponse($resourceInfos, 200);
 		} else {
 			return new JSONResponse(["error" => "Folder not found"], 400);
 		}
