@@ -332,6 +332,9 @@ class RevaController extends Controller {
 		} else {
 			$nodeInfos = $this->filesystem->listContents($path);
 		}
+		// FIXME: https://github.com/pondersource/nc-sciencemesh/issues/26
+		// It seems that if the folder is not found, then NextcloudAdapter
+		// returns [] and not false?
 		if ($nodeInfos !== false) {
 			$resourceInfos = array_map(function($nodeInfo) {
 				return $this->nodeInfoToCS3ResourceInfo($nodeInfo);
