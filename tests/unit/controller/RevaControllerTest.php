@@ -171,10 +171,10 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	public function testGetMDFolder(){
 		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$this->sciencemeshFolder->method("get")
-			->with($this->equalTo("test"))
+			->with($this->equalTo("some/path"))
 			->willReturn($testFolder);
 		$testFolder->method("getType")->willReturn(\OCP\Files\FileInfo::TYPE_FOLDER);
-		$testFolder->method("getPath")->willReturn("/some/");
+		$testFolder->method("getPath")->willReturn("/some/path");
 		$testFolder->method("getSize")->willReturn(1234);
 		$testFolder->method("getMTime")->willReturn(1234567890); // should this be seconds or milliseconds?
 		$controller = new RevaController(
@@ -182,12 +182,68 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager
 		);
-		$metadata =   json_decode('{"opaque":{},"type":1,"id":{"opaque_id":"fileid-/some/path"},"checksum":{},"etag":"deadbeef","mime_type":"text/plain","mtime":{"seconds":1234567890},"path":"/some/path","permission_set":{},"size":12345,"canonical_metadata":{},"arbitrary_metadata":{"metadata":{"da":"ta","some":"arbi","trary":"meta"}}}');
-
-		$this->request->method("getParam")->willReturn('{"resource_id":{"storage_id":"storage-id","opaque_id":"opaque-id"},"path":"/some/path"}');
+		$metadata = [
+			"opaque" => [
+					"map" => NULL,
+			],
+			"type" => 1,
+			"id" => [
+					"opaque_id" => "fileid-/some/path"
+			],
+			"checksum" => [
+					"type" => 0,
+					"sum" => "",
+			],
+			"etag" => "deadbeef",
+			"mime_type" => "text/plain",
+			"mtime" => [
+					"seconds" => 1234567890
+			],
+			"path" => "/some/path",
+			"permission_set" => [
+					"add_grant" => false,
+					"create_container" => false,
+					"delete" => false,
+					"get_path" => false,
+					"get_quota" => false,
+					"initiate_file_download" => false,
+					"initiate_file_upload" => false,
+					// "listGrants => false,
+					// "listContainer => false,
+					// "listFileVersions => false,
+					// "listRecycle => false,
+					// "move => false,
+					// "removeGrant => false,
+					// "purgeRecycle => false,
+					// "restoreFileVersion => false,
+					// "restoreRecycleItem => false,
+					// "stat => false,
+					// "updateGrant => false,
+					// "denyGrant => false,
+			],
+			"size" => 12345,
+			"canonical_metadata" => [
+					"target" => NULL,
+			],
+			"arbitrary_metadata" => [
+					"metadata" => [
+							"some" => "arbi",
+							"trary" => "meta",
+							"da" => "ta",
+					],
+			],
+	];
+		$this->request->method("getParam")
+			->with($this->equalTo("ref"))
+			->willReturn([
+				"resource_id" => [
+					"storage_id" => "storage-id",
+					"opaque_id" => "opaque-id"
+				],
+				"path" => "/some/path"
+			]);
 		$result = $controller->GetMD($this->userId);
-	//	$this->assertEquals($result->getData(),$metadata);
-
+		$this->assertEquals($result->getData(), $metadata);
 	}
 
 	// public function testGetMDFile(){
