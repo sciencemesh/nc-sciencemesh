@@ -187,32 +187,19 @@ class RevaController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
-
-// 	 {
-//  200, `{
-//  "opaque":{},"type":1,"id":{
-// 	 "opaque_id":"fileid-/some/path"
-// 	 },"checksum":{},"etag":"deadbeef","mime_type":"text/plain","mtime":{
-// 									 "seconds":1234567890
-// 									 }
-// 	 ,"path":"/some/path","permission_set":{},"size":12345,"canonical_metadata":{},"arbitrary_metadata":
-// 	 {"metadata":
-// 		 {"da":"ta","some":"arbi","trary":"meta"}
-// 	 }
-//  }`, serverStateEmpty
-// },
 	public function GetMD($userId) {
 		$this->initializeStorage($userId);
 		$ref = $this->request->getParam("ref") ?: "/";
-		error_log("hi in GetMD!");
-		error_log(json_encode($ref["path"]));
-		$success = $this->filesystem->has($ref["path"]);
+	//	$path = $ref["path"];
+		$ref = json_decode("path", true);
+		$success = $this->filesystem->has($ref);
+		
 		if ($success) {
 		//	$metadata = $this->filesystem->getMetaData($ref["path"]);
 		$metadata =   json_decode('{"opaque":{},"type":1,"id":{"opaque_id":"fileid-/some/path"},"checksum":{},"etag":"deadbeef","mime_type":"text/plain","mtime":{"seconds":1234567890},"path":"/some/path","permission_set":{},"size":12345,"canonical_metadata":{},"arbitrary_metadata":{"metadata":{"da":"ta","some":"arbi","trary":"meta"}}}');
-			error_log(json_encode($metadata));
 			return new JSONResponse($metadata, 200);
 		} else {
+			var_dump('ELSEEE');
 			return new JSONResponse(["error" => "File not found"], 404);
 		}
 	}
