@@ -121,8 +121,7 @@ class NextcloudAdapter implements AdapterInterface
     {
         try {
             $node = $this->folder->get($path);
-            $nodeInfo = $this->normalizeNodeInfo($node);
-            return $this->nodeInfoToCS3ResourceInfo($nodeInfo);
+            return $this->normalizeNodeInfo($node);
         } catch (\OCP\Files\NotFoundException $exception) {
             return false;
         }
@@ -208,16 +207,12 @@ class NextcloudAdapter implements AdapterInterface
         } catch (\OCP\Files\NotFoundException $exception) {
             return [];
         }
-        //var_dump("directory: ",$directory);
         if (method_exists($node, 'getDirectoryListing')) {
             $nodes = $node->getDirectoryListing();
-          //  var_dump("nodes: ",$nodes);
             $result = array_map(function (\OCP\Files\Node $node) {
-               $nodeInfo = $this->normalizeNodeInfo($node);
-                return $this->nodeInfoToCS3ResourceInfo($nodeInfo);
+               return $this->normalizeNodeInfo($node);
             }, $nodes);
         }
-      //  var_dump("result: ",$result);
         return $result;
     }
 
@@ -468,69 +463,5 @@ class NextcloudAdapter implements AdapterInterface
             'Owner' => $node->getOwner(),
             /*/
         ], $metaData);
-    }
-
-    /**
-     * @param array $nodeInfo
-     *
-     * Returns the data of a CS3 provider.ResourceInfo object https://github.com/cs3org/cs3apis/blob/a86e5cb/cs3/storage/provider/v1beta1/resources.proto#L35-L93
-     * @return array
-     *
-     * @throws \OCP\Files\InvalidPathException
-     * @throws \OCP\Files\NotFoundException
-     */
-    private function nodeInfoToCS3ResourceInfo(array $nodeInfo) : array
-    {
-        return [
-            "opaque" => [
-                "map" => NULL,
-            ],
-            "type" => 1,
-            "id" => [
-                "opaque_id" => "fileid-/some/path"
-            ],
-            "checksum" => [
-                "type" => 0,
-                "sum" => "",
-            ],
-            "etag" => "deadbeef",
-            "mime_type" => "text/plain",
-            "mtime" => [
-                "seconds" => 1234567890
-            ],
-            "path" => "/some/path",
-            "permission_set" => [
-                "add_grant" => false,
-                "create_container" => false,
-                "delete" => false,
-                "get_path" => false,
-                "get_quota" => false,
-                "initiate_file_download" => false,
-                "initiate_file_upload" => false,
-                // "listGrants => false,
-                // "listContainer => false,
-                // "listFileVersions => false,
-                // "listRecycle => false,
-                // "move => false,
-                // "removeGrant => false,
-                // "purgeRecycle => false,
-                // "restoreFileVersion => false,
-                // "restoreRecycleItem => false,
-                // "stat => false,
-                // "updateGrant => false,
-                // "denyGrant => false,
-            ],
-            "size" => 12345,
-            "canonical_metadata" => [
-                "target" => NULL,
-            ],
-            "arbitrary_metadata" => [
-                "metadata" => [
-                    "some" => "arbi",
-                    "trary" => "meta",
-                    "da" => "ta",
-                ],
-            ],
-        ];
     }
 }

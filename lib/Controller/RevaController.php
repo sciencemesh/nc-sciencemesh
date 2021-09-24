@@ -43,6 +43,71 @@ class RevaController extends Controller {
 		$this->trashManager = $trashManager;
 	}
 
+	/**
+	 * @param array $nodeInfo
+	 *
+	 * Returns the data of a CS3 provider.ResourceInfo object https://github.com/cs3org/cs3apis/blob/a86e5cb/cs3/storage/provider/v1beta1/resources.proto#L35-L93
+	 * @return array
+	 *
+	 * @throws \OCP\Files\InvalidPathException
+	 * @throws \OCP\Files\NotFoundException
+	 */
+
+	private function nodeInfoToCS3ResourceInfo(array $nodeInfo) : array
+	{
+			return [
+					"opaque" => [
+							"map" => NULL,
+					],
+					"type" => 1,
+					"id" => [
+							"opaque_id" => "fileid-/" . $nodeInfo["path"],
+					],
+					"checksum" => [
+							"type" => 0,
+							"sum" => "",
+					],
+					"etag" => "deadbeef",
+					"mime_type" => "text/plain",
+					"mtime" => [
+							"seconds" => 1234567890
+					],
+					"path" => "/" . $nodeInfo["path"],
+					"permission_set" => [
+							"add_grant" => false,
+							"create_container" => false,
+							"delete" => false,
+							"get_path" => false,
+							"get_quota" => false,
+							"initiate_file_download" => false,
+							"initiate_file_upload" => false,
+							// "listGrants => false,
+							// "listContainer => false,
+							// "listFileVersions => false,
+							// "listRecycle => false,
+							// "move => false,
+							// "removeGrant => false,
+							// "purgeRecycle => false,
+							// "restoreFileVersion => false,
+							// "restoreRecycleItem => false,
+							// "stat => false,
+							// "updateGrant => false,
+							// "denyGrant => false,
+					],
+					"size" => 12345,
+					"canonical_metadata" => [
+							"target" => NULL,
+					],
+					"arbitrary_metadata" => [
+							"metadata" => [
+									"some" => "arbi",
+									"trary" => "meta",
+									"da" => "ta",
+							],
+					],
+			];
+	}
+
 	private function getFileSystem() {
 		// Create the Nextcloud Adapter
 		$adapter = new NextcloudAdapter($this->sciencemeshFolder);
@@ -194,9 +259,9 @@ class RevaController extends Controller {
 		$success = $this->filesystem->has($path);
 
 		if ($success) {
-  		$metadata = $this->filesystem->getMetaData($ref["path"]);
-			error_log(json_encode($metadata));
-			return new JSONResponse($metadata, 200);
+  		$nodeInfo = $this->filesystem->getMetaData($ref["path"]);
+			$resourceInfo = $this->nodeInfoToCS3ResourceInfo($nodeInfo);
+				return new JSONResponse($resourceInfo, 200);
 		} else {
 			return new JSONResponse(["error" => "File not found"], 404);
 		}
@@ -263,10 +328,13 @@ class RevaController extends Controller {
 		$ref = $this->request->getParam("ref") ?: "/";
 		$path = $ref["path"];
 		if ($path == "/") {
-			$resourceInfos = $this->filesystem->listContents(".");
+			$nodeInfos = $this->filesystem->listContents(".");
 		} else {
-			$resourceInfos = $this->filesystem->listContents($path);
+			$nodeInfos = $this->filesystem->listContents($path);
 		}
+		$resourceInfos = array_map(function($nodeInfo) {
+			return $this->nodeInfoToCS3ResourceInfo($nodeInfo);
+		}, $nodeInfos);
 		if ($resourceInfos !== false) {
 			return new JSONResponse($resourceInfos, 200);
 		} else {
