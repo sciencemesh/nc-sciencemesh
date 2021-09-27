@@ -253,10 +253,18 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function GetMD($userId) {
-		$this->initializeStorage($userId);
 		$ref = $this->request->getParam("ref") ?: "/";
 		$path = $ref["path"];
-		$success = $this->filesystem->has($path);
+		if ($path == "/") {
+			$success = $this->userFolder->nodeExists("sciencemesh");
+			if ($success) {
+				$this->initializeStorage($userId);
+				$path = ".";
+			}
+		} else {
+			$this->initializeStorage($userId);
+			$success = $this->filesystem->has($path);
+		}
 
 		if ($success) {
   		$nodeInfo = $this->filesystem->getMetaData($ref["path"]);
