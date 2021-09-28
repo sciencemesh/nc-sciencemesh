@@ -41,6 +41,14 @@ class RevaController extends Controller {
 		$this->session = $session;
 		$this->userManager = $userManager;
 		$this->trashManager = $trashManager;
+
+		$this->userFolder = $this->rootFolder->getUserFolder($userId);
+		// Create the Nextcloud Adapter
+		$adapter = new NextcloudAdapter($this->userFolder);
+		$this->filesystem = new \League\Flysystem\Filesystem($adapter);
+
+		$this->baseUrl = $this->getStorageUrl($userId); // Where is that used?
+
 	}
 
 	/**
@@ -55,13 +63,14 @@ class RevaController extends Controller {
 
 	private function nodeInfoToCS3ResourceInfo(array $nodeInfo) : array
 	{
+		  $path = substr($nodeInfo["path"], strlen("/sciencemesh"));
 			return [
 					"opaque" => [
 							"map" => NULL,
 					],
 					"type" => 1,
 					"id" => [
-							"opaque_id" => "fileid-/" . $nodeInfo["path"],
+							"opaque_id" => "fileid-/" . $path,
 					],
 					"checksum" => [
 							"type" => 0,
@@ -72,7 +81,7 @@ class RevaController extends Controller {
 					"mtime" => [
 							"seconds" => 1234567890
 					],
-					"path" => "/" . $nodeInfo["path"],
+					"path" => "/" . $path,
 					"permission_set" => [
 							"add_grant" => false,
 							"create_container" => false,
@@ -108,27 +117,10 @@ class RevaController extends Controller {
 			];
 	}
 
-	private function getFileSystem() {
-		// Create the Nextcloud Adapter
-		$adapter = new NextcloudAdapter($this->sciencemeshFolder);
-		$filesystem = new \League\Flysystem\Filesystem($adapter);
-		return $filesystem;
-	}
-
 	private function getStorageUrl($userId) {
 		$storageUrl = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute("sciencemesh.storage.handleHead", array("userId" => $userId, "path" => "foo")));
 		$storageUrl = preg_replace('/foo$/', '', $storageUrl);
 		return $storageUrl;
-	}
-
-	private function initializeStorage($userId) {
-		$this->userFolder = $this->rootFolder->getUserFolder($userId);
-		if (!$this->userFolder->nodeExists("sciencemesh")) {
-			$this->userFolder->newFolder("sciencemesh"); // Create the Sciencemesh directory for storage if it doesn't exist.
-		}
-		$this->sciencemeshFolder = $this->userFolder->get("sciencemesh"); // used by getFileSystem
-		$this->filesystem = $this->getFileSystem();
-		$this->baseUrl = $this->getStorageUrl($userId); // Where is that used?
 	}
 
 	private function respond($responseBody, $statusCode, $headers=array()) {
@@ -150,8 +142,7 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function AddGrant($userId) {
-		$this->initializeStorage($userId);
-		$path = $this->request->getParam("path") ?: "/";
+		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
 		// FIXME: Expected a param with a grant to add here;
 		return new JSONResponse("Not implemented", 200);
 	}
@@ -180,8 +171,7 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function CreateDir($userId) {
-		$this->initializeStorage($userId);
-		$path = $this->request->getParam("path") ?: "/";
+		$path = "sciencemesh" . $this->request->getParam("path"); // FIXME: sanitize the input
 		$success = $this->filesystem->createDir($path);
 		if ($success) {
 			return new JSONResponse("OK", 200);
@@ -196,7 +186,10 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function CreateHome($userId) {
-		$this->initializeStorage($userId);
+		$homeExists = $this->userFolder->nodeExists("sciencemesh");
+		if (!$homeExists) {
+			$this->userFolder->newFolder("sciencemesh"); // Create the Sciencemesh directory for storage if it doesn't exist.
+		}
 		return new JSONResponse("OK", 200);
 	}
 
@@ -206,8 +199,7 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function CreateReference($userId) {
-		$this->initializeStorage($userId);
-		$path = $this->request->getParam("path") ?: "/";
+		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: normalize incoming path
 		return new JSONResponse("Not implemented", 200);
 	}
 
@@ -217,8 +209,7 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function Delete($userId) {
-		$this->initializeStorage($userId);
-		$path = $this->request->getParam("path") ?: "/";
+		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: normalize incoming path
 		$success = $this->filesystem->delete($path);
 		if ($success) {
 			return new JSONResponse("OK", 200);
@@ -233,7 +224,6 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function EmptyRecycle($userId) {
-		$this->initializeStorage($userId);
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
 
@@ -253,13 +243,12 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function GetMD($userId) {
-		$this->initializeStorage($userId);
-		$ref = $this->request->getParam("ref") ?: "/";
-		$path = $ref["path"];
+		$ref = $this->request->getParam("ref");
+		$path = "sciencemesh" . $ref["path"]; // FIXME: normalize incoming path
+		error_log('GetMD ' . $path);
 		$success = $this->filesystem->has($path);
-
 		if ($success) {
-  		$nodeInfo = $this->filesystem->getMetaData($ref["path"]);
+  		$nodeInfo = $this->filesystem->getMetaData($path);
 			$resourceInfo = $this->nodeInfoToCS3ResourceInfo($nodeInfo);
 				return new JSONResponse($resourceInfo, 200);
 		} else {
@@ -273,7 +262,6 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function GetPathByID($userId) {
-		$this->initializeStorage($userId);
 		$storageId = $this->request->getParam("storage_id");
 		$opaqueId = $this->request->getParam("opaque_id");
 		return new JSONResponse("/foo", 200);
@@ -324,14 +312,9 @@ class RevaController extends Controller {
 //	 serverStateEmpty},
 
 	public function ListFolder($userId) {
-		$this->initializeStorage($userId);
-		$ref = $this->request->getParam("ref") ?: "/";
-		$path = $ref["path"];
-		if ($path == "/") {
-			$nodeInfos = $this->filesystem->listContents(".");
-		} else {
-			$nodeInfos = $this->filesystem->listContents($path);
-		}
+		$ref = $this->request->getParam("ref");
+		$path = "sciencemesh" . $ref["path"]; // FIXME: sanitize!
+		$nodeInfos = $this->filesystem->listContents($path);
 		// FIXME: https://github.com/pondersource/nc-sciencemesh/issues/26
 		// It seems that if the folder is not found, then NextcloudAdapter
 		// returns [] and not false?
@@ -351,8 +334,7 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function ListGrants($userId) {
-		$this->initializeStorage($userId);
-		$path = $this->request->getParam("path") ?: "/";
+		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
 		return new JSONResponse("Not implemented", 200);
 	}
 
@@ -362,7 +344,6 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function ListRecycle($userId) {
-		$this->initializeStorage($userId);
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
 
@@ -397,8 +378,7 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function ListRevisions($userId) {
-		$this->initializeStorage($userId);
-		$path = $this->request->getParam("path") ?: "/";
+		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
 		return new JSONResponse("Not implemented", 200);
 	}
 
@@ -408,7 +388,6 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function Move($userId) {
-		$this->initializeStorage($userId);
 		$from = $this->request->getParam("from");
 		$to = $this->request->getParam("to");
 		$success = $this->filesystem->move($from, $to);
@@ -425,8 +404,7 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function RemoveGrant($userId) {
-		$this->initializeStorage($userId);
-		$path = $this->request->getParam("path") ?: "/";
+		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
 		// FIXME: Expected a grant to remove here;
 		return new JSONResponse("Not implemented", 200);
 	}
@@ -437,15 +415,15 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function RestoreRecycleItem($userId) {
-		$this->initializeStorage($userId);
-		$path = $this->request->getParam("path") ?: "/";
+		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
 
 		foreach ($trashItems as $node) {
 			if (preg_match("/^sciencemesh/", $node->getOriginalLocation())) {
-				$nodePath = preg_replace("/^sciencemesh/", "", $node->getOriginalLocation());
-				if ($path == $nodePath) {
+				// $nodePath = preg_replace("/^sciencemesh/", "", $node->getOriginalLocation());
+				// error_log("replaced " . $nodePath . " from " . $node->getOriginalLocation());
+				if ($path == $node->getOriginalLocation()) {
 					$this->trashManager->restoreItem($node);
 					return new JSONResponse("OK", 200);
 				}
@@ -460,8 +438,7 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function RestoreRevision($userId) {
-		$this->initializeStorage($userId);
-		$path = $this->request->getParam("path") ?: "/";
+		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
 		// FIXME: Expected a revision param here;
 		return new JSONResponse("Not implemented", 200);
 	}
@@ -472,8 +449,7 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function SetArbitraryMetadata($userId) {
-		$this->initializeStorage($userId);
-		$path = $this->request->getParam("path") ?: "/";
+		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
 		$metadata = $this->request->getParam("metadata");
 		// FIXME: What do we do with the existing metadata? Just toss it and overwrite with the new value? Or do we merge?
 		return new JSONResponse("Not implemented", 200);
@@ -485,8 +461,7 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function UnsetArbitraryMetadata($userId) {
-		$this->initializeStorage($userId);
-		$path = $this->request->getParam("path") ?: "/";
+		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
 		return new JSONResponse("Not implemented", 200);
 	}
 
@@ -496,8 +471,7 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function UpdateGrant($userId) {
-		$this->initializeStorage($userId);
-		$path = $this->request->getParam("path") ?: "/";
+		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
 		// FIXME: Expected a paramater with the grant(s)
 		return new JSONResponse("Not implemented", 200);
 	}
@@ -508,17 +482,16 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function Upload($userId, $path) {
-		$this->initializeStorage($userId);
 		$contents = $this->request->put;
-		if ($this->filesystem->has($path)) {
-			$success = $this->filesystem->update($path, $contents);
+		if ($this->filesystem->has("/sciencemesh" . $path)) {
+			$success = $this->filesystem->update("/sciencemesh" . $path, $contents);
 			if ($success) {
 				return new JSONResponse("OK", 200);
 			} else {
 				return new JSONResponse(["error" => "Update failed"], 500);
 			}
 		} else {
-			$success = $this->filesystem->write($path, $contents);
+			$success = $this->filesystem->write("/sciencemesh" . $path, $contents);
 			if ($success) {
 				return new JSONResponse("OK", 201);
 			} else {
