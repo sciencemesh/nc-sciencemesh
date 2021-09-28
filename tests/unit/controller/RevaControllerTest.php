@@ -188,7 +188,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			"opaque" => [
 					"map" => NULL,
 			],
-			"type" => 1,
+			"type" => 2,
 			"id" => [
 					"opaque_id" => "fileid-/some/path"
 			],
@@ -197,7 +197,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 					"sum" => "",
 			],
 			"etag" => "deadbeef",
-			"mime_type" => "text/plain",
+			"mime_type" => "directory",
 			"mtime" => [
 					"seconds" => 1234567890
 			],
@@ -233,6 +233,9 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 							"trary" => "meta",
 							"da" => "ta",
 					],
+			],
+			"owner" => [
+				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
 			],
 	  ];
 		$this->userFolder->method("getPath")
@@ -281,7 +284,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 					"sum" => "",
 			],
 			"etag" => "deadbeef",
-			"mime_type" => "text/plain",
+			"mime_type" => "application/json",
 			"mtime" => [
 					"seconds" => 1234567890
 			],
@@ -317,6 +320,9 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 							"trary" => "meta",
 							"da" => "ta",
 					],
+			],
+			"owner" => [
+				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
 			],
 	  ];
 		$this->userFolder->method("getPath")->willReturn("");
@@ -412,7 +418,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 						"sum" => "",
 				],
 				"etag" => "deadbeef",
-				"mime_type" => "text/plain",
+				"mime_type" => "application/json",
 				"mtime" => [
 						"seconds" => 1234567890
 				],
@@ -448,6 +454,9 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 								"trary" => "meta",
 								"da" => "ta",
 						],
+				],
+				"owner" => [
+					"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
 				],
 			],
 		];
@@ -535,7 +544,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 						"sum" => "",
 				],
 				"etag" => "deadbeef",
-				"mime_type" => "text/plain",
+				"mime_type" => "application/json",
 				"mtime" => [
 						"seconds" => 1234567890
 				],
@@ -572,6 +581,9 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 								"da" => "ta",
 						],
 				],
+				"owner" => [
+					"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				],	
 			],
 		];
 	  $folderContentsObjects = [ $testFile ];

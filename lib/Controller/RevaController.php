@@ -64,11 +64,12 @@ class RevaController extends Controller {
 	private function nodeInfoToCS3ResourceInfo(array $nodeInfo) : array
 	{
 		  $path = substr($nodeInfo["path"], strlen("/sciencemesh"));
+			$isDirectory = ($nodeInfo["mimetype"] == "directory");
 			return [
 					"opaque" => [
 							"map" => NULL,
 					],
-					"type" => 1,
+					"type" => ($isDirectory ? 2 : 1),
 					"id" => [
 							"opaque_id" => "fileid-/" . $path,
 					],
@@ -77,7 +78,7 @@ class RevaController extends Controller {
 							"sum" => "",
 					],
 					"etag" => "deadbeef",
-					"mime_type" => "text/plain",
+					"mime_type" => $nodeInfo["mimetype"],
 					"mtime" => [
 							"seconds" => 1234567890
 					],
@@ -113,6 +114,9 @@ class RevaController extends Controller {
 									"trary" => "meta",
 									"da" => "ta",
 							],
+					],
+					"owner" => [
+						"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
 					],
 			];
 	}
@@ -314,6 +318,8 @@ class RevaController extends Controller {
 	public function ListFolder($userId) {
 		$ref = $this->request->getParam("ref");
 		$path = "sciencemesh" . $ref["path"]; // FIXME: sanitize!
+		error_log("ListFolder " . $path);
+
 		$nodeInfos = $this->filesystem->listContents($path);
 		// FIXME: https://github.com/pondersource/nc-sciencemesh/issues/26
 		// It seems that if the folder is not found, then NextcloudAdapter
@@ -322,6 +328,7 @@ class RevaController extends Controller {
 			$resourceInfos = array_map(function($nodeInfo) {
 				return $this->nodeInfoToCS3ResourceInfo($nodeInfo);
 			}, $nodeInfos);
+			error_log(json_encode($resourceInfos));
 			return new JSONResponse($resourceInfos, 200);
 		} else {
 			return new JSONResponse(["error" => "Folder not found"], 400);
