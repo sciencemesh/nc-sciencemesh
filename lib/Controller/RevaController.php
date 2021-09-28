@@ -260,6 +260,7 @@ class RevaController extends Controller {
 		$ref = $this->request->getParam("ref") ?: "/";
 		$path = $ref["path"];
 		if ($path == "/") {
+			$this->userFolder = $this->rootFolder->getUserFolder($userId);
 			$success = $this->userFolder->nodeExists("sciencemesh");
 			if ($success) {
 				$this->initializeStorage($userId);
