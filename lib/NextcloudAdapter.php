@@ -203,11 +203,14 @@ class NextcloudAdapter implements AdapterInterface
         $result = [];
 
         try {
-            $node = $this->folder->get("/" . $directory);
+            // FIXME? $node = $this->folder->get("/" . $directory);
+            $node = $this->folder->get($directory);
         } catch (\OCP\Files\NotFoundException $exception) {
             return [];
         }
+        error_log("checking getDirectoryListing " . $directory);
         if (method_exists($node, 'getDirectoryListing')) {
+            error_log("methd exists on node");
             $nodes = $node->getDirectoryListing();
             $result = array_map(function (\OCP\Files\Node $node) {
                 return $this->normalizeNodeInfo($node);

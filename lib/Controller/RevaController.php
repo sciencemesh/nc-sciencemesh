@@ -63,13 +63,14 @@ class RevaController extends Controller {
 
 	private function nodeInfoToCS3ResourceInfo(array $nodeInfo) : array
 	{
+		  $path = substr($nodeInfo["path"], strlen("/sciencemesh"));
 			return [
 					"opaque" => [
 							"map" => NULL,
 					],
 					"type" => 1,
 					"id" => [
-							"opaque_id" => "fileid-/" . $nodeInfo["path"],
+							"opaque_id" => "fileid-/" . $path,
 					],
 					"checksum" => [
 							"type" => 0,
@@ -80,7 +81,7 @@ class RevaController extends Controller {
 					"mtime" => [
 							"seconds" => 1234567890
 					],
-					"path" => "/" . $nodeInfo["path"],
+					"path" => "/" . $path,
 					"permission_set" => [
 							"add_grant" => false,
 							"create_container" => false,
@@ -170,8 +171,7 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function CreateDir($userId) {
-		$ref = $this->request->getParam("ref");
-		$path = "sciencemesh" . $ref["path"]; // FIXME: sanitize the input
+		$path = "sciencemesh" . $this->request->getParam("path"); // FIXME: sanitize the input
 		$success = $this->filesystem->createDir($path);
 		if ($success) {
 			return new JSONResponse("OK", 200);
@@ -187,9 +187,8 @@ class RevaController extends Controller {
 	 */
 	public function CreateHome($userId) {
 		$homeExists = $this->userFolder->nodeExists("sciencemesh");
-		if ($createHome && !$homeExists) {
+		if (!$homeExists) {
 			$this->userFolder->newFolder("sciencemesh"); // Create the Sciencemesh directory for storage if it doesn't exist.
-		  $homeExists = true;
 		}
 		return new JSONResponse("OK", 200);
 	}
@@ -246,6 +245,7 @@ class RevaController extends Controller {
 	public function GetMD($userId) {
 		$ref = $this->request->getParam("ref");
 		$path = "sciencemesh" . $ref["path"]; // FIXME: normalize incoming path
+		error_log('GetMD ' . $path);
 		$success = $this->filesystem->has($path);
 		if ($success) {
   		$nodeInfo = $this->filesystem->getMetaData($path);
@@ -421,8 +421,9 @@ class RevaController extends Controller {
 
 		foreach ($trashItems as $node) {
 			if (preg_match("/^sciencemesh/", $node->getOriginalLocation())) {
-				$nodePath = preg_replace("/^sciencemesh/", "", $node->getOriginalLocation());
-				if ($path == $nodePath) {
+				// $nodePath = preg_replace("/^sciencemesh/", "", $node->getOriginalLocation());
+				// error_log("replaced " . $nodePath . " from " . $node->getOriginalLocation());
+				if ($path == $node->getOriginalLocation()) {
 					$this->trashManager->restoreItem($node);
 					return new JSONResponse("OK", 200);
 				}
@@ -482,15 +483,15 @@ class RevaController extends Controller {
 	 */
 	public function Upload($userId, $path) {
 		$contents = $this->request->put;
-		if ($this->filesystem->has($path)) {
-			$success = $this->filesystem->update($path, $contents);
+		if ($this->filesystem->has("/sciencemesh" . $path)) {
+			$success = $this->filesystem->update("/sciencemesh" . $path, $contents);
 			if ($success) {
 				return new JSONResponse("OK", 200);
 			} else {
 				return new JSONResponse(["error" => "Update failed"], 500);
 			}
 		} else {
-			$success = $this->filesystem->write($path, $contents);
+			$success = $this->filesystem->write("/sciencemesh" . $path, $contents);
 			if ($success) {
 				return new JSONResponse("OK", 201);
 			} else {
