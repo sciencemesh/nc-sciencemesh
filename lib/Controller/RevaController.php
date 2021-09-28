@@ -121,13 +121,17 @@ class RevaController extends Controller {
 		return $storageUrl;
 	}
 
-	private function initializeStorage($userId) {
+	private function initializeStorage($userId, $createHome = false) {
 		$this->userFolder = $this->rootFolder->getUserFolder($userId);
-		if (!$this->userFolder->nodeExists("sciencemesh")) {
+		$homeExists = $this->userFolder->nodeExists("sciencemesh");
+		if ($createHome && !$homeExists) {
 			$this->userFolder->newFolder("sciencemesh"); // Create the Sciencemesh directory for storage if it doesn't exist.
+		  $homeExists = true;
 		}
-		$this->sciencemeshFolder = $this->userFolder->get("sciencemesh"); // used by getFileSystem
-		$this->filesystem = $this->getFileSystem();
+		if ($homeExists) {
+			$this->sciencemeshFolder = $this->userFolder->get("sciencemesh"); // used by getFileSystem
+			$this->filesystem = $this->getFileSystem();
+		}
 		$this->baseUrl = $this->getStorageUrl($userId); // Where is that used?
 	}
 
@@ -196,7 +200,7 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function CreateHome($userId) {
-		$this->initializeStorage($userId);
+		$this->initializeStorage($userId, true);
 		return new JSONResponse("OK", 200);
 	}
 
