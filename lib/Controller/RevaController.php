@@ -216,6 +216,7 @@ class RevaController extends Controller {
 	public function Delete($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: normalize incoming path
 		$success = $this->filesystem->delete($path);
+		error_log('Deleting: '.$path);
 		if ($success) {
 			return new JSONResponse("OK", 200);
 		} else {
@@ -350,27 +351,31 @@ class RevaController extends Controller {
 	public function ListRecycle($userId) {
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
-
+		if($trashItems == []){
+			error_log('EMPTY trash: ');
+		}else{
+			error_log('Not EMPTY trash : ');
+		}
 		$result = [];
 		foreach ($trashItems as $node) {
 			if (preg_match("/^sciencemesh/", $node->getOriginalLocation())) {
-				$result[] = [
-				    'mimetype' => $node->getMimetype(),
-				    'path' => preg_replace("/^sciencemesh/", "", $node->getOriginalLocation()),
-				    'size' => $node->getSize(),
-				    'basename' => basename($node->getPath()),
-				    'timestamp' => $node->getMTime(),
-				    'deleted' => $node->getDeletedTime(),
-				    'type' => $node->getType(),
-				    // @FIXME: Use $node->getPermissions() to set private or public
-				    //         as soon as we figure out what Nextcloud permissions mean in this context
-				    'visibility' => 'public',
-				    /*/
-				    'CreationTime' => $node->getCreationTime(),
-				    'Etag' => $node->getEtag(),
-				    'Owner' => $node->getOwner(),
-				    /*/
-				];
+				$result = [
+					[
+					"opaque" => [
+						"map" => NULL,
+					],
+					"key" => "some-deleted-version",
+					"ref"	=> [
+						"resource_id" => [
+							"map" => NULL,
+						],
+						"path" => "/subdir"
+					],
+					"size" => 12345,
+					"deletion_time" => [
+						"seconds" => 1234567890
+					]
+				]];
 			}
 		}
 		return new JSONResponse($result, 200);
@@ -427,10 +432,13 @@ class RevaController extends Controller {
 			if (preg_match("/^sciencemesh/", $node->getOriginalLocation())) {
 				// $nodePath = preg_replace("/^sciencemesh/", "", $node->getOriginalLocation());
 				// error_log("replaced " . $nodePath . " from " . $node->getOriginalLocation());
-				if ($path == $node->getOriginalLocation()) {
-					$this->trashManager->restoreItem($node);
-					return new JSONResponse("OK", 200);
-				}
+				$this->trashManager->restoreItem($node);
+				// error_log('path: '.$path);
+				// error_log('original: '.$node->getOriginalLocation());
+				// if ($path == $node->getOriginalLocation()) {
+				// 	$this->trashManager->restoreItem($node);
+				// 	return new JSONResponse("OK", 200);
+				// }
 			}
 		}
 		return new JSONResponse('["error" => "Not found."]', 404);
