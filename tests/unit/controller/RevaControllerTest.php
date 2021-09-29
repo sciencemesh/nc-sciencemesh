@@ -24,7 +24,17 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	private $userService;
 	private $trashManager;
 
+	public $existingsMap = [
+		["sciencemesh/not/found", false],
+		["sciencemesh/test", true],
+		["sciencemesh/test.json", true],
+		["sciencemesh/some/path", true],
+		["sciencemesh", true]
+	];
+
 	public function setUp() {
+
+
 		// Controller constructor arg names:
 		// $AppName, IRootFolder $rootFolder, IRequest $request, ISession $session,
 		// IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IConfig $config,
@@ -45,10 +55,9 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->userFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$this->rootFolder->method("getUserFolder")->willReturn($this->userFolder);
 		$this->sciencemeshFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
-		$this->userFolder->method("nodeExists")->willReturn(true);
-		// $this->userFolder->method("get")
-		// 	->with($this->equalTo("sciencemesh"))
-		// 	->willReturn($this->sciencemeshFolder);
+		$this->userFolder->method("nodeExists")
+			->will($this->returnValueMap($this->existingsMap));
+
 		$this->sciencemeshFolder->method("nodeExists")->willReturn(true);
 		$this->sciencemeshFolder->method("getPath")->willReturn("/sciencemesh");
 	}
@@ -342,23 +351,23 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->GetMD($this->userId);
 		$this->assertEquals($result->getData(),$metadata);
 	}
-
-	public function testGetPathByID(){
-
-		$paramsMap = [
-			["storage_id",NULL,"some-storage-id"],
-			["opaque_id",NULL,"some-opaque-id"]
-		];
-		$this->request->method("getParam")
-								->will($this->returnValueMap($paramsMap));
-		$controller = new RevaController(
-			$this->appName, $this->rootFolder, $this->request, $this->session,
-			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
-			$this->userService, $this->trashManager
-		);
-		$result = $controller->GetPathByID($this->userId);
-		$this->assertEquals($result->getData(),'/foo');
-	}
+	//
+	// public function testGetPathByID(){
+	//
+	// 	$paramsMap = [
+	// 		["storage_id",NULL,"some-storage-id"],
+	// 		["opaque_id",NULL,"some-opaque-id"]
+	// 	];
+	// 	$this->request->method("getParam")
+	// 							->will($this->returnValueMap($paramsMap));
+	// 	$controller = new RevaController(
+	// 		$this->appName, $this->rootFolder, $this->request, $this->session,
+	// 		$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+	// 		$this->userService, $this->trashManager
+	// 	);
+	// 	$result = $controller->GetPathByID($this->userId);
+	// 	$this->assertEquals($result->getData(),'/foo');
+	// }
 
 	public function testInitiateUpload(){
 
@@ -374,7 +383,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->InitiateUpload($this->userId);
 		$this->assertEquals($result->getData(),$response);
 	}
-	
+
 	public function testListFolderRoot(){
 		// $testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$this->request->method("getParam")
@@ -393,7 +402,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$testFile->method("getPath")->willReturn("/sciencemesh/test.json");
 		$testFile->method("getSize")->willReturn(1234);
 		$testFile->method("getMTime")->willReturn(1234567890); // should this be seconds or milliseconds?
-	
+
 		$paramsMap = [
 			["sciencemesh", $this->sciencemeshFolder],
 			["sciencemesh/test.json", $testFile]
@@ -483,14 +492,11 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 				],
 				"path" => "/not/found"
 			]);
-	
+
 		$paramsMap = [
 			["sciencemesh",$this->sciencemeshFolder],
-			["not/found", NULL]
+			["/not/found", NULL]
 		];
-		$this->userFolder->method("get")
-								->will($this->returnValueMap($paramsMap));
-
 		$this->sciencemeshFolder->method("getDirectoryListing")
 			->willReturn(false);
 		$controller = new RevaController(
@@ -498,9 +504,12 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager
 		);
-
+		$this->userFolder->method("get")
+			->will($this->returnValueMap($paramsMap));
+		$this->userFolder->method('nodeExists')
+			->willReturn(false);
 		$result = $controller->ListFolder($this->userId);
-		$this->assertEquals($result->getData(), []);
+		$this->assertEquals($result->getStatus(), 404);
 	}
 
 	public function testListFolderOther(){
@@ -583,7 +592,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 				],
 				"owner" => [
 					"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-				],	
+				],
 			],
 		];
 	  $folderContentsObjects = [ $testFile ];
@@ -775,9 +784,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->userFolder->method("get")
 			->with($this->equalTo("sciencemesh/test.json"))
 			->willReturn($testFile);
-		$this->userFolder->method("nodeExists")
-			->with($this->equalTo("sciencemesh/test.json"))
-			->willReturn(true);
 		$testFile->method("getContent")
 			->willReturn("some-content");
 		$testFile->method("getPath")
