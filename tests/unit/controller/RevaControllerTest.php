@@ -532,8 +532,10 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			);
 
 			$result = $controller->ListFolder($this->userId);
+			$this->assertEquals($result->getData(), []);
 			$this->assertEquals($result->getStatus(), 200);
 		}
+
 	public function testListFolderOther(){
 		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$this->request->method("getParam")
