@@ -645,18 +645,23 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 
 	public function testListRecycle(){
 
-		$data =[
+		$data = [
 			[
-				"mimetype"=>"application/json",
-				"path"=>"/some/path/to/file1.json",
-				"size"=>1234,
-				"basename"=>"file1.json",
-				"timestamp"=>1234567890,
-				'deleted'=>1234567890,
-				"type"=>"file",
-				"visibility"=>"public"
+			"opaque" => [
+				"map" => NULL,
+			],
+			"key" => "some-deleted-version",
+			"ref"	=> [
+				"resource_id" => [
+					"map" => NULL,
+				],
+				"path" => "/subdir"
+			],
+			"size" => 12345,
+			"deletion_time" => [
+				"seconds" => 1234567890
 			]
-		];
+		]];
 		$user =  $this->getMockBuilder("OCP\IUser")->getMock();
 		$this->userManager->method("get")->willReturn($user);
 		$item1 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();

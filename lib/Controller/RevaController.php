@@ -433,6 +433,7 @@ class RevaController extends Controller {
 				// $nodePath = preg_replace("/^sciencemesh/", "", $node->getOriginalLocation());
 				// error_log("replaced " . $nodePath . " from " . $node->getOriginalLocation());
 				$this->trashManager->restoreItem($node);
+				return new JSONResponse("OK", 200);
 				// error_log('path: '.$path);
 				// error_log('original: '.$node->getOriginalLocation());
 				// if ($path == $node->getOriginalLocation()) {
