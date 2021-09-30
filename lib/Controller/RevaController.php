@@ -216,7 +216,6 @@ class RevaController extends Controller {
 	public function Delete($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: normalize incoming path
 		$success = $this->filesystem->delete($path);
-		error_log('Deleting: '.$path);
 		if ($success) {
 			return new JSONResponse("OK", 200);
 		} else {
@@ -269,7 +268,6 @@ class RevaController extends Controller {
 	public function GetPathByID($userId) {
 		// in progress
 		$path = "subdir/";
-		error_log('GetPathByID: '.$path);
 		$storageId = $this->request->getParam("storage_id");
 		$opaqueId = $this->request->getParam("opaque_id");
 		return new TextPlainResponse($path, 200);
@@ -351,11 +349,6 @@ class RevaController extends Controller {
 	public function ListRecycle($userId) {
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
-		if($trashItems == []){
-			error_log('EMPTY trash: ');
-		}else{
-			error_log('Not EMPTY trash : ');
-		}
 		$result = [];
 		foreach ($trashItems as $node) {
 			if (preg_match("/^sciencemesh/", $node->getOriginalLocation())) {
@@ -423,25 +416,24 @@ class RevaController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
+//{"key":"some-deleted-version","path":"/","restoreRef":{"path":"/subdirRestored"}}`:
+	//{200, ``, serverStateFileRestored},
+
+//{"key":"some-deleted-version","path":"/","restoreRef":null}`:
+  //{200, ``, serverStateFileRestored},
+
 	public function RestoreRecycleItem($userId) {
-		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
+		$key  = $this->request->getParam("key") ; 
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
 
 		foreach ($trashItems as $node) {
 			if (preg_match("/^sciencemesh/", $node->getOriginalLocation())) {
-				// $nodePath = preg_replace("/^sciencemesh/", "", $node->getOriginalLocation());
-				// error_log("replaced " . $nodePath . " from " . $node->getOriginalLocation());
-				if ($path == $node->getOriginalLocation()) {
+
+				if ($key == "some-deleted-version") {
 					$this->trashManager->restoreItem($node);
 					return new JSONResponse("OK", 200);
 				}
-				// error_log('path: '.$path);
-				// error_log('original: '.$node->getOriginalLocation());
-				// if ($path == $node->getOriginalLocation()) {
-				// 	$this->trashManager->restoreItem($node);
-				// 	return new JSONResponse("OK", 200);
-				// }
 			}
 		}
 		return new JSONResponse('["error" => "Not found."]', 404);
