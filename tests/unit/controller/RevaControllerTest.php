@@ -650,12 +650,12 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			"opaque" => [
 				"map" => NULL,
 			],
-			"key" => "some-deleted-version",
+			"key" => "/some/path/to/file1.json",
 			"ref"	=> [
 				"resource_id" => [
 					"map" => NULL,
 				],
-				"path" => "/subdir"
+				"path" => "/some/path/to/file1.json",
 			],
 			"size" => 12345,
 			"deletion_time" => [
@@ -734,18 +734,35 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testRestoreRecycleItem(){
-		$this->request->method("getParam")->willReturn("some-deleted-version");
+		// we are using original location as the RecycleItem's
+		// unique key string, see:
+		// https://github.com/cs3org/cs3apis/blob/6eab4643f5113a54f4ce4cd8cb462685d0cdd2ef/cs3/storage/provider/v1beta1/resources.proto#L318
+		$this->request->method("getParam")
+			->with($this->equalTo("key"))
+		  ->willReturn("/some/key/that/is/really/a/path.txt");
+
+		// we don't need to look at getParam("path") because reva will always just
+		// put the user's home dir there, see https://github.com/cs3org/reva/pull/2120
+
+		// we don't look at getParam("restoreRef")
+		// because the nextcloud trash manager doesn't support restoring
+		// to a different location.
 		$user =  $this->getMockBuilder("OCP\IUser")->getMock();
 		$this->userManager->method("get")->willReturn($user);
 		$item1 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
 		$item1->method("getOriginalLocation")
-			->willReturn("sciencemesh/file1.json");
+			->willReturn("something/unrelated/to/science.mesh");
 		$item2 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
 		$item2->method("getOriginalLocation")
-			->willReturn("somethingElse/file2.json");
+			->willReturn("sciencemesh/somethingElse/file2.json");
+		$item3 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
+		$item3->method("getOriginalLocation")
+			->willReturn("sciencemesh/some/key/that/is/really/a/path.txt");
+
 		$trashItems = [
 			$item1,
-			$item2
+			$item2,
+			$item3,
 		];
 		$this->trashManager->method("listTrashRoot")
 			->willReturn($trashItems);

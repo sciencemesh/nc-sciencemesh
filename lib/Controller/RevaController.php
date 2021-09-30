@@ -352,17 +352,18 @@ class RevaController extends Controller {
 		$result = [];
 		foreach ($trashItems as $node) {
 			if (preg_match("/^sciencemesh/", $node->getOriginalLocation())) {
+				$path = substr($node->getOriginalLocation(), strlen("sciencemesh"));
 				$result = [
 					[
 					"opaque" => [
 						"map" => NULL,
 					],
-					"key" => "some-deleted-version",
+					"key" =>  $path,
 					"ref"	=> [
 						"resource_id" => [
 							"map" => NULL,
 						],
-						"path" => "/subdir"
+						"path" => $path,
 					],
 					"size" => 12345,
 					"deletion_time" => [
@@ -429,8 +430,11 @@ class RevaController extends Controller {
 
 		foreach ($trashItems as $node) {
 			if (preg_match("/^sciencemesh/", $node->getOriginalLocation())) {
+				// we are using original location as the RecycleItem's
+				// unique key string, see:
+				// https://github.com/cs3org/cs3apis/blob/6eab4643f5113a54f4ce4cd8cb462685d0cdd2ef/cs3/storage/provider/v1beta1/resources.proto#L318
 
-				if ($key == "some-deleted-version") {
+				if ("sciencemesh" . $key == $node->getOriginalLocation()) {
 					$this->trashManager->restoreItem($node);
 					return new JSONResponse("OK", 200);
 				}
