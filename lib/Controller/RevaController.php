@@ -423,7 +423,7 @@ class RevaController extends Controller {
   //{200, ``, serverStateFileRestored},
 
 	public function RestoreRecycleItem($userId) {
-		$key  = $this->request->getParams("key") ; 
+		$key  = $this->request->getParam("key") ; 
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
 
