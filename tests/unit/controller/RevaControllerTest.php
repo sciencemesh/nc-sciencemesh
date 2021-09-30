@@ -734,7 +734,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testRestoreRecycleItem(){
-		$this->request->method("getParam")->willReturn("/file1.json");
+		$this->request->method("getParam")->willReturn("some-deleted-version");
 		$user =  $this->getMockBuilder("OCP\IUser")->getMock();
 		$this->userManager->method("get")->willReturn($user);
 		$item1 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();

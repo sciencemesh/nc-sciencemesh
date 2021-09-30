@@ -429,26 +429,11 @@ class RevaController extends Controller {
 
 		foreach ($trashItems as $node) {
 			if (preg_match("/^sciencemesh/", $node->getOriginalLocation())) {
-<<<<<<< HEAD
 
 				if ($key == "some-deleted-version") {
 					$this->trashManager->restoreItem($node);
 					return new JSONResponse("OK", 200);
 				}
-=======
-				// $nodePath = preg_replace("/^sciencemesh/", "", $node->getOriginalLocation());
-				// error_log("replaced " . $nodePath . " from " . $node->getOriginalLocation());
-				if ($path == $node->getOriginalLocation()) {
-					$this->trashManager->restoreItem($node);
-					return new JSONResponse("OK", 200);
-				}
-				// error_log('path: '.$path);
-				// error_log('original: '.$node->getOriginalLocation());
-				// if ($path == $node->getOriginalLocation()) {
-				// 	$this->trashManager->restoreItem($node);
-				// 	return new JSONResponse("OK", 200);
-				// }
->>>>>>> fbdc60096c218ce22cc67a3fe00ec5410a378e41
 			}
 		}
 		return new JSONResponse('["error" => "Not found."]', 404);
