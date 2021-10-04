@@ -201,13 +201,12 @@ class NextcloudAdapter implements AdapterInterface
     final public function listContents($directory = '', $recursive = false)
     {
         $result = [];
-
+        var_dump('dir: /'.$directory);
         try {
             $node = $this->folder->get("/" . $directory);
         } catch (\OCP\Files\NotFoundException $exception) {
             return [];
         }
-
         if (method_exists($node, 'getDirectoryListing')) {
             $nodes = $node->getDirectoryListing();
 
@@ -215,7 +214,6 @@ class NextcloudAdapter implements AdapterInterface
                 return $this->normalizeNodeInfo($node);
             }, $nodes);
         }
-
         return $result;
     }
 

@@ -1,4 +1,6 @@
-<?php
+[[
+    "map" => NULL,
+]]<?php
 namespace OCA\ScienceMesh\Controller;
 
 use OCA\ScienceMesh\ServerConfig;
@@ -26,7 +28,8 @@ use OCP\AppFramework\Controller;
 
 use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IManager;
-use OCP\Share\IShare;
+#use OCA\Share\IShare;
+#use OC\Share20\Manager;
 
 class RevaController extends Controller {
 	/* @var IURLGenerator */
@@ -35,7 +38,7 @@ class RevaController extends Controller {
 	/* @var ISession */
 	private $session;
 
-	public function __construct($AppName, IRootFolder $rootFolder, IRequest $request, ISession $session, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IConfig $config, \OCA\ScienceMesh\Service\UserService $UserService, ITrashManager $trashManager, IManager $shareManager )
+	public function __construct($AppName, IRootFolder $rootFolder, IRequest $request, ISession $session, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IConfig $config, \OCA\ScienceMesh\Service\UserService $UserService, ITrashManager $trashManager, IManager $shareManager)
 	{
 		parent::__construct($AppName, $request);
 		require_once(__DIR__.'/../../vendor/autoload.php');
@@ -56,6 +59,7 @@ class RevaController extends Controller {
 
 		# Share
 		$this->shareManager = $shareManager;
+
 	}
 
 	/**
@@ -127,24 +131,87 @@ class RevaController extends Controller {
 					],
 			];
 	}
-private function getShareInfo(IShare $share) : array
-{
-	return 	$result = [
-						'id' => $share->getFullId(),
-						'share_type' => $share->getShareType(),
-						'uid_owner' => $share->getSharedBy(),
-						'displayname_owner' => $this->userManager->get($share->getSharedBy())->getDisplayName(),
-						'permissions' => 0,
-						'stime' => $share->getShareTime()->getTimestamp(),
-						'parent' => null,
-						'expiration' => null,
-						'token' => null,
-						'uid_file_owner' => $share->getShareOwner(),
-						'displayname_file_owner' => $this->userManager->get($share->getShareOwner())->getDisplayName(),
-						'path' => $share->getTarget(),
-					];
 
-}
+	# Unused so far
+	private function getShareInfo(IShare $share) : array
+	{
+		return [
+			'id' => $share->getFullId(),
+			'share_type' => $share->getShareType(),
+			'uid_owner' => $share->getSharedBy(),
+			'displayname_owner' => $this->userManager->get($share->getSharedBy())->getDisplayName(),
+			'permissions' => 0,
+			'stime' => $share->getShareTime()->getTimestamp(),
+			'parent' => null,
+			'expiration' => null,
+			'token' => null,
+			'uid_file_owner' => $share->getShareOwner(),
+			'displayname_file_owner' => $this->userManager->get($share->getShareOwner())->getDisplayName(),
+			'path' => $share->getTarget(),
+		];
+	}
+
+	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
+	private shareInfoToResourceInfo(IShare $share): array
+	{
+		return [
+			"id"=>[
+	    	"map" => NULL,
+			],
+			"resource_id"=>[
+	    	"map" => NULL,
+			],
+			"permissions"=>[
+				"permissions"=>[
+					"add_grant"=>true,
+					"create_container"=>true,
+					"delete"=>true,
+					"get_path"=>true,
+					"get_quota"=>true,
+					"initiate_file_download"=>true,
+					"initiate_file_upload"=>true,
+					"list_grants"=>true,
+					"list_container"=>true,
+					"list_file_versions"=>true,
+					"list_recycle"=>true,
+					"move"=>true,
+					"remove_grant"=>true,
+					"purge_recycle"=>true,
+					"restore_file_version"=>true,
+					"restore_recycle_item"=>true,
+					"stat"=>true,
+					"update_grant"=>true,
+					"deny_grant"=>true
+				]
+			],
+			"grantee"=>[
+				"Id"=>[
+					"UserId"=>[
+						"idp"=>"0.0.0.0:19000",
+						"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+						"type"=>1
+					]
+				]
+			],
+			"owner"=>[
+				"idp"=>"0.0.0.0:19000",
+				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type"=>1
+			],
+			"creator"=>[
+				"idp"=>"0.0.0.0:19000",
+				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type"=>1
+			],
+			"ctime"=>[
+				"seconds"=>1234567890
+			],
+			"mtime"=>[
+				"seconds"=>1234567890
+			]
+		];
+	}
+
 	private function getStorageUrl($userId) {
 		$storageUrl = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute("sciencemesh.storage.handleHead", array("userId" => $userId, "path" => "foo")));
 		$storageUrl = preg_replace('/foo$/', '', $storageUrl);
@@ -188,9 +255,8 @@ private function getShareInfo(IShare $share) : array
 		$auth = $this->userManager->checkPassword($userId,$password);
 		if ($auth) {
 			return new JSONResponse("Logged in", 200);
-		} else {
-			return new JSONResponse("Username / password not recognized", 401);
 		}
+		return new JSONResponse("Username / password not recognized", 401);
 	}
 
 	/**
@@ -203,9 +269,8 @@ private function getShareInfo(IShare $share) : array
 		$success = $this->filesystem->createDir($path);
 		if ($success) {
 			return new JSONResponse("OK", 200);
-		} else {
-			return new JSONResponse(["error" => "Could not create directory."], 500);
 		}
+		return new JSONResponse(["error" => "Could not create directory."], 500);
 	}
 
 	/**
@@ -241,9 +306,9 @@ private function getShareInfo(IShare $share) : array
 		$success = $this->filesystem->delete($path);
 		if ($success) {
 			return new JSONResponse("OK", 200);
-		} else {
-			return new JSONResponse(["error" => "Failed to delete."], 500);
 		}
+		return new JSONResponse(["error" => "Failed to delete."], 500);
+
 	}
 
 	/**
@@ -278,9 +343,9 @@ private function getShareInfo(IShare $share) : array
   		$nodeInfo = $this->filesystem->getMetaData($path);
 			$resourceInfo = $this->nodeInfoToCS3ResourceInfo($nodeInfo);
 				return new JSONResponse($resourceInfo, 200);
-		} else {
-			return new JSONResponse(["error" => "File not found"], 404);
 		}
+		return new JSONResponse(["error" => "File not found"], 404);
+
 	}
 
 	/**
@@ -394,9 +459,8 @@ private function getShareInfo(IShare $share) : array
 		$success = $this->filesystem->move($from, $to);
 		if ($success) {
 			return new JSONResponse("OK", 200);
-		} else {
-			return new JSONResponse(["error" => "Failed to move."], 500);
 		}
+		return new JSONResponse(["error" => "Failed to move."], 500);
 	}
 
 	/**
@@ -496,33 +560,30 @@ private function getShareInfo(IShare $share) : array
 			$success = $this->filesystem->update("/sciencemesh" . $path, $contents);
 			if ($success) {
 				return new JSONResponse("OK", 200);
-			} else {
-				return new JSONResponse(["error" => "Update failed"], 500);
 			}
-		} else {
-			$success = $this->filesystem->write("/sciencemesh" . $path, $contents);
-			if ($success) {
-				return new JSONResponse("OK", 201);
-			} else {
-				return new JSONResponse(["error" => "Create failed"], 500);
-			}
+			return new JSONResponse(["error" => "Update failed"], 500);
 		}
+		$success = $this->filesystem->write("/sciencemesh" . $path, $contents);
+		if ($success) {
+			return new JSONResponse("OK", 201);
+		}
+		return new JSONResponse(["error" => "Create failed"], 500);
 	}
 
+# Create a new share in fn with the given acl.
 
-
-	 @ // FIXME: 100 - successful ( instead of 200? )
-	 						//404 - couldn’t fetch shares
-							// https://docs.nextcloud.com/server/19/developer_manual/client_apis/OCS/ocs-share-api.html?highlight=share#local-shares
-
-
+# What the fn is?
+# What the given acl is?
 	public function Share($userId){
-		//$md =  $this->request->getParam("md");
-		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
-		$share = $this->shareManager->newShare();
-		$token = $share->getToken();
-		return return new JSONResponse("Not implemented", 200, 201);
+		$newShare = $this->shareManager->newShare();
+		$createShare = $this->shareManager->createShare($newShare);
+		if($createShare){
+			$response = $this->shareInfoToResourceInfo($newShare);
+			return new JSONResponse($response, 200);
+		}
+		return new JSONResponse(["error" => "Share failed"], 500);
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -530,24 +591,40 @@ private function getShareInfo(IShare $share) : array
 	 */
 
 
+	 # GetShare gets the information for a share by the given ref.
+
+	 # POST /apps/sciencemesh/~tester/api/share/GetShare {"Spec":{"Id":{"opaque_id":"some-share-id"}}}`:
+	 # Is this the ref :  {"Spec":{"Id":{"opaque_id":"some-share-id"}}} ?
+ 	 # Is this a token: some-share-id ?
 	public function GetShare($userId){
-		$user = $this->userManager->get($userId);
-		$share = $this->shareManager->getShareByToken($token);
+		$spec =  $this->request->getParam("Spec");
+		$Id = $spec["Id"];
+		$opaqueId = $Id["opaque_id"];
+	  $share = $this->shareManager->getShareByToken($opaqueId);
+		if($share){
+			$response = shareInfoToResourceInfo($share);
+			return new JSONResponse($response, 200);
+		}
+		return new JSONResponse(["error" => "GetShare failed"], 500);
 
-		return return new JSONResponse("Not implemented", 200, 201);
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
 	 */
-
+	# Unshare deletes the share pointed by ref.
 	public function UnShare($userId){
-		$user = $this->userManager->get($userId);
-		$share = $this->shareManager->getShareByToken($token);
-		$this->shareManager->deleteShare($share);
-
-		return return new JSONResponse("Not implemented", 200, 201);
+		$spec =  $this->request->getParam("Spec");
+		$Id = $spec["Id"];
+		$opaqueId = $Id["opaque_id"];
+	  $share = $this->shareManager->getShareByToken($opaqueId);
+		$success = $this->shareManager->deleteShare($share);
+		if ($success) {
+			return new JSONResponse("OK", 201);
+		}
+		return new JSONResponse(["error" => "UnShare failed"], 500);
 	}
 	/**
 	 * @PublicPage
@@ -555,12 +632,14 @@ private function getShareInfo(IShare $share) : array
 	 * @NoSameSiteCookieRequired
 	 */
 
+	# Received/ sent or all of them?
+	# UpdateShare updates the mode of the given share.
 	public function UpdateShare($userId){
-		$user = $this->userManager->get($userId);
-		$share = $this->shareManager->getShareByToken($token);
-		$this->shareManager->updateShare($share);
+		// $user = $this->userManager->get($userId);
+		// $share = $this->shareManager->getShareByToken($token);
+		// $this->shareManager->updateShare($share);
 
-		return return new JSONResponse("Not implemented", 200, 201);
+		return new JSONResponse("Not implemented", 200);
 	}
 	/**
 	 * @PublicPage
@@ -568,20 +647,28 @@ private function getShareInfo(IShare $share) : array
 	 * @NoSameSiteCookieRequired
 	 */
 
+	# ListShares returns the shares created by the user. If md is provided is not nil,
+	# it returns only shares attached to the given resource.
+
+	# TD: I dont get this:'If md is provided is not nil,it returns only shares attached to the given resource.'
+	# Why?
+	# 1)There is no 'md' here.
+		#`POST /apps/sciencemesh/~tester/api/share/ListShares [{"type":4,"Term":{"Creator":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1}}}]`:
+	# 2) What the 'given resourse' is
 	public function ListShares($userId){
-		$shares = $this->shareManager->getAllShares();
-
-		return return new JSONResponse("Not implemented", 200, 201);
+		$listShares = $this->shareManager->getSharesBy($userId);
+		$response = shareInfoToResourceInfo();
+		return new JSONResponse($response, 200);
 	}
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
 	 */
-
+	# ListReceivedShares returns the list of shares the user has access.
 	public function ListReceivedShares($userId){
-
-		return return new JSONResponse("Not implemented", 200, 201);
+		#$receivedShares = $this->shareManager->getSharedWith($userId);
+		return new JSONResponse("Not implemented", 200);
 	}
 	/**
 	 * @PublicPage
@@ -589,16 +676,19 @@ private function getShareInfo(IShare $share) : array
 	 * @NoSameSiteCookieRequired
 	 */
 
+	# so, a specific share from all of them
+	# GetReceivedShare returns the information for a received share the user has access.
 	public function GetReceivedShare($userId){
-		return return new JSONResponse("Not implemented", 200, 201);
+
+		return new JSONResponse("Not implemented", 200);
 	}
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
 	 */
-
+	# UpdateReceivedShare updates the received share with share state.
 	public function UpdateReceivedShare($userId){
-		return return new JSONResponse("Not implemented", 200, 201);
+		return new JSONResponse("Not implemented", 200);
 	}
 }
