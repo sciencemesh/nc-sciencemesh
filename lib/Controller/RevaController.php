@@ -569,33 +569,29 @@ class RevaController extends Controller {
 		}
 		return new JSONResponse(["error" => "Create failed"], 500);
 	}
-
-# Create a new share in fn with the given acl.
-
-# What the fn is?
-# What the given acl is?
+  /**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @NoSameSiteCookieRequired
+   *
+   * Create a new share in fn with the given acl.
+	 */
 	public function Share($userId){
 		$newShare = $this->shareManager->newShare();
 		$createShare = $this->shareManager->createShare($newShare);
 		if($createShare){
-			$response = $this->shareInfoToResourceInfo($newShare);
+			$response = $this->shareInfoToResourceInfo($createShare);
 			return new JSONResponse($response, 200);
 		}
 		return new JSONResponse(["error" => "Share failed"], 500);
 	}
-
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
+   *
+   * GetShare gets the information for a share by the given ref.
 	 */
-
-
-	 # GetShare gets the information for a share by the given ref.
-
-	 # POST /apps/sciencemesh/~tester/api/share/GetShare {"Spec":{"Id":{"opaque_id":"some-share-id"}}}`:
-	 # Is this the ref :  {"Spec":{"Id":{"opaque_id":"some-share-id"}}} ?
- 	 # Is this a token: some-share-id ?
 	public function GetShare($userId){
 		$spec =  $this->request->getParam("Spec");
 		$Id = $spec["Id"];
@@ -608,13 +604,13 @@ class RevaController extends Controller {
 		return new JSONResponse(["error" => "GetShare failed"], 500);
 
 	}
-
-	/**
+  /**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
+   *
+   * Unshare deletes the share pointed by ref.
 	 */
-	# Unshare deletes the share pointed by ref.
 	public function UnShare($userId){
 		$spec =  $this->request->getParam("Spec");
 		$Id = $spec["Id"];
@@ -626,69 +622,126 @@ class RevaController extends Controller {
 		}
 		return new JSONResponse(["error" => "UnShare failed"], 500);
 	}
-	/**
+  /**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
+   *
+   * Received/ sent or all of them?
+ 	 * UpdateShare updates the mode(permissions??????) of the given share.
 	 */
 
-	# Received/ sent or all of them?
-	# UpdateShare updates the mode of the given share.
+   # public updateShare(IShare $share) : IShare. No arguments, so how do we know what to update in this specific share?
+   # https://stable19--nextcloud-server.netlify.app/classes/ocp-share-imanager#method_updateShare
 	public function UpdateShare($userId){
-		// $user = $this->userManager->get($userId);
-		// $share = $this->shareManager->getShareByToken($token);
-		// $this->shareManager->updateShare($share);
-
-		return new JSONResponse("Not implemented", 200);
+    $spec =  $this->request->getParam("Spec");
+    $Id = $spec["Id"];
+    $opaqueId = $Id["opaque_id"];
+    $share = $this->shareManager->getShareByToken($opaqueId);
+    $updatedShare = $this->shareManager->updateShare($share);
+    // $success = $this->shareManager->updateShare($share);
+    if($updatedShare) {
+      $response = shareInfoToResourceInfo($updatedShare);
+      return new JSONResponse($response, 201);
+    }
+    return new JSONResponse(["error" => "UpdateShare failed"], 500);
 	}
-	/**
+  /**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
+   *
+   * ListShares returns the shares created by the user. If md is provided is not nil,
+ 	 * it returns only shares attached to the given resource.
 	 */
-
-	# ListShares returns the shares created by the user. If md is provided is not nil,
-	# it returns only shares attached to the given resource.
-
-	# TD: I dont get this:'If md is provided is not nil,it returns only shares attached to the given resource.'
-	# Why?
-	# 1)There is no 'md' here.
-		#`POST /apps/sciencemesh/~tester/api/share/ListShares [{"type":4,"Term":{"Creator":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1}}}]`:
-	# 2) What the 'given resourse' is
 	public function ListShares($userId){
+    # getSharedBy: returns \OCP\Share\IShare[]
 		$listShares = $this->shareManager->getSharesBy($userId);
-		$response = shareInfoToResourceInfo();
-		return new JSONResponse($response, 200);
+		$response = shareInfoToResourceInfo(); # needs param, onle single share
+    // if ($success) {
+    //   return new JSONResponse($response, 201);
+    // }
+    // return new JSONResponse(["error" => "GetReceivedShare failed"], 500);
 	}
-	/**
+  /**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
+   *
+   * ListReceivedShares returns the list of shares the user has access.
 	 */
-	# ListReceivedShares returns the list of shares the user has access.
 	public function ListReceivedShares($userId){
-		#$receivedShares = $this->shareManager->getSharedWith($userId);
-		return new JSONResponse("Not implemented", 200);
+		$listReceivedShares = $this->shareManager->getSharedWith($userId);
+    #why not return ListReceivedShares
+    // $response = shareInfoToResourceInfo(); # needs param
+    // $response["state"]=>2;
+    // if ($success) {
+    //   return new JSONResponse($response, 201);
+    // }
+    // return new JSONResponse(["error" => "GetReceivedShare failed"], 500);
+
 	}
-	/**
+  /**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
+   *
+   * GetReceivedShare returns the information for a received share the user has access.
 	 */
-
-	# so, a specific share from all of them
-	# GetReceivedShare returns the information for a received share the user has access.
+# diff with getshare???
+# received share the user has access. ->why sayinh that, can you receive a share without having access??
 	public function GetReceivedShare($userId){
-
-		return new JSONResponse("Not implemented", 200);
+    $spec =  $this->request->getParam("Spec");
+    $Id = $spec["Id"];
+    $opaqueId = $Id["opaque_id"];
+    $share = $this->shareManager->getShareByToken($opaqueId);
+		$updatedShare = $this->shareManager->updateShare($share);
+    // $success = $this->shareManager->updateShare($share);
+    if($updatedShare) {
+      $response = shareInfoToResourceInfo($updatedShare);
+      $response["state"]=>2;
+      return new JSONResponse($response, 201);
+    }
+    return new JSONResponse(["error" => "GetReceivedShare failed"], 500);
 	}
-	/**
+  /**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
+   *
+   * UpdateReceivedShare updates the received share with share state.
 	 */
-	# UpdateReceivedShare updates the received share with share state.
+   # diff with UpdateShare???
+   // UpdateReceivedShare {
+   //   "ref":{
+   //     "Spec":{
+   //       "Id":{
+   //         "opaque_id":"some-share-id"
+   //       }
+   //     }
+   //   }
+   //   ,"f":{
+   //     "Field":{
+   //       "DisplayName":"some new name for this received share"
+   //     }
+   //   }
+   // }
+   // Move the share as a recipient of the share.
+   // public moveShare(IShare $share, string $recipientId) : IShare
+   // This is updating the share target. So where the recipient has the share mounted.
+
+   // Use moveshare???
 	public function UpdateReceivedShare($userId){
-		return new JSONResponse("Not implemented", 200);
-	}
+    $spec =  $this->request->getParam("Spec");
+    $Id = $spec["Id"];
+    $opaqueId = $Id["opaque_id"];
+    $share = $this->shareManager->getShareByToken($opaqueId);
+	//	$success = $this->shareManager->updateShare($share);
+    $movedShare = $this->shareManager->moveShare($share,$userId);
+    if ($movedShare) {
+      $response = shareInfoToResourceInfo($movedShare); # needs param
+      $response["state"]=>2;
+      return new JSONResponse($response, 201);
+    }
+    return new JSONResponse(["error" => "UpdateReceivedShare failed"], 500);
 }
