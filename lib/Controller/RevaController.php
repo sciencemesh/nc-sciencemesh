@@ -1,6 +1,4 @@
-[[
-    "map" => NULL,
-]]<?php
+<?php
 namespace OCA\ScienceMesh\Controller;
 
 use OCA\ScienceMesh\ServerConfig;
@@ -152,7 +150,7 @@ class RevaController extends Controller {
 	}
 
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
-	private shareInfoToResourceInfo(IShare $share): array
+	private function shareInfoToResourceInfo(IShare $share): array
 	{
 		return [
 			"id"=>[
@@ -570,10 +568,8 @@ class RevaController extends Controller {
 		return new JSONResponse(["error" => "Create failed"], 500);
 	}
 
-# Create a new share in fn with the given acl.
+# Create a new share with the given access control list.
 
-# What the fn is?
-# What the given acl is?
 	public function Share($userId){
 		$newShare = $this->shareManager->newShare();
 		$createShare = $this->shareManager->createShare($newShare);
@@ -594,8 +590,6 @@ class RevaController extends Controller {
 	 # GetShare gets the information for a share by the given ref.
 
 	 # POST /apps/sciencemesh/~tester/api/share/GetShare {"Spec":{"Id":{"opaque_id":"some-share-id"}}}`:
-	 # Is this the ref :  {"Spec":{"Id":{"opaque_id":"some-share-id"}}} ?
- 	 # Is this a token: some-share-id ?
 	public function GetShare($userId){
 		$spec =  $this->request->getParam("Spec");
 		$Id = $spec["Id"];
@@ -632,7 +626,6 @@ class RevaController extends Controller {
 	 * @NoSameSiteCookieRequired
 	 */
 
-	# Received/ sent or all of them?
 	# UpdateShare updates the mode of the given share.
 	public function UpdateShare($userId){
 		// $user = $this->userManager->get($userId);
@@ -650,11 +643,7 @@ class RevaController extends Controller {
 	# ListShares returns the shares created by the user. If md is provided is not nil,
 	# it returns only shares attached to the given resource.
 
-	# TD: I dont get this:'If md is provided is not nil,it returns only shares attached to the given resource.'
-	# Why?
-	# 1)There is no 'md' here.
-		#`POST /apps/sciencemesh/~tester/api/share/ListShares [{"type":4,"Term":{"Creator":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1}}}]`:
-	# 2) What the 'given resourse' is
+	#`POST /apps/sciencemesh/~tester/api/share/ListShares [{"type":4,"Term":{"Creator":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1}}}]`:
 	public function ListShares($userId){
 		$listShares = $this->shareManager->getSharesBy($userId);
 		$response = shareInfoToResourceInfo();
