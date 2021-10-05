@@ -1,6 +1,4 @@
-[[
-    "map" => NULL,
-]]<?php
+<?php
 namespace OCA\ScienceMesh\Controller;
 
 use OCA\ScienceMesh\ServerConfig;
@@ -152,7 +150,7 @@ class RevaController extends Controller {
 	}
 
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
-	private shareInfoToResourceInfo(IShare $share): array
+	private function shareInfoToResourceInfo(IShare $share): array
 	{
 		return [
 			"id"=>[
@@ -342,7 +340,7 @@ class RevaController extends Controller {
 		if ($success) {
   		$nodeInfo = $this->filesystem->getMetaData($path);
 			$resourceInfo = $this->nodeInfoToCS3ResourceInfo($nodeInfo);
-				return new JSONResponse($resourceInfo, 200);
+			return new JSONResponse($resourceInfo, 200);
 		}
 		return new JSONResponse(["error" => "File not found"], 404);
 
@@ -380,7 +378,7 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 
-	public function ListFolder($userId) {
+  public function ListFolder($userId) {
 		$ref = $this->request->getParam("ref");
 		$path = "sciencemesh" . $ref["path"]; // FIXME: sanitize!
 		$success = $this->filesystem->has($path);
@@ -486,7 +484,7 @@ class RevaController extends Controller {
   //{200, ``, serverStateFileRestored},
 
 	public function RestoreRecycleItem($userId) {
-		$key  = $this->request->getParam("key") ;
+		$key  = $this->request->getParam("key");
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
 
@@ -560,8 +558,9 @@ class RevaController extends Controller {
 			$success = $this->filesystem->update("/sciencemesh" . $path, $contents);
 			if ($success) {
 				return new JSONResponse("OK", 200);
+			} else {
+				return new JSONResponse(["error" => "Update failed"], 500);
 			}
-			return new JSONResponse(["error" => "Update failed"], 500);
 		}
 		$success = $this->filesystem->write("/sciencemesh" . $path, $contents);
 		if ($success) {
@@ -630,7 +629,6 @@ class RevaController extends Controller {
    * Received/ sent or all of them?
  	 * UpdateShare updates the mode(permissions??????) of the given share.
 	 */
-
    # public updateShare(IShare $share) : IShare. No arguments, so how do we know what to update in this specific share?
    # https://stable19--nextcloud-server.netlify.app/classes/ocp-share-imanager#method_updateShare
 	public function UpdateShare($userId){

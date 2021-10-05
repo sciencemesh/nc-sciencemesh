@@ -408,7 +408,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$testFile->method("getMTime")->willReturn(1234567890); // should this be seconds or milliseconds?
 
 		$paramsMap = [
-			["/sciencemesh", $this->sciencemeshFolder],
+			["sciencemesh", $this->sciencemeshFolder],
 			["sciencemesh/test.json", $testFile]
 		];
 		$this->userFolder->method("get")
@@ -499,7 +499,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 
 		$paramsMap = [
 			["sciencemesh",$this->sciencemeshFolder],
-			["/not/found", NULL]
+			["not/found", NULL]
 		];
 		$this->sciencemeshFolder->method("getDirectoryListing")
 			->willReturn(false);
@@ -561,8 +561,8 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->userFolder->method("getPath")->willReturn("");
 
 		$paramsMap = [
-			["/sciencemesh/some/path",$testFolder],
-			["/sciencemesh/some/path/test.json",$testFile]
+			["sciencemesh/some/path",$testFolder],
+			["sciencemesh/some/path/test.json",$testFile]
 		];
 		$this->userFolder->method("get")
 								->will($this->returnValueMap($paramsMap));
