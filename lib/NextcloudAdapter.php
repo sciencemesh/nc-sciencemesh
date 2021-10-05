@@ -203,13 +203,14 @@ class NextcloudAdapter implements AdapterInterface
         $result = [];
         var_dump('dir: /'.$directory);
         try {
-            $node = $this->folder->get("/" . $directory);
+            // FIXME? $node = $this->folder->get("/" . $directory);
+            $node = $this->folder->get($directory);
         } catch (\OCP\Files\NotFoundException $exception) {
             return [];
         }
         if (method_exists($node, 'getDirectoryListing')) {
+            error_log("methd exists on node");
             $nodes = $node->getDirectoryListing();
-
             $result = array_map(function (\OCP\Files\Node $node) {
                 return $this->normalizeNodeInfo($node);
             }, $nodes);
@@ -453,6 +454,7 @@ class NextcloudAdapter implements AdapterInterface
             'size' => $node->getSize(),
             'basename' => basename($node->getPath()),
             'timestamp' => $node->getMTime(),
+            // 'type' => Reva needs an integer as type
             'type' => $node->getType(),
             // @FIXME: Use $node->getPermissions() to set private or public
             //         as soon as we figure out what Nextcloud permissions mean in this context
