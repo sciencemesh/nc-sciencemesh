@@ -484,7 +484,7 @@ class RevaController extends Controller {
   //{200, ``, serverStateFileRestored},
 
 	public function RestoreRecycleItem($userId) {
-		$key  = $this->request->getParam("key"); 
+		$key  = $this->request->getParam("key");
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
 
@@ -561,14 +561,6 @@ class RevaController extends Controller {
 			} else {
 				return new JSONResponse(["error" => "Update failed"], 500);
 			}
-		} else {
-			$success = $this->filesystem->write("/sciencemesh" . $path, $contents);
-			if ($success) {
-				return new JSONResponse("OK", 201);
-			} else {
-				return new JSONResponse(["error" => "Create failed"], 500);
-			}
-			return new JSONResponse(["error" => "Update failed"], 500);
 		}
 		$success = $this->filesystem->write("/sciencemesh" . $path, $contents);
 		if ($success) {

@@ -201,7 +201,6 @@ class NextcloudAdapter implements AdapterInterface
     final public function listContents($directory = '', $recursive = false)
     {
         $result = [];
-        var_dump('dir: /'.$directory);
         try {
             // FIXME? $node = $this->folder->get("/" . $directory);
             $node = $this->folder->get($directory);
