@@ -201,14 +201,12 @@ class NextcloudAdapter implements AdapterInterface
     final public function listContents($directory = '', $recursive = false)
     {
         $result = [];
-
         try {
             // FIXME? $node = $this->folder->get("/" . $directory);
             $node = $this->folder->get($directory);
         } catch (\OCP\Files\NotFoundException $exception) {
             return [];
         }
-        error_log("checking getDirectoryListing " . $directory);
         if (method_exists($node, 'getDirectoryListing')) {
             error_log("methd exists on node");
             $nodes = $node->getDirectoryListing();
