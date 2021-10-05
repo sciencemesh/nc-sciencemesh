@@ -31,6 +31,14 @@ return [
         ['name' => 'reva#UnsetArbitraryMetadata', 'url' => '/~{userId}/api/storage/UnsetArbitraryMetadata', 'verb' => 'POST'],
         ['name' => 'reva#UpdateGrant', 'url' => '/~{userId}/api/storage/UpdateGrant', 'verb' => 'POST'],
         ['name' => 'reva#Upload', 'url' => '/~{userId}/api/storage/Upload/{path}', 'verb' => 'PUT'],
+        ['name' => 'reva#Share', 'url' => '/~{userId}/api/share/Share', 'verb' => 'POST'],
+        ['name' => 'reva#GetShare', 'url' => '/~{userId}/api/share/GetShare', 'verb' => 'POST'],
+        ['name' => 'reva#UnShare', 'url' => '/~{userId}/api/share/UnShare', 'verb' => 'POST'],
+        ['name' => 'reva#UpdateShare', 'url' => '/~{userId}/api/share/UpdateShare', 'verb' => 'POST'],
+        ['name' => 'reva#ListShares', 'url' => '/~{userId}/api/share/ListShares', 'verb' => 'POST'],
+        ['name' => 'reva#ListreceivedShares', 'url' => '/~{userId}/api/share/ListReceivedShares', 'verb' => 'POST'],
+        ['name' => 'reva#GetReceivedShare', 'url' => '/~{userId}/api/share/GetReceivedShare', 'verb' => 'POST'],
+        ['name' => 'reva#UpdateReceivedShare', 'url' => '/~{userId}/api/share/UpdateReceivedShare', 'verb' => 'POST'],
         
 /*        
         ['name' => 'storage#createHome', 'url' => '/~{userId}/CreateHome', 'verb' => 'POST'],
