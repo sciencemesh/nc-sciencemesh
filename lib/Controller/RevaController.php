@@ -25,7 +25,7 @@ use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Controller;
 
 use OCA\Files_Sharing\Controller\ShareAPIController;
-
+use OCP\Share\Exceptions;
 use OCP\Constants;
 
 class RevaController extends Controller {
@@ -150,7 +150,7 @@ class RevaController extends Controller {
 	}
 
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
-	private function shareInfoToResourceInfo(array $share_array): array
+	private function shareInfoToResourceInfo(IShare $share): array
 	{
 		return [
 			"id"=>[
@@ -232,13 +232,24 @@ class RevaController extends Controller {
 		return $permissionsCode;
 	}
 
-	# correspondes the permissions we got from Reva to Nextcloud
-	// private function getSharedWithCode(int $shareWith) : int
-	// {
-	// 		if($shareWith == ){
-	// 			return
-	// 		}
-	// }
+	/**
+	 * @param int
+	 *
+	 * @return int
+	 * @throws NotFoundException
+	 */
+	private function getGranteeType(int $granteeType) : int
+	{
+			// This type represents an individual.
+			if($granteeType == 1 ){
+				return 0;
+			// This type represents a group of individuals.
+			}elseif ($granteeType == 2){
+				return 1;
+			}
+			throw new OCSNotFoundException();
+
+	}
 	private function getStorageUrl($userId) {
 		$storageUrl = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute("sciencemesh.storage.handleHead", array("userId" => $userId, "path" => "foo")));
 		$storageUrl = preg_replace('/foo$/', '', $storageUrl);
@@ -654,13 +665,14 @@ class RevaController extends Controller {
 		$permissionsCode = $this->getPermissionsCode($resourcePermissions);
 		$grantee = $g["grantee"];
 		$granteeId = $grantee["Id"];
+		$granteeType = $grantee["Type"];
 		$granteeIdUserId = $granteeId["UserId"];
-		$granteeType = $granteeIdUserId["type"];
+		$userType = $granteeIdUserId["type"]; // unused
+		error_log("granteeType: ".$granteeType);
+		$granteeTypeCode = $this->getGranteeType($granteeType);
 		$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
-		error_log("GranteeType: ".$granteeType);
 		error_log("shareWith: ".$shareWith);
-
-		$success = $this->shareAPIController->createShare($resourcePath,$permissionsCode,$granteeType,$shareWith);
+		$success = $this->shareAPIController->createShare($resourcePath,$permissionsCode,$granteeTypeCode,$shareWith);
 		if($success){
 			$response = $this->shareInfoToResourceInfo();
 			return new JSONResponse($response, 200);
@@ -678,6 +690,7 @@ class RevaController extends Controller {
 		$spec =  $this->request->getParam("Spec");
 		$Id = $spec["Id"];
 		$opaqueId = $Id["opaque_id"];
+		error_log("GET SHRARE WITH opaque_id: ".$opaqueId);
 		$success = $this->shareAPIController->getShare($opaqueId);
 		if($success){
 			$response = shareInfoToResourceInfo();
@@ -709,14 +722,16 @@ class RevaController extends Controller {
 	 * @NoSameSiteCookieRequired
    *
 	 */
+
 	public function UpdateShare($userId){
     $ref =  $this->request->getParam("ref");
-		$Spec = $ref["Spec"];
-    $Id = $Spec["Id"];
-    $opaqueId = $Id["opaque_id"];
-		$p = $ref["p"];
+		$spec = $ref["Spec"];
+    $id = $spec["Id"];
+    $opaqueId = $id["opaque_id"];
+		$p = $this->request->getParam("p");
 		$permissions = $p["permissions"];
-		$success = $this->shareAPIController->updateShare($opaqueId,$permissions); # I do not need to include the rest arguments?
+		$permissionsCode = $this->getPermissionsCode($permissions);
+		$success = $this->shareAPIController->updateShare($opaqueId,$permissionsCode);
     if($success) {
       $response = shareInfoToResourceInfo();
       return new JSONResponse($response, 201);
@@ -731,11 +746,53 @@ class RevaController extends Controller {
    * ListShares returns the shares created by the user. If md is provided is not nil,
  	 * it returns only shares attached to the given resource.
 	 */
+	 //
+	 // public function getShares(
+		//  string $shared_with_me = 'false',
+		//  string $reshares = 'false',
+		//  string $subfiles = 'false',
+		//  string $path = '',
+		//  string $include_tags = 'false'
+	 //
+
+// 	 message Filter {
+// 	// The filter to apply.
+// 	enum Type {
+// 		TYPE_INVALID = 0;
+// 		TYPE_NO = 1;
+// 		TYPE_RESOURCE_ID = 2;
+// 		TYPE_OWNER = 3;
+// 		TYPE_CREATOR = 4;
+// 	}
+// 	// REQUIRED.
+// 	Type type = 2;
+// 	oneof term {
+// 		storage.provider.v1beta1.ResourceId resource_id = 3;
+// 		cs3.identity.user.v1beta1.UserId owner = 4;
+// 		cs3.identity.user.v1beta1.UserId creator = 5;
+// 	}
+// }  [{"type":4,"Term":{"Creator":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1}}}
+
+
+// UNSUDED REQUEST
 	public function ListShares($userId){
-		$response = shareInfoToResourceInfo();
-		$success =  $this->shareAPIController->getShares();
-    if ($success) {
-      return new JSONResponse('Not Implemented', 201);
+		$requests = $this->request->getParams();
+		$request = array_values($requests)[2];
+		$type = $request["type"];
+		$term =  $request["Term"];
+		$creator = $term["Creator"];
+		$idpCreator = $creator["idp"];
+		$opaqueIdCreator = ["opaque_id"];
+		$typeCreator = ["type"];
+
+		$responses = [];
+		$shares =  $this->shareAPIController->getShares();
+    if ($shares) {
+			foreach ($shares as $share) {
+				array_push($responses,$this->shareInfoToResourceInfo($share));
+			}
+			error_log(count($responses));
+      return new JSONResponse($responses, 201);
     }
     return new JSONResponse(["error" => "ListShares failed"], 500);
 	}
@@ -763,7 +820,6 @@ class RevaController extends Controller {
    *
    * GetReceivedShare returns the information for a received share the user has access.
 	 */
-# The user has access for what???? ( read, write , unshare??)
 	public function GetReceivedShare($userId){
     $spec =  $this->request->getParam("Spec");
     $Id = $spec["Id"];
@@ -804,15 +860,18 @@ class RevaController extends Controller {
 
    // Use moveshare???
 	public function UpdateReceivedShare($userId){
-    $spec =  $this->request->getParam("Spec");
-    $Id = $spec["Id"];
+		$ref =  $this->request->getParam("ref");
+		$Spec = $ref["Spec"];
+    $Id = $Spec["Id"];
     $opaqueId = $Id["opaque_id"];
-		$success = $this->shareAPIController->updateShare($opaqueId,$permissions);
-    if ($success) {
-      // $response = shareInfoToResourceInfo();
-      // $response["state"]=2;
-      return new JSONResponse("Not Implemented", 201);
+		$p = $ref["p"];
+		$permissions = $p["permissions"];
+		$permissionsCode = $this->getPermissionsCode($permissions);
+		$success = $this->shareAPIController->updateShare($opaqueId,$permissionsCode);
+    if($success) {
+      $response = shareInfoToResourceInfo();
+      return new JSONResponse($response, 201);
     }
-    return new JSONResponse(["error" => "UpdateReceivedShare failed"], 500);
-  }
+    return new JSONResponse(["error" => "UpdateShare failed"], 500);
+	}
 }
