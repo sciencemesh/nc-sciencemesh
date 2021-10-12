@@ -1239,9 +1239,25 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->userService, $this->trashManager , $this->shareManager
 		);
 		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$this->request->method("getParams")
+			->willReturn(
+				[
+					"POST",
+					"/apps/sciencemesh/~tester/api/share/ListShares",
+					[
+						"type"=>4,
+						"Term"=>[
+							"Creator"=>[
+								"idp"=>"0.0.0.0=>19000",
+								"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+								"type"=>1
+								]
+							]
+						]
+				]
+			);
 		$this->shareManager->method("getSharesBy")
 			->willReturn([$testShare]);
-		$result = $controller->ListReceivedShares($this->userId);
 		$responses =[[
 			"id"=>[
 				"map" => NULL,
@@ -1296,9 +1312,11 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			],
 			"mtime"=>[
 				"seconds"=>1234567890
-			]
+			],
+			"state"=>2
 		]];
-		$this->assertEquals($result->getData(),'Not Implemented');
+		$result = $controller->ListReceivedShares($this->userId);
+		$this->assertEquals($result->getData(),$responses);
 		$this->assertEquals($result->getStatus(),201);
 	}
 	public function testListReceivedSharesEmpty(){
@@ -1307,6 +1325,23 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager , $this->shareManager
 		);
+		$this->request->method("getParams")
+			->willReturn(
+				[
+					"POST",
+					"/apps/sciencemesh/~tester/api/share/ListShares",
+					[
+						"type"=>4,
+						"Term"=>[
+							"Creator"=>[
+								"idp"=>"0.0.0.0=>19000",
+								"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+								"type"=>1
+								]
+							]
+						]
+				]
+			);
 		$this->shareManager->method("getSharesBy")
 			->willReturn([]);
 		$result = $controller->ListReceivedShares($this->userId);
