@@ -861,7 +861,7 @@ class RevaController extends Controller {
 		$Spec = $ref["Spec"];
     $Id = $Spec["Id"];
     $opaqueId = $Id["opaque_id"];
-		$share = $this->shareManager->getShareById($opaqueId);
+		$share = $this->shareManager->getShareById($opaqueId,$userId);
 		$updated = $this->shareManager->updateShare($share, 5);
     if($updated) {
       $response = $this->shareInfoToResourceInfo($updated);
