@@ -26,6 +26,8 @@ use OCP\AppFramework\Controller;
 
 use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IManager;
+use OCP\Share\IShare;
+
 use OCP\Share\Exceptions;
 use OCP\Constants;
 
@@ -723,15 +725,16 @@ class RevaController extends Controller {
    *
    * Unshare deletes the share pointed by ref.
 	 */
-	public function UnShare($userId){
+	public function Unshare($userId){
 		$spec =  $this->request->getParam("Spec");
 		$Id = $spec["Id"];
 		$opaqueId = $Id["opaque_id"];
-		$success = $this->shareManager->deleteShare($opaqueId);
+		$share = $this->shareManager->getShareById($opaqueId);
+		$success = $this->shareManager->deleteShare($share);
 		if ($success) {
 			return new JSONResponse("OK", 201);
 		}
-		return new JSONResponse(["error" => "UnShare failed"], 500);
+		return new JSONResponse(["error" => "Unshare failed"], 500);
 	}
   /**
 	 * @PublicPage

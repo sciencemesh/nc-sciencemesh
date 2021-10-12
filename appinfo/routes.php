@@ -33,7 +33,7 @@ return [
         ['name' => 'reva#Upload', 'url' => '/~{userId}/api/storage/Upload/{path}', 'verb' => 'PUT'],
         ['name' => 'reva#Share', 'url' => '/~{userId}/api/share/Share', 'verb' => 'POST'],
         ['name' => 'reva#GetShare', 'url' => '/~{userId}/api/share/GetShare', 'verb' => 'POST'],
-        ['name' => 'reva#UnShare', 'url' => '/~{userId}/api/share/UnShare', 'verb' => 'POST'],
+        ['name' => 'reva#Unshare', 'url' => '/~{userId}/api/share/Unshare', 'verb' => 'POST'],
         ['name' => 'reva#UpdateShare', 'url' => '/~{userId}/api/share/UpdateShare', 'verb' => 'POST'],
         ['name' => 'reva#ListShares', 'url' => '/~{userId}/api/share/ListShares', 'verb' => 'POST'],
         ['name' => 'reva#ListreceivedShares', 'url' => '/~{userId}/api/share/ListReceivedShares', 'verb' => 'POST'],
