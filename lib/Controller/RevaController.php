@@ -26,6 +26,8 @@ use OCP\AppFramework\Controller;
 
 use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IManager;
+use OCP\Share\IShare;
+
 use OCP\Share\Exceptions;
 use OCP\Constants;
 
@@ -723,15 +725,16 @@ class RevaController extends Controller {
    *
    * Unshare deletes the share pointed by ref.
 	 */
-	public function UnShare($userId){
+	public function Unshare($userId){
 		$spec =  $this->request->getParam("Spec");
 		$Id = $spec["Id"];
 		$opaqueId = $Id["opaque_id"];
-		$success = $this->shareManager->deleteShare($opaqueId);
+		$share = $this->shareManager->getShareById($opaqueId);
+		$success = $this->shareManager->deleteShare($share);
 		if ($success) {
 			return new JSONResponse("OK", 201);
 		}
-		return new JSONResponse(["error" => "UnShare failed"], 500);
+		return new JSONResponse(["error" => "Unshare failed"], 500);
 	}
   /**
 	 * @PublicPage
@@ -748,9 +751,10 @@ class RevaController extends Controller {
 		$p = $this->request->getParam("p");
 		$permissions = $p["permissions"];
 		$permissionsCode = $this->getPermissionsCode($permissions);
-		$share = $this->shareManager->updateShare($opaqueId,$permissionsCode);
-    if($share) {
-      $response = $this->shareInfoToResourceInfo($share);
+		$share = $this->shareManager->getShareById($opaqueId);
+		$updated = $this->shareManager->updateShare($share, $permissionsCode);
+    if($updated) {
+      $response = $this->shareInfoToResourceInfo($updated);
       return new JSONResponse($response, 201);
     }
     return new JSONResponse(["error" => "UpdateShare failed"], 500);
@@ -803,7 +807,7 @@ class RevaController extends Controller {
 		$typeCreator = ["type"];
 
 		$responses = [];
-		$shares =  $this->shareManager->getSharesBy($userId);
+		$shares =  $this->shareManager->getSharesBy($userId, 6);
     if ($shares) {
 			foreach ($shares as $share) {
 				array_push($responses,$this->shareInfoToResourceInfo($share));
@@ -811,7 +815,7 @@ class RevaController extends Controller {
 			error_log(count($responses));
       return new JSONResponse($responses, 201);
     }
-    return new JSONResponse(["error" => "ListShares failed"], 500);
+    return new JSONResponse([], 200);
 	}
   /**
 	 * @PublicPage
@@ -823,11 +827,11 @@ class RevaController extends Controller {
 	public function ListReceivedShares($userId){
     // $response = shareInfoToResourceInfo();
     // $response["state"]=>2;
-		$shares =  $this->shareManager->getSharesBy($userId);
+		$shares =  $this->shareManager->getSharesBy($userId, 6);
     if ($shares) {
       return new JSONResponse('Not Implemented', 201);
     }
-    return new JSONResponse(["error" => "ListReceivedShares failed"], 500);
+    return new JSONResponse([], 200);
 
 	}
   /**
@@ -881,14 +885,16 @@ class RevaController extends Controller {
 		$Spec = $ref["Spec"];
     $Id = $Spec["Id"];
     $opaqueId = $Id["opaque_id"];
-		$p = $ref["p"];
-		$permissions = $p["permissions"];
-		$permissionsCode = $this->getPermissionsCode($permissions);
-		$share = $this->shareManager->updateShare($opaqueId,$permissionsCode);
-    if($share) {
-      $response = $this->shareInfoToResourceInfo($share);
+		// $p = $ref["permissions"];
+		// $permissions = $p["permissions"];
+		// error_log(json_encode($permissions));
+		// $permissionsCode = $this->getPermissionsCode($permissions);
+		$share = $this->shareManager->getShareById($opaqueId);
+		$updated = $this->shareManager->updateShare($share, 5);
+    if($updated) {
+      $response = $this->shareInfoToResourceInfo($updated);
       return new JSONResponse($response, 201);
     }
-    return new JSONResponse(["error" => "UpdateShare failed"], 500);
+    return new JSONResponse(["error" => "UpdateReceivedShare failed"], 500);
 	}
 }
