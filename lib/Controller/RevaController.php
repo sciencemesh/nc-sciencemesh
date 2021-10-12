@@ -815,7 +815,7 @@ class RevaController extends Controller {
 			error_log(count($responses));
       return new JSONResponse($responses, 201);
     }
-    return new JSONResponse(["error" => "ListShares failed"], 500);
+    return new JSONResponse([], 200);
 	}
   /**
 	 * @PublicPage
@@ -831,7 +831,7 @@ class RevaController extends Controller {
     if ($shares) {
       return new JSONResponse('Not Implemented', 201);
     }
-    return new JSONResponse(["error" => "ListReceivedShares failed"], 500);
+    return new JSONResponse([], 200);
 
 	}
   /**
