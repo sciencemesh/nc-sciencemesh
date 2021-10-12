@@ -650,6 +650,18 @@ class RevaController extends Controller {
     // }
     // SHARE WITH WHO???
     // acl =  {"md":{"opaque":{},"type":1,"id":{"opaque_id":"fileid-/some/path"},"checksum":{},"etag":"deadbeef","mime_type":"text/plain","mtime":{"seconds":1234567890},"path":"/some/path","permission_set":{},"size":12345,"canonical_metadata":{},"arbitrary_metadata":{"metadata":{"da":"ta","some":"arbi","trary":"meta"}}},"g":{"grantee":{"Id":null},"permissions":{"permissions":{}}}}`???
+	// 	*/
+ 	// public function createShare(
+ 	// 	string $path =sciencemesh/some/path,
+ 	// 	int $permissions = 31, from getPermissionsCode()
+ 	// 	int $shareType = -1, OCP\Share\IShare::TYPE_REMOTE = 6
+ 	// 	string $shareWith = null, tester@localhost:8080
+ 	// 	string $publicUpload = 'false',
+ 	// 	string $password = '',
+ 	// 	string $sendPasswordByTalk = null,
+ 	// 	string $expireDate = '',
+ 	// 	string $label = ''
+ 	// ):
 
 	public function Share($userId){
     $md =  $this->request->getParam("md");
@@ -665,14 +677,13 @@ class RevaController extends Controller {
 		$permissionsCode = $this->getPermissionsCode($resourcePermissions);
 		$grantee = $g["grantee"];
 		$granteeId = $grantee["Id"];
-		$granteeType = $grantee["Type"];
 		$granteeIdUserId = $granteeId["UserId"];
 		$userType = $granteeIdUserId["type"]; // unused
 		error_log("granteeType: ".$granteeType);
 		$granteeTypeCode = $this->getGranteeType($granteeType);
 		$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
 		error_log("shareWith: ".$shareWith);
-		$success = $this->shareAPIController->createShare($resourcePath,$permissionsCode,$granteeTypeCode,$shareWith);
+		$success = $this->shareAPIController->createShare($resourcePath,$permissionsCode,6,$shareWith);
 		if($success){
 			$response = $this->shareInfoToResourceInfo();
 			return new JSONResponse($response, 200);
