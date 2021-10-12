@@ -751,9 +751,10 @@ class RevaController extends Controller {
 		$p = $this->request->getParam("p");
 		$permissions = $p["permissions"];
 		$permissionsCode = $this->getPermissionsCode($permissions);
-		$share = $this->shareManager->updateShare($opaqueId,$permissionsCode);
-    if($share) {
-      $response = $this->shareInfoToResourceInfo($share);
+		$share = $this->shareManager->getShareById($opaqueId);
+		$updated = $this->shareManager->updateShare($share, $permissionsCode);
+    if($updated) {
+      $response = $this->shareInfoToResourceInfo($updated);
       return new JSONResponse($response, 201);
     }
     return new JSONResponse(["error" => "UpdateShare failed"], 500);
