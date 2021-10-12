@@ -1256,7 +1256,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 						]
 				]
 			);
-		$this->shareManager->method("getSharesBy")
+		$this->shareManager->method("getSharedWith")
 			->willReturn([$testShare]);
 		$responses =[[
 			"id"=>[
@@ -1342,7 +1342,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 						]
 				]
 			);
-		$this->shareManager->method("getSharesBy")
+		$this->shareManager->method("getSharedWith")
 			->willReturn([]);
 		$result = $controller->ListReceivedShares($this->userId);
 
