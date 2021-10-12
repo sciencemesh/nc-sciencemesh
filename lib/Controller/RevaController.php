@@ -587,41 +587,6 @@ class RevaController extends Controller {
    *
    * Create a new share in fn with the given access control list.
 	 */
-
-    // {
-    //   "md":{
-    //     "opaque":{},
-    //     "type":1,
-    //     "id":{
-    //       "opaque_id":"fileid-/some/path"
-    //     },
-    //     "checksum":{},
-    //     "etag":"deadbeef",
-    //     "mime_type":"text/plain",
-    //     "mtime":{
-    //       "seconds":1234567890
-    //     },
-    //     "path":"/some/path",
-    //     "permission_set":{},
-    //     "size":12345,
-    //     "canonical_metadata":{},
-    //     "arbitrary_metadata":{
-    //       "metadata":{
-    //         "da":"ta","some":"arbi","trary":"meta"
-    //       }
-    //     }
-    //   },
-    //   "g":{
-    //     "grantee":{
-    //       "Id":null
-    //     },
-    //   "permissions":{
-    //     "permissions":{}
-    //     }
-    //   }
-    // }
-    // SHARE WITH WHO???
-    // acl =  {"md":{"opaque":{},"type":1,"id":{"opaque_id":"fileid-/some/path"},"checksum":{},"etag":"deadbeef","mime_type":"text/plain","mtime":{"seconds":1234567890},"path":"/some/path","permission_set":{},"size":12345,"canonical_metadata":{},"arbitrary_metadata":{"metadata":{"da":"ta","some":"arbi","trary":"meta"}}},"g":{"grantee":{"Id":null},"permissions":{"permissions":{}}}}`???
 	// 	*/
  	// public function createShare(
  	// 	string $path =sciencemesh/some/path,
@@ -634,7 +599,6 @@ class RevaController extends Controller {
  	// 	string $expireDate = '',
  	// 	string $label = ''
  	// ):
-
 	public function Share($userId){
     $md =  $this->request->getParam("md");
 		$g = $this->request->getParam("g");
@@ -733,33 +697,6 @@ class RevaController extends Controller {
    * ListShares returns the shares created by the user. If md is provided is not nil,
  	 * it returns only shares attached to the given resource.
 	 */
-	 //
-	 // public function getShares(
-		//  string $shared_with_me = 'false',
-		//  string $reshares = 'false',
-		//  string $subfiles = 'false',
-		//  string $path = '',
-		//  string $include_tags = 'false'
-	 //
-
-// 	 message Filter {
-// 	// The filter to apply.
-// 	enum Type {
-// 		TYPE_INVALID = 0;
-// 		TYPE_NO = 1;
-// 		TYPE_RESOURCE_ID = 2;
-// 		TYPE_OWNER = 3;
-// 		TYPE_CREATOR = 4;
-// 	}
-// 	// REQUIRED.
-// 	Type type = 2;
-// 	oneof term {
-// 		storage.provider.v1beta1.ResourceId resource_id = 3;
-// 		cs3.identity.user.v1beta1.UserId owner = 4;
-// 		cs3.identity.user.v1beta1.UserId creator = 5;
-// 	}
-
-
 	public function ListShares($userId){
 		$requests = $this->request->getParams();
 		$request = array_values($requests)[2];
@@ -769,7 +706,6 @@ class RevaController extends Controller {
 		$idpCreator = $creator["idp"];
 		$opaqueIdCreator = ["opaque_id"];
 		$typeCreator = ["type"];
-
 		$responses = [];
 		$shares =  $this->shareManager->getSharesBy($userId, 6);
     if ($shares) {
@@ -836,26 +772,6 @@ class RevaController extends Controller {
    *
    * UpdateReceivedShare updates the received share with share state.
 	 */
-   # diff with UpdateShare???
-   // UpdateReceivedShare {
-   //   "ref":{
-   //     "Spec":{
-   //       "Id":{
-   //         "opaque_id":"some-share-id"
-   //       }
-   //     }
-   //   }
-   //   ,"f":{
-   //     "Field":{
-   //       "DisplayName":"some new name for this received share"
-   //     }
-   //   }
-   // }
-   // Move the share as a recipient of the share.
-   // public moveShare(IShare $share, string $recipientId) : IShare
-   // This is updating the share target. So where the recipient has the share mounted.
-
-   // Use moveshare???
 	public function UpdateReceivedShare($userId){
 		$ref =  $this->request->getParam("ref");
 		$Spec = $ref["Spec"];
