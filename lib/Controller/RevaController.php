@@ -807,7 +807,7 @@ class RevaController extends Controller {
 		$typeCreator = ["type"];
 
 		$responses = [];
-		$shares =  $this->shareManager->getSharesBy($userId);
+		$shares =  $this->shareManager->getSharesBy($userId, 6);
     if ($shares) {
 			foreach ($shares as $share) {
 				array_push($responses,$this->shareInfoToResourceInfo($share));
@@ -827,7 +827,7 @@ class RevaController extends Controller {
 	public function ListReceivedShares($userId){
     // $response = shareInfoToResourceInfo();
     // $response["state"]=>2;
-		$shares =  $this->shareManager->getSharesBy($userId);
+		$shares =  $this->shareManager->getSharesBy($userId, 6);
     if ($shares) {
       return new JSONResponse('Not Implemented', 201);
     }
