@@ -24,7 +24,8 @@ use OCP\AppFramework\Http\TextPlainResponse;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Controller;
 
-use OCA\Files_Sharing\Controller\ShareAPIController;
+use OCP\Share\Exceptions\ShareNotFound;
+use OCP\Share\IManager;
 use OCP\Share\Exceptions;
 use OCP\Constants;
 
@@ -36,7 +37,7 @@ class RevaController extends Controller {
 	private $session;
 
  # UserService : unused
-	public function __construct($AppName, IRootFolder $rootFolder, IRequest $request, ISession $session, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IConfig $config, \OCA\ScienceMesh\Service\UserService $UserService, ITrashManager $trashManager, ShareAPIController $shareAPIController)
+	public function __construct($AppName, IRootFolder $rootFolder, IRequest $request, ISession $session, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IConfig $config, \OCA\ScienceMesh\Service\UserService $UserService, ITrashManager $trashManager, IManager $shareManager)
 	{
 		parent::__construct($AppName, $request);
 		require_once(__DIR__.'/../../vendor/autoload.php');
@@ -56,7 +57,7 @@ class RevaController extends Controller {
 		$this->baseUrl = $this->getStorageUrl($userId); // Where is that used?
 
 		# Share
-		$this->shareAPIController = $shareAPIController;
+		$this->shareManager = $shareManager;
 
 	}
 
@@ -682,7 +683,7 @@ class RevaController extends Controller {
 //		$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
 		$shareWith = $granteeIdUserId["opaque_id"]."@example.com";
 		error_log("shareWith: ".$shareWith);
-		$success = $this->shareAPIController->createShare($resourcePath,$permissionsCode,6,$shareWith);
+		$success = $this->shareManager->createShare($resourcePath,$permissionsCode,6,$shareWith);
 		if($success){
 			$response = $this->shareInfoToResourceInfo();
 			return new JSONResponse($response, 200);
@@ -701,7 +702,7 @@ class RevaController extends Controller {
 		$Id = $spec["Id"];
 		$opaqueId = $Id["opaque_id"];
 		error_log("GET SHRARE WITH opaque_id: ".$opaqueId);
-		$success = $this->shareAPIController->getShare($opaqueId);
+		$success = $this->shareManager->getShare($opaqueId);
 		if($success){
 			$response = shareInfoToResourceInfo($success);
 			return new JSONResponse($response, 200);
@@ -720,7 +721,7 @@ class RevaController extends Controller {
 		$spec =  $this->request->getParam("Spec");
 		$Id = $spec["Id"];
 		$opaqueId = $Id["opaque_id"];
-		$success = $this->shareAPIController->deleteShare($opaqueId);
+		$success = $this->shareManager->deleteShare($opaqueId);
 		if ($success) {
 			return new JSONResponse("OK", 201);
 		}
@@ -741,7 +742,7 @@ class RevaController extends Controller {
 		$p = $this->request->getParam("p");
 		$permissions = $p["permissions"];
 		$permissionsCode = $this->getPermissionsCode($permissions);
-		$success = $this->shareAPIController->updateShare($opaqueId,$permissionsCode);
+		$success = $this->shareManager->updateShare($opaqueId,$permissionsCode);
     if($success) {
       $response = shareInfoToResourceInfo();
       return new JSONResponse($response, 201);
@@ -796,7 +797,7 @@ class RevaController extends Controller {
 		$typeCreator = ["type"];
 
 		$responses = [];
-		$shares =  $this->shareAPIController->getShares();
+		$shares =  $this->shareManager->getShares();
     if ($shares) {
 			foreach ($shares as $share) {
 				array_push($responses,$this->shareInfoToResourceInfo($share));
@@ -816,7 +817,7 @@ class RevaController extends Controller {
 	public function ListReceivedShares($userId){
     // $response = shareInfoToResourceInfo();
     // $response["state"]=>2;
-		$success =  $this->shareAPIController->getShares($sharedWithMe = true);
+		$success =  $this->shareManager->getShares($sharedWithMe = true);
     if ($success) {
       return new JSONResponse('Not Implemented', 201);
     }
@@ -834,7 +835,7 @@ class RevaController extends Controller {
     $spec =  $this->request->getParam("Spec");
     $Id = $spec["Id"];
     $opaqueId = $Id["opaque_id"];
-		$success = $this->shareAPIController->getShare($opaqueId,);
+		$success = $this->shareManager->getShare($opaqueId,);
     if($success) {
       $response = shareInfoToResourceInfo($success);
       $response["state"] = 2;
@@ -877,7 +878,7 @@ class RevaController extends Controller {
 		$p = $ref["p"];
 		$permissions = $p["permissions"];
 		$permissionsCode = $this->getPermissionsCode($permissions);
-		$success = $this->shareAPIController->updateShare($opaqueId,$permissionsCode);
+		$success = $this->shareManager->updateShare($opaqueId,$permissionsCode);
     if($success) {
       $response = shareInfoToResourceInfo();
       return new JSONResponse($response, 201);
