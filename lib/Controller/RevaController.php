@@ -26,8 +26,8 @@ use OCP\AppFramework\Controller;
 
 use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IManager;
-#use OCA\Share\IShare;
-#use OC\Share20\Manager;
+use OCP\Share\Exceptions;
+use OCP\Constants;
 
 class RevaController extends Controller {
 	/* @var IURLGenerator */
@@ -36,6 +36,7 @@ class RevaController extends Controller {
 	/* @var ISession */
 	private $session;
 
+ # UserService : unused
 	public function __construct($AppName, IRootFolder $rootFolder, IRequest $request, ISession $session, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IConfig $config, \OCA\ScienceMesh\Service\UserService $UserService, ITrashManager $trashManager, IManager $shareManager)
 	{
 		parent::__construct($AppName, $request);
@@ -192,7 +193,7 @@ class RevaController extends Controller {
 				]
 			],
 			"owner"=>[
-				"idp"=>"0.0.0.0:19000",
+				"idp"=>"0::.0.0.0:19000",
 				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
 				"type"=>1
 			],
@@ -210,6 +211,46 @@ class RevaController extends Controller {
 		];
 	}
 
+	# correspondes the permissions we got from Reva to Nextcloud
+	private function getPermissionsCode(array $permissions) : int
+	{
+		$permissionsCode = 0;
+		if(!empty($permissions["GetPath"]) || !empty($permissions["GetQuota"]) || !empty($permissions["InitiateFileDownload"]) || !empty($permissions["InitiateFileUpload"]) ||  !empty($permissions["Stat"]) ){
+			$permissionsCode += \OCP\Constants::PERMISSION_READ;
+		}
+		if( !empty($permissions["CreateContainer"]) || !empty($permissions["Move"]) ||  !empty($permissions["AddGrant"]) || !empty($permissions["RestoreFileVersion"]) || !empty($permissions["RestoreRecycleItem:"]) ){
+			$permissionsCode += \OCP\Constants::PERMISSION_CREATE;
+		}
+		if( !empty($permissions["Move"]) || !empty($permissions["Delete"]) || !empty($permissions["RemoveGrant"])){
+			$permissionsCode += \OCP\Constants::PERMISSION_DELETE;
+		}
+		if( !empty($permissions["ListGrants"]) || !empty($permissions["ListContents"]) || !empty($permissions["ListFileVersions"]) || !empty($permissions["ListRecycle"])){
+			$permissionsCode += \OCP\Constants::PERMISSION_SHARE;
+		}
+		if( !empty($permissions["UpdateGrant"])){
+			$permissionsCode += \OCP\Constants::PERMISSION_UPDATE;
+		}
+		return $permissionsCode;
+	}
+
+	/**
+	 * @param int
+	 *
+	 * @return int
+	 * @throws NotFoundException
+	 */
+	private function getGranteeType(int $granteeType) : int
+	{
+			// This type represents an individual.
+			if($granteeType == 1 ){
+				return 0;
+			// This type represents a group of individuals.
+			}elseif ($granteeType == 2){
+				return 1;
+			}
+			throw new OCSNotFoundException();
+
+	}
 	private function getStorageUrl($userId) {
 		$storageUrl = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute("sciencemesh.storage.handleHead", array("userId" => $userId, "path" => "foo")));
 		$storageUrl = preg_replace('/foo$/', '', $storageUrl);
@@ -568,117 +609,286 @@ class RevaController extends Controller {
 		}
 		return new JSONResponse(["error" => "Create failed"], 500);
 	}
+  /**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @NoSameSiteCookieRequired
+   *
+   * Create a new share in fn with the given access control list.
+	 */
 
-# Create a new share with the given access control list.
+    // {
+    //   "md":{
+    //     "opaque":{},
+    //     "type":1,
+    //     "id":{
+    //       "opaque_id":"fileid-/some/path"
+    //     },
+    //     "checksum":{},
+    //     "etag":"deadbeef",
+    //     "mime_type":"text/plain",
+    //     "mtime":{
+    //       "seconds":1234567890
+    //     },
+    //     "path":"/some/path",
+    //     "permission_set":{},
+    //     "size":12345,
+    //     "canonical_metadata":{},
+    //     "arbitrary_metadata":{
+    //       "metadata":{
+    //         "da":"ta","some":"arbi","trary":"meta"
+    //       }
+    //     }
+    //   },
+    //   "g":{
+    //     "grantee":{
+    //       "Id":null
+    //     },
+    //   "permissions":{
+    //     "permissions":{}
+    //     }
+    //   }
+    // }
+    // SHARE WITH WHO???
+    // acl =  {"md":{"opaque":{},"type":1,"id":{"opaque_id":"fileid-/some/path"},"checksum":{},"etag":"deadbeef","mime_type":"text/plain","mtime":{"seconds":1234567890},"path":"/some/path","permission_set":{},"size":12345,"canonical_metadata":{},"arbitrary_metadata":{"metadata":{"da":"ta","some":"arbi","trary":"meta"}}},"g":{"grantee":{"Id":null},"permissions":{"permissions":{}}}}`???
+	// 	*/
+ 	// public function createShare(
+ 	// 	string $path =sciencemesh/some/path,
+ 	// 	int $permissions = 31, from getPermissionsCode()
+ 	// 	int $shareType = -1, OCP\Share\IShare::TYPE_REMOTE = 6
+ 	// 	string $shareWith = null, tester@localhost:8080
+ 	// 	string $publicUpload = 'false',
+ 	// 	string $password = '',
+ 	// 	string $sendPasswordByTalk = null,
+ 	// 	string $expireDate = '',
+ 	// 	string $label = ''
+ 	// ):
 
 	public function Share($userId){
-		$newShare = $this->shareManager->newShare();
-		$createShare = $this->shareManager->createShare($newShare);
-		if($createShare){
-			$response = $this->shareInfoToResourceInfo($newShare);
-			return new JSONResponse($response, 200);
-		}
-		return new JSONResponse(["error" => "Share failed"], 500);
+    $md =  $this->request->getParam("md");
+		$g = $this->request->getParam("g");
+
+    $resourceType = $md["type"];
+		$resourcePath =  "sciencemesh".$md["path"];
+    $resourceId =  $md["id"];
+    $resourceOpaqueId = $resourceId["opaque_id"];
+
+		$sharePermissions = $g["permissions"];
+		$resourcePermissions = $sharePermissions["permissions"];
+		$permissionsCode = $this->getPermissionsCode($resourcePermissions);
+		$grantee = $g["grantee"];
+		$granteeId = $grantee["Id"];
+		$granteeIdUserId = $granteeId["UserId"];
+		$userType = $granteeIdUserId["type"]; // unused
+//		$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
+		$shareWith = $granteeIdUserId["opaque_id"]."@example.com";
+		error_log("shareWith: ".$shareWith);
+		$share = $this->shareManager->newShare();
+		try {
+			$path = $this->userFolder->get($resourcePath);
+		} catch (NotFoundException $e) {
+			// throw new OCSNotFoundException($this->l->t('Wrong path, file/folder doesn\'t exist'));
+			return new JSONResponse(["error" => "Share failed"], 500);
 	}
-
-	/**
-	 * @PublicPage
-	 * @NoCSRFRequired
-	 * @NoSameSiteCookieRequired
-	 */
-
-
-	 # GetShare gets the information for a share by the given ref.
-
-	 # POST /apps/sciencemesh/~tester/api/share/GetShare {"Spec":{"Id":{"opaque_id":"some-share-id"}}}`:
-	public function GetShare($userId){
-		$spec =  $this->request->getParam("Spec");
-		$Id = $spec["Id"];
-		$opaqueId = $Id["opaque_id"];
-	  $share = $this->shareManager->getShareByToken($opaqueId);
-		if($share){
-			$response = shareInfoToResourceInfo($share);
-			return new JSONResponse($response, 200);
-		}
-		return new JSONResponse(["error" => "GetShare failed"], 500);
-
-	}
-
-	/**
-	 * @PublicPage
-	 * @NoCSRFRequired
-	 * @NoSameSiteCookieRequired
-	 */
-	# Unshare deletes the share pointed by ref.
-	public function UnShare($userId){
-		$spec =  $this->request->getParam("Spec");
-		$Id = $spec["Id"];
-		$opaqueId = $Id["opaque_id"];
-	  $share = $this->shareManager->getShareByToken($opaqueId);
-		$success = $this->shareManager->deleteShare($share);
-		if ($success) {
-			return new JSONResponse("OK", 201);
-		}
-		return new JSONResponse(["error" => "UnShare failed"], 500);
-	}
-	/**
-	 * @PublicPage
-	 * @NoCSRFRequired
-	 * @NoSameSiteCookieRequired
-	 */
-
-	# UpdateShare updates the mode of the given share.
-	public function UpdateShare($userId){
-		// $user = $this->userManager->get($userId);
-		// $share = $this->shareManager->getShareByToken($token);
-		// $this->shareManager->updateShare($share);
-
-		return new JSONResponse("Not implemented", 200);
-	}
-	/**
-	 * @PublicPage
-	 * @NoCSRFRequired
-	 * @NoSameSiteCookieRequired
-	 */
-
-	# ListShares returns the shares created by the user. If md is provided is not nil,
-	# it returns only shares attached to the given resource.
-
-	#`POST /apps/sciencemesh/~tester/api/share/ListShares [{"type":4,"Term":{"Creator":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1}}}]`:
-	public function ListShares($userId){
-		$listShares = $this->shareManager->getSharesBy($userId);
-		$response = shareInfoToResourceInfo();
+		$share->setNode($path);
+		$share->setSharedWith($shareWith);
+		$share->setPermissions($permissionsCode);
+		$response = $this->shareInfoToResourceInfo($share);
 		return new JSONResponse($response, 200);
 	}
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
+   *
+   * GetShare gets the information for a share by the given ref.
 	 */
-	# ListReceivedShares returns the list of shares the user has access.
+	public function GetShare($userId){
+		$spec =  $this->request->getParam("Spec");
+		$Id = $spec["Id"];
+		$opaqueId = $Id["opaque_id"];
+		error_log("GET SHRARE WITH opaque_id: ".$opaqueId);
+		$share = $this->shareManager->getShareById($opaqueId);
+		if($share){
+			$response = $this->shareInfoToResourceInfo($share);
+			return new JSONResponse($response, 200);
+		}
+		return new JSONResponse(["error" => "GetShare failed"], 500);
+
+	}
+  /**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @NoSameSiteCookieRequired
+   *
+   * Unshare deletes the share pointed by ref.
+	 */
+	public function UnShare($userId){
+		$spec =  $this->request->getParam("Spec");
+		$Id = $spec["Id"];
+		$opaqueId = $Id["opaque_id"];
+		$success = $this->shareManager->deleteShare($opaqueId);
+		if ($success) {
+			return new JSONResponse("OK", 201);
+		}
+		return new JSONResponse(["error" => "UnShare failed"], 500);
+	}
+  /**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @NoSameSiteCookieRequired
+   *
+	 */
+
+	public function UpdateShare($userId){
+    $ref =  $this->request->getParam("ref");
+		$spec = $ref["Spec"];
+    $id = $spec["Id"];
+    $opaqueId = $id["opaque_id"];
+		$p = $this->request->getParam("p");
+		$permissions = $p["permissions"];
+		$permissionsCode = $this->getPermissionsCode($permissions);
+		$share = $this->shareManager->updateShare($opaqueId,$permissionsCode);
+    if($share) {
+      $response = $this->shareInfoToResourceInfo($share);
+      return new JSONResponse($response, 201);
+    }
+    return new JSONResponse(["error" => "UpdateShare failed"], 500);
+	}
+  /**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @NoSameSiteCookieRequired
+   *
+   * ListShares returns the shares created by the user. If md is provided is not nil,
+ 	 * it returns only shares attached to the given resource.
+	 */
+	 //
+	 // public function getShares(
+		//  string $shared_with_me = 'false',
+		//  string $reshares = 'false',
+		//  string $subfiles = 'false',
+		//  string $path = '',
+		//  string $include_tags = 'false'
+	 //
+
+// 	 message Filter {
+// 	// The filter to apply.
+// 	enum Type {
+// 		TYPE_INVALID = 0;
+// 		TYPE_NO = 1;
+// 		TYPE_RESOURCE_ID = 2;
+// 		TYPE_OWNER = 3;
+// 		TYPE_CREATOR = 4;
+// 	}
+// 	// REQUIRED.
+// 	Type type = 2;
+// 	oneof term {
+// 		storage.provider.v1beta1.ResourceId resource_id = 3;
+// 		cs3.identity.user.v1beta1.UserId owner = 4;
+// 		cs3.identity.user.v1beta1.UserId creator = 5;
+// 	}
+// }  [{"type":4,"Term":{"Creator":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1}}}
+
+
+// UNSUDED REQUEST
+	public function ListShares($userId){
+		$requests = $this->request->getParams();
+		$request = array_values($requests)[2];
+		$type = $request["type"];
+		$term =  $request["Term"];
+		$creator = $term["Creator"];
+		$idpCreator = $creator["idp"];
+		$opaqueIdCreator = ["opaque_id"];
+		$typeCreator = ["type"];
+
+		$responses = [];
+		$shares =  $this->shareManager->getSharesBy($userId);
+    if ($shares) {
+			foreach ($shares as $share) {
+				array_push($responses,$this->shareInfoToResourceInfo($share));
+			}
+			error_log(count($responses));
+      return new JSONResponse($responses, 201);
+    }
+    return new JSONResponse(["error" => "ListShares failed"], 500);
+	}
+  /**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @NoSameSiteCookieRequired
+   *
+   * ListReceivedShares returns the list of shares the user has access.
+	 */
 	public function ListReceivedShares($userId){
-		#$receivedShares = $this->shareManager->getSharedWith($userId);
-		return new JSONResponse("Not implemented", 200);
+    // $response = shareInfoToResourceInfo();
+    // $response["state"]=>2;
+		$shares =  $this->shareManager->getSharesBy($userId);
+    if ($shares) {
+      return new JSONResponse('Not Implemented', 201);
+    }
+    return new JSONResponse(["error" => "ListReceivedShares failed"], 500);
+
 	}
-	/**
+  /**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
+   *
+   * GetReceivedShare returns the information for a received share the user has access.
 	 */
-
-	# so, a specific share from all of them
-	# GetReceivedShare returns the information for a received share the user has access.
 	public function GetReceivedShare($userId){
-
-		return new JSONResponse("Not implemented", 200);
+    $spec =  $this->request->getParam("Spec");
+    $Id = $spec["Id"];
+    $opaqueId = $Id["opaque_id"];
+		$share = $this->shareManager->getShareById($opaqueId);
+    if($share) {
+      $response = $this->shareInfoToResourceInfo($share);
+      $response["state"] = 2;
+      return new JSONResponse($response, 201);
+    }
+    return new JSONResponse(["error" => "GetReceivedShare failed"], 500);
 	}
-	/**
+  /**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
+   *
+   * UpdateReceivedShare updates the received share with share state.
 	 */
-	# UpdateReceivedShare updates the received share with share state.
+   # diff with UpdateShare???
+   // UpdateReceivedShare {
+   //   "ref":{
+   //     "Spec":{
+   //       "Id":{
+   //         "opaque_id":"some-share-id"
+   //       }
+   //     }
+   //   }
+   //   ,"f":{
+   //     "Field":{
+   //       "DisplayName":"some new name for this received share"
+   //     }
+   //   }
+   // }
+   // Move the share as a recipient of the share.
+   // public moveShare(IShare $share, string $recipientId) : IShare
+   // This is updating the share target. So where the recipient has the share mounted.
+
+   // Use moveshare???
 	public function UpdateReceivedShare($userId){
-		return new JSONResponse("Not implemented", 200);
+		$ref =  $this->request->getParam("ref");
+		$Spec = $ref["Spec"];
+    $Id = $Spec["Id"];
+    $opaqueId = $Id["opaque_id"];
+		$p = $ref["p"];
+		$permissions = $p["permissions"];
+		$permissionsCode = $this->getPermissionsCode($permissions);
+		$share = $this->shareManager->updateShare($opaqueId,$permissionsCode);
+    if($share) {
+      $response = $this->shareInfoToResourceInfo($share);
+      return new JSONResponse($response, 201);
+    }
+    return new JSONResponse(["error" => "UpdateShare failed"], 500);
 	}
 }
