@@ -701,9 +701,9 @@ class RevaController extends Controller {
 		$Id = $spec["Id"];
 		$opaqueId = $Id["opaque_id"];
 		error_log("GET SHRARE WITH opaque_id: ".$opaqueId);
-		$share = $this->shareAPIController->getShareById($opaqueId);
-		if($share){
-			$response = shareInfoToResourceInfo($share);
+		$success = $this->shareAPIController->getShare($opaqueId);
+		if($success){
+			$response = shareInfoToResourceInfo($success);
 			return new JSONResponse($response, 200);
 		}
 		return new JSONResponse(["error" => "GetShare failed"], 500);
