@@ -679,9 +679,8 @@ class RevaController extends Controller {
 		$granteeId = $grantee["Id"];
 		$granteeIdUserId = $granteeId["UserId"];
 		$userType = $granteeIdUserId["type"]; // unused
-		error_log("granteeType: ".$granteeType);
-		$granteeTypeCode = $this->getGranteeType($granteeType);
-		$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
+//		$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
+		$shareWith = $granteeIdUserId["opaque_id"]."@example.com";
 		error_log("shareWith: ".$shareWith);
 		$success = $this->shareAPIController->createShare($resourcePath,$permissionsCode,6,$shareWith);
 		if($success){
