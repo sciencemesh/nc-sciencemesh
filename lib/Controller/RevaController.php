@@ -133,25 +133,6 @@ class RevaController extends Controller {
 			];
 	}
 
-	# Unused so far
-	private function getShareInfo(IShare $share) : array
-	{
-		return [
-			'id' => $share->getFullId(),
-			'share_type' => $share->getShareType(),
-			'uid_owner' => $share->getSharedBy(),
-			'displayname_owner' => $this->userManager->get($share->getSharedBy())->getDisplayName(),
-			'permissions' => 0,
-			'stime' => $share->getShareTime()->getTimestamp(),
-			'parent' => null,
-			'expiration' => null,
-			'token' => null,
-			'uid_file_owner' => $share->getShareOwner(),
-			'displayname_file_owner' => $this->userManager->get($share->getShareOwner())->getDisplayName(),
-			'path' => $share->getTarget(),
-		];
-	}
-
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
 	private function shareInfoToResourceInfo(IShare $share): array
 	{
@@ -241,18 +222,6 @@ class RevaController extends Controller {
 	 * @return int
 	 * @throws NotFoundException
 	 */
-	private function getGranteeType(int $granteeType) : int
-	{
-			// This type represents an individual.
-			if($granteeType == 1 ){
-				return 0;
-			// This type represents a group of individuals.
-			}elseif ($granteeType == 2){
-				return 1;
-			}
-			throw new OCSNotFoundException();
-
-	}
 	private function getStorageUrl($userId) {
 		$storageUrl = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute("sciencemesh.storage.handleHead", array("userId" => $userId, "path" => "foo")));
 		$storageUrl = preg_replace('/foo$/', '', $storageUrl);
@@ -684,12 +653,10 @@ class RevaController extends Controller {
 		$userType = $granteeIdUserId["type"]; // unused
 //		$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
 		$shareWith = $granteeIdUserId["opaque_id"]."@example.com";
-		error_log("shareWith: ".$shareWith);
 		$share = $this->shareManager->newShare();
 		try {
 			$path = $this->userFolder->get($resourcePath);
 		} catch (NotFoundException $e) {
-			// throw new OCSNotFoundException($this->l->t('Wrong path, file/folder doesn\'t exist'));
 			return new JSONResponse(["error" => "Share failed"], 500);
 	}
 		$share->setNode($path);
@@ -709,7 +676,6 @@ class RevaController extends Controller {
 		$spec =  $this->request->getParam("Spec");
 		$Id = $spec["Id"];
 		$opaqueId = $Id["opaque_id"];
-		error_log("GET SHRARE WITH opaque_id: ".$opaqueId);
 		$share = $this->shareManager->getShareById($opaqueId);
 		if($share){
 			$response = $this->shareInfoToResourceInfo($share);
@@ -792,10 +758,8 @@ class RevaController extends Controller {
 // 		cs3.identity.user.v1beta1.UserId owner = 4;
 // 		cs3.identity.user.v1beta1.UserId creator = 5;
 // 	}
-// }  [{"type":4,"Term":{"Creator":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1}}}
 
 
-// UNSUDED REQUEST
 	public function ListShares($userId){
 		$requests = $this->request->getParams();
 		$request = array_values($requests)[2];
@@ -812,7 +776,6 @@ class RevaController extends Controller {
 			foreach ($shares as $share) {
 				array_push($responses,$this->shareInfoToResourceInfo($share));
 			}
-			error_log(count($responses));
       return new JSONResponse($responses, 201);
     }
     return new JSONResponse([], 200);
@@ -825,11 +788,24 @@ class RevaController extends Controller {
    * ListReceivedShares returns the list of shares the user has access.
 	 */
 	public function ListReceivedShares($userId){
-    // $response = shareInfoToResourceInfo();
-    // $response["state"]=>2;
+		$requests = $this->request->getParams();
+		$request = array_values($requests)[2];
+		$type = $request["type"];
+		$term =  $request["Term"];
+		$creator = $term["Creator"];
+		$idpCreator = $creator["idp"];
+		$opaqueIdCreator = ["opaque_id"];
+		$typeCreator = ["type"];
+
+		$responses = [];
 		$shares =  $this->shareManager->getSharesBy($userId, 6);
     if ($shares) {
-      return new JSONResponse('Not Implemented', 201);
+			foreach ($shares as $share) {
+				$response = $this->shareInfoToResourceInfo($share);
+				$response["state"] = 2;
+				array_push($responses, $response);
+			}
+      return new JSONResponse($responses, 201);
     }
     return new JSONResponse([], 200);
 
@@ -885,14 +861,11 @@ class RevaController extends Controller {
 		$Spec = $ref["Spec"];
     $Id = $Spec["Id"];
     $opaqueId = $Id["opaque_id"];
-		// $p = $ref["permissions"];
-		// $permissions = $p["permissions"];
-		// error_log(json_encode($permissions));
-		// $permissionsCode = $this->getPermissionsCode($permissions);
 		$share = $this->shareManager->getShareById($opaqueId);
 		$updated = $this->shareManager->updateShare($share, 5);
     if($updated) {
       $response = $this->shareInfoToResourceInfo($updated);
+			$response["state"] = 2;
       return new JSONResponse($response, 201);
     }
     return new JSONResponse(["error" => "UpdateReceivedShare failed"], 500);

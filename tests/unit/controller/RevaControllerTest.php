@@ -855,4 +855,656 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getData(),"OK");
 	}
 
+	// test for sharing
+
+	public function testShare(){
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager
+		);
+		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$paramsMap = [
+			["md", NULL,["opaque"=>[],"type"=>1,"id"=>["opaque_id"=>"fileid-/some/path"],"checksum"=>[],"etag"=>"deadbeef","mime_type"=>"text/plain","mtime"=>["seconds"=>1234567890],"path"=>"/some/path","permission_set"=>[],"size"=>12345,"canonical_metadata"=>[],"arbitrary_metadata"=>["metadata"=>["da"=>"ta","some"=>"arbi","trary"=>"meta"]]]],
+			["g", NULL,["grantee"=>["Id"=>["UserId"=>["idp"=>"0.0.0.0=>19000","opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type"=>1]]],"permissions"=>["permissions"=>[]]]]
+		];
+		$this->request->method("getParam")
+			->will($this->returnValueMap($paramsMap));
+		$this->shareManager->method("newShare")
+			->willReturn($testShare);
+		$response = [
+			"id"=>[
+	    	"map" => NULL,
+			],
+			"resource_id"=>[
+	    	"map" => NULL,
+			],
+			"permissions"=>[
+				"permissions"=>[
+					"add_grant"=>true,
+					"create_container"=>true,
+					"delete"=>true,
+					"get_path"=>true,
+					"get_quota"=>true,
+					"initiate_file_download"=>true,
+					"initiate_file_upload"=>true,
+					"list_grants"=>true,
+					"list_container"=>true,
+					"list_file_versions"=>true,
+					"list_recycle"=>true,
+					"move"=>true,
+					"remove_grant"=>true,
+					"purge_recycle"=>true,
+					"restore_file_version"=>true,
+					"restore_recycle_item"=>true,
+					"stat"=>true,
+					"update_grant"=>true,
+					"deny_grant"=>true
+				]
+			],
+			"grantee"=>[
+				"Id"=>[
+					"UserId"=>[
+						"idp"=>"0.0.0.0:19000",
+						"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+						"type"=>1
+					]
+				]
+			],
+			"owner"=>[
+				"idp"=>"0::.0.0.0:19000",
+				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type"=>1
+			],
+			"creator"=>[
+				"idp"=>"0.0.0.0:19000",
+				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type"=>1
+			],
+			"ctime"=>[
+				"seconds"=>1234567890
+			],
+			"mtime"=>[
+				"seconds"=>1234567890
+			]
+		];
+		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+
+		$this->userFolder->method("get")
+			->willReturn($testFolder);
+		$result = $controller->Share($this->userId);
+		$this->assertEquals($result->getData(),$response);
+		$this->assertEquals($result->getStatus(),200);
+	}
+
+	public function testGetShare(){
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager
+		);
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$this->request->method("getParam")
+			->willReturn(
+				[
+				"Id"=>[
+					"opaque_id"=>"some-share-id"
+					]
+				]
+				);
+		$this->shareManager->method("getShareById")
+			->willReturn($testShare);
+		$response = [
+			"id"=>[
+				"map" => NULL,
+			],
+			"resource_id"=>[
+				"map" => NULL,
+			],
+			"permissions"=>[
+				"permissions"=>[
+					"add_grant"=>true,
+					"create_container"=>true,
+					"delete"=>true,
+					"get_path"=>true,
+					"get_quota"=>true,
+					"initiate_file_download"=>true,
+					"initiate_file_upload"=>true,
+					"list_grants"=>true,
+					"list_container"=>true,
+					"list_file_versions"=>true,
+					"list_recycle"=>true,
+					"move"=>true,
+					"remove_grant"=>true,
+					"purge_recycle"=>true,
+					"restore_file_version"=>true,
+					"restore_recycle_item"=>true,
+					"stat"=>true,
+					"update_grant"=>true,
+					"deny_grant"=>true
+				]
+			],
+			"grantee"=>[
+				"Id"=>[
+					"UserId"=>[
+						"idp"=>"0.0.0.0:19000",
+						"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+						"type"=>1
+					]
+				]
+			],
+			"owner"=>[
+				"idp"=>"0::.0.0.0:19000",
+				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type"=>1
+			],
+			"creator"=>[
+				"idp"=>"0.0.0.0:19000",
+				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type"=>1
+			],
+			"ctime"=>[
+				"seconds"=>1234567890
+			],
+			"mtime"=>[
+				"seconds"=>1234567890
+			]
+		];
+		$result = $controller->GetShare($this->userId);
+		$this->assertEquals($result->getData(),$response);
+		$this->assertEquals($result->getStatus(),200);
+	}
+	public function testUnshare(){
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager
+		);
+		$this->request->method("getParam")
+			->willReturn(
+				[
+				"Id"=>[
+					"opaque_id"=>"some-share-id"
+					]
+				]
+				);
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$this->shareManager->method("getShareById")
+			->willReturn($testShare);
+		$this->shareManager->method("deleteShare")
+			->willReturn(true);
+		$result = $controller->Unshare($this->userId);
+		$this->assertEquals($result->getData(),"OK");
+		$this->assertEquals($result->getStatus(),201);
+	}
+
+	public function testUpdateShare(){
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager
+		);
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$testShareUpdated = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$paramsMap = [
+			["ref", NULL,["Spec"=>["Id"=>["opaque_id"=>"some-share-id"]]]],
+			["p", NULL,	["permissions"=>["add_grant"=>true,"create_container"=>true,"delete"=>true,"get_path"=>true,"get_quota"=>true,"initiate_file_download"=>true,"initiate_file_upload"=>true,"list_grants"=>true,"list_container"=>true,"list_file_versions"=>true,"list_recycle"=>true,"move"=>true,"remove_grant"=>true,"purge_recycle"=>true,"restore_file_version"=>true,"restore_recycle_item"=>true,	"stat"=>true,"update_grant"=>true,"deny_grant"=>true]]]
+		];
+		$this->request->method("getParam")
+			->will($this->returnValueMap($paramsMap));
+		$this->shareManager->method("getShareById")
+			->willReturn($testShare);
+		$this->shareManager->method("updateShare")
+			->willReturn($testShareUpdated);
+		$response = [
+			"id"=>[
+				"map" => NULL,
+			],
+			"resource_id"=>[
+				"map" => NULL,
+			],
+			"permissions"=>[
+				"permissions"=>[
+					"add_grant"=>true,
+					"create_container"=>true,
+					"delete"=>true,
+					"get_path"=>true,
+					"get_quota"=>true,
+					"initiate_file_download"=>true,
+					"initiate_file_upload"=>true,
+					"list_grants"=>true,
+					"list_container"=>true,
+					"list_file_versions"=>true,
+					"list_recycle"=>true,
+					"move"=>true,
+					"remove_grant"=>true,
+					"purge_recycle"=>true,
+					"restore_file_version"=>true,
+					"restore_recycle_item"=>true,
+					"stat"=>true,
+					"update_grant"=>true,
+					"deny_grant"=>true
+				]
+			],
+			"grantee"=>[
+				"Id"=>[
+					"UserId"=>[
+						"idp"=>"0.0.0.0:19000",
+						"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+						"type"=>1
+					]
+				]
+			],
+			"owner"=>[
+				"idp"=>"0::.0.0.0:19000",
+				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type"=>1
+			],
+			"creator"=>[
+				"idp"=>"0.0.0.0:19000",
+				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type"=>1
+			],
+			"ctime"=>[
+				"seconds"=>1234567890
+			],
+			"mtime"=>[
+				"seconds"=>1234567890
+			]
+		];
+		$result = $controller->UpdateShare($this->userId);
+		$this->assertEquals($result->getData(),$response);
+		$this->assertEquals($result->getStatus(),201);
+	}
+	public function testListShares(){
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager
+		);
+		$this->request->method("getParams")
+			->willReturn(
+				[
+					"POST",
+					"/apps/sciencemesh/~tester/api/share/ListShares",
+					[
+						"type"=>4,
+						"Term"=>[
+							"Creator"=>[
+								"idp"=>"0.0.0.0=>19000",
+								"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+								"type"=>1
+								]
+							]
+						]
+				]
+			);
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$this->shareManager->method("getSharesBy")
+			->willReturn([$testShare]);
+		$result = $controller->ListShares($this->userId);
+		$responses =[[
+			"id"=>[
+				"map" => NULL,
+			],
+			"resource_id"=>[
+				"map" => NULL,
+			],
+			"permissions"=>[
+				"permissions"=>[
+					"add_grant"=>true,
+					"create_container"=>true,
+					"delete"=>true,
+					"get_path"=>true,
+					"get_quota"=>true,
+					"initiate_file_download"=>true,
+					"initiate_file_upload"=>true,
+					"list_grants"=>true,
+					"list_container"=>true,
+					"list_file_versions"=>true,
+					"list_recycle"=>true,
+					"move"=>true,
+					"remove_grant"=>true,
+					"purge_recycle"=>true,
+					"restore_file_version"=>true,
+					"restore_recycle_item"=>true,
+					"stat"=>true,
+					"update_grant"=>true,
+					"deny_grant"=>true
+				]
+			],
+			"grantee"=>[
+				"Id"=>[
+					"UserId"=>[
+						"idp"=>"0.0.0.0:19000",
+						"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+						"type"=>1
+					]
+				]
+			],
+			"owner"=>[
+				"idp"=>"0::.0.0.0:19000",
+				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type"=>1
+			],
+			"creator"=>[
+				"idp"=>"0.0.0.0:19000",
+				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type"=>1
+			],
+			"ctime"=>[
+				"seconds"=>1234567890
+			],
+			"mtime"=>[
+				"seconds"=>1234567890
+			]
+		]];
+		$this->assertEquals($result->getData(),$responses);
+		$this->assertEquals($result->getStatus(),201);
+	}
+	public function testListSharesEmpty(){
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager
+		);
+		$this->request->method("getParams")
+			->willReturn(
+				[
+					"POST",
+					"/apps/sciencemesh/~tester/api/share/ListShares",
+					[
+						"type"=>4,
+						"Term"=>[
+							"Creator"=>[
+								"idp"=>"0.0.0.0=>19000",
+								"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+								"type"=>1
+								]
+							]
+						]
+				]
+			);
+		$this->shareManager->method("getSharesBy")
+			->willReturn([]);
+		$result = $controller->ListShares($this->userId);
+		$this->assertEquals($result->getData(),[]);
+		$this->assertEquals($result->getStatus(),200);
+	}
+	public function testListReceivedShares(){
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager
+		);
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$this->request->method("getParams")
+			->willReturn(
+				[
+					"POST",
+					"/apps/sciencemesh/~tester/api/share/ListShares",
+					[
+						"type"=>4,
+						"Term"=>[
+							"Creator"=>[
+								"idp"=>"0.0.0.0=>19000",
+								"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+								"type"=>1
+								]
+							]
+						]
+				]
+			);
+		$this->shareManager->method("getSharesBy")
+			->willReturn([$testShare]);
+		$responses =[[
+			"id"=>[
+				"map" => NULL,
+			],
+			"resource_id"=>[
+				"map" => NULL,
+			],
+			"permissions"=>[
+				"permissions"=>[
+					"add_grant"=>true,
+					"create_container"=>true,
+					"delete"=>true,
+					"get_path"=>true,
+					"get_quota"=>true,
+					"initiate_file_download"=>true,
+					"initiate_file_upload"=>true,
+					"list_grants"=>true,
+					"list_container"=>true,
+					"list_file_versions"=>true,
+					"list_recycle"=>true,
+					"move"=>true,
+					"remove_grant"=>true,
+					"purge_recycle"=>true,
+					"restore_file_version"=>true,
+					"restore_recycle_item"=>true,
+					"stat"=>true,
+					"update_grant"=>true,
+					"deny_grant"=>true
+				]
+			],
+			"grantee"=>[
+				"Id"=>[
+					"UserId"=>[
+						"idp"=>"0.0.0.0:19000",
+						"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+						"type"=>1
+					]
+				]
+			],
+			"owner"=>[
+				"idp"=>"0::.0.0.0:19000",
+				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type"=>1
+			],
+			"creator"=>[
+				"idp"=>"0.0.0.0:19000",
+				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type"=>1
+			],
+			"ctime"=>[
+				"seconds"=>1234567890
+			],
+			"mtime"=>[
+				"seconds"=>1234567890
+			],
+			"state"=>2
+		]];
+		$result = $controller->ListReceivedShares($this->userId);
+		$this->assertEquals($result->getData(),$responses);
+		$this->assertEquals($result->getStatus(),201);
+	}
+	public function testListReceivedSharesEmpty(){
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager
+		);
+		$this->request->method("getParams")
+			->willReturn(
+				[
+					"POST",
+					"/apps/sciencemesh/~tester/api/share/ListShares",
+					[
+						"type"=>4,
+						"Term"=>[
+							"Creator"=>[
+								"idp"=>"0.0.0.0=>19000",
+								"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+								"type"=>1
+								]
+							]
+						]
+				]
+			);
+		$this->shareManager->method("getSharesBy")
+			->willReturn([]);
+		$result = $controller->ListReceivedShares($this->userId);
+
+		$this->assertEquals($result->getData(),[]);
+		$this->assertEquals($result->getStatus(),200);
+	}
+	public function testGetReceivedShare(){
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager
+		);
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$this->request->method("getParam")
+			->willReturn(
+				[
+				"Id"=>[
+					"opaque_id"=>"some-share-id"
+					]
+				]
+				);
+		$this->shareManager->method("getShareById")
+			->willReturn($testShare);
+		$response = [
+			"id"=>[
+				"map" => NULL,
+			],
+			"resource_id"=>[
+				"map" => NULL,
+			],
+			"permissions"=>[
+				"permissions"=>[
+					"add_grant"=>true,
+					"create_container"=>true,
+					"delete"=>true,
+					"get_path"=>true,
+					"get_quota"=>true,
+					"initiate_file_download"=>true,
+					"initiate_file_upload"=>true,
+					"list_grants"=>true,
+					"list_container"=>true,
+					"list_file_versions"=>true,
+					"list_recycle"=>true,
+					"move"=>true,
+					"remove_grant"=>true,
+					"purge_recycle"=>true,
+					"restore_file_version"=>true,
+					"restore_recycle_item"=>true,
+					"stat"=>true,
+					"update_grant"=>true,
+					"deny_grant"=>true
+				]
+			],
+			"grantee"=>[
+				"Id"=>[
+					"UserId"=>[
+						"idp"=>"0.0.0.0:19000",
+						"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+						"type"=>1
+					]
+				]
+			],
+			"owner"=>[
+				"idp"=>"0::.0.0.0:19000",
+				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type"=>1
+			],
+			"creator"=>[
+				"idp"=>"0.0.0.0:19000",
+				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type"=>1
+			],
+			"ctime"=>[
+				"seconds"=>1234567890
+			],
+			"mtime"=>[
+				"seconds"=>1234567890
+			],
+			"state"=>2
+		];
+		$result = $controller->GetReceivedShare($this->userId);
+		$this->assertEquals($result->getData(),$response);
+		$this->assertEquals($result->getStatus(),201);
+	}
+	public function testReceivedShare(){
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager
+		);
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$testShareUpdated = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$paramsMap = [
+			["ref", NULL,["Spec"=>["Id"=>["opaque_id"=>"some-share-id"]]]],
+			["p", NULL,	["permissions"=>["add_grant"=>true,"create_container"=>true,"delete"=>true,"get_path"=>true,"get_quota"=>true,"initiate_file_download"=>true,"initiate_file_upload"=>true,"list_grants"=>true,"list_container"=>true,"list_file_versions"=>true,"list_recycle"=>true,"move"=>true,"remove_grant"=>true,"purge_recycle"=>true,"restore_file_version"=>true,"restore_recycle_item"=>true,	"stat"=>true,"update_grant"=>true,"deny_grant"=>true]]]
+		];
+		$this->request->method("getParam")
+			->will($this->returnValueMap($paramsMap));
+		$this->shareManager->method("getShareById")
+			->willReturn($testShare);
+		$this->shareManager->method("updateShare")
+			->willReturn($testShareUpdated);
+		$response = [
+			"id"=>[
+				"map" => NULL,
+			],
+			"resource_id"=>[
+				"map" => NULL,
+			],
+			"permissions"=>[
+				"permissions"=>[
+					"add_grant"=>true,
+					"create_container"=>true,
+					"delete"=>true,
+					"get_path"=>true,
+					"get_quota"=>true,
+					"initiate_file_download"=>true,
+					"initiate_file_upload"=>true,
+					"list_grants"=>true,
+					"list_container"=>true,
+					"list_file_versions"=>true,
+					"list_recycle"=>true,
+					"move"=>true,
+					"remove_grant"=>true,
+					"purge_recycle"=>true,
+					"restore_file_version"=>true,
+					"restore_recycle_item"=>true,
+					"stat"=>true,
+					"update_grant"=>true,
+					"deny_grant"=>true
+				]
+			],
+			"grantee"=>[
+				"Id"=>[
+					"UserId"=>[
+						"idp"=>"0.0.0.0:19000",
+						"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+						"type"=>1
+					]
+				]
+			],
+			"owner"=>[
+				"idp"=>"0::.0.0.0:19000",
+				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type"=>1
+			],
+			"creator"=>[
+				"idp"=>"0.0.0.0:19000",
+				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type"=>1
+			],
+			"ctime"=>[
+				"seconds"=>1234567890
+			],
+			"mtime"=>[
+				"seconds"=>1234567890
+			],
+			"state"=>2
+		];
+		$result = $controller->UpdateReceivedShare($this->userId);
+		$this->assertEquals($result->getData(),$response);
+		$this->assertEquals($result->getStatus(),201);
+	}
+
 }
