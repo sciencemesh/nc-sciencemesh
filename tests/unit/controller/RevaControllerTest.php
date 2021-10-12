@@ -935,7 +935,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			->willReturn($testFolder);
 		$result = $controller->Share($this->userId);
 		$this->assertEquals($result->getData(),$response);
-		$this->assertEquals($result->getStatus(),200);
+		$this->assertEquals($result->getStatus(),201);
 	}
 
 	public function testGetShare(){

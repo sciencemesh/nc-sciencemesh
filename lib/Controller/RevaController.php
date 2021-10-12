@@ -630,7 +630,7 @@ class RevaController extends Controller {
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(["error" => "Share failed. Invalid share receipient"], 500);		}
 		$response = $this->shareInfoToResourceInfo($share);
-		return new JSONResponse($response, 200);
+		return new JSONResponse($response, 201);
 	}
 	/**
 	 * @PublicPage
