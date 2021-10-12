@@ -798,7 +798,7 @@ class RevaController extends Controller {
 		$typeCreator = ["type"];
 
 		$responses = [];
-		$shares =  $this->shareManager->getSharesBy($userId, 6);
+		$shares =  $this->shareManager->getSharedWith($userId, 6);
     if ($shares) {
 			foreach ($shares as $share) {
 				$response = $this->shareInfoToResourceInfo($share);
