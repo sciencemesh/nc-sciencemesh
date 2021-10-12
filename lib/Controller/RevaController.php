@@ -758,10 +758,8 @@ class RevaController extends Controller {
 // 		cs3.identity.user.v1beta1.UserId owner = 4;
 // 		cs3.identity.user.v1beta1.UserId creator = 5;
 // 	}
-// }  [{"type":4,"Term":{"Creator":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1}}}
 
 
-// UNSUDED REQUEST
 	public function ListShares($userId){
 		$requests = $this->request->getParams();
 		$request = array_values($requests)[2];
@@ -790,11 +788,24 @@ class RevaController extends Controller {
    * ListReceivedShares returns the list of shares the user has access.
 	 */
 	public function ListReceivedShares($userId){
-    // $response = shareInfoToResourceInfo();
-    // $response["state"]=>2;
+		$requests = $this->request->getParams();
+		$request = array_values($requests)[2];
+		$type = $request["type"];
+		$term =  $request["Term"];
+		$creator = $term["Creator"];
+		$idpCreator = $creator["idp"];
+		$opaqueIdCreator = ["opaque_id"];
+		$typeCreator = ["type"];
+
+		$responses = [];
 		$shares =  $this->shareManager->getSharesBy($userId, 6);
     if ($shares) {
-      return new JSONResponse('Not Implemented', 201);
+			foreach ($shares as $share) {
+				$response = $this->shareInfoToResourceInfo($share);
+				$response["state"] = 2;
+				array_push($responses, $response);
+			}
+      return new JSONResponse($responses, 201);
     }
     return new JSONResponse([], 200);
 
@@ -850,10 +861,6 @@ class RevaController extends Controller {
 		$Spec = $ref["Spec"];
     $Id = $Spec["Id"];
     $opaqueId = $Id["opaque_id"];
-		// $p = $ref["permissions"];
-		// $permissions = $p["permissions"];
-		// error_log(json_encode($permissions));
-		// $permissionsCode = $this->getPermissionsCode($permissions);
 		$share = $this->shareManager->getShareById($opaqueId);
 		$updated = $this->shareManager->updateShare($share, 5);
     if($updated) {
