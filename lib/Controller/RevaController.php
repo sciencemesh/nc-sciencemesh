@@ -683,12 +683,18 @@ class RevaController extends Controller {
 //		$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
 		$shareWith = $granteeIdUserId["opaque_id"]."@example.com";
 		error_log("shareWith: ".$shareWith);
-		$success = $this->shareManager->createShare($resourcePath,$permissionsCode,6,$shareWith);
-		if($success){
-			$response = $this->shareInfoToResourceInfo();
-			return new JSONResponse($response, 200);
-		}
-		return new JSONResponse(["error" => "Share failed"], 500);
+		$share = $this->shareManager->newShare();
+		try {
+			$path = $this->userFolder->get($resourcePath);
+		} catch (NotFoundException $e) {
+			// throw new OCSNotFoundException($this->l->t('Wrong path, file/folder doesn\'t exist'));
+			return new JSONResponse(["error" => "Share failed"], 500);
+	}
+		$share->setNode($path);
+		$share->setSharedWith($shareWith);
+		$share->setPermissions($permissionsCode);
+		$response = $this->shareInfoToResourceInfo($share);
+		return new JSONResponse($response, 200);
 	}
 	/**
 	 * @PublicPage
@@ -702,9 +708,9 @@ class RevaController extends Controller {
 		$Id = $spec["Id"];
 		$opaqueId = $Id["opaque_id"];
 		error_log("GET SHRARE WITH opaque_id: ".$opaqueId);
-		$success = $this->shareManager->getShare($opaqueId);
-		if($success){
-			$response = shareInfoToResourceInfo($success);
+		$share = $this->shareManager->getShareById($opaqueId);
+		if($share){
+			$response = $this->shareInfoToResourceInfo($share);
 			return new JSONResponse($response, 200);
 		}
 		return new JSONResponse(["error" => "GetShare failed"], 500);
@@ -742,9 +748,9 @@ class RevaController extends Controller {
 		$p = $this->request->getParam("p");
 		$permissions = $p["permissions"];
 		$permissionsCode = $this->getPermissionsCode($permissions);
-		$success = $this->shareManager->updateShare($opaqueId,$permissionsCode);
-    if($success) {
-      $response = shareInfoToResourceInfo();
+		$share = $this->shareManager->updateShare($opaqueId,$permissionsCode);
+    if($share) {
+      $response = $this->shareInfoToResourceInfo($share);
       return new JSONResponse($response, 201);
     }
     return new JSONResponse(["error" => "UpdateShare failed"], 500);
@@ -797,7 +803,7 @@ class RevaController extends Controller {
 		$typeCreator = ["type"];
 
 		$responses = [];
-		$shares =  $this->shareManager->getShares();
+		$shares =  $this->shareManager->getSharesBy($userId);
     if ($shares) {
 			foreach ($shares as $share) {
 				array_push($responses,$this->shareInfoToResourceInfo($share));
@@ -817,8 +823,8 @@ class RevaController extends Controller {
 	public function ListReceivedShares($userId){
     // $response = shareInfoToResourceInfo();
     // $response["state"]=>2;
-		$success =  $this->shareManager->getShares($sharedWithMe = true);
-    if ($success) {
+		$shares =  $this->shareManager->getSharesBy($userId);
+    if ($shares) {
       return new JSONResponse('Not Implemented', 201);
     }
     return new JSONResponse(["error" => "ListReceivedShares failed"], 500);
@@ -835,9 +841,9 @@ class RevaController extends Controller {
     $spec =  $this->request->getParam("Spec");
     $Id = $spec["Id"];
     $opaqueId = $Id["opaque_id"];
-		$success = $this->shareManager->getShare($opaqueId,);
-    if($success) {
-      $response = shareInfoToResourceInfo($success);
+		$share = $this->shareManager->getShareById($opaqueId);
+    if($share) {
+      $response = $this->shareInfoToResourceInfo($share);
       $response["state"] = 2;
       return new JSONResponse($response, 201);
     }
@@ -878,9 +884,9 @@ class RevaController extends Controller {
 		$p = $ref["p"];
 		$permissions = $p["permissions"];
 		$permissionsCode = $this->getPermissionsCode($permissions);
-		$success = $this->shareManager->updateShare($opaqueId,$permissionsCode);
-    if($success) {
-      $response = shareInfoToResourceInfo();
+		$share = $this->shareManager->updateShare($opaqueId,$permissionsCode);
+    if($share) {
+      $response = $this->shareInfoToResourceInfo($share);
       return new JSONResponse($response, 201);
     }
     return new JSONResponse(["error" => "UpdateShare failed"], 500);
