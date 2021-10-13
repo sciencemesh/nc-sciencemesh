@@ -621,13 +621,16 @@ class RevaController extends Controller {
 		try {
 			$path = $this->userFolder->get($resourcePath);
 		} catch (NotFoundException $e) {
-			return new JSONResponse(["error" => "Share failed"], 500);
-	}
+			return new JSONResponse(["error" => "Share failed. Resource Path not found"], 500);
+		}
 		$share->setNode($path);
-		$share->setSharedWith($shareWith);
 		$share->setPermissions($permissionsCode);
+		try {
+			$share->setSharedWith($shareWith);
+		} catch (InvalidArgumentException $e) {
+			return new JSONResponse(["error" => "Share failed. Invalid share receipient"], 500);		}
 		$response = $this->shareInfoToResourceInfo($share);
-		return new JSONResponse($response, 200);
+		return new JSONResponse($response, 201);
 	}
 	/**
 	 * @PublicPage
