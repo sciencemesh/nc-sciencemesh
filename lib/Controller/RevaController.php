@@ -24,11 +24,9 @@ use OCP\AppFramework\Http\TextPlainResponse;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Controller;
 
-use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IManager;
 use OCP\Share\IShare;
 
-use OCP\Share\Exceptions;
 use OCP\Constants;
 
 class RevaController extends Controller {
