@@ -585,24 +585,12 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
    *
-   * Create a new share in fn with the given access control list.
+   *  Create a new share in fn with the given acl.
 	 */
-	// 	*/
- 	// public function createShare(
- 	// 	string $path =sciencemesh/some/path,
- 	// 	int $permissions = 31, from getPermissionsCode()
- 	// 	int $shareType = -1, OCP\Share\IShare::TYPE_REMOTE = 6
- 	// 	string $shareWith = null, tester@localhost:8080
- 	// 	string $publicUpload = 'false',
- 	// 	string $password = '',
- 	// 	string $sendPasswordByTalk = null,
- 	// 	string $expireDate = '',
- 	// 	string $label = ''
- 	// ):
+
 	public function Share($userId){
     $md =  $this->request->getParam("md");
 		$g = $this->request->getParam("g");
-
     $resourceType = $md["type"];
 		$resourcePath =  "sciencemesh".$md["path"];
     $resourceId =  $md["id"];
@@ -674,6 +662,7 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
    *
+	 * UpdateShare updates the mode of the given share.
 	 */
 
 	public function UpdateShare($userId){
