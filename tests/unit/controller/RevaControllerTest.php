@@ -866,12 +866,14 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
 		$paramsMap = [
-			["md", NULL,["opaque"=>[],"type"=>1,"id"=>["opaque_id"=>"fileid-/some/path"],"checksum"=>[],"etag"=>"deadbeef","mime_type"=>"text/plain","mtime"=>["seconds"=>1234567890],"path"=>"/some/path","permission_set"=>[],"size"=>12345,"canonical_metadata"=>[],"arbitrary_metadata"=>["metadata"=>["da"=>"ta","some"=>"arbi","trary"=>"meta"]]]],
-			["g", NULL,["grantee"=>["Id"=>["UserId"=>["idp"=>"0.0.0.0=>19000","opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type"=>1]]],"permissions"=>["permissions"=>[]]]]
+			["md", NULL,["opaque_id"=>"fileid-/some/path"]],
+			["g", NULL,["grantee"=>["Id"=>["UserId"=>["idp"=>"0.0.0.0=>19000","opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type"=>1]]],"permissions"=>["permissions"=>["get_path"=>true]]]]
 		];
 		$this->request->method("getParam")
 			->will($this->returnValueMap($paramsMap));
 		$this->shareManager->method("newShare")
+			->willReturn($testShare);
+		$this->shareManager->method("createShare")
 			->willReturn($testShare);
 		$response = [
 			"id"=>[

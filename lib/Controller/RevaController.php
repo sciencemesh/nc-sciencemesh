@@ -24,11 +24,9 @@ use OCP\AppFramework\Http\TextPlainResponse;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Controller;
 
-use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IManager;
 use OCP\Share\IShare;
 
-use OCP\Share\Exceptions;
 use OCP\Constants;
 
 class RevaController extends Controller {
@@ -198,19 +196,19 @@ class RevaController extends Controller {
 	private function getPermissionsCode(array $permissions) : int
 	{
 		$permissionsCode = 0;
-		if(!empty($permissions["GetPath"]) || !empty($permissions["GetQuota"]) || !empty($permissions["InitiateFileDownload"]) || !empty($permissions["InitiateFileUpload"]) ||  !empty($permissions["Stat"]) ){
+		if(!empty($permissions["get_path"]) || !empty($permissions["get_quota"]) || !empty($permissions["initiate_file_download"]) || !empty($permissions["initiate_file_upload"]) ||  !empty($permissions["stat"]) ){
 			$permissionsCode += \OCP\Constants::PERMISSION_READ;
 		}
-		if( !empty($permissions["CreateContainer"]) || !empty($permissions["Move"]) ||  !empty($permissions["AddGrant"]) || !empty($permissions["RestoreFileVersion"]) || !empty($permissions["RestoreRecycleItem:"]) ){
+		if( !empty($permissions["create_container"]) || !empty($permissions["move"]) ||  !empty($permissions["add_grant"]) || !empty($permissions["restore_file_version"]) || !empty($permissions["restore_recycle_item"]) ){
 			$permissionsCode += \OCP\Constants::PERMISSION_CREATE;
 		}
-		if( !empty($permissions["Move"]) || !empty($permissions["Delete"]) || !empty($permissions["RemoveGrant"])){
+		if( !empty($permissions["move"]) || !empty($permissions["delete"]) || !empty($permissions["remove_grant"])){
 			$permissionsCode += \OCP\Constants::PERMISSION_DELETE;
 		}
-		if( !empty($permissions["ListGrants"]) || !empty($permissions["ListContents"]) || !empty($permissions["ListFileVersions"]) || !empty($permissions["ListRecycle"])){
+		if( !empty($permissions["list_grants"]) || !empty($permissions["list_file_versions"]) || !empty($permissions["list_recycle"])){
 			$permissionsCode += \OCP\Constants::PERMISSION_SHARE;
 		}
-		if( !empty($permissions["UpdateGrant"])){
+		if( !empty($permissions["update_grant"])){
 			$permissionsCode += \OCP\Constants::PERMISSION_UPDATE;
 		}
 		return $permissionsCode;
@@ -587,48 +585,56 @@ class RevaController extends Controller {
    *
    * Create a new share in fn with the given access control list.
 	 */
-	// 	*/
- 	// public function createShare(
- 	// 	string $path =sciencemesh/some/path,
- 	// 	int $permissions = 31, from getPermissionsCode()
- 	// 	int $shareType = -1, OCP\Share\IShare::TYPE_REMOTE = 6
- 	// 	string $shareWith = null, tester@localhost:8080
- 	// 	string $publicUpload = 'false',
- 	// 	string $password = '',
- 	// 	string $sendPasswordByTalk = null,
- 	// 	string $expireDate = '',
- 	// 	string $label = ''
- 	// ):
+
+// {
+// 	"md":{
+// 		"opaque_id":"fileid-/some/path"
+// 	},
+// 	"g":{
+// 		"grantee":{
+// 			"Id":{
+// 				"UserId":{
+// 					"idp":"0.0.0.0:19000",
+// 					"opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+// 					"type":1
+// 				}
+// 			}
+// 		},
+// 		"permissions":{
+// 			"permissions":{}
+// 			}
+// 		}
+// 	}
 	public function Share($userId){
     $md =  $this->request->getParam("md");
 		$g = $this->request->getParam("g");
-
-    $resourceType = $md["type"];
-		$resourcePath =  "sciencemesh".$md["path"];
-    $resourceId =  $md["id"];
-    $resourceOpaqueId = $resourceId["opaque_id"];
-
-		$sharePermissions = $g["permissions"];
-		$resourcePermissions = $sharePermissions["permissions"];
-		$permissionsCode = $this->getPermissionsCode($resourcePermissions);
+		$opaqueId = $md["opaque_id"];
+		$opaqueId = str_replace('fileid-', 'sciencemesh', $opaqueId);
 		$grantee = $g["grantee"];
 		$granteeId = $grantee["Id"];
 		$granteeIdUserId = $granteeId["UserId"];
-		$userType = $granteeIdUserId["type"]; // unused
 //		$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
-		$shareWith = $granteeIdUserId["opaque_id"]."@example.com";
+		$sharePermissions = $g["permissions"];
+
+		$resourcePermissions = $sharePermissions["permissions"];
+		$permissionsCode = $this->getPermissionsCode($resourcePermissions);
+		//$shareWith = "einstein@localhost:8080";
+		$shareWith = "einstein@example.com";
 		$share = $this->shareManager->newShare();
+		$share->setPermissions($permissionsCode);
+		$share->setShareType(IShare::TYPE_REMOTE);
+		$share->setSharedBy($userId);
 		try {
-			$path = $this->userFolder->get($resourcePath);
+		$path = $this->userFolder->get($opaqueId);
 		} catch (NotFoundException $e) {
 			return new JSONResponse(["error" => "Share failed. Resource Path not found"], 500);
 		}
 		$share->setNode($path);
-		$share->setPermissions($permissionsCode);
 		try {
 			$share->setSharedWith($shareWith);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(["error" => "Share failed. Invalid share receipient"], 500);		}
+			return new JSONResponse(["error" => "Share failed. Invalid share receipient"], 500);}
+		$this->shareManager->createShare($share);
 		$response = $this->shareInfoToResourceInfo($share);
 		return new JSONResponse($response, 201);
 	}
