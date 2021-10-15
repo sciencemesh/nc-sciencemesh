@@ -1,7 +1,21 @@
 <phpunit bootstrap="tests/bootstrap.php" colors="true">
-    <testsuites>
-        <testsuite name="unit">
-            <directory>./tests/unit</directory>
-        </testsuite>
-    </testsuites>
+    <filter>
+      <whitelist
+              addUncoveredFilesFromWhitelist="true"
+              processUncoveredFilesFromWhitelist="true">
+
+          <directory suffix=".php">./tests/unit/</directory>
+      </whitelist>
+  </filter>
+
+  <logging>
+      <log type="coverage-html" target="./tests/coverage/html/"/>
+      <log type="coverage-clover" target="./tests/coverage/coverage.xml"/>
+  </logging>
+
+  <testsuites>
+      <testsuite name="unit">
+          <directory>./tests/unit</directory>
+      </testsuite>
+  </testsuites>
 </phpunit>
