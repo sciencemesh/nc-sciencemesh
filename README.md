@@ -64,7 +64,7 @@ This will run the PHP unit and integration tests and if a package.json is presen
 
 Of course you can also install [PHPUnit](http://phpunit.de/getting-started.html) and use the configurations directly:
 
-     XDEBUG=coverage phpunit -c phpunit.xml
+     phpunit -c phpunit.xml
 
 or:
 
