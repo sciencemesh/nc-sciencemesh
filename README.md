@@ -51,7 +51,9 @@ The archive is located in build/artifacts/appstore and can then be uploaded to t
 ## Running tests
 You can use the provided Makefile to run all tests by using:
 
-   `make test`
+   ```
+   make test
+   ```
 
 This will run the PHP unit and integration tests and if a package.json is present in the **js/** folder will execute **npm run test**
 
