@@ -24,8 +24,8 @@ The make command will install or update Composer dependencies if a composer.json
     "build": "node node_modules/gulp-cli/bin/gulp.js"
 }
 ```
+# Before running tests 
 
-## Test with Reva
 * add this app to your Nextcloud instance as /apps/sciencemesh
 * run `php -S localhost:8080` in the root of your nextcloud folder (or run it with Apache / nginx / MAMP / etc)
 * create a user 'tester' (password e.g. '123')
@@ -34,11 +34,41 @@ The make command will install or update Composer dependencies if a composer.json
 ```sh
 git remote add michielbdejong https://github.com/michielbdejong/reva
 git fetch michielbdejong
+```
+
+## Run Reva integration tests
+
+Path: /reva
+```sh
 git checkout nextcloud-test-improvements
 NEXTCLOUD=http://tester:123@localhost:8080/index.php go test -v github.com/cs3org/reva/pkg/storage/fs/nextcloud/...
 ```
 * you should see it run lots of tests, most of which fail in various ways
 * look at [this mock](https://github.com/cs3org/reva/blob/de30aee/pkg/storage/fs/nextcloud/nextcloud_server_mock.go#L140-L169) to see the correct params and responses
+
+## Run Nextcloud Unit tests
+
+Path: /server/apps/sciencemesh
+
+You can use the provided Makefile to run all tests by using:
+
+   ```
+   XDEBUG=coverage make test
+   ```
+   or 
+   ```
+   XDEBUG_MODE=coverage ./vendor/bin/phpunit --coverage-text
+   ```
+   
+This will run the PHP unit and integration tests and if a package.json is present in the **js/** folder will execute **npm run test**
+
+Of course you can also install [PHPUnit](http://phpunit.de/getting-started.html) and use the configurations directly:
+
+     XDEBUG=coverage phpunit -c phpunit.xml
+
+or:
+
+    phpunit -c phpunit.integration.xml
 
 ## Publish to App Store
 
@@ -47,22 +77,3 @@ First get an account for the [App Store](http://apps.nextcloud.com/) then run:
     make && make appstore
 
 The archive is located in build/artifacts/appstore and can then be uploaded to the App Store.
-
-## Running tests
-You can use the provided Makefile to run all tests by using:
-
-   ```
-   make test
-   ```
-
-This will run the PHP unit and integration tests and if a package.json is present in the **js/** folder will execute **npm run test**
-
-Of course you can also install [PHPUnit](http://phpunit.de/getting-started.html) and use the configurations directly:
-
-    phpunit -c phpunit.xml
-
-or:
-
-    phpunit -c phpunit.integration.xml
-
-for integration tests
