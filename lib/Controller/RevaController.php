@@ -287,6 +287,7 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function CreateHome($userId) {
+		error_log('userid: '.$userId);
 		$homeExists = $this->userFolder->nodeExists("sciencemesh");
 		if (!$homeExists) {
 			$this->userFolder->newFolder("sciencemesh"); // Create the Sciencemesh directory for storage if it doesn't exist.
@@ -723,7 +724,10 @@ class RevaController extends Controller {
 			}
       return new JSONResponse($responses, 201);
     }
-    return new JSONResponse([], 200);
+		elseif($shares == []){
+			return new JSONResponse($shares, 200);
+		}
+		return new JSONResponse(["error" => "ListShares failed"], 500);
 	}
   /**
 	 * @PublicPage
@@ -733,6 +737,7 @@ class RevaController extends Controller {
    * ListReceivedShares returns the list of shares the user has access.
 	 */
 	public function ListReceivedShares($userId){
+		error_log("userid: ".$userId);
 		$requests = $this->request->getParams();
 		$request = array_values($requests)[2];
 		$type = $request["type"];
@@ -752,7 +757,11 @@ class RevaController extends Controller {
 			}
       return new JSONResponse($responses, 201);
     }
-    return new JSONResponse([], 200);
+		elseif($shares == []){
+			return new JSONResponse($shares, 200);
+		}
+		return new JSONResponse(["error" => "ListReceivedShares failed"], 500);
+
 
 	}
   /**
