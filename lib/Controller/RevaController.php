@@ -737,16 +737,6 @@ class RevaController extends Controller {
    * ListReceivedShares returns the list of shares the user has access.
 	 */
 	public function ListReceivedShares($userId){
-		error_log("userid: ".$userId);
-		$requests = $this->request->getParams();
-		$request = array_values($requests)[2];
-		$type = $request["type"];
-		$term =  $request["Term"];
-		$creator = $term["Creator"];
-		$idpCreator = $creator["idp"];
-		$opaqueIdCreator = ["opaque_id"];
-		$typeCreator = ["type"];
-
 		$responses = [];
 		$shares =  $this->shareManager->getSharedWith($userId,IShare::TYPE_REMOTE);
     if ($shares) {
