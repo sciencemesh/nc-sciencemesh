@@ -9,6 +9,10 @@
  */
 return [
     'routes' => [
+
+        ['name' => 'incomingShares#addShare', 'url' => '/ocm/addShare', 'verb' => 'POST'],
+        ['name' => 'incomingShares#receiveNotification', 'url' => '/ocm/receiveNotification', 'verb' => 'POST'],
+
         ['name' => 'reva#Authenticate', 'url' => '/~{userId}/api/storage/Authenticate', 'verb' => 'POST'],
         ['name' => 'reva#AddGrant', 'url' => '/~{userId}/api/storage/AddGrant', 'verb' => 'POST'],
         ['name' => 'reva#CreateDir', 'url' => '/~{userId}/api/storage/CreateDir', 'verb' => 'POST'],
