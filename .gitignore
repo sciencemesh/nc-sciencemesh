@@ -2,3 +2,5 @@ composer.lock
 vendor/*
 *~
 .phplint-cache
+tests/coverage
+cov.html/
