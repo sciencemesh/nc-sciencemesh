@@ -911,7 +911,16 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getData(),"OK");
 	}
 
-	// test for sharing
+	// // test for sharing
+	// public function addShareTest(){
+	// 	$controller = new RevaController(
+	// 		$this->appName, $this->rootFolder, $this->request, $this->session,
+	// 		$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+	// 		$this->userService, $this->trashManager , $this->shareManager,
+	// 		$this->groupManager, $this->cloudFederationProviderManager,
+	// 		$this->factory, $this->cloudIdManager,$this->logger,
+	// 	);
+	// }
 
 	public function testShare(){
 		$controller = new RevaController(

@@ -75,13 +75,8 @@ class RevaController extends Controller {
 	private $cloudIdManager;
 
  # UserService : unused
-	public function __construct($AppName,
-		LoggerInterface $logger,
-		IGroupManager $groupManager,
-		ICloudFederationProviderManager $cloudFederationProviderManager,
-		ICloudFederationFactory $factory,
-		ICloudIdManager $cloudIdManager,
-
+	public function __construct(
+		$AppName,
 		IRootFolder $rootFolder,
 		IRequest $request,
 		ISession $session,
@@ -91,16 +86,16 @@ class RevaController extends Controller {
 		IConfig $config,
 		\OCA\ScienceMesh\Service\UserService $UserService,
 		ITrashManager $trashManager,
-		IManager $shareManager
-		){
+		IManager $shareManager,
+		IGroupManager $groupManager,
+		ICloudFederationProviderManager $cloudFederationProviderManager,
+		ICloudFederationFactory $factory,
+		ICloudIdManager $cloudIdManager,
+		LoggerInterface $logger
+	)
+	{
 		parent::__construct($AppName, $request);
 		require_once(__DIR__.'/../../vendor/autoload.php');
-
-		$this->logger = $logger;
-		$this->groupManager = $groupManager;
-		$this->cloudFederationProviderManager = $cloudFederationProviderManager;
-		$this->factory = $factory;
-		$this->cloudIdManager = $cloudIdManager;
 
 		$this->config = new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
 		$this->rootFolder = $rootFolder;
@@ -116,9 +111,13 @@ class RevaController extends Controller {
 		$this->filesystem = new \League\Flysystem\Filesystem($adapter);
 
 		$this->baseUrl = $this->getStorageUrl($userId); // Where is that used?
-
 		# Share
 		$this->shareManager = $shareManager;
+		$this->logger = $logger;
+		$this->groupManager = $groupManager;
+		$this->cloudFederationProviderManager = $cloudFederationProviderManager;
+		$this->factory = $factory;
+		$this->cloudIdManager = $cloudIdManager;
 
 	}
 
@@ -275,6 +274,18 @@ class RevaController extends Controller {
 		return $permissionsCode;
 	}
 
+	private function getShareType($granteeType){
+		if($granteeType == 1){
+			return 'user';
+		}
+		elseif($granteeType == 2){
+			return 'group';
+		}
+		return new JSONResponse(
+			['message' => 'Internal error at ' . $this->urlGenerator->getBaseUrl()],
+			Http::STATUS_BAD_REQUEST
+		);
+	}
 	/**
 	 * @param int
 	 *
@@ -723,14 +734,60 @@ class RevaController extends Controller {
 	 *
 	 * Example: curl -H "Content-Type: application/json" -X POST -d '{"shareWith":"admin1@serve1","name":"welcome server2.txt","description":"desc","providerId":"2","owner":"admin2@http://localhost/server2","ownerDisplayName":"admin2 display","shareType":"user","resourceType":"file","protocol":{"name":"webdav","options":{"sharedSecret":"secret","permissions":"webdav-property"}}}' http://localhost/server/index.php/ocm/shares
 	 */
-	public function addShare($shareWith, $name, $description, $providerId, $owner, $ownerDisplayName, $sharedBy, $sharedByDisplayName, $protocol, $shareType, $resourceType) {
+//	 public function addShare($shareWith, $name, $description, $providerId, $owner, $ownerDisplayName, $sharedBy, $sharedByDisplayName, $protocol, $shareType, $resourceType) {
+
+
+
+	public function addShare($userId) {
+
+		$md =  $this->request->getParam("md");
+		$g = $this->request->getParam("g");
+		$opaqueId = $md["opaque_id"];
+		$opaqueIdDecoded = urldecode($opaqueId);
+		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
+		$ownerName =substr($opaqueIdExploded[0],strlen("fileid-"));
+		$sharedBy = $owner;
+		$ownerDisplayName = 'Albert Einstein';
+		$sharedByDisplayName = '';
+		$description = '';
+		$grantee = $g["grantee"];
+		$granteeId = $grantee["Id"];
+		$granteeIdUserId = $granteeId["UserId"];
+		//$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"]; //OK the huge number is for reva not nextcloud
+
+		$sharePermissions = $g["permissions"];
+
+		$resourcePermissions = $sharePermissions["permissions"];
+		$permissionsCode = $this->getPermissionsCode($resourcePermissions); // maybe unused
+
+		$protocol = [
+			'name'=>'webdav',
+			'options'=>[
+				"sharedSecret"=>"secret",
+				"permissions"=>"webdav-property",
+			]
+		];
+		$shareWith = 'marie@cesnet.cz';
+		$name = end($opaqueIdExploded);
+		$providerId = 2;
+		$owner = "einstein@cern.ch";
+		$resourceType = 'file';
+		$shareType =  $this->getShareType($grantee["type"]);
+
+		error_log("shareWith: ".$shareWith. " HARDCODED");
+		error_log('name: '.$name);
+		error_log("providerId: ".$providerId." HARDCODED");
+		error_log("owner: ".$owner. " HARDCODED");
+		error_log("resourceType: ".$resourceType. " HARDCODED");
+		error_log("shareType: ".$shareType);
+
 		// check if all required parameters are set
-		if ($shareWith === null ||
-			$name === null ||
-			$providerId === null ||
-			$owner === null ||
-			$resourceType === null ||
-			$shareType === null ||
+		if ($shareWith === null || // hardcoded
+			$name === null ||      // ok
+			$providerId === null || // ok
+			$owner === null || // hardcoded
+			$resourceType === null || // hardcoded
+			$shareType === null || // ok
 			!is_array($protocol) ||
 			!isset($protocol['name']) ||
 			!isset($protocol['options']) ||
@@ -804,10 +861,8 @@ class RevaController extends Controller {
 		if ($user) {
 			$recipientDisplayName = $user->getDisplayName();
 		}
+		return new JSONResponse($response, 200);
 
-		return new JSONResponse(
-			['recipientDisplayName' => $recipientDisplayName],
-			Http::STATUS_CREATED);
 	}
 	/**
 	 * @PublicPage
