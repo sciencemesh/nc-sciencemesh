@@ -33,7 +33,7 @@ return [
         ['name' => 'reva#UpdateGrant', 'url' => '/~{userId}/api/storage/UpdateGrant', 'verb' => 'POST'],
         ['name' => 'reva#Upload', 'url' => '/~{userId}/api/storage/Upload/{path}', 'verb' => 'PUT'],
         ['name' => 'reva#Share', 'url' => '/~{userId}/api/ocm/Share', 'verb' => 'POST'],
-        ['name' => 'reva#addShare', 'url' => '/ocm/addShare', 'verb' => 'POST'],
+        ['name' => 'reva#addShare', 'url' => '/~{userId}/api/ocm/addShare', 'verb' => 'POST'],
         ['name' => 'reva#GetShare', 'url' => '/~{userId}/api/ocm/GetShare', 'verb' => 'POST'],
         ['name' => 'reva#Unshare', 'url' => '/~{userId}/api/ocm/Unshare', 'verb' => 'POST'],
         ['name' => 'reva#UpdateShare', 'url' => '/~{userId}/api/ocm/UpdateShare', 'verb' => 'POST'],
