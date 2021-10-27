@@ -10,6 +10,7 @@ use OCA\Files_Trashbin\Trash\ITrashManager;
 
 use OCP\IRequest;
 use OCP\IUserManager;
+use OCP\IGroupManager;
 use OCP\IURLGenerator;
 use OCP\ISession;
 use OCP\IConfig;
@@ -17,6 +18,7 @@ use OCP\IConfig;
 use OCP\Files\IRootFolder;
 use OCP\Files\IHomeStorage;
 use OCP\Files\SimpleFS\ISimpleRoot;
+
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Http\JSONResponse;
@@ -24,23 +26,77 @@ use OCP\AppFramework\Http\TextPlainResponse;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Controller;
 
+use OCA\CloudFederationAPI\Config;
+use OCP\Federation\Exceptions\ActionNotSupportedException;
+use OCP\Federation\Exceptions\AuthenticationFailedException;
+use OCP\Federation\Exceptions\BadRequestException;
+use OCP\Federation\Exceptions\ProviderCouldNotAddShareException;
+use OCP\Federation\Exceptions\ProviderDoesNotExistsException;
+use OCP\Federation\ICloudFederationFactory;
+use OCP\Federation\ICloudFederationProviderManager;
+use OCP\Federation\ICloudIdManager;
+
 use OCP\Share\IManager;
 use OCP\Share\IShare;
+use OCP\Share\Exceptions\ShareNotFound;
 
 use OCP\Constants;
 
+use Psr\Log\LoggerInterface;
+
 class RevaController extends Controller {
-	/* @var IURLGenerator */
-	private $urlGenerator;
+
 
 	/* @var ISession */
 	private $session;
 
+	/** @var LoggerInterface */
+	private $logger;
+
+	/** @var IUserManager */
+	private $userManager;
+
+	/** @var IGroupManager */
+	private $groupManager;
+
+	/** @var IURLGenerator */
+	private $urlGenerator;
+
+	/** @var ICloudFederationProviderManager */
+	private $cloudFederationProviderManager;
+
+	/** @var Config */
+	private $config;
+
+	/** @var ICloudFederationFactory */
+	private $factory;
+
+	/** @var ICloudIdManager */
+	private $cloudIdManager;
+
  # UserService : unused
-	public function __construct($AppName, IRootFolder $rootFolder, IRequest $request, ISession $session, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IConfig $config, \OCA\ScienceMesh\Service\UserService $UserService, ITrashManager $trashManager, IManager $shareManager)
+	public function __construct(
+		$AppName,
+		IRootFolder $rootFolder,
+		IRequest $request,
+		ISession $session,
+		IUserManager $userManager,
+		IURLGenerator $urlGenerator,
+		$userId,
+		IConfig $config,
+		\OCA\ScienceMesh\Service\UserService $UserService,
+		ITrashManager $trashManager,
+		IManager $shareManager,
+		IGroupManager $groupManager,
+		ICloudFederationProviderManager $cloudFederationProviderManager,
+		ICloudFederationFactory $factory,
+		ICloudIdManager $cloudIdManager,
+		LoggerInterface $logger
+	)
 	{
 		parent::__construct($AppName, $request);
 		require_once(__DIR__.'/../../vendor/autoload.php');
+
 		$this->config = new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
 		$this->rootFolder = $rootFolder;
 		$this->request     = $request;
@@ -55,9 +111,13 @@ class RevaController extends Controller {
 		$this->filesystem = new \League\Flysystem\Filesystem($adapter);
 
 		$this->baseUrl = $this->getStorageUrl($userId); // Where is that used?
-
 		# Share
 		$this->shareManager = $shareManager;
+		$this->logger = $logger;
+		$this->groupManager = $groupManager;
+		$this->cloudFederationProviderManager = $cloudFederationProviderManager;
+		$this->factory = $factory;
+		$this->cloudIdManager = $cloudIdManager;
 
 	}
 
@@ -214,6 +274,18 @@ class RevaController extends Controller {
 		return $permissionsCode;
 	}
 
+	private function getShareType($granteeType){
+		if($granteeType == 1){
+			return 'user';
+		}
+		elseif($granteeType == 2){
+			return 'group';
+		}
+		return new JSONResponse(
+			['message' => 'Internal error at ' . $this->urlGenerator->getBaseUrl()],
+			Http::STATUS_BAD_REQUEST
+		);
+	}
 	/**
 	 * @param int
 	 *
@@ -639,6 +711,159 @@ class RevaController extends Controller {
 		$response = $this->shareInfoToResourceInfo($share);
 		return new JSONResponse($response, 201);
 	}
+
+	/**
+	 * add share
+	 *
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 * @BruteForceProtection(action=receiveFederatedShare)
+	 *
+	 * @param string $shareWith
+	 * @param string $name resource name (e.g. document.odt)
+	 * @param string $description share description (optional)
+	 * @param string $providerId resource UID on the provider side
+	 * @param string $owner provider specific UID of the user who owns the resource
+	 * @param string $ownerDisplayName display name of the user who shared the item
+	 * @param string $sharedBy provider specific UID of the user who shared the resource
+	 * @param string $sharedByDisplayName display name of the user who shared the resource
+	 * @param array $protocol (e,.g. ['name' => 'webdav', 'options' => ['username' => 'john', 'permissions' => 31]])
+	 * @param string $shareType ('group' or 'user' share)
+	 * @param $resourceType ('file', 'calendar',...)
+	 * @return Http\DataResponse|JSONResponse
+	 *
+	 * Example: curl -H "Content-Type: application/json" -X POST -d '{"shareWith":"admin1@serve1","name":"welcome server2.txt","description":"desc","providerId":"2","owner":"admin2@http://localhost/server2","ownerDisplayName":"admin2 display","shareType":"user","resourceType":"file","protocol":{"name":"webdav","options":{"sharedSecret":"secret","permissions":"webdav-property"}}}' http://localhost/server/index.php/ocm/shares
+	 */
+//	 public function addShare($shareWith, $name, $description, $providerId, $owner, $ownerDisplayName, $sharedBy, $sharedByDisplayName, $protocol, $shareType, $resourceType) {
+
+
+
+	public function addShare($userId) {
+
+		$md =  $this->request->getParam("md");
+		$g = $this->request->getParam("g");
+		$opaqueId = $md["opaque_id"];
+		$opaqueIdDecoded = urldecode($opaqueId);
+		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
+		$ownerName =substr($opaqueIdExploded[0],strlen("fileid-"));
+		$sharedBy = $owner;
+		$ownerDisplayName = 'Albert Einstein';
+		$sharedByDisplayName = '';
+		$description = '';
+		$grantee = $g["grantee"];
+		$granteeId = $grantee["Id"];
+		$granteeIdUserId = $granteeId["UserId"];
+		//$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"]; //OK the huge number is for reva not nextcloud
+
+		$sharePermissions = $g["permissions"];
+
+		$resourcePermissions = $sharePermissions["permissions"];
+		$permissionsCode = $this->getPermissionsCode($resourcePermissions); // maybe unused
+
+		$protocol = [
+			'name'=>'webdav',
+			'options'=>[
+				"sharedSecret"=>"secret",
+				"permissions"=>"webdav-property",
+			]
+		];
+		$shareWith = 'marie@cesnet.cz';
+		$name = end($opaqueIdExploded);
+		$providerId = 2;
+		$owner = "einstein@cern.ch";
+		$resourceType = 'file';
+		$shareType =  $this->getShareType($grantee["type"]);
+
+		error_log("shareWith: ".$shareWith. " HARDCODED");
+		error_log('name: '.$name);
+		error_log("providerId: ".$providerId." HARDCODED");
+		error_log("owner: ".$owner. " HARDCODED");
+		error_log("resourceType: ".$resourceType. " HARDCODED");
+		error_log("shareType: ".$shareType);
+
+		// check if all required parameters are set
+		if ($shareWith === null || // hardcoded
+			$name === null ||      // ok
+			$providerId === null || // ok
+			$owner === null || // hardcoded
+			$resourceType === null || // hardcoded
+			$shareType === null || // ok
+			!is_array($protocol) ||
+			!isset($protocol['name']) ||
+			!isset($protocol['options']) ||
+			!is_array($protocol['options']) ||
+			!isset($protocol['options']['sharedSecret'])
+		) {
+			return new JSONResponse(
+				['message' => 'Missing arguments'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
+
+
+		$cloudId = $this->cloudIdManager->resolveCloudId($shareWith);
+		$shareWith = $cloudId->getUser();
+
+		if ($shareType === 'user') {
+			$shareWith = $this->mapUid($shareWith);
+
+			if (!$this->userManager->userExists($shareWith)) {
+				return new JSONResponse(
+					['message' => 'User "' . $shareWith . '" does not exists at ' . $this->urlGenerator->getBaseUrl()],
+					Http::STATUS_BAD_REQUEST
+				);
+			}
+		}
+
+		if ($shareType === 'group') {
+			if (!$this->groupManager->groupExists($shareWith)) {
+				return new JSONResponse(
+					['message' => 'Group "' . $shareWith . '" does not exists at ' . $this->urlGenerator->getBaseUrl()],
+					Http::STATUS_BAD_REQUEST
+				);
+			}
+		}
+
+		// if no explicit display name is given, we use the uid as display name
+		$ownerDisplayName = $ownerDisplayName === null ? $owner : $ownerDisplayName;
+		$sharedByDisplayName = $sharedByDisplayName === null ? $sharedBy : $sharedByDisplayName;
+
+		// sharedBy* parameter is optional, if nothing is set we assume that it is the same user as the owner
+		if ($sharedBy === null) {
+			$sharedBy = $owner;
+			$sharedByDisplayName = $ownerDisplayName;
+		}
+
+		try {
+			$provider = $this->cloudFederationProviderManager->getCloudFederationProvider($resourceType);
+			$share = $this->factory->getCloudFederationShare($shareWith, $name, $description, $providerId, $owner, $ownerDisplayName, $sharedBy, $sharedByDisplayName, '', $shareType, $resourceType);
+			$share->setProtocol($protocol);
+			$provider->shareReceived($share);
+		} catch (ProviderDoesNotExistsException $e) {
+			return new JSONResponse(
+				['message' => $e->getMessage()],
+				Http::STATUS_NOT_IMPLEMENTED
+			);
+		} catch (ProviderCouldNotAddShareException $e) {
+			return new JSONResponse(
+				['message' => $e->getMessage()],
+				$e->getCode()
+			);
+		} catch (\Exception $e) {
+			return new JSONResponse(
+				['message' => 'Internal error at ' . $this->urlGenerator->getBaseUrl()],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		$user = $this->userManager->get($shareWith);
+		$recipientDisplayName = '';
+		if ($user) {
+			$recipientDisplayName = $user->getDisplayName();
+		}
+		return new JSONResponse($response, 200);
+
+	}
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -793,5 +1018,24 @@ class RevaController extends Controller {
       return new JSONResponse($response, 201);
     }
     return new JSONResponse(["error" => "UpdateReceivedShare failed"], 500);
+	}
+
+	/**
+	 * map login name to internal LDAP UID if a LDAP backend is in use
+	 *
+	 * @param string $uid
+	 * @return string mixed
+	 */
+	private function mapUid($uid) {
+		// FIXME this should be a method in the user management instead
+		$this->logger->debug('shareWith before, ' . $uid, ['app' => $this->appName]);
+		\OCP\Util::emitHook(
+			'\OCA\Files_Sharing\API\Server2Server',
+			'preLoginNameUsedAsUserName',
+			['uid' => &$uid]
+		);
+		$this->logger->debug('shareWith after, ' . $uid, ['app' => $this->appName]);
+
+		return $uid;
 	}
 }
