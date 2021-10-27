@@ -102,6 +102,8 @@ First make sure to `git checkout rrn-testing`.
 
 * ` ../../cmd/revad/revad -c ./ocmd-server-2-with-nextcloud.toml`
 
+Note that this is the only difference with the [Reva bulding instructions](https://reva.link/docs/tutorials/share-tutorial/#3-run-reva)
+
 ### 4)  Terminal 4 
 
 * ` cd /reva/examples/ocmd`
