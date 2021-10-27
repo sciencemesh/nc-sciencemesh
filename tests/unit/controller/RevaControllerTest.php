@@ -911,17 +911,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getData(),"OK");
 	}
 
-	// // test for sharing
-	// public function addShareTest(){
-	// 	$controller = new RevaController(
-	// 		$this->appName, $this->rootFolder, $this->request, $this->session,
-	// 		$this->userManager, $this->urlGenerator, $this->userId, $this->config,
-	// 		$this->userService, $this->trashManager , $this->shareManager,
-	// 		$this->groupManager, $this->cloudFederationProviderManager,
-	// 		$this->factory, $this->cloudIdManager,$this->logger,
-	// 	);
-	// }
-
 	public function testShare(){
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
@@ -1004,6 +993,50 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			->willReturn($testFolder);
 		$result = $controller->Share($this->userId);
 		$this->assertEquals($result->getData(),$response);
+		$this->assertEquals($result->getStatus(),201);
+	}
+
+	public function addShareTest(){
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,
+		);
+		$cloudId = $this->getMockBuilder("OCP\Federation\ICloudId")->getMock();
+		$provider = $this->getMockBuilder("OCP\Federation\ICloudFederationProvider")->getMock();
+		$share = $this->getMockBuilder("OCP\Federation\ICloudFederationShare")->getMock();
+		$user =  $this->getMockBuilder("OCP\IUser")->getMock();
+
+		$paramsMap = [
+			["md",NULL,["opaque_id"=>"fileid-einstein%2Fmy-folder"]],
+			["g",NULL,["grantee"=>["type"=>1,"Id"=>["UserId"=>["idp"=>"cesnet.cz","opaque_id"=>"marie","type"=>1]]]]],
+			["provider_domain",NULL,"cern.ch"],
+			["resource_type",NULL,"file"],
+			["provider_id",NULL,2],
+			["owner_display_name",NULL,"Albert Einstein"],
+			["protocol",NULL,["name"=>"webdav","options"=>["sharedSecret"=>"secret","permissions"=>"webdav-property"]]]
+		];
+		$this->request->method("getParam")
+			->will($this->returnValueMap($paramsMap));
+		$this->cloudIdManager->method("resolveCloudId")
+			->willReturn($cloudId);
+		$cloudId->method("getUser")
+			->willReturn();
+		$this->userManager->method("userExists")
+			->willReturn(true);
+		$this->urlGenerator->method("getBaseUrl")
+			->willReturn("welcome server2.txt");
+		$this->cloudFederationProviderManager->method("getCloudFederationProvider")
+			->willReturn($provider);
+		$this->factory->method("getCloudFederationShare")
+			->willReturn($share);
+		$this->userManager->method("get")
+			->willReturn($user);
+
+		$result = $controller->addShare($this->userId);
+		$this->assertEquals($result->getData(),'OK');
 		$this->assertEquals($result->getStatus(),201);
 	}
 
