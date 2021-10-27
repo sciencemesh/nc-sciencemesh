@@ -719,80 +719,53 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @BruteForceProtection(action=receiveFederatedShare)
 	 *
-	 * @param string $shareWith
-	 * @param string $name resource name (e.g. document.odt)
-	 * @param string $description share description (optional)
-	 * @param string $providerId resource UID on the provider side
-	 * @param string $owner provider specific UID of the user who owns the resource
-	 * @param string $ownerDisplayName display name of the user who shared the item
-	 * @param string $sharedBy provider specific UID of the user who shared the resource
-	 * @param string $sharedByDisplayName display name of the user who shared the resource
-	 * @param array $protocol (e,.g. ['name' => 'webdav', 'options' => ['username' => 'john', 'permissions' => 31]])
-	 * @param string $shareType ('group' or 'user' share)
-	 * @param $resourceType ('file', 'calendar',...)
 	 * @return Http\DataResponse|JSONResponse
-	 *
-	 * Example: curl -H "Content-Type: application/json" -X POST -d '{"shareWith":"admin1@serve1","name":"welcome server2.txt","description":"desc","providerId":"2","owner":"admin2@http://localhost/server2","ownerDisplayName":"admin2 display","shareType":"user","resourceType":"file","protocol":{"name":"webdav","options":{"sharedSecret":"secret","permissions":"webdav-property"}}}' http://localhost/server/index.php/ocm/shares
 	 */
-//	 public function addShare($shareWith, $name, $description, $providerId, $owner, $ownerDisplayName, $sharedBy, $sharedByDisplayName, $protocol, $shareType, $resourceType) {
-
-
 
 	public function addShare($userId) {
 
 		$md =  $this->request->getParam("md");
 		$g = $this->request->getParam("g");
+		// $providerId resource UID on the provider side
+		$providerId = $this->request->getParam("provider_id");
+		// $resourceType ('file', 'calendar',...)
+		$resourceType = $this->request->getParam("resource_type");
+		$providerDomain = $this->request->getParam("provider_domain");
+		// $ownerDisplayName display name of the user who shared the item
+		$ownerDisplayName = $this->request->getParam("owner_display_name");
+		// $protocol (e,.g. ['name' => 'webdav', 'options' => ['username' => 'john', 'permissions' => 31]])
+		$protocol = $this->request->getParam("protocol");
 		$opaqueId = $md["opaque_id"];
 		$opaqueIdDecoded = urldecode($opaqueId);
 		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
-		$ownerName =substr($opaqueIdExploded[0],strlen("fileid-"));
-		$sharedBy = $owner;
-		$ownerDisplayName = 'Albert Einstein';
+		//$name resource name (e.g. document.odt)
+		$name = end($opaqueIdExploded);
+		// $sharedByDisplayName display name of the user who shared the resource
 		$sharedByDisplayName = '';
+		$ownerName =substr($opaqueIdExploded[0],strlen("fileid-"));
 		$description = '';
 		$grantee = $g["grantee"];
 		$granteeId = $grantee["Id"];
 		$granteeIdUserId = $granteeId["UserId"];
-		//$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"]; //OK the huge number is for reva not nextcloud
+		$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
 
-		$sharePermissions = $g["permissions"];
+		// $owner provider specific UID of the user who owns the resource
+		$owner = $ownerName."@".$providerDomain;
 
-		$resourcePermissions = $sharePermissions["permissions"];
-		$permissionsCode = $this->getPermissionsCode($resourcePermissions); // maybe unused
-
-		$protocol = [
-			'name'=>'webdav',
-			'options'=>[
-				"sharedSecret"=>"secret",
-				"permissions"=>"webdav-property",
-			]
-		];
-		$shareWith = 'marie@cesnet.cz';
-		$name = end($opaqueIdExploded);
-		$providerId = 2;
-		$owner = "einstein@cern.ch";
-		$resourceType = 'file';
+		//$shareType ('group' or 'user' share)
 		$shareType =  $this->getShareType($grantee["type"]);
 
-		error_log("shareWith: ".$shareWith. " HARDCODED");
-		error_log('name: '.$name);
-		error_log("providerId: ".$providerId." HARDCODED");
-		error_log("owner: ".$owner. " HARDCODED");
-		error_log("resourceType: ".$resourceType. " HARDCODED");
-		error_log("shareType: ".$shareType);
+		// $sharedBy provider specific UID of the user who shared the resource
+		$sharedBy = $owner;
 
 		// check if all required parameters are set
-		if ($shareWith === null || // hardcoded
-			$name === null ||      // ok
-			$providerId === null || // ok
-			$owner === null || // hardcoded
-			$resourceType === null || // hardcoded
-			$shareType === null || // ok
-			!is_array($protocol) ||
-			!isset($protocol['name']) ||
-			!isset($protocol['options']) ||
-			!is_array($protocol['options']) ||
-			!isset($protocol['options']['sharedSecret'])
+		if ($shareWith === null ||
+			$name === null ||
+			$providerId === null ||
+			$owner === null ||
+			$resourceType === null ||
+			$shareType === null ||
+			!isset($protocol['name'])
 		) {
 			return new JSONResponse(
 				['message' => 'Missing arguments'],
@@ -861,7 +834,7 @@ class RevaController extends Controller {
 		if ($user) {
 			$recipientDisplayName = $user->getDisplayName();
 		}
-		return new JSONResponse($response, 200);
+		return new JSONResponse("OK", 200);
 
 	}
 	/**
