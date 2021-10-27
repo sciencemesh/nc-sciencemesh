@@ -77,3 +77,33 @@ First get an account for the [App Store](http://apps.nextcloud.com/) then run:
     make && make appstore
 
 The archive is located in build/artifacts/appstore and can then be uploaded to the App Store.
+
+# [OCM share functionality in Reva](https://reva.link/docs/tutorials/share-tutorial/#4-1-generate-invite-token)
+
+To check the share functionality we will need **4 terminals**.
+
+First make sure to `git checkout rrn-testing`.
+
+## 1) Terminal 1 
+
+* `cd reva/`
+
+* ` ./cmd/reva/reva -host localhost:17000 -insecure`
+
+## 2)  Terminal 2 
+
+ * `cd server/`
+ 
+ * ` php -S localhost:8080`
+
+## 3) Terminal 3 
+
+* ` cd /reva/examples/ocmd`
+
+* ` ../../cmd/revad/revad -c ./ocmd-server-2-with-nextcloud.toml`
+
+## 4)  Terminal 4 
+
+* ` cd /reva/examples/ocmd`
+
+* `../../cmd/revad/revad -c ocmd-server-1.toml`
