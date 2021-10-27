@@ -84,26 +84,41 @@ To check the share functionality we will need **4 terminals**.
 
 First make sure to `git checkout rrn-testing`.
 
-## 1) Terminal 1 
+### 1) Terminal 1 
 
 * `cd reva/`
 
 * ` ./cmd/reva/reva -host localhost:17000 -insecure`
 
-## 2)  Terminal 2 
+### 2)  Terminal 2 
 
  * `cd server/`
  
  * ` php -S localhost:8080`
 
-## 3) Terminal 3 
+### 3) Terminal 3 
 
 * ` cd /reva/examples/ocmd`
 
 * ` ../../cmd/revad/revad -c ./ocmd-server-2-with-nextcloud.toml`
 
-## 4)  Terminal 4 
+### 4)  Terminal 4 
 
 * ` cd /reva/examples/ocmd`
 
 * `../../cmd/revad/revad -c ocmd-server-1.toml`
+
+# CURL commands
+
+To check the [RevaCotroller.php](https://github.com/pondersource/nc-sciencemesh/blob/6215c61/lib/Controller/RevaController.php) methods you can use these Curl commands:
+
+## Sharing methods: 
+
+### addShare()
+
+    curl -v -H  'content-type:application/json' POST -d '{"md":{"opaque_id":"fileid-einstein%2Fmy-folder"},"g":{"grantee":{"type":1,"Id":{"UserId":{"idp":"cesnet.cz","opaque_id":"marie","type":1}}}},"provider_domain":"cern.ch","resource_type":"file","provider_id":2,"owner_display_name":"Albert Einstein","protocol":{"name":"webdav","options":{"sharedSecret":"secret","permissions":"webdav-property"}}}' http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/addShare
+
+    
+### ListReceivedShares()
+
+    curl -X POST http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/ListReceivedShares
