@@ -78,7 +78,7 @@ First get an account for the [App Store](http://apps.nextcloud.com/) then run:
 
 The archive is located in build/artifacts/appstore and can then be uploaded to the App Store.
 
-# [OCM share functionality in Reva](https://reva.link/docs/tutorials/share-tutorial/#4-1-generate-invite-token)
+# [OCM share functionality in Reva](https://reva.link/docs/tutorials/share-tutorial)
 
 To check the share functionality we will need **4 terminals**.
 
