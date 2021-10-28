@@ -678,27 +678,64 @@ class RevaController extends Controller {
 // 			}
 // 		}
 // 	}
+
+//
+// {
+// 	"md":{
+// 		"storage_id":"123e4567-e89b-12d3-a456-426655440000
+// 		"opaque_id":"fileid-marie%2Fmy-folder"
+// 	},
+// 	"g":{
+// 		"grantee":{
+// 			"type":1,
+// 			"Id":{
+// 				"UserId":{
+// 					"idp":"cernbox.cern.ch",
+// 					"opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+// 					"type":1
+// 				}
+// 			}
+// 		}
+// 		,
+// 		"permissions":{
+// 			"permissions":{
+// 				"get_path":true,
+// 				"initiate_file_download":true,
+// 				"list_container":true,
+// 				"list_file_versions":true,
+// 				"stat":true
+// 			}
+// 		}
+// 	}
+// 	'
+//| 1e7830a4-ed83-4c38-aa21-15242462b596 | cesnet.cz | f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c |
+// storage_id:"123e4567-e89b-12d3-a456-426655440000" opaque_id:"fileid-marie%2Fmy-folder"  |
+//permissions:<get_path:true initiate_file_download:true list_container:true list_file_versions:true stat:true >  |
+//GRANTEE_TYPE_USER | cernbox.cern.ch | 4c510ada-c86b-4815-8820-42cdf82c3d51 | 2021-10-28 12:58:28 +0200 CEST | 2021-10-28 12:58:28 +0200 CEST |
+
 	public function Share($userId){
     $md =  $this->request->getParam("md");
 		$g = $this->request->getParam("g");
 		$opaqueId = $md["opaque_id"];
-		$opaqueId = str_replace('fileid-', 'sciencemesh', $opaqueId);
+
+		$opaqueIdDecoded = urldecode($opaqueId);
+		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
+		//$name resource name (e.g. document.odt)
+		$name = end($opaqueIdExploded);
 		$grantee = $g["grantee"];
 		$granteeId = $grantee["Id"];
 		$granteeIdUserId = $granteeId["UserId"];
-//		$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
+		$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
 		$sharePermissions = $g["permissions"];
 
 		$resourcePermissions = $sharePermissions["permissions"];
 		$permissionsCode = $this->getPermissionsCode($resourcePermissions);
-		//$shareWith = "einstein@localhost:8080";
-		$shareWith = "einstein@example.com";
 		$share = $this->shareManager->newShare();
 		$share->setPermissions($permissionsCode);
 		$share->setShareType(IShare::TYPE_REMOTE);
 		$share->setSharedBy($userId);
 		try {
-		$path = $this->userFolder->get($opaqueId);
+			$path = $this->userFolder->get("sciencemesh/".$name);
 		} catch (NotFoundException $e) {
 			return new JSONResponse(["error" => "Share failed. Resource Path not found"], 500);
 		}
@@ -713,7 +750,7 @@ class RevaController extends Controller {
 	}
 
 	/**
-	 * add share
+	 * add a received share
 	 *
 	 * @NoCSRFRequired
 	 * @PublicPage
@@ -882,20 +919,20 @@ class RevaController extends Controller {
 	 */
 
 	public function UpdateShare($userId){
-    $ref =  $this->request->getParam("ref");
+		$ref =  $this->request->getParam("ref");
 		$spec = $ref["Spec"];
-    $id = $spec["Id"];
-    $opaqueId = $id["opaque_id"];
+		$id = $spec["Id"];
+		$opaqueId = $id["opaque_id"];
 		$p = $this->request->getParam("p");
 		$permissions = $p["permissions"];
 		$permissionsCode = $this->getPermissionsCode($permissions);
 		$share = $this->shareManager->getShareById($opaqueId);
 		$updated = $this->shareManager->updateShare($share, $permissionsCode);
-    if($updated) {
-      $response = $this->shareInfoToResourceInfo($updated);
-      return new JSONResponse($response, 201);
-    }
-    return new JSONResponse(["error" => "UpdateShare failed"], 500);
+		if($updated) {
+			$response = $this->shareInfoToResourceInfo($updated);
+			return new JSONResponse($response, 201);
+		}
+		return new JSONResponse(["error" => "UpdateShare failed"], 500);
 	}
   /**
 	 * @PublicPage
@@ -916,12 +953,12 @@ class RevaController extends Controller {
 		$typeCreator = ["type"];
 		$responses = [];
 		$shares =  $this->shareManager->getSharesBy($userId, 6);
-    if ($shares) {
+		if ($shares) {
 			foreach ($shares as $share) {
 				array_push($responses,$this->shareInfoToResourceInfo($share));
 			}
-      return new JSONResponse($responses, 201);
-    }
+			return new JSONResponse($responses, 201);
+		}
 		elseif($shares == []){
 			return new JSONResponse($shares, 200);
 		}
@@ -937,20 +974,18 @@ class RevaController extends Controller {
 	public function ListReceivedShares($userId){
 		$responses = [];
 		$shares =  $this->shareManager->getSharedWith($userId,IShare::TYPE_REMOTE);
-    if ($shares) {
+		if ($shares) {
 			foreach ($shares as $share) {
 				$response = $this->shareInfoToResourceInfo($share);
 				$response["state"] = 2;
 				array_push($responses, $response);
 			}
-      return new JSONResponse($responses, 201);
-    }
+			return new JSONResponse($responses, 201);
+		}
 		elseif($shares == []){
 			return new JSONResponse($shares, 200);
 		}
 		return new JSONResponse(["error" => "ListReceivedShares failed"], 500);
-
-
 	}
   /**
 	 * @PublicPage
@@ -960,16 +995,16 @@ class RevaController extends Controller {
    * GetReceivedShare returns the information for a received share the user has access.
 	 */
 	public function GetReceivedShare($userId){
-    $spec =  $this->request->getParam("Spec");
-    $Id = $spec["Id"];
-    $opaqueId = $Id["opaque_id"];
+		$spec =  $this->request->getParam("Spec");
+		$Id = $spec["Id"];
+		$opaqueId = $Id["opaque_id"];
 		$share = $this->shareManager->getShareById($opaqueId,$userId);
-    if($share) {
-      $response = $this->shareInfoToResourceInfo($share);
-      $response["state"] = 2;
-      return new JSONResponse($response, 201);
-    }
-    return new JSONResponse(["error" => "GetReceivedShare failed"], 500);
+		if($share) {
+			$response = $this->shareInfoToResourceInfo($share);
+			$response["state"] = 2;
+			return new JSONResponse($response, 201);
+		}
+		return new JSONResponse(["error" => "GetReceivedShare failed"], 500);
 	}
   /**
 	 * @PublicPage
@@ -981,16 +1016,16 @@ class RevaController extends Controller {
 	public function UpdateReceivedShare($userId){
 		$ref =  $this->request->getParam("ref");
 		$Spec = $ref["Spec"];
-    $Id = $Spec["Id"];
-    $opaqueId = $Id["opaque_id"];
+		$Id = $Spec["Id"];
+		$opaqueId = $Id["opaque_id"];
 		$share = $this->shareManager->getShareById($opaqueId,$userId);
 		$updated = $this->shareManager->updateShare($share, 5);
-    if($updated) {
-      $response = $this->shareInfoToResourceInfo($updated);
+		if($updated) {
+			$response = $this->shareInfoToResourceInfo($updated);
 			$response["state"] = 2;
-      return new JSONResponse($response, 201);
-    }
-    return new JSONResponse(["error" => "UpdateReceivedShare failed"], 500);
+				return new JSONResponse($response, 201);
+		}
+		return new JSONResponse(["error" => "UpdateReceivedShare failed"], 500);
 	}
 
 	/**
