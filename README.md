@@ -118,7 +118,7 @@ To check the [RevaCotroller.php](https://github.com/pondersource/nc-sciencemesh/
 
 ### addShare()
 
-    curl -v -H  'content-type:application/json' POST -d '{"md":{"opaque_id":"fileid-einstein%2Fmy-folder"},"g":{"grantee":{"type":1,"Id":{"UserId":{"idp":"cesnet.cz","opaque_id":"marie","type":1}}}},"provider_domain":"cern.ch","resource_type":"file","provider_id":2,"owner_display_name":"Albert Einstein","protocol":{"name":"webdav","options":{"sharedSecret":"secret","permissions":"webdav-property"}}}' http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/addShare
+    curl -v -H  'Content-Type:application/json' -X POST -d '{"md":{"opaque_id":"fileid-einstein%2Fmy-folder"},"g":{"grantee":{"type":1,"Id":{"UserId":{"idp":"cesnet.cz","opaque_id":"marie","type":1}}}},"provider_domain":"cern.ch","resource_type":"file","provider_id":2,"owner_display_name":"Albert Einstein","protocol":{"name":"webdav","options":{"sharedSecret":"secret","permissions":"webdav-property"}}}' http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/addShare
 
     
 ### ListReceivedShares()
