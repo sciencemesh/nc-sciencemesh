@@ -714,6 +714,7 @@ class RevaController extends Controller {
 //GRANTEE_TYPE_USER | cernbox.cern.ch | 4c510ada-c86b-4815-8820-42cdf82c3d51 | 2021-10-28 12:58:28 +0200 CEST | 2021-10-28 12:58:28 +0200 CEST |
 
 	public function Share($userId){
+		error_log("Call Share()");
     $md =  $this->request->getParam("md");
 		$g = $this->request->getParam("g");
 		$opaqueId = $md["opaque_id"];
@@ -760,6 +761,7 @@ class RevaController extends Controller {
 	 */
 
 	public function addShare($userId) {
+		error_log("Call addShare()");
 
 		$md =  $this->request->getParam("md");
 		$g = $this->request->getParam("g");
@@ -784,8 +786,7 @@ class RevaController extends Controller {
 		$grantee = $g["grantee"];
 		$granteeId = $grantee["Id"];
 		$granteeIdUserId = $granteeId["UserId"];
-		$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
-
+		$shareWith =$userId."@".$granteeIdUserId["idp"];
 		// $owner provider specific UID of the user who owns the resource
 		$owner = $ownerName."@".$providerDomain;
 
@@ -795,6 +796,15 @@ class RevaController extends Controller {
 		// $sharedBy provider specific UID of the user who shared the resource
 		$sharedBy = $owner;
 
+		error_log("shareWith: ".$shareWith);
+		error_log("name: ".$name);
+		error_log("providerId: ".$providerId);
+		error_log("owner: ".$owner);
+		error_log("resourceType: ".$resourceType);
+		error_log("shareType: ".$shareType);
+		if($protocol == null){
+			error_log("protocol: NULL");
+		}
 		// check if all required parameters are set
 		if ($shareWith === null ||
 			$name === null ||
@@ -810,7 +820,7 @@ class RevaController extends Controller {
 			);
 		}
 
-
+		error_log("Nothing is NUll! <3");
 		$cloudId = $this->cloudIdManager->resolveCloudId($shareWith);
 		$shareWith = $cloudId->getUser();
 
@@ -833,7 +843,6 @@ class RevaController extends Controller {
 				);
 			}
 		}
-
 		// if no explicit display name is given, we use the uid as display name
 		$ownerDisplayName = $ownerDisplayName === null ? $owner : $ownerDisplayName;
 		$sharedByDisplayName = $sharedByDisplayName === null ? $sharedBy : $sharedByDisplayName;
@@ -871,7 +880,9 @@ class RevaController extends Controller {
 		if ($user) {
 			$recipientDisplayName = $user->getDisplayName();
 		}
-		return new JSONResponse("OK", 200);
+		$response = '{"id":{},"resource_id":{},"permissions":{"permissions":{"add_grant":true,"create_container":true,"delete":true,"get_path":true,"get_quota":true,"initiate_file_download":true,"initiate_file_upload":true,"list_grants":true,"list_container":true,"list_file_versions":true,"list_recycle":true,"move":true,"remove_grant":true,"purge_recycle":true,"restore_file_version":true,"restore_recycle_item":true,"stat":true,"update_grant":true,"deny_grant":true}},"grantee":{"Id":{"UserId":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1}}},"owner":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"creator":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"ctime":{"seconds":1234567890},"mtime":{"seconds":1234567890}}';
+
+		return new JSONResponse(json_decode($response), 200);
 
 	}
 	/**
