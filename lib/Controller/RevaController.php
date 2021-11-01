@@ -359,7 +359,6 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function CreateHome($userId) {
-		error_log('userid: '.$userId);
 		$homeExists = $this->userFolder->nodeExists("sciencemesh");
 		if (!$homeExists) {
 			$this->userFolder->newFolder("sciencemesh"); // Create the Sciencemesh directory for storage if it doesn't exist.
@@ -714,7 +713,6 @@ class RevaController extends Controller {
 //GRANTEE_TYPE_USER | cernbox.cern.ch | 4c510ada-c86b-4815-8820-42cdf82c3d51 | 2021-10-28 12:58:28 +0200 CEST | 2021-10-28 12:58:28 +0200 CEST |
 
 	public function Share($userId){
-		error_log("Call Share()");
     $md =  $this->request->getParam("md");
 		$g = $this->request->getParam("g");
 		$opaqueId = $md["opaque_id"];
@@ -761,7 +759,6 @@ class RevaController extends Controller {
 	 */
 
 	public function addShare($userId) {
-		error_log("Call addShare()");
 
 		$md =  $this->request->getParam("md");
 		$g = $this->request->getParam("g");
@@ -796,15 +793,6 @@ class RevaController extends Controller {
 		// $sharedBy provider specific UID of the user who shared the resource
 		$sharedBy = $owner;
 
-		error_log("shareWith: ".$shareWith);
-		error_log("name: ".$name);
-		error_log("providerId: ".$providerId);
-		error_log("owner: ".$owner);
-		error_log("resourceType: ".$resourceType);
-		error_log("shareType: ".$shareType);
-		if($protocol == null){
-			error_log("protocol: NULL");
-		}
 		// check if all required parameters are set
 		if ($shareWith === null ||
 			$name === null ||
@@ -820,7 +808,6 @@ class RevaController extends Controller {
 			);
 		}
 
-		error_log("Nothing is NUll! <3");
 		$cloudId = $this->cloudIdManager->resolveCloudId($shareWith);
 		$shareWith = $cloudId->getUser();
 
