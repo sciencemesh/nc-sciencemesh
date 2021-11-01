@@ -359,7 +359,6 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function CreateHome($userId) {
-		error_log('userid: '.$userId);
 		$homeExists = $this->userFolder->nodeExists("sciencemesh");
 		if (!$homeExists) {
 			$this->userFolder->newFolder("sciencemesh"); // Create the Sciencemesh directory for storage if it doesn't exist.
@@ -784,8 +783,7 @@ class RevaController extends Controller {
 		$grantee = $g["grantee"];
 		$granteeId = $grantee["Id"];
 		$granteeIdUserId = $granteeId["UserId"];
-		$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
-
+		$shareWith =$userId."@".$granteeIdUserId["idp"];
 		// $owner provider specific UID of the user who owns the resource
 		$owner = $ownerName."@".$providerDomain;
 
@@ -810,7 +808,6 @@ class RevaController extends Controller {
 			);
 		}
 
-
 		$cloudId = $this->cloudIdManager->resolveCloudId($shareWith);
 		$shareWith = $cloudId->getUser();
 
@@ -833,7 +830,6 @@ class RevaController extends Controller {
 				);
 			}
 		}
-
 		// if no explicit display name is given, we use the uid as display name
 		$ownerDisplayName = $ownerDisplayName === null ? $owner : $ownerDisplayName;
 		$sharedByDisplayName = $sharedByDisplayName === null ? $sharedBy : $sharedByDisplayName;
@@ -871,7 +867,9 @@ class RevaController extends Controller {
 		if ($user) {
 			$recipientDisplayName = $user->getDisplayName();
 		}
-		return new JSONResponse("OK", 200);
+		$response = '{"id":{},"resource_id":{},"permissions":{"permissions":{"add_grant":true,"create_container":true,"delete":true,"get_path":true,"get_quota":true,"initiate_file_download":true,"initiate_file_upload":true,"list_grants":true,"list_container":true,"list_file_versions":true,"list_recycle":true,"move":true,"remove_grant":true,"purge_recycle":true,"restore_file_version":true,"restore_recycle_item":true,"stat":true,"update_grant":true,"deny_grant":true}},"grantee":{"Id":{"UserId":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1}}},"owner":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"creator":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"ctime":{"seconds":1234567890},"mtime":{"seconds":1234567890}}';
+
+		return new JSONResponse(json_decode($response), 200);
 
 	}
 	/**
