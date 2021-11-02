@@ -115,29 +115,29 @@ class RevaController extends Controller {
 		parent::__construct($AppName, $request);
 		require_once(__DIR__.'/../../vendor/autoload.php');
 
-		$this->config = new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
 		$this->rootFolder = $rootFolder;
 		$this->request     = $request;
-		$this->urlGenerator = $urlGenerator;
 		$this->session = $session;
 		$this->userManager = $userManager;
+		$this->urlGenerator = $urlGenerator;
+
+		$this->config = new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
+
 		$this->trashManager = $trashManager;
+		$this->shareManager = $shareManager;
+		$this->groupManager = $groupManager;
+		$this->cloudFederationProviderManager = $cloudFederationProviderManager;
+		$this->factory = $factory;
+		$this->cloudIdManager = $cloudIdManager;
+		$this->logger = $logger;
+		$this->appManager = $appManager;
+		$this->l = $l10n;
 
 		$this->userFolder = $this->rootFolder->getUserFolder($userId);
 		// Create the Nextcloud Adapter
 		$adapter = new NextcloudAdapter($this->userFolder);
 		$this->filesystem = new \League\Flysystem\Filesystem($adapter);
-
 		$this->baseUrl = $this->getStorageUrl($userId); // Where is that used?
-		# Share
-		$this->shareManager = $shareManager;
-		$this->logger = $logger;
-		$this->groupManager = $groupManager;
-		$this->cloudFederationProviderManager = $cloudFederationProviderManager;
-		$this->factory = $factory;
-		$this->cloudIdManager = $cloudIdManager;
-		$this->appManager = $appManager;
-		$this->l = $l10n;
 
 	}
 
@@ -150,6 +150,32 @@ class RevaController extends Controller {
 	 * @throws \OCP\Files\InvalidPathException
 	 * @throws \OCP\Files\NotFoundException
 	 */
+	 private function lock(\OCP\Files\Node $node) {
+ 		$node->lock(ILockingProvider::LOCK_SHARED);
+ 		$this->lockedNode = $node;
+ 	}
+
+ 	/**
+ 	 * Make sure that the passed date is valid ISO 8601
+ 	 * So YYYY-MM-DD
+ 	 * If not throw an exception
+ 	 *
+ 	 * @param string $expireDate
+ 	 *
+ 	 * @throws \Exception
+ 	 * @return \DateTime
+ 	 */
+ 	private function parseDate(string $expireDate): \DateTime {
+ 		try {
+ 			$date = new \DateTime($expireDate);
+ 		} catch (\Exception $e) {
+ 			throw new \Exception('Invalid date. Format must be YYYY-MM-DD');
+ 		}
+
+ 		$date->setTime(0, 0, 0);
+
+ 		return $date;
+ 	}
 
 	private function nodeInfoToCS3ResourceInfo(array $nodeInfo) : array
 	{
@@ -671,61 +697,34 @@ class RevaController extends Controller {
 		return new JSONResponse(["error" => "Create failed"], 500);
 	}
 
-//
-// {
-// 	"md":{
-// 		"storage_id":"123e4567-e89b-12d3-a456-426655440000
-// 		"opaque_id":"fileid-marie%2FtestFile.json"
-// 	},
-// 	"g":{
-// 		"grantee":{
-// 			"type":1,
-// 			"Id":{
-// 				"UserId":{
-// 					"idp":"localhost:8080",
-// 					"opaque_id":"einstein",
-// 					"type":1
-// 				}
-// 			}
-// 		}
-// 		,
-// 		"permissions":{
-// 			"permissions":{
-// 				"get_path":true,
-// 				"initiate_file_download":true,
-// 				"list_container":true,
-// 				"list_file_versions":true,
-// 				"stat":true
-// 			}
-// 		}
-// 	}
-
-	private function lock(\OCP\Files\Node $node) {
-		$node->lock(ILockingProvider::LOCK_SHARED);
-		$this->lockedNode = $node;
-	}
-
-	/**
-	 * Make sure that the passed date is valid ISO 8601
-	 * So YYYY-MM-DD
-	 * If not throw an exception
-	 *
-	 * @param string $expireDate
-	 *
-	 * @throws \Exception
-	 * @return \DateTime
-	 */
-	private function parseDate(string $expireDate): \DateTime {
-		try {
-			$date = new \DateTime($expireDate);
-		} catch (\Exception $e) {
-			throw new \Exception('Invalid date. Format must be YYYY-MM-DD');
-		}
-
-		$date->setTime(0, 0, 0);
-
-		return $date;
-	}
+	//
+	// {
+	// 	"md":{
+	// 		"storage_id":"123e4567-e89b-12d3-a456-426655440000
+	// 		"opaque_id":"fileid-marie%2FtestFile.json"
+	// 	},
+	// 	"g":{
+	// 		"grantee":{
+	// 			"type":1,
+	// 			"Id":{
+	// 				"UserId":{
+	// 					"idp":"localhost:8080",
+	// 					"opaque_id":"einstein",
+	// 					"type":1
+	// 				}
+	// 			}
+	// 		}
+	// 		,
+	// 		"permissions":{
+	// 			"permissions":{
+	// 				"get_path":true,
+	// 				"initiate_file_download":true,
+	// 				"list_container":true,
+	// 				"list_file_versions":true,
+	// 				"stat":true
+	// 			}
+	// 		}
+	// 	}
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -742,10 +741,6 @@ class RevaController extends Controller {
    * Create a new share in fn with the given access control list.
 	 */
 	public function Share($userId){
-		error_log("call Share()!!!!!");
-
-		$path = null;
-		$permissions = null;
 		$publicUpload = 'false';
 		$password = '';
 		$sendPasswordByTalk = null;
@@ -770,7 +765,7 @@ class RevaController extends Controller {
 		$resourcePermissions = $sharePermissions["permissions"];
 		$permissions = $this->getPermissionsCode($resourcePermissions);
 		$share = $this->shareManager->newShare();
-//-------------------
+
 		if ($permissions === null) {
 			$permissions = $this->config->getAppValue('core', 'shareapi_default_permissions', Constants::PERMISSION_ALL);
 		}
@@ -807,11 +802,6 @@ class RevaController extends Controller {
 			$permissions &= ~Constants::PERMISSION_CREATE;
 		}
 
-		/**
-		 * Hack for https://github.com/owncloud/core/issues/22587
-		 * We check the permissions via webdav. But the permissions of the mount point
-		 * do not equal the share permissions. Here we fix that for federated mounts.
-		 */
 		if ($path->getStorage()->instanceOfStorage(Storage::class)) {
 			$permissions &= ~($permissions & ~$path->getPermissions());
 		}
@@ -981,11 +971,6 @@ class RevaController extends Controller {
 			\OC::$server->getLogger()->logException($e);
 			throw new OCSForbiddenException($e->getMessage(), $e);
 		}
-// ------------------
-		// $output = $this->formatShare($share);
-		//
-		// return new DataResponse($output);
-		// $this->shareManager->createShare($share);
 		$response = $this->shareInfoToResourceInfo($share);
 		return new JSONResponse($response, 201);
 	}
