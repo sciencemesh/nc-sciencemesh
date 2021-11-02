@@ -930,6 +930,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$testFolder 			= $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$testShare 				= $this->getMockBuilder("OCP\Share\IShare")->getMock();
 		$testCreatedShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$testLockedNode = $this->getMockBuilder("OCP\Files\Node")->getMock();
 		$paramsMap = [
 			["md", NULL,["opaque_id"=>"fileid-marie%2FtestFile.json"]],
 			["g", NULL,["grantee"=>["Id"=>["UserId"=>["idp"=>"localhost:8080","opaque_id"=>"einstein","type"=>1]]],"permissions"=>["permissions"=>["get_path"=>true]]]]
@@ -938,8 +939,12 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			->will($this->returnValueMap($paramsMap));
 		$this->shareManager->method("newShare")
 			->willReturn($testShare);
+		$testShare->method("getNode")
+			->willReturn($testLockedNode);
 		$this->userFolder->method("get")
 			->willReturn($testFolder);
+		$testFolder->method("instanceOfStorage")
+			->willReturn(true);
 		$this->shareManager->method("shareApiAllowLinks")
 			->willReturn(true);
 		$this->shareManager->method("shareApiLinkAllowPublicUpload")
@@ -1011,7 +1016,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getStatus(),201);
 	}
 
-	public function addShareTest(){
+	public function testAddShare(){
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
