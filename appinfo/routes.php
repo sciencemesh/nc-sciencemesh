@@ -7,6 +7,7 @@
  * The controller class has to be registered in the application.php file since
  * it's instantiated in there
  */
+
 return [
     'routes' => [
 

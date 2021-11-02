@@ -25,6 +25,9 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TextPlainResponse;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\OCS\OCSForbiddenException;
+use OCP\AppFramework\OCS\OCSBadRequestException;
+use OCP\AppFramework\QueryException;
 
 use OCA\CloudFederationAPI\Config;
 use OCP\Federation\Exceptions\ActionNotSupportedException;
@@ -43,6 +46,11 @@ use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Constants;
 
 use Psr\Log\LoggerInterface;
+
+use OCP\App\IAppManager;
+use OCP\Lock\ILockingProvider;
+use OCP\Lock\LockedException;
+use OCP\IL10N;
 
 class RevaController extends Controller {
 
@@ -74,7 +82,15 @@ class RevaController extends Controller {
 	/** @var ICloudIdManager */
 	private $cloudIdManager;
 
- # UserService : unused
+	/** @var \OCP\Files\Node */
+	private $lockedNode;
+
+	/** @var IAppManager */
+	private $appManager;
+
+	/** @var IL10N */
+	private $l;
+
 	public function __construct(
 		$AppName,
 		IRootFolder $rootFolder,
@@ -91,7 +107,9 @@ class RevaController extends Controller {
 		ICloudFederationProviderManager $cloudFederationProviderManager,
 		ICloudFederationFactory $factory,
 		ICloudIdManager $cloudIdManager,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		IAppManager $appManager,
+		IL10N $l10n
 	)
 	{
 		parent::__construct($AppName, $request);
@@ -118,6 +136,8 @@ class RevaController extends Controller {
 		$this->cloudFederationProviderManager = $cloudFederationProviderManager;
 		$this->factory = $factory;
 		$this->cloudIdManager = $cloudIdManager;
+		$this->appManager = $appManager;
+		$this->l = $l10n;
 
 	}
 
@@ -650,47 +670,20 @@ class RevaController extends Controller {
 		}
 		return new JSONResponse(["error" => "Create failed"], 500);
 	}
-  /**
-	 * @PublicPage
-	 * @NoCSRFRequired
-	 * @NoSameSiteCookieRequired
-   *
-   * Create a new share in fn with the given access control list.
-	 */
-
-// {
-// 	"md":{
-// 		"opaque_id":"fileid-/some/path"
-// 	},
-// 	"g":{
-// 		"grantee":{
-// 			"Id":{
-// 				"UserId":{
-// 					"idp":"0.0.0.0:19000",
-// 					"opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-// 					"type":1
-// 				}
-// 			}
-// 		},
-// 		"permissions":{
-// 			"permissions":{}
-// 			}
-// 		}
-// 	}
 
 //
 // {
 // 	"md":{
 // 		"storage_id":"123e4567-e89b-12d3-a456-426655440000
-// 		"opaque_id":"fileid-marie%2Fmy-folder"
+// 		"opaque_id":"fileid-marie%2FtestFile.json"
 // 	},
 // 	"g":{
 // 		"grantee":{
 // 			"type":1,
 // 			"Id":{
 // 				"UserId":{
-// 					"idp":"cernbox.cern.ch",
-// 					"opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+// 					"idp":"localhost:8080",
+// 					"opaque_id":"einstein",
 // 					"type":1
 // 				}
 // 			}
@@ -706,13 +699,60 @@ class RevaController extends Controller {
 // 			}
 // 		}
 // 	}
-// 	'
-//| 1e7830a4-ed83-4c38-aa21-15242462b596 | cesnet.cz | f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c |
-// storage_id:"123e4567-e89b-12d3-a456-426655440000" opaque_id:"fileid-marie%2Fmy-folder"  |
-//permissions:<get_path:true initiate_file_download:true list_container:true list_file_versions:true stat:true >  |
-//GRANTEE_TYPE_USER | cernbox.cern.ch | 4c510ada-c86b-4815-8820-42cdf82c3d51 | 2021-10-28 12:58:28 +0200 CEST | 2021-10-28 12:58:28 +0200 CEST |
 
+	private function lock(\OCP\Files\Node $node) {
+		$node->lock(ILockingProvider::LOCK_SHARED);
+		$this->lockedNode = $node;
+	}
+
+	/**
+	 * Make sure that the passed date is valid ISO 8601
+	 * So YYYY-MM-DD
+	 * If not throw an exception
+	 *
+	 * @param string $expireDate
+	 *
+	 * @throws \Exception
+	 * @return \DateTime
+	 */
+	private function parseDate(string $expireDate): \DateTime {
+		try {
+			$date = new \DateTime($expireDate);
+		} catch (\Exception $e) {
+			throw new \Exception('Invalid date. Format must be YYYY-MM-DD');
+		}
+
+		$date->setTime(0, 0, 0);
+
+		return $date;
+	}
+	/**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @NoSameSiteCookieRequired
+	 * @suppress PhanUndeclaredClassMethod
+   *
+	 * @return DataResponse
+	 	 * @throws NotFoundException
+	 	 * @throws OCSBadRequestException
+	 	 * @throws OCSException
+	 	 * @throws OCSForbiddenException
+	 	 * @throws OCSNotFoundException
+	 	 * @throws InvalidPathException
+   * Create a new share in fn with the given access control list.
+	 */
 	public function Share($userId){
+		error_log("call Share()!!!!!");
+
+		$path = null;
+		$permissions = null;
+		$publicUpload = 'false';
+		$password = '';
+		$sendPasswordByTalk = null;
+		$expireDate = '';
+		$label = '';
+		$shareType = IShare::TYPE_LINK;
+
     $md =  $this->request->getParam("md");
 		$g = $this->request->getParam("g");
 		$opaqueId = $md["opaque_id"];
@@ -728,22 +768,224 @@ class RevaController extends Controller {
 		$sharePermissions = $g["permissions"];
 
 		$resourcePermissions = $sharePermissions["permissions"];
-		$permissionsCode = $this->getPermissionsCode($resourcePermissions);
+		$permissions = $this->getPermissionsCode($resourcePermissions);
 		$share = $this->shareManager->newShare();
-		$share->setPermissions($permissionsCode);
-		$share->setShareType(IShare::TYPE_REMOTE);
-		$share->setSharedBy($userId);
+//-------------------
+		if ($permissions === null) {
+			$permissions = $this->config->getAppValue('core', 'shareapi_default_permissions', Constants::PERMISSION_ALL);
+		}
+
+		// Verify path
+		if ($name === null) {
+			throw new OCSNotFoundException($this->l->t('Please specify a file or folder path'));
+		}
+
 		try {
 			$path = $this->userFolder->get("sciencemesh/".$name);
 		} catch (NotFoundException $e) {
 			return new JSONResponse(["error" => "Share failed. Resource Path not found"], 500);
 		}
+
 		$share->setNode($path);
+
 		try {
+			$this->lock($share->getNode());
+		} catch (LockedException $e) {
+			throw new OCSNotFoundException($this->l->t('Could not create share'));
+		}
+
+		if ($permissions < 0 || $permissions > Constants::PERMISSION_ALL) {
+			throw new OCSNotFoundException($this->l->t('Invalid permissions'));
+		}
+
+		// Shares always require read permissions
+		$permissions |= Constants::PERMISSION_READ;
+
+		if ($path instanceof \OCP\Files\File) {
+			// Single file shares should never have delete or create permissions
+			$permissions &= ~Constants::PERMISSION_DELETE;
+			$permissions &= ~Constants::PERMISSION_CREATE;
+		}
+
+		/**
+		 * Hack for https://github.com/owncloud/core/issues/22587
+		 * We check the permissions via webdav. But the permissions of the mount point
+		 * do not equal the share permissions. Here we fix that for federated mounts.
+		 */
+		if ($path->getStorage()->instanceOfStorage(Storage::class)) {
+			$permissions &= ~($permissions & ~$path->getPermissions());
+		}
+
+		if ($shareType === IShare::TYPE_USER) {
+			// Valid user is required to share
+			if ($shareWith === null || !$this->userManager->userExists($shareWith)) {
+				throw new OCSNotFoundException($this->l->t('Please specify a valid user'));
+			}
 			$share->setSharedWith($shareWith);
-		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(["error" => "Share failed. Invalid share receipient"], 500);}
-		$this->shareManager->createShare($share);
+			$share->setPermissions($permissions);
+		} elseif ($shareType === IShare::TYPE_GROUP) {
+			if (!$this->shareManager->allowGroupSharing()) {
+				throw new OCSNotFoundException($this->l->t('Group sharing is disabled by the administrator'));
+			}
+
+			// Valid group is required to share
+			if ($shareWith === null || !$this->groupManager->groupExists($shareWith)) {
+				throw new OCSNotFoundException($this->l->t('Please specify a valid group'));
+			}
+			$share->setSharedWith($shareWith);
+			$share->setPermissions($permissions);
+		} elseif ($shareType === IShare::TYPE_LINK
+			|| $shareType === IShare::TYPE_EMAIL) {
+
+			// Can we even share links?
+			if (!$this->shareManager->shareApiAllowLinks()) {
+				throw new OCSNotFoundException($this->l->t('Public link sharing is disabled by the administrator'));
+			}
+
+			if ($publicUpload === 'true') {
+				// Check if public upload is allowed
+				if (!$this->shareManager->shareApiLinkAllowPublicUpload()) {
+					throw new OCSForbiddenException($this->l->t('Public upload disabled by the administrator'));
+				}
+
+				// Public upload can only be set for folders
+				if ($path instanceof \OCP\Files\File) {
+					throw new OCSNotFoundException($this->l->t('Public upload is only possible for publicly shared folders'));
+				}
+
+				$permissions = Constants::PERMISSION_READ |
+					Constants::PERMISSION_CREATE |
+					Constants::PERMISSION_UPDATE |
+					Constants::PERMISSION_DELETE;
+			} else {
+				$permissions = Constants::PERMISSION_READ;
+			}
+
+			// TODO: It might make sense to have a dedicated setting to allow/deny converting link shares into federated ones
+			if (($permissions & Constants::PERMISSION_READ) && $this->shareManager->outgoingServer2ServerSharesAllowed()) {
+				$permissions |= Constants::PERMISSION_SHARE;
+			}
+
+			$share->setPermissions($permissions);
+
+			// Set password
+			if ($password !== '') {
+				$share->setPassword($password);
+			}
+
+			// Only share by mail have a recipient
+			if (is_string($shareWith) && $shareType === IShare::TYPE_EMAIL) {
+				$share->setSharedWith($shareWith);
+			}
+
+			// If we have a label, use it
+			if (!empty($label)) {
+				$share->setLabel($label);
+			}
+
+			if ($sendPasswordByTalk === 'true') {
+				if (!$this->appManager->isEnabledForUser('spreed')) {
+					throw new OCSForbiddenException($this->l->t('Sharing %s sending the password by Nextcloud Talk failed because Nextcloud Talk is not enabled', [$path->getPath()]));
+				}
+
+				$share->setSendPasswordByTalk(true);
+			}
+
+			//Expire date
+			if ($expireDate !== '') {
+				try {
+					$expireDate = $this->parseDate($expireDate);
+					$share->setExpirationDate($expireDate);
+				} catch (\Exception $e) {
+					throw new OCSNotFoundException($this->l->t('Invalid date, date format must be YYYY-MM-DD'));
+				}
+			}
+		} elseif ($shareType === IShare::TYPE_REMOTE) {
+			if (!$this->shareManager->outgoingServer2ServerSharesAllowed()) {
+				throw new OCSForbiddenException($this->l->t('Sharing %1$s failed because the back end does not allow shares from type %2$s', [$path->getPath(), $shareType]));
+			}
+
+			if ($shareWith === null) {
+				throw new OCSNotFoundException($this->l->t('Please specify a valid federated user ID'));
+			}
+
+			$share->setSharedWith($shareWith);
+			$share->setPermissions($permissions);
+			if ($expireDate !== '') {
+				try {
+					$expireDate = $this->parseDate($expireDate);
+					$share->setExpirationDate($expireDate);
+				} catch (\Exception $e) {
+					throw new OCSNotFoundException($this->l->t('Invalid date, date format must be YYYY-MM-DD'));
+				}
+			}
+		} elseif ($shareType === IShare::TYPE_REMOTE_GROUP) {
+			if (!$this->shareManager->outgoingServer2ServerGroupSharesAllowed()) {
+				throw new OCSForbiddenException($this->l->t('Sharing %1$s failed because the back end does not allow shares from type %2$s', [$path->getPath(), $shareType]));
+			}
+
+			if ($shareWith === null) {
+				throw new OCSNotFoundException($this->l->t('Please specify a valid federated group ID'));
+			}
+
+			$share->setSharedWith($shareWith);
+			$share->setPermissions($permissions);
+			if ($expireDate !== '') {
+				try {
+					$expireDate = $this->parseDate($expireDate);
+					$share->setExpirationDate($expireDate);
+				} catch (\Exception $e) {
+					throw new OCSNotFoundException($this->l->t('Invalid date, date format must be YYYY-MM-DD'));
+				}
+			}
+		} elseif ($shareType === IShare::TYPE_CIRCLE) {
+			if (!\OC::$server->getAppManager()->isEnabledForUser('circles') || !class_exists('\OCA\Circles\ShareByCircleProvider')) {
+				throw new OCSNotFoundException($this->l->t('You cannot share to a Circle if the app is not enabled'));
+			}
+
+			$circle = \OCA\Circles\Api\v1\Circles::detailsCircle($shareWith);
+
+			// Valid circle is required to share
+			if ($circle === null) {
+				throw new OCSNotFoundException($this->l->t('Please specify a valid circle'));
+			}
+			$share->setSharedWith($shareWith);
+			$share->setPermissions($permissions);
+		}
+		elseif ($shareType === IShare::TYPE_ROOM) {
+			try {
+				$this->getRoomShareHelper()->createShare($share, $shareWith, $permissions, $expireDate);
+			} catch (QueryException $e) {
+				throw new OCSForbiddenException($this->l->t('Sharing %s failed because the back end does not support room shares', [$path->getPath()]));
+			}
+		} elseif ($shareType === IShare::TYPE_DECK) {
+			try {
+				$this->getDeckShareHelper()->createShare($share, $shareWith, $permissions, $expireDate);
+			} catch (QueryException $e) {
+				throw new OCSForbiddenException($this->l->t('Sharing %s failed because the back end does not support room shares', [$path->getPath()]));
+			}
+		}
+		 else {
+			throw new OCSBadRequestException($this->l->t('Unknown share type'));
+		}
+		$share->setShareType($shareType);
+		$share->setSharedBy($userId);
+
+		try {
+			$share = $this->shareManager->createShare($share);
+		} catch (GenericShareException $e) {
+			\OC::$server->getLogger()->logException($e);
+			$code = $e->getCode() === 0 ? 403 : $e->getCode();
+			throw new OCSException($e->getHint(), $code);
+		} catch (\Exception $e) {
+			\OC::$server->getLogger()->logException($e);
+			throw new OCSForbiddenException($e->getMessage(), $e);
+		}
+// ------------------
+		// $output = $this->formatShare($share);
+		//
+		// return new DataResponse($output);
+		// $this->shareManager->createShare($share);
 		$response = $this->shareInfoToResourceInfo($share);
 		return new JSONResponse($response, 201);
 	}
