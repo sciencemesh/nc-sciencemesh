@@ -801,7 +801,12 @@ class RevaController extends Controller {
 			$permissions &= ~Constants::PERMISSION_DELETE;
 			$permissions &= ~Constants::PERMISSION_CREATE;
 		}
-
+		if($path->getStorage() == null){
+			error_log("path->getStorage() == null");
+		}
+		if($path == null){
+			error_log("empty path");
+		}
 		if ($path->getStorage()->instanceOfStorage(Storage::class)) {
 			$permissions &= ~($permissions & ~$path->getPermissions());
 		}
