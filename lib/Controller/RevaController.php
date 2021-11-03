@@ -987,6 +987,7 @@ class RevaController extends Controller {
 
 	public function addShare($userId) {
 
+		error_log("call addShare()");
 		$md =  $this->request->getParam("md");
 		$g = $this->request->getParam("g");
 		// $providerId resource UID on the provider side
@@ -1096,7 +1097,7 @@ class RevaController extends Controller {
 		}
 		$response = '{"id":{},"resource_id":{},"permissions":{"permissions":{"add_grant":true,"create_container":true,"delete":true,"get_path":true,"get_quota":true,"initiate_file_download":true,"initiate_file_upload":true,"list_grants":true,"list_container":true,"list_file_versions":true,"list_recycle":true,"move":true,"remove_grant":true,"purge_recycle":true,"restore_file_version":true,"restore_recycle_item":true,"stat":true,"update_grant":true,"deny_grant":true}},"grantee":{"Id":{"UserId":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1}}},"owner":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"creator":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"ctime":{"seconds":1234567890},"mtime":{"seconds":1234567890}}';
 
-		return new JSONResponse(json_decode($response), 200);
+		return new JSONResponse(json_decode($response), 201);
 
 	}
 	/**
