@@ -124,3 +124,10 @@ To check the [RevaCotroller.php](https://github.com/pondersource/nc-sciencemesh/
 ### ListReceivedShares()
 
     curl -X POST http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/ListReceivedShares
+    
+### Share()
+
+    curl -v -H  'Content-Type:application/json'  -X POST -d '{"md":{"storage_id":"123e4567-e89b-12d3-a456-426655440000","opaque_id":"fileid-marie%2FtestFile.json"},"g":{"grantee":{"type":1,"Id":{"UserId":{"idp":"cernbox.cern.ch","opaque_id":"einstein","type":1}}},"permissions":{"permissions":{"get_path":true,"initiate_file_download":true,"list_container":true,"list_file_versions":true,"stat":true}}}}'  http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/Share
+
+
+    
