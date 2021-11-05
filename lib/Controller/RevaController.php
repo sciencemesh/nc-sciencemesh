@@ -321,6 +321,15 @@ class RevaController extends Controller {
 		return $permissionsCode;
 	}
 
+	/**
+	 * @param string $path
+	 * @return \OCP\Share\IShare
+	 * @throws ShareNotFound
+	 */
+	private function getShareByPath($path){
+		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
+	}
+
 	private function getShareType($granteeType){
 		if($granteeType == 1){
 			return 'user';
@@ -1080,6 +1089,7 @@ class RevaController extends Controller {
 		return new JSONResponse(["error" => "GetShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 
 	}
+
   /**
 	 * @PublicPage
 	 * @NoCSRFRequired
