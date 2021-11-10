@@ -15,12 +15,12 @@
         <nextcloud min-version="15" max-version="25"/>
     </dependencies>
     <settings>
-        <admin>OCAScienceMeshSettings</admin>
+        <admin>OCA\ScienceMesh\Settings</admin>
     </settings>
     <navigations>
         <navigation>
             <name>ScienceMesh</name>
-            <route>sciencemesh.app.appLauncher</route>
+            <route>sciencemesh.app.launcher</route>
             <order>10</order>
         </navigation>
     </navigations>
