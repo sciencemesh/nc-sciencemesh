@@ -1,78 +1,79 @@
 <?php
-	namespace OCA\ScienceMesh;
 
-	use OCP\IConfig;
-	use OCP\IUserManager;
-	use OCP\IUrlGenerator;
+namespace OCA\ScienceMesh;
+
+use OCP\IConfig;
+use OCP\IUserManager;
+use OCP\IUrlGenerator;
+
+/**
+ * @package OCA\ScienceMesh
+ */
+class ServerConfig {
+
+	/** @var IConfig */
+	private $config;
 
 	/**
-	 * @package OCA\ScienceMesh
+	 * @param IConfig $config
 	 */
-	class ServerConfig {
-
-		/** @var IConfig */
-		private $config;
-
-		/**
-		 * @param IConfig $config
-		 */
-		public function __construct(IConfig $config, IUrlGenerator $urlGenerator, IUserManager $userManager) {
-			$this->config = $config;
-			$this->userManager = $userManager;
-			$this->urlGenerator = $urlGenerator;
-		}
-
-		/**
-		 * @return string
-		 */
-		public function getPrivateKey() {
-			$result = $this->config->getAppValue('sciencemesh','privateKey');
-			if (!$result) {
-				// generate and save a new set if we don't have a private key;
-				$keys = $this->generateKeySet();
-				$this->config->setAppValue('sciencemesh','privateKey',$keys['privateKey']);
-				$this->config->setAppValue('sciencemesh','encryptionKey',$keys['encryptionKey']);
-			}
-			return $this->config->getAppValue('sciencemesh','privateKey');
-		}
-
-		/**
-		 * @param string $privateKey
-		 */
-		public function setPrivateKey($privateKey) {
-			$this->config->setAppValue('sciencemesh','privateKey',$privateKey);
-		}
-
-		/**
-		 * @return string
-		 */
-		public function getEncryptionKey() {
-			return $this->config->getAppValue('sciencemesh','encryptionKey');
-		}
-
-		/**
-		 * @param string $publicKey
-		 */
-		public function setEncryptionKey($publicKey) {
-			$this->config->setAppValue('sciencemesh','encryptionKey',$publicKey);
-		}
-
-		private function generateKeySet() {
-			$config = array(
-				"digest_alg" => "sha256",
-				"private_key_bits" => 2048,
-				"private_key_type" => OPENSSL_KEYTYPE_RSA,
-			);
-			// Create the private and public key
-			$key = openssl_pkey_new($config);
-
-			// Extract the private key from $key to $privateKey
-			openssl_pkey_export($key, $privateKey);
-			$encryptionKey = base64_encode(random_bytes(32));
-			$result = array(
-				"privateKey" => $privateKey,
-				"encryptionKey" => $encryptionKey
-			);
-			return $result;
-		}
+	public function __construct(IConfig $config) {
+		$this->config = $config;
 	}
+
+	public function getApiKey() {
+		return $this->config->getAppValue('sciencemesh','apiKey');
+	}
+	public function getSiteName() {
+		return $this->config->getAppValue('sciencemesh','siteName');
+	}
+	public function getSiteUrl() {
+		return $this->config->getAppValue('sciencemesh','siteUrl');
+	}
+	public function getSiteId() {
+		return $this->config->getAppValue('sciencemesh','siteId');
+	}
+	public function getCountry() {
+		return $this->config->getAppValue('sciencemesh','country');
+	}
+	public function getIopUrl() {
+		return $this->config->getAppValue('sciencemesh','iopUrl');
+	}
+	public function getNumUsers() {
+		return $this->config->getAppValue('sciencemesh','numUsers');
+	}
+	public function getNumFiles() {
+		return $this->config->getAppValue('sciencemesh','numFiles');
+	}
+	public function getNumStorage() {
+		return $this->config->getAppValue('sciencemesh','numStorage');
+	}
+
+	public function setApiKey($apiKey) {
+		$this->config->setAppValue('sciencemesh','apiKey',$apiKey);
+	}
+	public function setSiteName($siteName) {
+		$this->config->setAppValue('sciencemesh','siteName',$siteName);
+	}
+	public function setSiteUrl($siteUrl) {
+		$this->config->setAppValue('sciencemesh','siteUrl',$siteUrl);
+	}
+	public function setSiteId($siteId) {
+		$this->config->setAppValue('sciencemesh','siteId',$siteId);
+	}
+	public function setCountry($country) {
+		$this->config->setAppValue('sciencemesh','country',$country);
+	}
+	public function setIopUrl($iopUrl) {
+		$this->config->setAppValue('sciencemesh','iopUrl',$iopUrl);
+	}
+	public function setNumUsers($numUsers) {
+		$this->config->setAppValue('sciencemesh','numUsers',$numUsers);
+	}
+	public function setNumFiles($numFiles) {
+		$this->config->setAppValue('sciencemesh','numFiles',$numFiles);
+	}
+	public function setNumStorage($numStorage) {
+		$this->config->setAppValue('sciencemesh','numStorage',$numStorage);
+	}
+}

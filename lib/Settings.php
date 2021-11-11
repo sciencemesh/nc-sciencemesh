@@ -3,11 +3,10 @@
 namespace OCA\ScienceMesh;
 
 use OCA\ScienceMesh\ServerConfig;
-use OcP\AppFramework\Http\TemplateResponse;
+use OCP\AppFramework\Http\TemplateResponse;
 use OCP\Settings\ISettings;
 
 class Settings implements ISettings {
-	
 	private $config;
 
 	public function __construct(Serverconfig $config) {
@@ -15,16 +14,23 @@ class Settings implements ISettings {
 	}
 
 	public function getForm() {
-		$response = new TemplateResponse('sciencemesh', 'admin');
+		$response = new TemplateResponse('sciencemesh', 'settings-admin');
 		$response->setParams([
-			'privateKey' => $this->config->getPrivateKey(),
-			'encryptionKey' => $this->config->getEncryptionKey()
+			'apiKey' => $this->config->getApiKey(),
+			'siteName' => $this->config->getSiteName(),
+			'siteUrl' => $this->config->getSiteUrl(),
+			'siteId' => $this->config->getSiteId(),
+			'country' => $this->config->getCountry(),
+			'iopUrl' => $this->config->getIopUrl(),
+			'numUsers' => $this->config->getNumUsers(),
+			'numFiles' => $this->config->getNumFiles(),
+			'numStorage' => $this->config->getNumStorage()
 		]);
 		return $response;
 	}
 
 	public function getSection() {
-		return 'security';
+		return 'sharing';
 	}
 
 	public function getPriority() {

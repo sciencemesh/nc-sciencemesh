@@ -3741,12 +3741,12 @@
 			document.removeEventListener("DOMContentLoaded", preventDOMContentLoaded, true);
 			window.removeEventListener("load", preventDOMContentLoaded, true);
 		}
-			
+/*
 		editor.fireEvent("DOMContentLoaded", document);
 		window.setTimeout(function() {
 			editor.fireEvent("load", window);
 		}, 100);
-
+*/
 		if (typeof jQuery !== "undefined") {
 			if (typeof jQuery.holdReady === "function") {
 				jQuery.holdReady(false);
