@@ -15,15 +15,18 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Notification\IManager as INotificationManager;
+use OCP\IUserSession;
 
 class AppController extends Controller {
         private $userId;
         private $userManager;
         private $urlGenerator;
         private $config;
+        private $userSession;
 
-        public function __construct($AppName, ITimeFactory $timeFactory, INotificationManager $notificationManager, IRequest $request, IConfig $config, IUserManager $userManager, IURLGenerator $urlGenerator, $userId){
+        public function __construct($AppName, ITimeFactory $timeFactory, INotificationManager $notificationManager, IRequest $request, IConfig $config, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IUserSession $userSession){
                 parent::__construct($AppName, $request);
+              
                 $this->userId = $userId;
                 $this->userManager = $userManager;
                 $this->request     = $request;
@@ -31,6 +34,7 @@ class AppController extends Controller {
                 $this->notificationManager = $notificationManager;
                 $this->timeFactory = $timeFactory;
                 $this->config = new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
+                $this->userSession = $userSession;
         }
 
         /**
@@ -55,7 +59,8 @@ class AppController extends Controller {
          * @NoCSRFRequired
          */
         public function notifications() {
-                $user = $this->userManager->get("alice");
+                $user = $this->userSession->getUser();
+                //$user = $this->userManager->get("alice");
                 $shortMessage = "ScienceMesh notification!";
                 $longMessage = "A longer notification message from ScienceMesh";
                 $notification = $this->notificationManager->createNotification();
