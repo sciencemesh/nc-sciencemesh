@@ -69,5 +69,22 @@ class ShareAPIHelper {
 	public function createShare($share, $shareWith, $permissions, $expireDate) {
 		$share->setSharedWith($shareWith);
 		$share->setPermissions($permissions);
+		error_log('making rest call to grpc client '. $shareWith);
+		$client = $this->clientService->newClient();
+		$response = $client->post(
+			'https://revanc1.docker/ocm/send',
+			[
+				'timeout' => 10,
+				'connect_timeout' => 3,
+				'body' => [
+					'loginType' => 'basic',
+					'loginUsername' => 'einstein',
+					'loginPassword' => 'relativity',
+					'path' => '/home',
+					'recipientUsername' => 'marie',
+					'recipientHost' => 'localhost:17000'
+				]
+			]
+		);
 	}
 }
