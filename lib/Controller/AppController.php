@@ -60,7 +60,6 @@ class AppController extends Controller {
          */
         public function notifications() {
                 $user = $this->userSession->getUser();
-                //$user = $this->userManager->get("alice");
                 $shortMessage = "ScienceMesh notification!";
                 $longMessage = "A longer notification message from ScienceMesh";
                 $notification = $this->notificationManager->createNotification();
