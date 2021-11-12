@@ -4,7 +4,7 @@
               addUncoveredFilesFromWhitelist="true"
               processUncoveredFilesFromWhitelist="true">
 
-          <directory suffix=".php">./tests/unit/</directory>
+          <directory suffix=".php">./lib/</directory>
       </whitelist>
   </filter>
 
