@@ -5,6 +5,7 @@ use OCA\ScienceMesh\ServerConfig;
 use OCA\ScienceMesh\PlainResponse;
 use OCA\ScienceMesh\ResourceServer;
 use OCA\ScienceMesh\NextcloudAdapter;
+use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
 
 use OCA\Files_Trashbin\Trash\ITrashManager;
 
@@ -110,7 +111,8 @@ class RevaController extends Controller {
 		ICloudIdManager $cloudIdManager,
 		LoggerInterface $logger,
 		IAppManager $appManager,
-		IL10N $l10n
+		IL10N $l10n,
+		ScienceMeshShareProvider $shareProvider
 	)
 	{
 		parent::__construct($AppName, $request);
@@ -139,7 +141,7 @@ class RevaController extends Controller {
 		$adapter = new NextcloudAdapter($this->userFolder);
 		$this->filesystem = new \League\Flysystem\Filesystem($adapter);
 		$this->baseUrl = $this->getStorageUrl($userId); // Where is that used?
-
+		$this->shareProvider = $shareProvider;
 	}
 
 	/**
@@ -700,6 +702,7 @@ class RevaController extends Controller {
 		}
 		return new JSONResponse(["error" => "Create failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -948,6 +951,7 @@ class RevaController extends Controller {
 		$response = $this->shareInfoToResourceInfo($share);
 		return new JSONResponse($response, Http::STATUS_CREATED);
 	}
+
 	/**
 	 * add a received share
 	 *
@@ -1190,7 +1194,7 @@ class RevaController extends Controller {
 	 */
 	public function ListReceivedShares($userId){
 		$responses = [];
-		$shares =  $this->shareManager->getSharedWith($userId,IShare::TYPE_REMOTE);
+		$shares = $this->shareProvider->getExternalShares();
 		if ($shares) {
 			foreach ($shares as $share) {
 				$response = $this->shareInfoToResourceInfo($share);

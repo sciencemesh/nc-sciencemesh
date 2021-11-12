@@ -893,7 +893,30 @@ class ScienceMeshShareProvider implements IShareProvider {
 
 		return $share;
 	}
+	/**
+	 * Create a share object from a database row from external shares
+	 *
+	 * @param array $data
+	 * @return IShare
+	 * @throws InvalidShare
+	 * @throws ShareNotFound
+	 */
+	private function createExternalShareObject($data) {
+		$share = new Share($this->rootFolder, $this->userManager);
+		$share->setId((int)$data['id'])
+			->setShareType((int)$data['share_type'])
+			->setShareOwner($data['owner'])
+			->setSharedBy($data['owner'])
+			->setToken($data['share_token'])
+			->setSharedWith($data['user']);
+			$shareTime = new \DateTime();
+		$shareTime->setTimestamp((int)$data['stime']);
+		$share->setShareTime($shareTime);
+		$share->setNodeId((int)$data['file_source']);
+		$share->setProviderId($this->identifier());
 
+		return $share;
+	}
 	/**
 	 * Get the node with file $id for $user
 	 *
@@ -1098,6 +1121,25 @@ class ScienceMeshShareProvider implements IShareProvider {
 		while ($data = $cursor->fetch()) {
 			try {
 				$share = $this->createShareObject($data);
+			} catch (InvalidShare $e) {
+				continue;
+			} catch (ShareNotFound $e) {
+				continue;
+			}
+
+			yield $share;
+		}
+		$cursor->closeCursor();
+	}
+	
+	public function getExternalShares(): iterable {
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->select('*')
+			->from('share_external');
+		$cursor = $qb->execute();
+		while ($data = $cursor->fetch()) {
+			try {
+				$share = $this->createExternalShareObject($data);
 			} catch (InvalidShare $e) {
 				continue;
 			} catch (ShareNotFound $e) {
