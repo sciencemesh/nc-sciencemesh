@@ -715,7 +715,7 @@ class RevaController extends Controller {
 	 	 * @throws InvalidPathException
    * Create a new share in fn with the given access control list.
 	 */
-	public function Share($userId){
+	public function addSentShare($userId){
 		$publicUpload = 'false';
 		$password = '';
 		$sendPasswordByTalk = null;
@@ -958,7 +958,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 
-	public function addShare($userId) {
+	public function addReceivedShare($userId) {
 		$md =  $this->request->getParam("md");
 		$g = $this->request->getParam("g");
 		// $providerId resource UID on the provider side
@@ -991,7 +991,7 @@ class RevaController extends Controller {
 
 		// $sharedBy provider specific UID of the user who shared the resource
 		$sharedBy = $owner;
-
+    
 		// check if all required parameters are set
 		if ($shareWith === null ||
 			$name === null ||
