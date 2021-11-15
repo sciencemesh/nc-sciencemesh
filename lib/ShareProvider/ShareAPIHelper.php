@@ -22,15 +22,8 @@
 
 namespace OCA\ScienceMesh\ShareProvider;
 
-use OC\Share20\Exception\InvalidShare;
-use OC\Share20\Share;
-use OCP\Constants;
 use OCP\IConfig;
 use OCP\IUserManager;
-use OCP\Share\Exceptions\GenericShareException;
-use OCP\Share\Exceptions\ShareNotFound;
-use OCP\Share\IShare;
-use OCP\Share\IShareProvider;
 use OCA\ScienceMesh\RevaHttpClient;
 
 /**
@@ -78,7 +71,7 @@ class ShareAPIHelper {
 		$this->revaHttpClient->createShare([
 			'path' => '/home',
 			'recipientUsername' => 'marie',
-			'recipientHost' =>  'localhost:17000'
+			'recipientHost' => 'localhost:17000'
 		]);
 	}
 }

@@ -8,7 +8,6 @@ use OCP\Collaboration\Collaborators\SearchResultType;
 use OCP\IConfig;
 use OCP\IUserManager;
 use OCP\IUserSession;
-use OCP\Share\IShare;
 use OCA\ScienceMesh\RevaHttpClient;
 
 class ScienceMeshSearchPlugin implements ISearchPlugin {
@@ -33,10 +32,10 @@ class ScienceMeshSearchPlugin implements ISearchPlugin {
 
 	public function search($search, $limit, $offset, ISearchResult $searchResult) {
 		$users = $this->revaHttpClient->findAcceptedUsers();
-		$users = array_filter($users, function($user) use ($search) {
+		$users = array_filter($users, function ($user) use ($search) {
 			return (stripos($user['displayName'], $search) !== false);
 		});
- 		$users = array_slice($users, $offset, $limit);
+		$users = array_slice($users, $offset, $limit);
 
 		$exactResults = [];
 		foreach ($users as $user) {
