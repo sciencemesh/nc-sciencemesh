@@ -321,41 +321,41 @@ class RevaController extends Controller {
 		return $permissionsCode;
 	}
 
-	/**
-	 * @param string $opaqueId
-	 * @return \OCP\Share\IShare
-	 * @throws ShareNotFound
-	 */
-	private function getShareByOpaqueId($opaqueId,$userId){
-		$opaqueIdDecoded = urldecode($opaqueId);
-		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
-		//$name resource name (e.g. document.odt)
-		$name = end($opaqueIdExploded);
-
-		// if ($path !== '') {
-		// 	$userFolder = $this->rootFolder->getUserFolder($userId);
-		// 	try {
-		// 		$node = $userFolder->get($path);
-		// 		$this->lock($node);
-		// 	} catch (NotFoundException $e) {
-		// 		throw new OCSNotFoundException(
-		// 			$this->l->t('Wrong path, file/folder doesn\'t exist')
-		// 		);
-		// 	} catch (LockedException $e) {
-		// 		throw new OCSNotFoundException($this->l->t('Could not lock node'));
-		// 	}
-		// }
-		//
-		// $shares = $this->getFormattedShares(
-		// 	$userId,
-		// 	$node,
-		// 	($shared_with_me === 'true'),
-		// 	($reshares === 'true'),
-		// 	($subfiles === 'true'),
-		// 	($include_tags === 'true'),$userId
-		// );
-		return new DataResponse(array_values($shares));
-	}
+	// /**
+	//  * @param string $opaqueId
+	//  * @return \OCP\Share\IShare
+	//  * @throws ShareNotFound
+	//  */
+	// private function getShareByOpaqueId($opaqueId,$userId){
+	// 	$opaqueIdDecoded = urldecode($opaqueId);
+	// 	$opaqueIdExploded = explode("/",$opaqueIdDecoded);
+	// 	//$name resource name (e.g. document.odt)
+	// 	$name = end($opaqueIdExploded);
+	//
+	// 	// if ($path !== '') {
+	// 	// 	$userFolder = $this->rootFolder->getUserFolder($userId);
+	// 	// 	try {
+	// 	// 		$node = $userFolder->get($path);
+	// 	// 		$this->lock($node);
+	// 	// 	} catch (NotFoundException $e) {
+	// 	// 		throw new OCSNotFoundException(
+	// 	// 			$this->l->t('Wrong path, file/folder doesn\'t exist')
+	// 	// 		);
+	// 	// 	} catch (LockedException $e) {
+	// 	// 		throw new OCSNotFoundException($this->l->t('Could not lock node'));
+	// 	// 	}
+	// 	// }
+	// 	//
+	// 	// $shares = $this->getFormattedShares(
+	// 	// 	$userId,
+	// 	// 	$node,
+	// 	// 	($shared_with_me === 'true'),
+	// 	// 	($reshares === 'true'),
+	// 	// 	($subfiles === 'true'),
+	// 	// 	($include_tags === 'true'),$userId
+	// 	// );
+	// 	return new DataResponse(array_values($shares));
+	// }
 
 	private function getShareType($granteeType){
 		if($granteeType == 1){
@@ -379,17 +379,6 @@ class RevaController extends Controller {
 		$storageUrl = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute("sciencemesh.storage.handleHead", array("userId" => $userId, "path" => "foo")));
 		$storageUrl = preg_replace('/foo$/', '', $storageUrl);
 		return $storageUrl;
-	}
-
-	private function respond($responseBody, $statusCode, $headers=array()) {
-		$result = new PlainResponse($body);
-		foreach ($headers as $header => $values) {
-			foreach ($values as $value) {
-				$result->addHeader($header, $value);
-			}
-		}
-		$result->setStatus($statusCode);
-		return $result;
 	}
 
 	/* Reva handlers */
@@ -446,7 +435,7 @@ class RevaController extends Controller {
 		if (!$homeExists) {
 			$this->userFolder->newFolder("sciencemesh"); // Create the Sciencemesh directory for storage if it doesn't exist.
 		}
-		return new JSONResponse("OK", Http::STATUS_OK);
+		return new JSONResponse("OK", Http::STATUS_CREATED);
 	}
 
 	/**
@@ -616,15 +605,15 @@ class RevaController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
-	public function Move($userId) {
-		$from = $this->request->getParam("from");
-		$to = $this->request->getParam("to");
-		$success = $this->filesystem->move($from, $to);
-		if ($success) {
-			return new JSONResponse("OK", Http::STATUS_OK);
-		}
-		return new JSONResponse(["error" => "Failed to move."], Http::STATUS_INTERNAL_SERVER_ERROR);
-	}
+	// public function Move($userId) {
+	// 	$from = $this->request->getParam("from");
+	// 	$to = $this->request->getParam("to");
+	// 	$success = $this->filesystem->move($from, $to);
+	// 	if ($success) {
+	// 		return new JSONResponse("OK", Http::STATUS_OK);
+	// 	}
+	// 	return new JSONResponse(["error" => "Failed to move."], Http::STATUS_INTERNAL_SERVER_ERROR);
+	// }
 
 	/**
 	 * @PublicPage
@@ -727,6 +716,7 @@ class RevaController extends Controller {
 		}
 		return new JSONResponse(["error" => "Create failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -1018,7 +1008,7 @@ class RevaController extends Controller {
 
 		// $sharedBy provider specific UID of the user who shared the resource
 		$sharedBy = $owner;
-    
+
 		// check if all required parameters are set
 		if ($shareWith === null ||
 			$name === null ||
