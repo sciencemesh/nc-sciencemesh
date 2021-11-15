@@ -206,6 +206,10 @@ jobs:
           ./occ app:enable --force ${{ env.APP_NAME }}
           php -S localhost:8080 &
 
+      - name: PHPLint
+        working-directory: apps/${{ env.APP_NAME }}
+        run: ./vendor/bin/php-cs-fixer fix --dry-run --diff
+
       - name: PHPUnit
         working-directory: apps/${{ env.APP_NAME }}
         run: ./vendor/phpunit/phpunit/phpunit -c phpunit.xml
