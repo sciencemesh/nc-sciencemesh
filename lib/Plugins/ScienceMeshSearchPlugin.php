@@ -36,7 +36,7 @@ class ScienceMeshSearchPlugin implements ISearchPlugin {
 		$users = array_filter($users, function($user) use ($search) {
 			return (stripos($user['displayName'], $search) !== false);
 		});
-// 		$users = array_slice($users, $offset, $limit);
+ 		$users = array_slice($users, $offset, $limit);
 
 		$exactResults = [];
 		foreach ($users as $user) {
