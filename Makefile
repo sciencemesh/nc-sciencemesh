@@ -158,6 +158,10 @@ appstore:
 	--exclude="../$(app_name)/js/.*" \
 	--exclude-vcs \
 	
+.PHONY: coverage
+coverage:
+	XDEBUG_MODE=coverage ./vendor/bin/phpunit --coverage-text
+
 .PHONY: test
 test: composer
 	$(CURDIR)/vendor/bin/phplint ./ --exclude=vendor

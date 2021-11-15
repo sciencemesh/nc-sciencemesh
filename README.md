@@ -36,7 +36,7 @@ git remote add michielbdejong https://github.com/michielbdejong/reva
 git fetch michielbdejong
 ```
 
-# How to use Lint for coverage tests
+# How to run the Linter
 
 * We just check the code base
 
