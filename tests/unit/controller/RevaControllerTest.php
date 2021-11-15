@@ -71,8 +71,8 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 
 		$this->sciencemeshFolder->method("nodeExists")->willReturn(true);
 		$this->sciencemeshFolder->method("getPath")->willReturn("/sciencemesh");
-
 		$this->shareProvider = $this->getMockBuilder("OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider")->disableOriginalConstructor()->getMock();
+
 	}
 
 	public function testAuthenticateOK() {
@@ -1277,6 +1277,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		  $this->userService, $this->trashManager , $this->shareManager,
 		$this->groupManager, $this->cloudFederationProviderManager,
 		$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l, $this->shareProvider,
+
 		);
 		$this->request->method("getParams")
 			->willReturn(
@@ -1510,7 +1511,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getData(),[]);
 		$this->assertEquals($result->getStatus(),200);
 	}
-	
 	public function testGetReceivedShare() {
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,

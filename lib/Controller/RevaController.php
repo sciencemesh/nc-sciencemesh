@@ -105,6 +105,7 @@ class RevaController extends Controller {
 		IAppManager $appManager,
 		IL10N $l10n,
 		ScienceMeshShareProvider $shareProvider
+
 	) {
 		parent::__construct($AppName, $request);
 		require_once(__DIR__.'/../../vendor/autoload.php');
@@ -133,6 +134,7 @@ class RevaController extends Controller {
 		$this->filesystem = new \League\Flysystem\Filesystem($adapter);
 		$this->baseUrl = $this->getStorageUrl($userId); // Where is that used?
 		$this->shareProvider = $shareProvider;
+
 	}
 
 	/**
@@ -232,7 +234,6 @@ class RevaController extends Controller {
 
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
 	private function shareInfoToResourceInfo(IShare $share): array {
-		$empty = (object) null;
 		return [
 			"id" => [
 				"map" => null,
