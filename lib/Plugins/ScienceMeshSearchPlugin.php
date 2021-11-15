@@ -8,7 +8,6 @@ use OCP\Collaboration\Collaborators\SearchResultType;
 use OCP\IConfig;
 use OCP\IUserManager;
 use OCP\IUserSession;
-use OCP\Share\IShare;
 
 class ScienceMeshSearchPlugin implements ISearchPlugin {
 	protected $shareeEnumeration;
