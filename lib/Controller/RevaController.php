@@ -322,12 +322,39 @@ class RevaController extends Controller {
 	}
 
 	/**
-	 * @param string $path
+	 * @param string $opaqueId
 	 * @return \OCP\Share\IShare
 	 * @throws ShareNotFound
 	 */
-	private function getShareByPath($path){
-		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
+	private function getShareByOpaqueId($opaqueId,$userId){
+		$opaqueIdDecoded = urldecode($opaqueId);
+		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
+		//$name resource name (e.g. document.odt)
+		$name = end($opaqueIdExploded);
+
+		// if ($path !== '') {
+		// 	$userFolder = $this->rootFolder->getUserFolder($userId);
+		// 	try {
+		// 		$node = $userFolder->get($path);
+		// 		$this->lock($node);
+		// 	} catch (NotFoundException $e) {
+		// 		throw new OCSNotFoundException(
+		// 			$this->l->t('Wrong path, file/folder doesn\'t exist')
+		// 		);
+		// 	} catch (LockedException $e) {
+		// 		throw new OCSNotFoundException($this->l->t('Could not lock node'));
+		// 	}
+		// }
+		//
+		// $shares = $this->getFormattedShares(
+		// 	$userId,
+		// 	$node,
+		// 	($shared_with_me === 'true'),
+		// 	($reshares === 'true'),
+		// 	($subfiles === 'true'),
+		// 	($include_tags === 'true'),$userId
+		// );
+		return new DataResponse(array_values($shares));
 	}
 
 	private function getShareType($granteeType){
@@ -1098,34 +1125,43 @@ class RevaController extends Controller {
    * Unshare deletes the share pointed by ref.
 	 */
 	public function Unshare($userId){
+		error_log("call Unshare");
+
 		$spec =  $this->request->getParam("Spec");
 		$id = $spec["Id"];
 		$opaqueId = $id["opaque_id"];
+		$opaqueIdDecoded = urldecode($opaqueId);
+		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
+		//$name resource name (e.g. document.odt)
+		$name = end($opaqueIdExploded);
 		error_log("opaque_id: ".$opaqueId);
-		try {
-			$share = $this->getShareById($opaqueId,$userId);
-		} catch (ShareNotFound $e) {
-			error_log("getShareById fails");
-			throw new OCSNotFoundException($this->l->t('Wrong share ID, share doesn\'t exist'));
-		}
 
-		try {
-			$this->lock($share->getNode());
-		} catch (LockedException $e) {
-			throw new OCSNotFoundException($this->l->t('Could not delete share'));
-		}
-
-		if (!$this->canAccessShare($share,$userId)) {
-			throw new OCSNotFoundException($this->l->t('Wrong share ID, share doesn\'t exist'));
-		}
-
-		if (!$this->canDeleteShare($share)) {
-			throw new OCSForbiddenException($this->l->t('Could not delete share'));
-		}
-		$success = $this->shareManager->deleteShare($share);
-		if ($success) {
-			return new JSONResponse("OK", Http::STATUS_OK);
-		}
+		$testSharesBy  = $this->shareManager->getSharesBy($userId,IShare::TYPE_LINK);
+		error_log(json_encode($testSharesBy));
+		// try {
+		// 	$share = $this->getShareById($opaqueId,$userId);
+		// } catch (ShareNotFound $e) {
+		// 	error_log("getShareById fails");
+		// 	throw new OCSNotFoundException($this->l->t('Wrong share ID, share doesn\'t exist'));
+		// }
+		//
+		// try {
+		// 	$this->lock($share->getNode());
+		// } catch (LockedException $e) {
+		// 	throw new OCSNotFoundException($this->l->t('Could not delete share'));
+		// }
+		//
+		// if (!$this->canAccessShare($share,$userId)) {
+		// 	throw new OCSNotFoundException($this->l->t('Wrong share ID, share doesn\'t exist'));
+		// }
+		//
+		// if (!$this->canDeleteShare($share)) {
+		// 	throw new OCSForbiddenException($this->l->t('Could not delete share'));
+		// }
+		// $success = $this->shareManager->deleteShare($share);
+		// if ($success) {
+		// 	return new JSONResponse("OK", Http::STATUS_OK);
+		// }
 		return new JSONResponse(["error" => "Unshare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
   /**
@@ -1327,4 +1363,88 @@ class RevaController extends Controller {
 		}
 		return false;
 	}
+
+
+		/**
+		 * @param string $viewer
+		 * @param Node $node
+		 * @param bool $sharedWithMe
+		 * @param bool $reShares
+		 * @param bool $subFiles
+		 * @param bool $includeTags
+		 *
+		 * @return array
+		 * @throws NotFoundException
+		 * @throws OCSBadRequestException
+		 */
+		private function getFormattedShares(
+			string $viewer,
+			$node = null,
+			bool $sharedWithMe = false,
+			bool $reShares = false,
+			bool $subFiles = false,
+			bool $includeTags = false,
+			string $userId
+		): array {
+			if ($sharedWithMe) {
+				return $this->getSharedWithMe($node, $includeTags);
+			}
+
+			if ($subFiles) {
+				return $this->getSharesInDir($node);
+			}
+
+			$shares = $this->getSharesFromNode($viewer, $node, $reShares);
+
+			$known = $formatted = $miniFormatted = [];
+			$resharingRight = false;
+			foreach ($shares as $share) {
+				try {
+					$share->getNode();
+				} catch (NotFoundException $e) {
+					/*
+					 * Ignore shares where we can't get the node
+					 * For example deleted shares
+					 */
+					continue;
+				}
+
+				if (in_array($share->getId(), $known)
+					|| ($share->getSharedWith() === $userId && $share->getShareType() === IShare::TYPE_USER)) {
+					continue;
+				}
+
+				$known[] = $share->getId();
+				try {
+					/** @var IShare $share */
+					$format = $this->formatShare($share, $node);
+					$formatted[] = $format;
+
+					// let's also build a list of shares created
+					// by the current user only, in case
+					// there is no resharing rights
+					if ($share->getSharedBy() === $userId) {
+						$miniFormatted[] = $format;
+					}
+
+					// check if one of those share is shared with me
+					// and if I have resharing rights on it
+					if (!$resharingRight && $this->shareProviderResharingRights($userId, $share, $node)) {
+						$resharingRight = true;
+					}
+				} catch (InvalidPathException | NotFoundException $e) {
+				}
+			}
+
+			if (!$resharingRight) {
+				$formatted = $miniFormatted;
+			}
+
+			if ($includeTags) {
+				$formatted =
+					Helper::populateTags($formatted, 'file_source', \OC::$server->getTagManager());
+			}
+
+			return $formatted;
+		}
 }
