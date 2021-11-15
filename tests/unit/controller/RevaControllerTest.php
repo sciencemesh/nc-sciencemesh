@@ -1165,7 +1165,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		];
 		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 
-		$result = $controller->Share($this->userId);
+		$result = $controller->addSentShare($this->userId);
 		$this->assertEquals($result->getData(),$response);
 		$this->assertEquals($result->getStatus(),201);
 	}
