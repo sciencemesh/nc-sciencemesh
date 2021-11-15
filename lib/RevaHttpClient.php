@@ -102,4 +102,20 @@ class RevaHttpClient {
 		}
 		return $this->revaPost('send', $params);
 	}
+	public function findAcceptedUsers() {
+		// FIXME: do an actual call to Reva, using ocm-find-accepted-users
+		/*
+			$users = $this->revaPost('find-accepted-users');
+			return $users;
+		*/
+		$users = [
+			[
+				"opaqueId" => "123-123",
+				"idp" => "pondersource.nl",
+				"mail" => "alice@pondersource.nl",
+				"displayName" => "Alice ScienceMesh"
+			]
+		];
+		return $users;
+	}
 }
