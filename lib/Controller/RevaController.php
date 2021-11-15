@@ -243,13 +243,10 @@ class RevaController extends Controller {
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
 	private function shareInfoToResourceInfo(IShare $share): array
 	{
+		$empty_object = (object) NULL; //renders as {} in json_encode
 		return [
-			"id"=>[
-	    	"map" => NULL,
-			],
-			"resource_id"=>[
-	    	"map" => NULL,
-			],
+			"id"=>$empty_object,
+			"resource_id"=>$empty_object,
 			"permissions"=>[
 				"permissions"=>[
 					"add_grant"=>true,
