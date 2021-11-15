@@ -7,7 +7,6 @@ use PHPUnit_Framework_TestCase;
 use OCA\ScienceMesh\Service\UserService;
 
 class UserServiceTest extends PHPUnit_Framework_TestCase {
-
 	public function setUp() {
 		$this->session = $this->getMockBuilder("OCP\IUserSession")->getMock();
 		$this->userService = new UserService($this->session);
