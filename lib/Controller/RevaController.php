@@ -134,7 +134,6 @@ class RevaController extends Controller {
 		$this->filesystem = new \League\Flysystem\Filesystem($adapter);
 		$this->baseUrl = $this->getStorageUrl($userId); // Where is that used?
 		$this->shareProvider = $shareProvider;
-
 	}
 
 	/**

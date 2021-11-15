@@ -72,7 +72,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->sciencemeshFolder->method("nodeExists")->willReturn(true);
 		$this->sciencemeshFolder->method("getPath")->willReturn("/sciencemesh");
 		$this->shareProvider = $this->getMockBuilder("OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider")->disableOriginalConstructor()->getMock();
-
 	}
 
 	public function testAuthenticateOK() {
