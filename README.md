@@ -49,13 +49,13 @@ composer require --dev nextcloud/coding-standard
 * Path: /server/apps/sciencemesh
 
 ```
-make:lint-check
+make lint-check
 ```
 
 * The second one for fixing our codebase
 
 ```
-make:lint-fix
+make lint-fix
 ```
 
 ## Run Reva integration tests
