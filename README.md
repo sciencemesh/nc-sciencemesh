@@ -42,7 +42,7 @@ git fetch michielbdejong
 ```
 composer require --dev nextcloud/coding-standard
 ```
-* How to use Lint for coverage tests
+# How to use Lint for coverage tests
 
 * We just check the code base
 
