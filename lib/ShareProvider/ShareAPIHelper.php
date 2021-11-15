@@ -22,15 +22,9 @@
 
 namespace OCA\ScienceMesh\ShareProvider;
 
-use OC\Share20\Exception\InvalidShare;
-use OC\Share20\Share;
-use OCP\Constants;
 use OCP\IConfig;
 use OCP\IUserManager;
-use OCP\Share\Exceptions\GenericShareException;
-use OCP\Share\Exceptions\ShareNotFound;
-use OCP\Share\IShare;
-use OCP\Share\IShareProvider;
+use OCA\ScienceMesh\RevaHttpClient;
 
 /**
  * Class ScienceMeshShareHelper
@@ -44,6 +38,9 @@ class ShareAPIHelper {
 	/** @var IUserManager */
 	private $userManager;
 
+	/** @var RevaHttpClient */
+	private $revaHttpClient;
+
 	/**
 	 * ShareAPIHelper constructor.
 	 *
@@ -51,11 +48,12 @@ class ShareAPIHelper {
 	 * @param IUserManager $userManager
 	 */
 	public function __construct(
-			IConfig $config,
-			IUserManager $userManager
+		IConfig $config,
+		IUserManager $userManager
 	) {
 		$this->config = $config;
 		$this->userManager = $userManager;
+		$this->revaHttpClient = new RevaHttpClient();
 	}
 
 	public function formatShare($share) {
@@ -70,21 +68,10 @@ class ShareAPIHelper {
 		$share->setSharedWith($shareWith);
 		$share->setPermissions($permissions);
 		error_log('making rest call to grpc client '. $shareWith);
-		$client = $this->clientService->newClient();
-		$response = $client->post(
-			'https://revanc1.docker/ocm/send',
-			[
-				'timeout' => 10,
-				'connect_timeout' => 3,
-				'body' => [
-					'loginType' => 'basic',
-					'loginUsername' => 'einstein',
-					'loginPassword' => 'relativity',
-					'path' => '/home',
-					'recipientUsername' => 'marie',
-					'recipientHost' => 'localhost:17000'
-				]
-			]
-		);
+		$this->revaHttpClient->createShare([
+			'path' => '/home',
+			'recipientUsername' => 'marie',
+			'recipientHost' => 'localhost:17000'
+		]);
 	}
 }

@@ -1,7 +1,7 @@
 <?php
+
 namespace OCA\ScienceMesh\Controller;
 
-use OCA\ScienceMesh\ServerConfig;
 use OCA\ScienceMesh\PlainResponse;
 use OCA\ScienceMesh\ResourceServer;
 use OCA\ScienceMesh\NextcloudAdapter;
@@ -13,12 +13,6 @@ use OCP\ISession;
 use OCP\IConfig;
 
 use OCP\Files\IRootFolder;
-use OCP\Files\IHomeStorage;
-use OCP\Files\SimpleFS\ISimpleRoot;
-use OCP\AppFramework\Http;
-use OCP\AppFramework\Http\Response;
-use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Controller;
 
 class StorageController extends Controller {
@@ -28,13 +22,12 @@ class StorageController extends Controller {
 	/* @var ISession */
 	private $session;
 	
-	public function __construct($AppName, IRootFolder $rootFolder, IRequest $request, ISession $session, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IConfig $config, \OCA\ScienceMesh\Service\UserService $UserService) 
-	{
+	public function __construct($AppName, IRootFolder $rootFolder, IRequest $request, ISession $session, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IConfig $config, \OCA\ScienceMesh\Service\UserService $UserService) {
 		parent::__construct($AppName, $request);
 		require_once(__DIR__.'/../../vendor/autoload.php');
 		$this->config = new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
 		$this->rootFolder = $rootFolder;
-		$this->request     = $request;
+		$this->request = $request;
 		$this->urlGenerator = $urlGenerator;
 		$this->session = $session;
 	}
@@ -47,7 +40,7 @@ class StorageController extends Controller {
 	}
 
 	private function getStorageUrl($userId) {
-		$storageUrl = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute("sciencemesh.storage.handleHead", array("userId" => $userId, "path" => "foo")));
+		$storageUrl = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute("sciencemesh.storage.handleHead", ["userId" => $userId, "path" => "foo"]));
 		$storageUrl = preg_replace('/foo$/', '', $storageUrl);
 		return $storageUrl;
 	}
@@ -74,9 +67,9 @@ class StorageController extends Controller {
 		$this->resourceServer = new ResourceServer($this->filesystem, $this->response);
 
 		$request = $this->rawRequest;
-		$baseUrl = $this->getStorageUrl($userId);		
+		$baseUrl = $this->getStorageUrl($userId);
 		$this->resourceServer->setBaseUrl($baseUrl);
-		$response = $this->resourceServer->respondToRequest($request);	
+		$response = $this->resourceServer->respondToRequest($request);
 		return $this->respond($response);
 	}
 	
@@ -85,7 +78,7 @@ class StorageController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
-	public function handleGet($userId, $path) {	
+	public function handleGet($userId, $path) {
 		return $this->handleRequest($userId, $path);
 	}
 	

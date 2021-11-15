@@ -1,9 +1,8 @@
 <?php
+
 namespace OCA\ScienceMesh\Controller;
 
-use OCA\ScienceMesh\ServerConfig;
 use OCA\ScienceMesh\PlainResponse;
-use OCA\ScienceMesh\ResourceServer;
 use OCA\ScienceMesh\NextcloudAdapter;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
 
@@ -17,14 +16,10 @@ use OCP\ISession;
 use OCP\IConfig;
 
 use OCP\Files\IRootFolder;
-use OCP\Files\IHomeStorage;
-use OCP\Files\SimpleFS\ISimpleRoot;
 
 use OCP\AppFramework\Http;
-use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TextPlainResponse;
-use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\OCS\OCSForbiddenException;
 use OCP\AppFramework\OCS\OCSBadRequestException;
@@ -32,9 +27,6 @@ use OCP\AppFramework\OCS\OCSNotFoundException;
 use OCP\AppFramework\QueryException;
 
 use OCA\CloudFederationAPI\Config;
-use OCP\Federation\Exceptions\ActionNotSupportedException;
-use OCP\Federation\Exceptions\AuthenticationFailedException;
-use OCP\Federation\Exceptions\BadRequestException;
 use OCP\Federation\Exceptions\ProviderCouldNotAddShareException;
 use OCP\Federation\Exceptions\ProviderDoesNotExistsException;
 use OCP\Federation\ICloudFederationFactory;
@@ -113,13 +105,12 @@ class RevaController extends Controller {
 		IAppManager $appManager,
 		IL10N $l10n,
 		ScienceMeshShareProvider $shareProvider
-	)
-	{
+	) {
 		parent::__construct($AppName, $request);
 		require_once(__DIR__.'/../../vendor/autoload.php');
 
 		$this->rootFolder = $rootFolder;
-		$this->request     = $request;
+		$this->request = $request;
 		$this->session = $session;
 		$this->userManager = $userManager;
 		$this->urlGenerator = $urlGenerator;
@@ -153,168 +144,165 @@ class RevaController extends Controller {
 	 * @throws \OCP\Files\InvalidPathException
 	 * @throws \OCP\Files\NotFoundException
 	 */
-	 private function lock(\OCP\Files\Node $node) {
- 		$node->lock(ILockingProvider::LOCK_SHARED);
- 		$this->lockedNode = $node;
- 	}
+	private function lock(\OCP\Files\Node $node) {
+		$node->lock(ILockingProvider::LOCK_SHARED);
+		$this->lockedNode = $node;
+	}
 
- 	/**
- 	 * Make sure that the passed date is valid ISO 8601
- 	 * So YYYY-MM-DD
- 	 * If not throw an exception
- 	 *
- 	 * @param string $expireDate
- 	 *
- 	 * @throws \Exception
- 	 * @return \DateTime
- 	 */
- 	private function parseDate(string $expireDate): \DateTime {
- 		try {
- 			$date = new \DateTime($expireDate);
- 		} catch (\Exception $e) {
- 			throw new \Exception('Invalid date. Format must be YYYY-MM-DD');
- 		}
+	/**
+	 * Make sure that the passed date is valid ISO 8601
+	 * So YYYY-MM-DD
+	 * If not throw an exception
+	 *
+	 * @param string $expireDate
+	 *
+	 * @throws \Exception
+	 * @return \DateTime
+	 */
+	private function parseDate(string $expireDate): \DateTime {
+		try {
+			$date = new \DateTime($expireDate);
+		} catch (\Exception $e) {
+			throw new \Exception('Invalid date. Format must be YYYY-MM-DD');
+		}
 
- 		$date->setTime(0, 0, 0);
+		$date->setTime(0, 0, 0);
 
- 		return $date;
- 	}
+		return $date;
+	}
 
-	private function nodeInfoToCS3ResourceInfo(array $nodeInfo) : array
-	{
-		  $path = substr($nodeInfo["path"], strlen("/sciencemesh"));
-			$isDirectory = ($nodeInfo["mimetype"] == "directory");
-			return [
-					"opaque" => [
-							"map" => NULL,
-					],
-					"type" => ($isDirectory ? 2 : 1),
-					"id" => [
-							"opaque_id" => "fileid-/" . $path,
-					],
-					"checksum" => [
-							"type" => 0,
-							"sum" => "",
-					],
-					"etag" => "deadbeef",
-					"mime_type" => $nodeInfo["mimetype"],
-					"mtime" => [
-							"seconds" => 1234567890
-					],
-					"path" => "/" . $path,
-					"permission_set" => [
-							"add_grant" => false,
-							"create_container" => false,
-							"delete" => false,
-							"get_path" => false,
-							"get_quota" => false,
-							"initiate_file_download" => false,
-							"initiate_file_upload" => false,
-							// "listGrants => false,
-							// "listContainer => false,
-							// "listFileVersions => false,
-							// "listRecycle => false,
-							// "move => false,
-							// "removeGrant => false,
-							// "purgeRecycle => false,
-							// "restoreFileVersion => false,
-							// "restoreRecycleItem => false,
-							// "stat => false,
-							// "updateGrant => false,
-							// "denyGrant => false,
-					],
-					"size" => 12345,
-					"canonical_metadata" => [
-							"target" => NULL,
-					],
-					"arbitrary_metadata" => [
-							"metadata" => [
-									"some" => "arbi",
-									"trary" => "meta",
-									"da" => "ta",
-							],
-					],
-					"owner" => [
-						"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-					],
-			];
+	private function nodeInfoToCS3ResourceInfo(array $nodeInfo) : array {
+		$path = substr($nodeInfo["path"], strlen("/sciencemesh"));
+		$isDirectory = ($nodeInfo["mimetype"] == "directory");
+		return [
+			"opaque" => [
+				"map" => null,
+			],
+			"type" => ($isDirectory ? 2 : 1),
+			"id" => [
+				"opaque_id" => "fileid-/" . $path,
+			],
+			"checksum" => [
+				"type" => 0,
+				"sum" => "",
+			],
+			"etag" => "deadbeef",
+			"mime_type" => $nodeInfo["mimetype"],
+			"mtime" => [
+				"seconds" => 1234567890
+			],
+			"path" => "/" . $path,
+			"permission_set" => [
+				"add_grant" => false,
+				"create_container" => false,
+				"delete" => false,
+				"get_path" => false,
+				"get_quota" => false,
+				"initiate_file_download" => false,
+				"initiate_file_upload" => false,
+				// "listGrants => false,
+				// "listContainer => false,
+				// "listFileVersions => false,
+				// "listRecycle => false,
+				// "move => false,
+				// "removeGrant => false,
+				// "purgeRecycle => false,
+				// "restoreFileVersion => false,
+				// "restoreRecycleItem => false,
+				// "stat => false,
+				// "updateGrant => false,
+				// "denyGrant => false,
+			],
+			"size" => 12345,
+			"canonical_metadata" => [
+				"target" => null,
+			],
+			"arbitrary_metadata" => [
+				"metadata" => [
+					"some" => "arbi",
+					"trary" => "meta",
+					"da" => "ta",
+				],
+			],
+			"owner" => [
+				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+			],
+		];
 	}
 
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
-	private function shareInfoToResourceInfo(IShare $share): array
-	{
-		$empty_object = (object) NULL; //renders as {} in json_encode
+	private function shareInfoToResourceInfo(IShare $share): array {
+		$empty_object = (object) null; //renders as {} in json_encode
 		return [
-			"id"=>$empty_object,
-			"resource_id"=>$empty_object,
-			"permissions"=>[
-				"permissions"=>[
-					"add_grant"=>true,
-					"create_container"=>true,
-					"delete"=>true,
-					"get_path"=>true,
-					"get_quota"=>true,
-					"initiate_file_download"=>true,
-					"initiate_file_upload"=>true,
-					"list_grants"=>true,
-					"list_container"=>true,
-					"list_file_versions"=>true,
-					"list_recycle"=>true,
-					"move"=>true,
-					"remove_grant"=>true,
-					"purge_recycle"=>true,
-					"restore_file_version"=>true,
-					"restore_recycle_item"=>true,
-					"stat"=>true,
-					"update_grant"=>true,
-					"deny_grant"=>true
+			"id" => $empty_object,
+			"resource_id" => $empty_object,
+			"permissions" => [
+				"permissions" => [
+					"add_grant" => true,
+					"create_container" => true,
+					"delete" => true,
+					"get_path" => true,
+					"get_quota" => true,
+					"initiate_file_download" => true,
+					"initiate_file_upload" => true,
+					"list_grants" => true,
+					"list_container" => true,
+					"list_file_versions" => true,
+					"list_recycle" => true,
+					"move" => true,
+					"remove_grant" => true,
+					"purge_recycle" => true,
+					"restore_file_version" => true,
+					"restore_recycle_item" => true,
+					"stat" => true,
+					"update_grant" => true,
+					"deny_grant" => true
 				]
 			],
-			"grantee"=>[
-				"Id"=>[
-					"UserId"=>[
-						"idp"=>"0.0.0.0:19000",
-						"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-						"type"=>1
+			"grantee" => [
+				"Id" => [
+					"UserId" => [
+						"idp" => "0.0.0.0:19000",
+						"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+						"type" => 1
 					]
 				]
 			],
-			"owner"=>[
-				"idp"=>"0::.0.0.0:19000",
-				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-				"type"=>1
+			"owner" => [
+				"idp" => "0::.0.0.0:19000",
+				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type" => 1
 			],
-			"creator"=>[
-				"idp"=>"0.0.0.0:19000",
-				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-				"type"=>1
+			"creator" => [
+				"idp" => "0.0.0.0:19000",
+				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type" => 1
 			],
-			"ctime"=>[
-				"seconds"=>1234567890
+			"ctime" => [
+				"seconds" => 1234567890
 			],
-			"mtime"=>[
-				"seconds"=>1234567890
+			"mtime" => [
+				"seconds" => 1234567890
 			]
 		];
 	}
 
 	# correspondes the permissions we got from Reva to Nextcloud
-	private function getPermissionsCode(array $permissions) : int
-	{
+	private function getPermissionsCode(array $permissions) : int {
 		$permissionsCode = 0;
-		if(!empty($permissions["get_path"]) || !empty($permissions["get_quota"]) || !empty($permissions["initiate_file_download"]) || !empty($permissions["initiate_file_upload"]) ||  !empty($permissions["stat"]) ){
+		if (!empty($permissions["get_path"]) || !empty($permissions["get_quota"]) || !empty($permissions["initiate_file_download"]) || !empty($permissions["initiate_file_upload"]) || !empty($permissions["stat"])) {
 			$permissionsCode += \OCP\Constants::PERMISSION_READ;
 		}
-		if( !empty($permissions["create_container"]) || !empty($permissions["move"]) ||  !empty($permissions["add_grant"]) || !empty($permissions["restore_file_version"]) || !empty($permissions["restore_recycle_item"]) ){
+		if (!empty($permissions["create_container"]) || !empty($permissions["move"]) || !empty($permissions["add_grant"]) || !empty($permissions["restore_file_version"]) || !empty($permissions["restore_recycle_item"])) {
 			$permissionsCode += \OCP\Constants::PERMISSION_CREATE;
 		}
-		if( !empty($permissions["move"]) || !empty($permissions["delete"]) || !empty($permissions["remove_grant"])){
+		if (!empty($permissions["move"]) || !empty($permissions["delete"]) || !empty($permissions["remove_grant"])) {
 			$permissionsCode += \OCP\Constants::PERMISSION_DELETE;
 		}
-		if( !empty($permissions["list_grants"]) || !empty($permissions["list_file_versions"]) || !empty($permissions["list_recycle"])){
+		if (!empty($permissions["list_grants"]) || !empty($permissions["list_file_versions"]) || !empty($permissions["list_recycle"])) {
 			$permissionsCode += \OCP\Constants::PERMISSION_SHARE;
 		}
-		if( !empty($permissions["update_grant"])){
+		if (!empty($permissions["update_grant"])) {
 			$permissionsCode += \OCP\Constants::PERMISSION_UPDATE;
 		}
 		return $permissionsCode;
@@ -325,15 +313,14 @@ class RevaController extends Controller {
 	 * @return \OCP\Share\IShare
 	 * @throws ShareNotFound
 	 */
-	private function getShareByPath($path){
+	private function getShareByPath($path) {
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
-	private function getShareType($granteeType){
-		if($granteeType == 1){
+	private function getShareType($granteeType) {
+		if ($granteeType == 1) {
 			return 'user';
-		}
-		elseif($granteeType == 2){
+		} elseif ($granteeType == 2) {
 			return 'group';
 		}
 		return new JSONResponse(
@@ -348,12 +335,12 @@ class RevaController extends Controller {
 	 * @throws NotFoundException
 	 */
 	private function getStorageUrl($userId) {
-		$storageUrl = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute("sciencemesh.storage.handleHead", array("userId" => $userId, "path" => "foo")));
+		$storageUrl = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute("sciencemesh.storage.handleHead", ["userId" => $userId, "path" => "foo"]));
 		$storageUrl = preg_replace('/foo$/', '', $storageUrl);
 		return $storageUrl;
 	}
 
-	private function respond($responseBody, $statusCode, $headers=array()) {
+	private function respond($responseBody, $statusCode, $headers = []) {
 		$result = new PlainResponse($body);
 		foreach ($headers as $header => $values) {
 			foreach ($values as $value) {
@@ -443,7 +430,6 @@ class RevaController extends Controller {
 			return new JSONResponse("OK", Http::STATUS_OK);
 		}
 		return new JSONResponse(["error" => "Failed to delete."], Http::STATUS_INTERNAL_SERVER_ERROR);
-
 	}
 
 	/**
@@ -475,12 +461,11 @@ class RevaController extends Controller {
 		$path = "sciencemesh" . $ref["path"]; // FIXME: normalize incoming path
 		$success = $this->filesystem->has($path);
 		if ($success) {
-  		$nodeInfo = $this->filesystem->getMetaData($path);
+			$nodeInfo = $this->filesystem->getMetaData($path);
 			$resourceInfo = $this->nodeInfoToCS3ResourceInfo($nodeInfo);
 			return new JSONResponse($resourceInfo, Http::STATUS_OK);
 		}
 		return new JSONResponse(["error" => "File not found"], 404);
-
 	}
 
 	/**
@@ -515,15 +500,15 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 
-  public function ListFolder($userId) {
+	public function ListFolder($userId) {
 		$ref = $this->request->getParam("ref");
 		$path = "sciencemesh" . $ref["path"]; // FIXME: sanitize!
 		$success = $this->filesystem->has($path);
-		if(!$success){
+		if (!$success) {
 			return new JSONResponse(["error" => "Folder not found"], 404);
 		}
 		$nodeInfos = $this->filesystem->listContents($path);
-		$resourceInfos = array_map(function($nodeInfo) {
+		$resourceInfos = array_map(function ($nodeInfo) {
 			return $this->nodeInfoToCS3ResourceInfo($nodeInfo);
 		}, $nodeInfos);
 		return new JSONResponse($resourceInfos, Http::STATUS_OK);
@@ -553,21 +538,21 @@ class RevaController extends Controller {
 				$path = substr($node->getOriginalLocation(), strlen("sciencemesh"));
 				$result = [
 					[
-					"opaque" => [
-						"map" => NULL,
-					],
-					"key" =>  $path,
-					"ref"	=> [
-						"resource_id" => [
-							"map" => NULL,
+						"opaque" => [
+							"map" => null,
 						],
-						"path" => $path,
-					],
-					"size" => 12345,
-					"deletion_time" => [
-						"seconds" => 1234567890
-					]
-				]];
+						"key" => $path,
+						"ref" => [
+							"resource_id" => [
+								"map" => null,
+							],
+							"path" => $path,
+						],
+						"size" => 12345,
+						"deletion_time" => [
+							"seconds" => 1234567890
+						]
+					]];
 			}
 		}
 		return new JSONResponse($result, Http::STATUS_OK);
@@ -615,7 +600,7 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function RestoreRecycleItem($userId) {
-		$key  = $this->request->getParam("key");
+		$key = $this->request->getParam("key");
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
 
@@ -705,17 +690,17 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
 	 * @suppress PhanUndeclaredClassMethod
-   *
+	 *
 	 * @return DataResponse
-	 	 * @throws NotFoundException
-	 	 * @throws OCSBadRequestException
-	 	 * @throws OCSException
-	 	 * @throws OCSForbiddenException
-	 	 * @throws OCSNotFoundException
-	 	 * @throws InvalidPathException
-   * Create a new share in fn with the given access control list.
+	 * @throws NotFoundException
+	 * @throws OCSBadRequestException
+	 * @throws OCSException
+	 * @throws OCSForbiddenException
+	 * @throws OCSNotFoundException
+	 * @throws InvalidPathException
+	 * Create a new share in fn with the given access control list.
 	 */
-	public function addSentShare($userId){
+	public function addSentShare($userId) {
 		$publicUpload = 'false';
 		$password = '';
 		$sendPasswordByTalk = null;
@@ -723,7 +708,7 @@ class RevaController extends Controller {
 		$label = '';
 		$shareType = IShare::TYPE_LINK;
 
-    $md =  $this->request->getParam("md");
+		$md = $this->request->getParam("md");
 		$g = $this->request->getParam("g");
 		$opaqueId = $md["opaque_id"];
 
@@ -915,8 +900,7 @@ class RevaController extends Controller {
 			}
 			$share->setSharedWith($shareWith);
 			$share->setPermissions($permissions);
-		}
-		elseif ($shareType === IShare::TYPE_ROOM) {
+		} elseif ($shareType === IShare::TYPE_ROOM) {
 			try {
 				$this->getRoomShareHelper()->createShare($share, $shareWith, $permissions, $expireDate);
 			} catch (QueryException $e) {
@@ -928,8 +912,7 @@ class RevaController extends Controller {
 			} catch (QueryException $e) {
 				throw new OCSForbiddenException($this->l->t('Sharing %s failed because the back end does not support room shares', [$path->getPath()]));
 			}
-		}
-		 else {
+		} else {
 			throw new OCSBadRequestException($this->l->t('Unknown share type'));
 		}
 		$share->setShareType($shareType);
@@ -960,7 +943,7 @@ class RevaController extends Controller {
 	 */
 
 	public function addReceivedShare($userId) {
-		$md =  $this->request->getParam("md");
+		$md = $this->request->getParam("md");
 		$g = $this->request->getParam("g");
 		// $providerId resource UID on the provider side
 		$providerId = $this->request->getParam("provider_id");
@@ -978,21 +961,21 @@ class RevaController extends Controller {
 		$name = end($opaqueIdExploded);
 		// $sharedByDisplayName display name of the user who shared the resource
 		$sharedByDisplayName = '';
-		$ownerName =substr($opaqueIdExploded[0],strlen("fileid-"));
+		$ownerName = substr($opaqueIdExploded[0],strlen("fileid-"));
 		$description = '';
 		$grantee = $g["grantee"];
 		$granteeId = $grantee["Id"];
 		$granteeIdUserId = $granteeId["UserId"];
-		$shareWith =$userId."@".$granteeIdUserId["idp"];
+		$shareWith = $userId."@".$granteeIdUserId["idp"];
 		// $owner provider specific UID of the user who owns the resource
 		$owner = $ownerName."@".$providerDomain;
 
 		//$shareType ('group' or 'user' share)
-		$shareType =  $this->getShareType($grantee["type"]);
+		$shareType = $this->getShareType($grantee["type"]);
 
 		// $sharedBy provider specific UID of the user who shared the resource
 		$sharedBy = $owner;
-    
+	
 		// check if all required parameters are set
 		if ($shareWith === null ||
 			$name === null ||
@@ -1069,37 +1052,35 @@ class RevaController extends Controller {
 		}
 		$response = '{"id":{},"resource_id":{},"permissions":{"permissions":{"add_grant":true,"create_container":true,"delete":true,"get_path":true,"get_quota":true,"initiate_file_download":true,"initiate_file_upload":true,"list_grants":true,"list_container":true,"list_file_versions":true,"list_recycle":true,"move":true,"remove_grant":true,"purge_recycle":true,"restore_file_version":true,"restore_recycle_item":true,"stat":true,"update_grant":true,"deny_grant":true}},"grantee":{"Id":{"UserId":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1}}},"owner":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"creator":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"ctime":{"seconds":1234567890},"mtime":{"seconds":1234567890}}';
 		return new JSONResponse(json_decode($response), 201);
-
 	}
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
-   *
-   * GetShare gets the information for a share by the given ref.
+	 *
+	 * GetShare gets the information for a share by the given ref.
 	 */
-	public function GetShare($userId){
-		$spec =  $this->request->getParam("Spec");
+	public function GetShare($userId) {
+		$spec = $this->request->getParam("Spec");
 		$Id = $spec["Id"];
 		$opaqueId = $Id["opaque_id"];
 		$share = $this->shareManager->getShareById($opaqueId);
-		if($share){
+		if ($share) {
 			$response = $this->shareInfoToResourceInfo($share);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
 		return new JSONResponse(["error" => "GetShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
-
 	}
 
-  /**
+	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
-   *
-   * Unshare deletes the share pointed by ref.
+	 *
+	 * Unshare deletes the share pointed by ref.
 	 */
-	public function Unshare($userId){
-		$spec =  $this->request->getParam("Spec");
+	public function Unshare($userId) {
+		$spec = $this->request->getParam("Spec");
 		$id = $spec["Id"];
 		$opaqueId = $id["opaque_id"];
 		error_log("opaque_id: ".$opaqueId);
@@ -1129,15 +1110,15 @@ class RevaController extends Controller {
 		}
 		return new JSONResponse(["error" => "Unshare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
-  /**
+	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
-   *
+	 *
 	 */
 
-	public function UpdateShare($userId){
-		$ref =  $this->request->getParam("ref");
+	public function UpdateShare($userId) {
+		$ref = $this->request->getParam("ref");
 		$spec = $ref["Spec"];
 		$id = $spec["Id"];
 		$opaqueId = $id["opaque_id"];
@@ -1146,50 +1127,49 @@ class RevaController extends Controller {
 		$permissionsCode = $this->getPermissionsCode($permissions);
 		$share = $this->shareManager->getShareById($opaqueId);
 		$updated = $this->shareManager->updateShare($share, $permissionsCode);
-		if($updated) {
+		if ($updated) {
 			$response = $this->shareInfoToResourceInfo($updated);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
 		return new JSONResponse(["error" => "UpdateShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
-  /**
+	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
-   *
-   * ListShares returns the shares created by the user. If md is provided is not nil,
- 	 * it returns only shares attached to the given resource.
+	 *
+	 * ListShares returns the shares created by the user. If md is provided is not nil,
+	 * it returns only shares attached to the given resource.
 	 */
-	public function ListShares($userId){
+	public function ListShares($userId) {
 		$requests = $this->request->getParams();
 		$request = array_values($requests)[2];
 		$type = $request["type"];
-		$term =  $request["Term"];
+		$term = $request["Term"];
 		$creator = $term["Creator"];
 		$idpCreator = $creator["idp"];
 		$opaqueIdCreator = ["opaque_id"];
 		$typeCreator = ["type"];
 		$responses = [];
-		$shares =  $this->shareManager->getSharesBy($userId, 6);
+		$shares = $this->shareManager->getSharesBy($userId, 6);
 		if ($shares) {
 			foreach ($shares as $share) {
 				array_push($responses,$this->shareInfoToResourceInfo($share));
 			}
 			return new JSONResponse($responses, Http::STATUS_OK);
-		}
-		elseif($shares == []){
+		} elseif ($shares == []) {
 			return new JSONResponse($shares, Http::STATUS_OK);
 		}
 		return new JSONResponse(["error" => "ListShares failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
-  /**
+	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
-   *
-   * ListReceivedShares returns the list of shares the user has access.
+	 *
+	 * ListReceivedShares returns the list of shares the user has access.
 	 */
-	public function ListReceivedShares($userId){
+	public function ListReceivedShares($userId) {
 		$responses = [];
 		$shares = $this->shareProvider->getExternalShares();
 		if ($shares) {
@@ -1199,49 +1179,48 @@ class RevaController extends Controller {
 				array_push($responses, $response);
 			}
 			return new JSONResponse($responses, Http::STATUS_OK);
-		}
-		elseif($shares === []){
+		} elseif ($shares === []) {
 			return new JSONResponse($shares, Http::STATUS_OK);
 		}
 		return new JSONResponse(["error" => "ListReceivedShares failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
-  /**
+	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
-   *
-   * GetReceivedShare returns the information for a received share the user has access.
+	 *
+	 * GetReceivedShare returns the information for a received share the user has access.
 	 */
-	public function GetReceivedShare($userId){
-		$spec =  $this->request->getParam("Spec");
+	public function GetReceivedShare($userId) {
+		$spec = $this->request->getParam("Spec");
 		$Id = $spec["Id"];
 		$opaqueId = $Id["opaque_id"];
 		$share = $this->shareManager->getShareById($opaqueId,$userId);
-		if($share) {
+		if ($share) {
 			$response = $this->shareInfoToResourceInfo($share);
 			$response["state"] = 2;
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
 		return new JSONResponse(["error" => "GetReceivedShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
-  /**
+	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
-   *
-   * UpdateReceivedShare updates the received share with share state.
+	 *
+	 * UpdateReceivedShare updates the received share with share state.
 	 */
-	public function UpdateReceivedShare($userId){
-		$ref =  $this->request->getParam("ref");
+	public function UpdateReceivedShare($userId) {
+		$ref = $this->request->getParam("ref");
 		$Spec = $ref["Spec"];
 		$Id = $Spec["Id"];
 		$opaqueId = $Id["opaque_id"];
 		$share = $this->shareManager->getShareById($opaqueId,$userId);
 		$updated = $this->shareManager->updateShare($share, 5);
-		if($updated) {
+		if ($updated) {
 			$response = $this->shareInfoToResourceInfo($updated);
 			$response["state"] = 2;
-				return new JSONResponse($response, Http::STATUS_OK);
+			return new JSONResponse($response, Http::STATUS_OK);
 		}
 		return new JSONResponse(["error" => "UpdateReceivedShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
@@ -1266,37 +1245,37 @@ class RevaController extends Controller {
 	}
 
 
-		/**
-		 * Since we have multiple providers but the OCS Share API v1 does
-		 * not support this we need to check all backends.
-		 *
-		 * @param string $id
-		 * @return \OCP\Share\IShare
-		 * @throws ShareNotFound
-		 */
-		private function getShareById(string $id,string $userId): IShare {
-			$share = null;
+	/**
+	 * Since we have multiple providers but the OCS Share API v1 does
+	 * not support this we need to check all backends.
+	 *
+	 * @param string $id
+	 * @return \OCP\Share\IShare
+	 * @throws ShareNotFound
+	 */
+	private function getShareById(string $id,string $userId): IShare {
+		$share = null;
 
-			// First check if it is an internal share.
-			try {
-				$share = $this->shareManager->getShareById('ocinternal:' . $id,$userId);
-				return $share;
-			} catch (ShareNotFound $e) {
-				// Do nothing, just try the other share type
-			}
-			try {
-				$share = $this->shareManager->getShareById('ocRoomShare:' . $id,$userId);
-				return $share;
-			} catch (ShareNotFound $e) {
-				// Do nothing, just try the other share type
-			}
-			if (!$this->shareManager->outgoingServer2ServerSharesAllowed()) {
-				throw new ShareNotFound();
-			}
-			$share = $this->shareManager->getShareById('ocFederatedSharing:' . $id,$userId);
-
+		// First check if it is an internal share.
+		try {
+			$share = $this->shareManager->getShareById('ocinternal:' . $id,$userId);
 			return $share;
+		} catch (ShareNotFound $e) {
+			// Do nothing, just try the other share type
 		}
+		try {
+			$share = $this->shareManager->getShareById('ocRoomShare:' . $id,$userId);
+			return $share;
+		} catch (ShareNotFound $e) {
+			// Do nothing, just try the other share type
+		}
+		if (!$this->shareManager->outgoingServer2ServerSharesAllowed()) {
+			throw new ShareNotFound();
+		}
+		$share = $this->shareManager->getShareById('ocFederatedSharing:' . $id,$userId);
+
+		return $share;
+	}
 	/**
 	 * Does the user have read permission on the share
 	 *

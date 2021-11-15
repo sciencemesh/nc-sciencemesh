@@ -3,8 +3,6 @@
 namespace OCA\ScienceMesh;
 
 use OCP\IConfig;
-use OCP\IUserManager;
-use OCP\IUrlGenerator;
 
 /**
  * @package OCA\ScienceMesh
