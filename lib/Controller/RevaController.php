@@ -232,10 +232,14 @@ class RevaController extends Controller {
 
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
 	private function shareInfoToResourceInfo(IShare $share): array {
-		$empty_object = (object) null; //renders as {} in json_encode
+		$empty = (object) null;
 		return [
-			"id" => $empty_object,
-			"resource_id" => $empty_object,
+			"id" => [
+				"map" => null,
+			],
+			"resource_id" => [
+				"map" => null,
+			],
 			"permissions" => [
 				"permissions" => [
 					"add_grant" => true,
@@ -1179,10 +1183,9 @@ class RevaController extends Controller {
 				array_push($responses, $response);
 			}
 			return new JSONResponse($responses, Http::STATUS_OK);
-		} elseif ($shares === []) {
+		} else {
 			return new JSONResponse($shares, Http::STATUS_OK);
 		}
-		return new JSONResponse(["error" => "ListReceivedShares failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
 	/**
 	 * @PublicPage

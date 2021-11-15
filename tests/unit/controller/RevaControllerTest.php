@@ -1510,38 +1510,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getData(),[]);
 		$this->assertEquals($result->getStatus(),200);
 	}
-	public function testListReceivedSharesFailed() {
-		$controller = new RevaController(
-			$this->appName, $this->rootFolder, $this->request, $this->session,
-			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
-		  $this->userService, $this->trashManager , $this->shareManager,
-		$this->groupManager, $this->cloudFederationProviderManager,
-		$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l, $this->shareProvider,
-		);
-		$this->request->method("getParams")
-			->willReturn(
-				[
-					"POST",
-					"/apps/sciencemesh/~tester/api/share/ListShares",
-					[
-						"type" => 4,
-						"Term" => [
-							"Creator" => [
-								"idp" => "0.0.0.0=>19000",
-								"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-								"type" => 1
-							]
-						]
-					]
-				]
-			);
-		$this->shareProvider->method("getExternalShares")
-			->willReturn(null);
-		$result = $controller->ListReceivedShares($this->userId);
-
-		$this->assertEquals($result->getData(),["error" => "ListReceivedShares failed"]);
-		$this->assertEquals($result->getStatus(),Http::STATUS_INTERNAL_SERVER_ERROR);
-	}
+	
 	public function testGetReceivedShare() {
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
