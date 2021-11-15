@@ -1200,7 +1200,7 @@ class RevaController extends Controller {
 			}
 			return new JSONResponse($responses, Http::STATUS_OK);
 		}
-		elseif($shares == []){
+		elseif($shares === []){
 			return new JSONResponse($shares, Http::STATUS_OK);
 		}
 		return new JSONResponse(["error" => "ListReceivedShares failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
