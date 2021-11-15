@@ -33,8 +33,8 @@ return [
         ['name' => 'reva#UnsetArbitraryMetadata', 'url' => '/~{userId}/api/storage/UnsetArbitraryMetadata', 'verb' => 'POST'],
         ['name' => 'reva#UpdateGrant', 'url' => '/~{userId}/api/storage/UpdateGrant', 'verb' => 'POST'],
         ['name' => 'reva#Upload', 'url' => '/~{userId}/api/storage/Upload/{path}', 'verb' => 'PUT'],
-        ['name' => 'reva#Share', 'url' => '/~{userId}/api/ocm/Share', 'verb' => 'POST'],
-        ['name' => 'reva#addShare', 'url' => '/~{userId}/api/ocm/addShare', 'verb' => 'POST'],
+        ['name' => 'reva#addSentShare', 'url' => '/~{userId}/api/ocm/addSentShare', 'verb' => 'POST'],
+        ['name' => 'reva#addReceivedShare', 'url' => '/~{userId}/api/ocm/addReceivedShare', 'verb' => 'POST'],
         ['name' => 'reva#GetShare', 'url' => '/~{userId}/api/ocm/GetShare', 'verb' => 'POST'],
         ['name' => 'reva#Unshare', 'url' => '/~{userId}/api/ocm/Unshare', 'verb' => 'POST'],
         ['name' => 'reva#UpdateShare', 'url' => '/~{userId}/api/ocm/UpdateShare', 'verb' => 'POST'],
@@ -58,6 +58,9 @@ return [
         ['name' => 'storage#handleDelete', 'url' => '/~{userId}/files/{path}', 'verb' => 'DELETE', 'requirements' => array('path' => '.+')],
         ['name' => 'storage#handleHead', 'url' => '/~{userId}/files/{path}', 'verb' => 'HEAD', 'requirements' => array('path' => '.+')],
 
-        ['name' => 'app#appLauncher', 'url' => '/', 'verb' => 'GET'],
+        ['name' => 'app#launcher', 'url' => '/', 'verb' => 'GET'],
+        ['name' => 'app#notifications', 'url' => '/notifications', 'verb' => 'GET'],
+        ['name' => 'app#invitations', 'url' => '/invitations', 'verb' => 'GET'],
+        ['name' => 'app#contacts', 'url' => '/contacts', 'verb' => 'GET'],
     ]
 ];
