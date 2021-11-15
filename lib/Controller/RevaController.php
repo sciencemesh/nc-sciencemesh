@@ -4,6 +4,7 @@ namespace OCA\ScienceMesh\Controller;
 
 use OCA\ScienceMesh\PlainResponse;
 use OCA\ScienceMesh\NextcloudAdapter;
+use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
 
 use OCA\Files_Trashbin\Trash\ITrashManager;
 
@@ -102,7 +103,9 @@ class RevaController extends Controller {
 		ICloudIdManager $cloudIdManager,
 		LoggerInterface $logger,
 		IAppManager $appManager,
-		IL10N $l10n
+		IL10N $l10n,
+		ScienceMeshShareProvider $shareProvider
+
 	) {
 		parent::__construct($AppName, $request);
 		require_once(__DIR__.'/../../vendor/autoload.php');
@@ -130,6 +133,7 @@ class RevaController extends Controller {
 		$adapter = new NextcloudAdapter($this->userFolder);
 		$this->filesystem = new \League\Flysystem\Filesystem($adapter);
 		$this->baseUrl = $this->getStorageUrl($userId); // Where is that used?
+		$this->shareProvider = $shareProvider;
 	}
 
 	/**
@@ -684,6 +688,7 @@ class RevaController extends Controller {
 		}
 		return new JSONResponse(["error" => "Create failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -930,6 +935,7 @@ class RevaController extends Controller {
 		$response = $this->shareInfoToResourceInfo($share);
 		return new JSONResponse($response, Http::STATUS_CREATED);
 	}
+
 	/**
 	 * add a received share
 	 *
@@ -1169,7 +1175,7 @@ class RevaController extends Controller {
 	 */
 	public function ListReceivedShares($userId) {
 		$responses = [];
-		$shares = $this->shareManager->getSharedWith($userId,IShare::TYPE_REMOTE);
+		$shares = $this->shareProvider->getExternalShares();
 		if ($shares) {
 			foreach ($shares as $share) {
 				$response = $this->shareInfoToResourceInfo($share);
@@ -1177,10 +1183,9 @@ class RevaController extends Controller {
 				array_push($responses, $response);
 			}
 			return new JSONResponse($responses, Http::STATUS_OK);
-		} elseif ($shares == []) {
+		} else {
 			return new JSONResponse($shares, Http::STATUS_OK);
 		}
-		return new JSONResponse(["error" => "ListReceivedShares failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
 	/**
 	 * @PublicPage
