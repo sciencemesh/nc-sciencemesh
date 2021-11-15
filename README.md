@@ -36,18 +36,6 @@ git remote add michielbdejong https://github.com/michielbdejong/reva
 git fetch michielbdejong
 ```
 
-# Make lint installation 
-
-* The first one you need install composer if you don't have
-
-```
-sudo apt install composer
-```
-
-* Install the package to your dev dependencies
-```
-composer require --dev nextcloud/coding-standard
-```
 # How to use Lint for coverage tests
 
 * We just check the code base
