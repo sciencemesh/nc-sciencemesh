@@ -19,6 +19,8 @@ use OCP\Files\IRootFolder;
 use OCP\Files\IHomeStorage;
 use OCP\Files\SimpleFS\ISimpleRoot;
 
+use League\Flysystem\FileNotFoundException;
+
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Http\JSONResponse;
@@ -452,15 +454,17 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+	 * @throws FileNotFoundException
 	 */
 	public function Delete($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: normalize incoming path
-		$success = $this->filesystem->delete($path);
-		if ($success) {
+		try {
+			$this->filesystem->delete($path);
 			return new JSONResponse("OK", Http::STATUS_OK);
+			}
+	 catch (FileNotFoundException $e) {
+			return new JSONResponse(["error" => "Failed to delete."], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
-		return new JSONResponse(["error" => "Failed to delete."], Http::STATUS_INTERNAL_SERVER_ERROR);
-
 	}
 
 	/**
@@ -712,7 +716,7 @@ class RevaController extends Controller {
 		}
 		$success = $this->filesystem->write("/sciencemesh" . $path, $contents);
 		if ($success) {
-			return new JSONResponse("OK", Http::STATUS_CREATED);
+			return new JSONResponse("CREATED", Http::STATUS_CREATED);
 		}
 		return new JSONResponse(["error" => "Create failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
@@ -1005,7 +1009,6 @@ class RevaController extends Controller {
 
 		//$shareType ('group' or 'user' share)
 		$shareType =  $this->getShareType($grantee["type"]);
-
 		// $sharedBy provider specific UID of the user who shared the resource
 		$sharedBy = $owner;
 
@@ -1037,7 +1040,6 @@ class RevaController extends Controller {
 				);
 			}
 		}
-
 		if ($shareType === 'group') {
 			if (!$this->groupManager->groupExists($shareWith)) {
 				return new JSONResponse(
@@ -1069,7 +1071,7 @@ class RevaController extends Controller {
 		} catch (ProviderCouldNotAddShareException $e) {
 			return new JSONResponse(
 				['message' => $e->getMessage()],
-				$e->getCode()
+				Http::STATUS_BAD_REQUEST
 			);
 		} catch (\Exception $e) {
 			return new JSONResponse(
@@ -1205,7 +1207,6 @@ class RevaController extends Controller {
 		elseif($shares == []){
 			return new JSONResponse($shares, Http::STATUS_OK);
 		}
-		return new JSONResponse(["error" => "ListShares failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
   /**
 	 * @PublicPage
@@ -1291,37 +1292,37 @@ class RevaController extends Controller {
 	}
 
 
-		/**
-		 * Since we have multiple providers but the OCS Share API v1 does
-		 * not support this we need to check all backends.
-		 *
-		 * @param string $id
-		 * @return \OCP\Share\IShare
-		 * @throws ShareNotFound
-		 */
-		private function getShareById(string $id,string $userId): IShare {
-			$share = null;
-
-			// First check if it is an internal share.
-			try {
-				$share = $this->shareManager->getShareById('ocinternal:' . $id,$userId);
-				return $share;
-			} catch (ShareNotFound $e) {
-				// Do nothing, just try the other share type
-			}
-			try {
-				$share = $this->shareManager->getShareById('ocRoomShare:' . $id,$userId);
-				return $share;
-			} catch (ShareNotFound $e) {
-				// Do nothing, just try the other share type
-			}
-			if (!$this->shareManager->outgoingServer2ServerSharesAllowed()) {
-				throw new ShareNotFound();
-			}
-			$share = $this->shareManager->getShareById('ocFederatedSharing:' . $id,$userId);
-
-			return $share;
-		}
+		// /**
+		//  * Since we have multiple providers but the OCS Share API v1 does
+		//  * not support this we need to check all backends.
+		//  *
+		//  * @param string $id
+		//  * @return \OCP\Share\IShare
+		//  * @throws ShareNotFound
+		//  */
+		// private function getShareById(string $id,string $userId): IShare {
+		// 	$share = null;
+		//
+		// 	// First check if it is an internal share.
+		// 	try {
+		// 		$share = $this->shareManager->getShareById('ocinternal:' . $id,$userId);
+		// 		return $share;
+		// 	} catch (ShareNotFound $e) {
+		// 		// Do nothing, just try the other share type
+		// 	}
+		// 	try {
+		// 		$share = $this->shareManager->getShareById('ocRoomShare:' . $id,$userId);
+		// 		return $share;
+		// 	} catch (ShareNotFound $e) {
+		// 		// Do nothing, just try the other share type
+		// 	}
+		// 	if (!$this->shareManager->outgoingServer2ServerSharesAllowed()) {
+		// 		throw new ShareNotFound();
+		// 	}
+		// 	$share = $this->shareManager->getShareById('ocFederatedSharing:' . $id,$userId);
+		//
+		// 	return $share;
+		// }
 	/**
 	 * Does the user have read permission on the share
 	 *
@@ -1338,7 +1339,6 @@ class RevaController extends Controller {
 		if ($share->getPermissions() === 0) {
 			return false;
 		}
-
 		// Owner of the file and the sharer of the file can always get share
 		if ($share->getShareOwner() === $userId
 			|| $share->getSharedBy() === $userId) {
@@ -1367,74 +1367,74 @@ class RevaController extends Controller {
 		 * @throws NotFoundException
 		 * @throws OCSBadRequestException
 		 */
-		private function getFormattedShares(
-			string $viewer,
-			$node = null,
-			bool $sharedWithMe = false,
-			bool $reShares = false,
-			bool $subFiles = false,
-			bool $includeTags = false,
-			string $userId
-		): array {
-			if ($sharedWithMe) {
-				return $this->getSharedWithMe($node, $includeTags);
-			}
-
-			if ($subFiles) {
-				return $this->getSharesInDir($node);
-			}
-
-			$shares = $this->getSharesFromNode($viewer, $node, $reShares);
-
-			$known = $formatted = $miniFormatted = [];
-			$resharingRight = false;
-			foreach ($shares as $share) {
-				try {
-					$share->getNode();
-				} catch (NotFoundException $e) {
-					/*
-					 * Ignore shares where we can't get the node
-					 * For example deleted shares
-					 */
-					continue;
-				}
-
-				if (in_array($share->getId(), $known)
-					|| ($share->getSharedWith() === $userId && $share->getShareType() === IShare::TYPE_USER)) {
-					continue;
-				}
-
-				$known[] = $share->getId();
-				try {
-					/** @var IShare $share */
-					$format = $this->formatShare($share, $node);
-					$formatted[] = $format;
-
-					// let's also build a list of shares created
-					// by the current user only, in case
-					// there is no resharing rights
-					if ($share->getSharedBy() === $userId) {
-						$miniFormatted[] = $format;
-					}
-
-					// check if one of those share is shared with me
-					// and if I have resharing rights on it
-					if (!$resharingRight && $this->shareProviderResharingRights($userId, $share, $node)) {
-						$resharingRight = true;
-					}
-				} catch (InvalidPathException | NotFoundException $e) {
-				}
-			}
-
-			if (!$resharingRight) {
-				$formatted = $miniFormatted;
-			}
-
-			if ($includeTags) {
-				$formatted =
-					Helper::populateTags($formatted, 'file_source', \OC::$server->getTagManager());
-			}
-
-			return $formatted;
-		}
-}
+// 		private function getFormattedShares(
+// 			string $viewer,
+// 			$node = null,
+// 			bool $sharedWithMe = false,
+// 			bool $reShares = false,
+// 			bool $subFiles = false,
+// 			bool $includeTags = false,
+// 			string $userId
+// 		): array {
+// 			if ($sharedWithMe) {
+// 				return $this->getSharedWithMe($node, $includeTags);
+// 			}
+//
+// 			if ($subFiles) {
+// 				return $this->getSharesInDir($node);
+// 			}
+//
+// 			$shares = $this->getSharesFromNode($viewer, $node, $reShares);
+//
+// 			$known = $formatted = $miniFormatted = [];
+// 			$resharingRight = false;
+// 			foreach ($shares as $share) {
+// 				try {
+// 					$share->getNode();
+// 				} catch (NotFoundException $e) {
+// 					/*
+// 					 * Ignore shares where we can't get the node
+// 					 * For example deleted shares
+// 					 */
+// 					continue;
+// 				}
+//
+// 				if (in_array($share->getId(), $known)
+// 					|| ($share->getSharedWith() === $userId && $share->getShareType() === IShare::TYPE_USER)) {
+// 					continue;
+// 				}
+//
+// 				$known[] = $share->getId();
+// 				try {
+// 					/** @var IShare $share */
+// 					$format = $this->formatShare($share, $node);
+// 					$formatted[] = $format;
+//
+// 					// let's also build a list of shares created
+// 					// by the current user only, in case
+// 					// there is no resharing rights
+// 					if ($share->getSharedBy() === $userId) {
+// 						$miniFormatted[] = $format;
+// 					}
+//
+// 					// check if one of those share is shared with me
+// 					// and if I have resharing rights on it
+// 					if (!$resharingRight && $this->shareProviderResharingRights($userId, $share, $node)) {
+// 						$resharingRight = true;
+// 					}
+// 				} catch (InvalidPathException | NotFoundException $e) {
+// 				}
+// 			}
+//
+// 			if (!$resharingRight) {
+// 				$formatted = $miniFormatted;
+// 			}
+//
+// 			if ($includeTags) {
+// 				$formatted =
+// 					Helper::populateTags($formatted, 'file_source', \OC::$server->getTagManager());
+// 			}
+//
+// 			return $formatted;
+// 		}
+ }
