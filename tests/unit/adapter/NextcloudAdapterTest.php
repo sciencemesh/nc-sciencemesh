@@ -156,4 +156,16 @@ class NextcloudAdapterTest extends PHPUnit_Framework_TestCase {
 			'visibility' => 'public',
 		], $result);
 	}
+
+	public function testGetMetadataNotFound() {
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('some/path/to/file'))
+			->will($this->throwException(new \OCP\Files\NotFoundException()));
+
+		$result = $this->directory->getMetadata('some/path/to/file');
+
+		$this->assertEquals(false, $result);
+	}
 }
