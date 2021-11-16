@@ -57,6 +57,27 @@ class NextcloudAdapterTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(true, $result);
 	}
 
+	public function testDeleteDirTypeFolder() {
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('someDir'))
+			->willReturn($this->node);
+
+		$this->node
+			->expects($this->once())
+			->method('getType')
+			->willReturn(\OCP\Files\FileInfo::TYPE_FOLDER);
+
+		$this->node
+			->expects($this->once())
+			->method('delete');
+
+		$result = $this->directory->deleteDir('someDir');
+
+		$this->assertEquals(true, $result);
+	}
+
 	public function testDeleteDirTypeFile() {
 		$this->folder
 			->expects($this->once())
