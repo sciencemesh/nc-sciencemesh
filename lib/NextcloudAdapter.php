@@ -136,7 +136,7 @@ class NextcloudAdapter implements AdapterInterface {
 
 	/**
 	 * Get the size of a file.
- 	 * Synonymous to getMetadata.
+	 * Synonymous to getMetadata.
 	 *
 	 * @param string $path
 	 *
@@ -161,7 +161,7 @@ class NextcloudAdapter implements AdapterInterface {
 	/**
 	 * Get the visibility of a file.
 	 * Synonymous to getMetadata.
-   *
+	 *
 	 * @param string $path
 	 *
 	 * @return array|false

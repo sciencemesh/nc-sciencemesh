@@ -235,5 +235,4 @@ class NextcloudAdapterTest extends PHPUnit_Framework_TestCase {
 			'visibility' => 'public',
 		], $result);
 	}
-
 }
