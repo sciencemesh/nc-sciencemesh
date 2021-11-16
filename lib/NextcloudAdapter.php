@@ -124,6 +124,7 @@ class NextcloudAdapter implements AdapterInterface {
 
 	/**
 	 * Get the mimetype of a file.
+	 * Synonymous to getMetadata
 	 *
 	 * @param string $path
 	 *
