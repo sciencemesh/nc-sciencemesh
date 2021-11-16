@@ -3,14 +3,14 @@
 namespace OCA\ScienceMesh\Tests\Unit\Controller;
 
 use PHPUnit_Framework_TestCase;
-use OCA\ScienceMesh\NextCloudAdapter;
+use OCA\ScienceMesh\NextcloudAdapter;
 
 class NextcloudAdapterTest extends PHPUnit_Framework_TestCase {
 	public function setUp() {
 		$this->config = $this->getMockBuilder('League\Flysystem\Config')->getMock();
 		$this->folder = $this->getMockBuilder('OCP\Files\Folder')->getMock();
 		$this->node = $this->getMockBuilder('OCP\Files\Node')->getMock();
-		$this->directory = new NextCloudAdapter($this->folder);
+		$this->directory = new NextcloudAdapter($this->folder);
 	}
 
 	public function testCopy() {
