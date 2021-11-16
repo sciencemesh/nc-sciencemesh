@@ -19,7 +19,7 @@ class NextcloudAdapterTest extends PHPUnit_Framework_TestCase {
 			->method('get')
 			->with($this->equalTo('test1'))
 			->willReturn($this->node);
-		
+
 		$this->node
 			->expects($this->once())
 			->method('copy')
@@ -57,7 +57,7 @@ class NextcloudAdapterTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(true, $result);
 	}
 
-	public function testDeleteDirTypeFolder() {
+	public function testDeleteDirTypeFile() {
 		$this->folder
 			->expects($this->once())
 			->method('get')
@@ -67,15 +67,23 @@ class NextcloudAdapterTest extends PHPUnit_Framework_TestCase {
 		$this->node
 			->expects($this->once())
 			->method('getType')
-			->willReturn(\OCP\Files\FileInfo::TYPE_FOLDER);
-
-		$this->node
-			->expects($this->once())
-			->method('delete');
+			->willReturn(\OCP\Files\FileInfo::TYPE_FILE);
 
 		$result = $this->directory->deleteDir('someDir');
 
-		$this->assertEquals(true, $result);
+		$this->assertEquals(false, $result);
+	}
+
+	public function testDeleteDirNotFound() {
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('someDir'))
+			->will($this->throwException(new \OCP\Files\NotFoundException()));
+	
+		$result = $this->directory->deleteDir('someDir');
+
+		$this->assertEquals(false, $result);
 	}
 
 }
