@@ -18,6 +18,7 @@ use OCP\IConfig;
 use OCP\Files\IRootFolder;
 use OCP\Files\IHomeStorage;
 use OCP\Files\SimpleFS\ISimpleRoot;
+use OCP\Files\NotPermittedException;
 
 use League\Flysystem\FileNotFoundException;
 
@@ -431,13 +432,20 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+	  * @throws \OCP\Files\NotPermittedException
 	 */
 	public function CreateHome($userId) {
 		$homeExists = $this->userFolder->nodeExists("sciencemesh");
 		if (!$homeExists) {
-			$this->userFolder->newFolder("sciencemesh"); // Create the Sciencemesh directory for storage if it doesn't exist.
+			try{
+				$this->userFolder->newFolder("sciencemesh"); // Create the Sciencemesh directory for storage if it doesn't exist.
+			}
+			catch (NotPermittedException $e) {
+				return new JSONResponse(["error" => "Create home failed. Resource Path not foun"], Http::STATUS_INTERNAL_SERVER_ERROR);
+			}
+			return new JSONResponse("CREATED", Http::STATUS_CREATED);
 		}
-		return new JSONResponse("OK", Http::STATUS_CREATED);
+		return new JSONResponse("OK", Http::STATUS_OK);
 	}
 
 	/**
@@ -1229,7 +1237,7 @@ class RevaController extends Controller {
 		elseif($shares == []){
 			return new JSONResponse($shares, Http::STATUS_OK);
 		}
-		return new JSONResponse(["error" => "ListReceivedShares failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
+		//return new JSONResponse(["error" => "ListReceivedShares failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
   /**
 	 * @PublicPage

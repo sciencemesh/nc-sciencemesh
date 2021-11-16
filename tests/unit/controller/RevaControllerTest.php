@@ -101,6 +101,20 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$date->setTime(0, 0, 0);
 		$this->assertEquals($response, $date);
 	}
+	public function testParseDateException(){
+		$parseDate = self::getMethod('parseDate');
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+		);
+		$response = $parseDate->invokeArgs($controller, array('2021-11-11'));
+		$date = new \DateTime('2021-11-11');
+		$date->setTime(0, 0, 0);
+		$this->assertEquals($response, $date);
+	}
 	public function testGetShareTypeUser(){
 		$getShareType = self::getMethod('getShareType');
 		$controller = new RevaController(
@@ -240,6 +254,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getData(), "OK");
 	}
 	public function testCreateHome(){
+		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
@@ -247,10 +262,44 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->groupManager, $this->cloudFederationProviderManager,
 			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
 		);
+		$this->userFolder->method("newFolder")
+		->willReturn($testFolder);
 		$result = $controller->CreateHome($this->userId);
 		$this->assertEquals($result->getData(), "OK");
 	}
-
+	public function testCreateHomeCREATED(){
+		$rootFolder = $this->getMockBuilder("OCP\Files\IRootFolder")->getMock();
+		$userFolder	= $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$rootFolder->method("getUserFolder")->willReturn($userFolder);
+		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$controller = new RevaController(
+			$this->appName, $rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+		);
+		$this->userFolder->method("newFolder")
+		->willReturn($testFolder);
+		$result = $controller->CreateHome($this->userId);
+		$this->assertEquals($result->getData(), 'CREATED');
+	}
+	public function testCreateHomeException(){
+		$rootFolder = $this->getMockBuilder("OCP\Files\IRootFolder")->getMock();
+		$userFolder	= $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$rootFolder->method("getUserFolder")->willReturn($userFolder);
+		$controller = new RevaController(
+			$this->appName, $rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+		);
+		$userFolder->method("newFolder")
+			->willThrowException(new \OCP\Files\NotPermittedException());
+		$result = $controller->CreateHome($this->userId);
+		$this->assertEquals($result->getStatus(), 500);
+	}
 	public function testCreateReference(){
 		$this->request->method("getParam")->willReturn("/test");
 		$controller = new RevaController(
@@ -1129,7 +1178,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->Upload($this->userId, "/fakeFile.json");
 		$this->assertEquals($result->getData(),"CREATED");
 	}
-
 
 	public function testUploadFailUpdate(){
 		$this->userFolder->method("get")
