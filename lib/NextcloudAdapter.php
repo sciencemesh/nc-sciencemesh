@@ -124,6 +124,7 @@ class NextcloudAdapter implements AdapterInterface {
 
 	/**
 	 * Get the mimetype of a file.
+	 * Synonymous to getMetadata.
 	 *
 	 * @param string $path
 	 *
@@ -135,6 +136,7 @@ class NextcloudAdapter implements AdapterInterface {
 
 	/**
 	 * Get the size of a file.
+	 * Synonymous to getMetadata.
 	 *
 	 * @param string $path
 	 *
@@ -146,6 +148,7 @@ class NextcloudAdapter implements AdapterInterface {
 
 	/**
 	 * Get the timestamp of a file.
+	 * Synonymous to getMetadata.
 	 *
 	 * @param string $path
 	 *
@@ -157,6 +160,7 @@ class NextcloudAdapter implements AdapterInterface {
 
 	/**
 	 * Get the visibility of a file.
+	 * Synonymous to getMetadata.
 	 *
 	 * @param string $path
 	 *
