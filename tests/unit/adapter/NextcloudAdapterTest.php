@@ -248,4 +248,78 @@ class NextcloudAdapterTest extends PHPUnit_Framework_TestCase {
 
 		$this->assertEquals($this->node, $result);
 	}
+
+	public function testListContentNotFound() {
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('someDir'))
+			->will($this->throwException(new \OCP\Files\NotFoundException()));
+	
+		$result = $this->directory->listContents('someDir', false);
+
+		$this->assertEquals([], $result);
+	}
+
+	public function testReadNotFound() {
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('someDir'))
+			->will($this->throwException(new \OCP\Files\NotFoundException()));
+	
+		$result = $this->directory->read('someDir');
+
+		$this->assertEquals(false, $result);
+	}
+
+	public function testReadStreamNotFound() {
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('someDir'))
+			->will($this->throwException(new \OCP\Files\NotFoundException()));
+	
+		$result = $this->directory->readStream('someDir');
+
+		$this->assertEquals(false, $result);
+	}
+
+	public function testRenameNotFound() {
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('someDir'))
+			->will($this->throwException(new \OCP\Files\NotFoundException()));
+	
+		$result = $this->directory->rename('someDir', 'newPath');
+
+		$this->assertEquals(false, $result);
+	}
+
+	public function testWriteStreamNotFound() {
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('someDir'))
+			->will($this->throwException(new \OCP\Files\NotFoundException()));
+	
+		$result = $this->directory->writeStream('someDir', 'newPath', $this->config);
+
+		$this->assertEquals(false, $result);
+	}
+
+	/*public function testListContets() {
+		//$this->getMetadataSetup();
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('some/path/to/file'))
+			->willReturn($this->node);
+
+			
+		$result = $this->directory->listContents('some/path/to/file', false);
+        
+		$this->assertEquals([], $result);
+	}*/
 }
