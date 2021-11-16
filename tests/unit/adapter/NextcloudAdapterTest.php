@@ -235,4 +235,17 @@ class NextcloudAdapterTest extends PHPUnit_Framework_TestCase {
 			'visibility' => 'public',
 		], $result);
 	}
+
+	public function testHas() {
+		$this->folder
+			->expects($this->once())
+			->method('nodeExists')
+			->with($this->equalTo('test1'))
+			->willReturn($this->node);
+
+		
+		$result = $this->directory->has('test1');
+
+		$this->assertEquals($this->node, $result);
+	}
 }
