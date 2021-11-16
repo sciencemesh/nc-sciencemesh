@@ -317,9 +317,9 @@ class NextcloudAdapterTest extends PHPUnit_Framework_TestCase {
 			->with($this->equalTo('some/path/to/file'))
 			->willReturn($this->node);
 
-			
+
 		$result = $this->directory->listContents('some/path/to/file', false);
-        
+
 		$this->assertEquals([], $result);
 	}*/
 }
