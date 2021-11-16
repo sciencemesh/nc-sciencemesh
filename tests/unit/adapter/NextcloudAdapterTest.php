@@ -107,4 +107,53 @@ class NextcloudAdapterTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(false, $result);
 	}
 
+	public function testGetMetadataFound() {
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('some/path/to/file'))
+			->willReturn($this->node);
+
+		$this->folder
+			->expects($this->once())
+			->method('getPath')
+			->willReturn('some/path/to');
+		
+		$this->node
+			->expects($this->exactly(2))
+			->method('getType')
+			->willReturn(\OCP\Files\FileInfo::TYPE_FILE);
+
+		$this->node
+			->expects($this->exactly(2))
+			->method('getPath')
+			->willReturn('some/path/to/file');
+
+		$this->node
+			->expects($this->once())
+			->method('getSize')
+			->willReturn(1234);
+
+		$this->node
+			->expects($this->once())
+			->method('getMtime')
+			->willReturn(1234567890123);
+
+		$this->node
+			->expects($this->once())
+			->method('getMimeType')
+			->willReturn('text/plain');
+
+		$result = $this->directory->getMetadata('some/path/to/file');
+
+		$this->assertEquals([
+			'mimetype' => 'text/plain',
+			'path' => 'file',
+			'size' => 1234,
+			'basename' => 'file',
+			'timestamp' => 1234567890123,
+			'type' => 'file',
+			'visibility' => 'public',
+		], $result);
+	}
 }
