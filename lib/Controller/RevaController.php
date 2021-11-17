@@ -755,12 +755,11 @@ class RevaController extends Controller {
 		if ($permissions === null) {
 			$permissions = $this->config->getAppValue('core', 'shareapi_default_permissions', Constants::PERMISSION_ALL);
 		}
-
 		// Verify path
-		if ($name === null) {
+		if ($name === "") {
+			error_log('name: '.$name);
 			throw new OCSNotFoundException($this->l->t('Please specify a file or folder path'));
 		}
-
 		try {
 			$path = $this->userFolder->get("sciencemesh/".$name);
 		} catch (NotFoundException $e) {
@@ -774,11 +773,6 @@ class RevaController extends Controller {
 		} catch (LockedException $e) {
 			throw new OCSNotFoundException($this->l->t('Could not create share'));
 		}
-
-		if ($permissions < 0 || $permissions > Constants::PERMISSION_ALL) {
-			throw new OCSNotFoundException($this->l->t('Invalid permissions'));
-		}
-
 		// Shares always require read permissions
 		$permissions |= Constants::PERMISSION_READ;
 
@@ -1330,27 +1324,37 @@ class RevaController extends Controller {
 		}
 		// Have reshare rights on the shared file/folder ?
 		// Does the currentUser have access to the shared file?
-		$userFolder = $this->rootFolder->getUserFolder($userId);
-		$files = $userFolder->getById($share->getNodeId());
+		$files = $this->userFolder->getById($share->getNodeId());
 		if (!empty($files) && $this->shareProviderResharingRights($userId, $share, $files[0])) {
 			return true;
 		}
 		return false;
 	}
 
+	private function shareProviderResharingRights(string $userId, IShare $share, $node): bool {
+					if ($share->getShareOwner() === $userId) {
+									return true;
+					}
+					// we check that current user have parent resharing rights on the current file
+					if ($node !== null && ($node->getPermissions() & Constants::PERMISSION_SHARE) !== 0) {
+									return true;
+					}
+					return false;
+	}
 
-	/**
-	 * @param string $viewer
-	 * @param Node $node
-	 * @param bool $sharedWithMe
-	 * @param bool $reShares
-	 * @param bool $subFiles
-	 * @param bool $includeTags
-	 *
-	 * @return array
-	 * @throws NotFoundException
-	 * @throws OCSBadRequestException
-	 */
+	//
+	// /**
+	//  * @param string $viewer
+	//  * @param Node $node
+	//  * @param bool $sharedWithMe
+	//  * @param bool $reShares
+	//  * @param bool $subFiles
+	//  * @param bool $includeTags
+	//  *
+	//  * @return array
+	//  * @throws NotFoundException
+	//  * @throws OCSBadRequestException
+//	 */
 // 		private function getFormattedShares(
 // 			string $viewer,
 // 			$node = null,
