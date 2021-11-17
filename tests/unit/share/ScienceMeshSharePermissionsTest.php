@@ -7,7 +7,7 @@ use PHPUnit_Framework_TestCase;
 use OCA\ScienceMesh\Share\ScienceMeshSharePermissions;
 
 class ScienceMeshSharePermissionsTest extends PHPUnit_Framework_TestCase {
-	public $json_false= '{
+	public $json_false = '{
 			"permissions": {
 				"add_grant": false,
 				"create_container": false,
@@ -50,9 +50,9 @@ class ScienceMeshSharePermissionsTest extends PHPUnit_Framework_TestCase {
 			"restore_recycle_item" => false,
 			"stat" => false,
 			"update_grant" => false,
-			"deny_grant" => false	
+			"deny_grant" => false
 		]
-		];
+	];
 	public $json_true = '{
 			"add_grant": true,
 			"create_container": true,
@@ -78,11 +78,11 @@ class ScienceMeshSharePermissionsTest extends PHPUnit_Framework_TestCase {
 		"permissions": {
 			"add_grant": true,';
 
-	public function testFromJson(){
+	public function testFromJson() {
 		$permissions_expected = new ScienceMeshSharePermissions;
 		$permissions_from_json_false = ScienceMeshSharePermissions::fromJson($this->json_false);
 		$this->assertEquals($permissions_expected, $permissions_from_json_false);
-		foreach(ScienceMeshSharePermissions::FIELDS as $field) {
+		foreach (ScienceMeshSharePermissions::FIELDS as $field) {
 			$permissions_expected->setPermission($field, true);
 		}
 		$permissions_from_json_true = ScienceMeshSharePermissions::fromJson($this->json_true);
@@ -90,15 +90,15 @@ class ScienceMeshSharePermissionsTest extends PHPUnit_Framework_TestCase {
 		$this->expectException(\InvalidArgumentException::class);
 		$permissions_fail = ScienceMeshSharePermissions::fromJson($this->json_malformed);
 	}
-	public function testGetArray(){
+	public function testGetArray() {
 		$permissions = new ScienceMeshSharePermissions;
 		$this->assertEquals($permissions->getArray(), $this->array_false);
 	}
-	public function testGetJson(){
+	public function testGetJson() {
 		$permissions = new ScienceMeshSharePermissions;
 		$this->assertEquals(json_decode($permissions->getJson()), json_decode($this->json_false));
 	}
-	public function testPermission(){
+	public function testPermission() {
 		$permissions = new ScienceMeshSharePermissions;
 		$add_grant = $permissions->getPermission('add_grant');
 		$this->assertEquals($add_grant, false);
@@ -106,17 +106,17 @@ class ScienceMeshSharePermissionsTest extends PHPUnit_Framework_TestCase {
 		$add_grant = $permissions->getPermission('add_grant');
 		$this->assertEquals($add_grant, true);
 	}
-	public function testSetPermissionValueException(){
+	public function testSetPermissionValueException() {
 		$permissions = new ScienceMeshSharePermissions;
 		$this->expectException(\InvalidArgumentException::class);
 		$permissions->setPermission('add_grant', 0);
 	}
-	public function testSetPermissionKeyException(){
+	public function testSetPermissionKeyException() {
 		$permissions = new ScienceMeshSharePermissions;
 		$this->expectException(\UnexpectedValueException::class);
 		$permissions->setPermission('notarealpermissiontype', true);
 	}
-	public function testGetPermissionKeyException(){
+	public function testGetPermissionKeyException() {
 		$permissions = new ScienceMeshSharePermissions;
 		$this->expectException(\UnexpectedValueException::class);
 		$permissions->getPermission('notarealpermissiontype');

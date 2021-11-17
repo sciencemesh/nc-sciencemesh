@@ -7,13 +7,13 @@ class ScienceMeshUserId {
 	private $opaque_id;
 	private $type;
 
-	public function __construct($idp, $opaque_id, $type){
+	public function __construct($idp, $opaque_id, $type) {
 		$this->idp = $idp;
 		$this->opaque_id = $opaque_id;
 		$this->type = $type;
 	}
 
-	public static function fromJson($json){
+	public static function fromJson($json) {
 		$id = json_decode($json, true);
 		$error = json_last_error();
 		if ($error) {
@@ -25,10 +25,9 @@ class ScienceMeshUserId {
 				$error
 			);
 		}
-		if ( isset($id['idp']) && 
-			 isset($id['opaque_id']) && 
-			 isset($id['type'])) 
-		{
+		if (isset($id['idp']) &&
+			 isset($id['opaque_id']) &&
+			 isset($id['type'])) {
 			$idp = $id['idp'];
 			$opaque_id = $id['opaque_id'];
 			$type = $id['type'];
@@ -43,12 +42,12 @@ class ScienceMeshUserId {
 		}
 	}
 
-	public static function fromArray($arr){
+	public static function fromArray($arr) {
 		$json = json_encode($arr);
 		return ScienceMeshUserId::fromJson($json);
 	}
 
-	public function asJson(){
+	public function asJson() {
 		return json_encode([
 			'idp' => $this->idp,
 			'opaque_id' => $this->opaque_id,
@@ -56,27 +55,27 @@ class ScienceMeshUserId {
 		]);
 	}
 
-	public function getIdp(){
+	public function getIdp() {
 		return $this->idp;
 	}
 
-	public function setIdp($idp){
+	public function setIdp($idp) {
 		$this->idp = $idp;
 	}
 
-	public function getOpaqueId(){
+	public function getOpaqueId() {
 		return $this->opaque_id;
 	}
 
-	public function setOpaqueID($opaque_id){
+	public function setOpaqueID($opaque_id) {
 		$this->opaque_id = $opaque_id;
 	}
 
-	public function getType(){
+	public function getType() {
 		return $this->type;
 	}
 
-	public function setType($type){
+	public function setType($type) {
 		$this->type = $type;
 	}
 }

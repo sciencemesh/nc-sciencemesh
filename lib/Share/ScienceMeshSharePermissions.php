@@ -46,20 +46,20 @@ class ScienceMeshSharePermissions {
 
 	public static function fromJson($json) {
 		$permission_array = json_decode($json, true);
-		if(isset($permission_array['permissions']) && is_array($permission_array['permissions'])){
+		if (isset($permission_array['permissions']) && is_array($permission_array['permissions'])) {
 			$permission_array = $permission_array['permissions'];
 		}
-		if($permission_array === null) {
+		if ($permission_array === null) {
 			throw new \InvalidArgumentException(
-				__CLASS__ . 
+				__CLASS__ .
 				': Failed to parse JSON. $json: ' .
 				$json .
 				' json_last_error CODE: ' .
 				json_last_error());
 		}
 		$permissions = new ScienceMeshSharePermissions;
-		foreach (ScienceMeshSharePermissions::FIELDS as $key){
-			if(isset($permission_array[$key]) && is_bool($permission_array[$key])) {
+		foreach (ScienceMeshSharePermissions::FIELDS as $key) {
+			if (isset($permission_array[$key]) && is_bool($permission_array[$key])) {
 				$permissions->setPermission($key, $permission_array[$key]);
 			}
 		}
@@ -70,7 +70,7 @@ class ScienceMeshSharePermissions {
 		$res = [
 			'permissions' => []
 		];
-		foreach (ScienceMeshSharePermissions::FIELDS as $key){
+		foreach (ScienceMeshSharePermissions::FIELDS as $key) {
 			$res['permissions'][$key] = $this->$key;
 		}
 		return $res;
@@ -81,24 +81,24 @@ class ScienceMeshSharePermissions {
 	}
 
 	public function setPermission($key, $value) {
-		if(in_array($key, ScienceMeshSharePermissions::FIELDS)){
-			if(is_bool($value)){
+		if (in_array($key, ScienceMeshSharePermissions::FIELDS)) {
+			if (is_bool($value)) {
 				$this->$key = $value;
 			} else {
 				throw new \InvalidArgumentException(
-					__CLASS__ . 
+					__CLASS__ .
 					": ScienceMesh Permission values have to be booleans.");
 			}
 		} else {
 			throw new \UnexpectedValueException(
-				__CLASS__ . 
-				"->setPermission: Unknown Permission Type: " . 
+				__CLASS__ .
+				"->setPermission: Unknown Permission Type: " .
 				$key);
 		}
 	}
 
 	public function getPermission($key) {
-		if(in_array($key, ScienceMeshSharePermissions::FIELDS)){
+		if (in_array($key, ScienceMeshSharePermissions::FIELDS)) {
 			return $this->$key;
 		} else {
 			throw new \UnexpectedValueException(
