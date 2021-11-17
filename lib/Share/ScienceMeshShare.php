@@ -6,7 +6,7 @@ use OCP\Share\IShare;
 use ScienceMeshSharePermissions;
 use ScienceMeshUserId;
 
-class ScienceMeshShare implements IShare {
+class ScienceMeshShare {
 	private $scienceMeshId;
 	private $scienceMeshResourceId;
 	private $scienceMeshPermissions;

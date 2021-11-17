@@ -4,7 +4,7 @@ namespace OCA\ScienceMesh\Tests\Unit;
 
 use PHPUnit_Framework_TestCase;
 
-use OCA\ScienceMesh\ScienceMeshShare;
+use \OCA\ScienceMesh\Share\ScienceMeshShare;
 
 class ScienceMeshShareTest extends PHPUnit_Framework_TestCase {
 /*

@@ -2,7 +2,7 @@
 
 namespace OCA\ScienceMesh\Share;
 
-class ScienceMeshPermissions {
+class ScienceMeshSharePermissions {
 	private $add_grant = false;
 	private $create_container = false;
 	private $delete = false;
@@ -57,8 +57,8 @@ class ScienceMeshPermissions {
 				' json_last_error CODE: ' .
 				json_last_error());
 		}
-		$permissions = new ScienceMeshPermissions;
-		foreach (ScienceMeshPermissions::FIELDS as $key){
+		$permissions = new ScienceMeshSharePermissions;
+		foreach (ScienceMeshSharePermissions::FIELDS as $key){
 			if(isset($permission_array[$key]) && is_bool($permission_array[$key])) {
 				$permissions->setPermission($key, $permission_array[$key]);
 			}
@@ -70,7 +70,7 @@ class ScienceMeshPermissions {
 		$res = [
 			'permissions' => []
 		];
-		foreach (ScienceMeshPermissions::FIELDS as $key){
+		foreach (ScienceMeshSharePermissions::FIELDS as $key){
 			$res['permissions'][$key] = $this->$key;
 		}
 		return $res;
@@ -81,7 +81,7 @@ class ScienceMeshPermissions {
 	}
 
 	public function setPermission($key, $value) {
-		if(in_array($key, ScienceMeshPermissions::FIELDS)){
+		if(in_array($key, ScienceMeshSharePermissions::FIELDS)){
 			if(is_bool($value)){
 				$this->$key = $value;
 			} else {
@@ -98,7 +98,7 @@ class ScienceMeshPermissions {
 	}
 
 	public function getPermission($key) {
-		if(in_array($key, ScienceMeshPermissions::FIELDS)){
+		if(in_array($key, ScienceMeshSharePermissions::FIELDS)){
 			return $this->$key;
 		} else {
 			throw new \UnexpectedValueException(
