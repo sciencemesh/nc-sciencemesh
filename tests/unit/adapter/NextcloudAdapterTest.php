@@ -30,6 +30,18 @@ class NextcloudAdapterTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(true, $result);
 	}
 
+	public function testCopyNotFound() {
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('test1'))
+			->will($this->throwException(new \OCP\Files\NotFoundException()));
+	
+		$result = $this->directory->copy('test1', 'test2');
+
+		$this->assertEquals(false, $result);
+	}
+
 	public function testCreateDir() {
 		$this->folder
 			->expects($this->once())
