@@ -30,6 +30,18 @@ class NextcloudAdapterTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(true, $result);
 	}
 
+	public function testCopyNotFound() {
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('test1'))
+			->will($this->throwException(new \OCP\Files\NotFoundException()));
+	
+		$result = $this->directory->copy('test1', 'test2');
+
+		$this->assertEquals(false, $result);
+	}
+
 	public function testCreateDir() {
 		$this->folder
 			->expects($this->once())
@@ -234,5 +246,115 @@ class NextcloudAdapterTest extends PHPUnit_Framework_TestCase {
 			'type' => 'file',
 			'visibility' => 'public',
 		], $result);
+	}
+
+	public function testHas() {
+		$this->folder
+			->expects($this->once())
+			->method('nodeExists')
+			->with($this->equalTo('test1'))
+			->willReturn($this->node);
+
+		
+		$result = $this->directory->has('test1');
+
+		$this->assertEquals($this->node, $result);
+	}
+
+	public function testListContentNotFound() {
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('someDir'))
+			->will($this->throwException(new \OCP\Files\NotFoundException()));
+	
+		$result = $this->directory->listContents('someDir', false);
+
+		$this->assertEquals([], $result);
+	}
+
+	public function testReadNotFound() {
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('someDir'))
+			->will($this->throwException(new \OCP\Files\NotFoundException()));
+	
+		$result = $this->directory->read('someDir');
+
+		$this->assertEquals(false, $result);
+	}
+
+	public function testReadStreamNotFound() {
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('someDir'))
+			->will($this->throwException(new \OCP\Files\NotFoundException()));
+	
+		$result = $this->directory->readStream('someDir');
+
+		$this->assertEquals(false, $result);
+	}
+
+	public function testRename() {
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('test1'))
+			->willReturn($this->node);
+
+		$this->node
+			->expects($this->once())
+			->method('move')
+			->with($this->equalTo('test2'))
+			->willReturn(true);
+		$result = $this->directory->rename('test1', 'test2');
+
+		$this->assertEquals(true, $result);
+	}
+
+	public function testRenameNotFound() {
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('someDir'))
+			->will($this->throwException(new \OCP\Files\NotFoundException()));
+	
+		$result = $this->directory->rename('someDir', 'newPath');
+
+		$this->assertEquals(false, $result);
+	}
+
+	public function testWriteStreamNotFound() {
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('someDir'))
+			->will($this->throwException(new \OCP\Files\NotFoundException()));
+	
+		$result = $this->directory->writeStream('someDir', 'newPath', $this->config);
+
+		$this->assertEquals(false, $result);
+	}
+
+	/*public function testListContets() {
+		//$this->getMetadataSetup();
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('some/path/to/file'))
+			->willReturn($this->node);
+
+
+		$result = $this->directory->listContents('some/path/to/file', false);
+
+		$this->assertEquals([], $result);
+	}*/
+
+	public function testSetVisibility() {
+		$result = $this->directory->setVisibility('someDir', 'visible');
+
+		$this->assertEquals(false, $result);
 	}
 }
