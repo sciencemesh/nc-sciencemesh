@@ -319,20 +319,20 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->createDir($this->userId);
 		$this->assertEquals($result->getData(), "OK");
 	}
-	// public function testCreateDirFails() {
-	// 	$this->request->method("getParam")->willReturn("/test");
-	// 	$controller = new RevaController(
-	// 		$this->appName, $this->rootFolder, $this->request, $this->session,
-	// 		$this->userManager, $this->urlGenerator, $this->userId, $this->config,
-	// 		$this->userService, $this->trashManager , $this->shareManager,
-	// 		$this->groupManager, $this->cloudFederationProviderManager,
-	// 		$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
-	// 	);
-	// 	$this->userFolder->method("newFolder")
-	// 		->willThrowException(new \OCP\Files\NotPermittedException());
-	// 	$result = $controller->createDir($this->userId);
-	// 	$this->assertEquals($result->getStatus(), 500);
-	// }
+	public function testCreateDirFails() {
+		$this->request->method("getParam")->willReturn("/test");
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+		);
+		$this->userFolder->method("newFolder")
+			->willThrowException(new \OCP\Files\NotPermittedException());
+		$result = $controller->createDir($this->userId);
+		$this->assertEquals($result->getStatus(), 500);
+	}
 	public function testCreateHome() {
 		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$controller = new RevaController(

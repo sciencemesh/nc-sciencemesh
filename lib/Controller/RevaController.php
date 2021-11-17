@@ -403,14 +403,16 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+	 * @throws \OCP\Files\NotPermittedException
 	 */
 	public function CreateDir($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path"); // FIXME: sanitize the input
-		$success = $this->filesystem->createDir($path);
-		if ($success) {
-			return new JSONResponse("OK", Http::STATUS_OK);
+		try{
+			$this->filesystem->createDir($path);
+		} catch (NotPermittedException $e) {
+			return new JSONResponse(["error" => "Could not create directory."], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
-		return new JSONResponse(["error" => "Could not create directory."], Http::STATUS_INTERNAL_SERVER_ERROR);
+			return new JSONResponse("OK", Http::STATUS_OK);
 	}
 
 	/**
