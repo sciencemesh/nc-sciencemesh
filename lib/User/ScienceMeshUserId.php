@@ -1,8 +1,17 @@
 <?php
 
-namespace OCA\ScienceMesh\Share;
+namespace OCA\ScienceMesh\User;
 
 class ScienceMeshUserId {
+	public const USER_TYPE_INVALID = 0;
+	public const USER_TYPE_PRIMARY = 1;
+	public const USER_TYPE_SECONDARY = 2;
+	public const USER_TYPE_SERVICE = 3;
+	public const USER_TYPE_APPLICATION = 4;
+	public const USER_TYPE_GUEST = 5;
+	public const USER_TYPE_FEDERATED = 6;
+	public const USER_TYPE_LIGHTWEIGHT = 7;
+
 	private $idp;
 	private $opaque_id;
 	private $type;
