@@ -1391,6 +1391,8 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			["owner_display_name",NULL,"Albert Einstein"],
 			["protocol",NULL,["name"=>"webdav","options"=>["sharedSecret"=>"secret","permissions"=>"webdav-property"]]]
 		];
+		$this->request->method("getParam")
+			->will($this->returnValueMap($paramsMap));
 		$result = $controller->addReceivedShare($this->userId);
 		$this->assertEquals($result->getStatus(),400);
 	}
@@ -1585,17 +1587,19 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->groupManager, $this->cloudFederationProviderManager,
 			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
 		);
-		$testFolder 			= $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		//$testFolder 			= $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$testShare 				= $this->getMockBuilder("OCP\Share\IShare")->getMock();
-		$testCreatedShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
-		$testLockedNode   = $this->getMockBuilder("OCP\Files\Node")->getMock();
-		$storage 					= $this->getMockBuilder("\OC\Files\Storage\Storage")->getMock();
-		$paramsMap = [
-			["md", NULL,["opaque_id"=>"fileid-marie%2FtestFile.json"]],
-			["g", NULL,["grantee"=>["Id"=>["UserId"=>["idp"=>"localhost:8080","opaque_id"=>"einstein","type"=>1]]],"permissions"=>["permissions"=>["get_path"=>true]]]]
-		];
+		//$testCreatedShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		//$testLockedNode   = $this->getMockBuilder("OCP\Files\Node")->getMock();
+		//$storage 					= $this->getMockBuilder("\OC\Files\Storage\Storage")->getMock();
 		$this->request->method("getParam")
-			->will($this->returnValueMap($paramsMap));
+			->willReturn(
+				[
+				"Id"=>[
+					"opaque_id"=>"some-share-id"
+					]
+				]
+				);
 		$this->shareManager->method("getShareById")
 			->willReturn($testShare);
 		$response = [
@@ -1666,17 +1670,14 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->groupManager, $this->cloudFederationProviderManager,
 			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
 		);
-		$testFolder 			= $this->getMockBuilder("OCP\Files\Folder")->getMock();
-		$testShare 				= $this->getMockBuilder("OCP\Share\IShare")->getMock();
-		$testCreatedShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
-		$testLockedNode   = $this->getMockBuilder("OCP\Files\Node")->getMock();
-		$storage 					= $this->getMockBuilder("\OC\Files\Storage\Storage")->getMock();
-		$paramsMap = [
-			["md", NULL,["opaque_id"=>"fileid-marie%2FtestFile.json"]],
-			["g", NULL,["grantee"=>["Id"=>["UserId"=>["idp"=>"localhost:8080","opaque_id"=>"einstein","type"=>1]]],"permissions"=>["permissions"=>["get_path"=>true]]]]
-		];
 		$this->request->method("getParam")
-			->will($this->returnValueMap($paramsMap));
+			->willReturn(
+				[
+				"Id"=>[
+					"opaque_id"=>"some-share-id"
+					]
+				]
+				);
 		$this->shareManager->method("getShareById")
 			->willReturn(false);
 		$result = $controller->GetShare($this->userId);
