@@ -2,7 +2,6 @@
 
 namespace OCA\ScienceMesh;
 
-use OCA\ScienceMesh\ServerConfig;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\Settings\ISettings;
 

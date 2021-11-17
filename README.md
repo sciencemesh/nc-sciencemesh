@@ -36,6 +36,22 @@ git remote add michielbdejong https://github.com/michielbdejong/reva
 git fetch michielbdejong
 ```
 
+# How to run the Linter
+
+* We just check the code base
+
+* Path: /server/apps/sciencemesh
+
+```
+make lint-check
+```
+
+* The second one for fixing our codebase
+
+```
+make lint-fix
+```
+
 ## Run Reva integration tests
 
 Path: /reva

@@ -53,6 +53,15 @@ all: build
 # Fetches the PHP and JS dependencies and compiles the JS. If no composer.json
 # is present, the composer step is skipped, if no package.json or js/package.json
 # is present, the npm step is skipped
+
+.PHONY: lint-check
+lint-check:
+	$(CURDIR)/vendor/bin/php-cs-fixer fix --dry-run --diff
+
+.PHONY: lint-fix
+lint-fix:
+	$(CURDIR)/vendor/bin/php-cs-fixer fix
+
 .PHONY: build
 build:
 ifneq (,$(wildcard $(CURDIR)/composer.json))
@@ -149,6 +158,10 @@ appstore:
 	--exclude="../$(app_name)/js/.*" \
 	--exclude-vcs \
 	
+.PHONY: coverage
+coverage:
+	XDEBUG_MODE=coverage ./vendor/bin/phpunit --coverage-text
+
 .PHONY: test
 test: composer
 	$(CURDIR)/vendor/bin/phplint ./ --exclude=vendor

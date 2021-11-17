@@ -182,39 +182,39 @@ class ScienceMeshShareProvider implements IShareProvider {
 		}
 
 		$share->setSharedWith($shareWith);
-/*
-		try {
-			$remoteShare = $this->getShareFromExternalShareTable($share);
-		} catch (ShareNotFound $e) {
-			$remoteShare = null;
-		}
+		/*
+				try {
+					$remoteShare = $this->getShareFromExternalShareTable($share);
+				} catch (ShareNotFound $e) {
+					$remoteShare = null;
+				}
 
-		if ($remoteShare) {
-			try {
-				$ownerCloudId = $this->cloudIdManager->getCloudId($remoteShare['owner'], $remoteShare['remote']);
-				$shareId = $this->addShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $ownerCloudId->getId(), $permissions, 'tmp_token_' . time(), $shareType);
-				$share->setId($shareId);
-				list($token, $remoteId) = $this->askOwnerToReShare($shareWith, $share, $shareId);
-				// remote share was create successfully if we get a valid token as return
-				$send = is_string($token) && $token !== '';
-			} catch (\Exception $e) {
-				// fall back to old re-share behavior if the remote server
-				// doesn't support flat re-shares (was introduced with Nextcloud 9.1)
-				$this->removeShareFromTable($share);
-				$shareId = $this->createFederatedShare($share);
-			}
-			if ($send) {
-				$this->updateSuccessfulReshare($shareId, $token);
-				$this->storeRemoteId($shareId, $remoteId);
-			} else {
-				$this->removeShareFromTable($share);
-				$message_t = $this->l->t('File is already shared with %s', [$shareWith]);
-				throw new \Exception($message_t);
-			}
-		} else {
-			$shareId = $this->createFederatedShare($share);
-		}
-*/
+				if ($remoteShare) {
+					try {
+						$ownerCloudId = $this->cloudIdManager->getCloudId($remoteShare['owner'], $remoteShare['remote']);
+						$shareId = $this->addShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $ownerCloudId->getId(), $permissions, 'tmp_token_' . time(), $shareType);
+						$share->setId($shareId);
+						list($token, $remoteId) = $this->askOwnerToReShare($shareWith, $share, $shareId);
+						// remote share was create successfully if we get a valid token as return
+						$send = is_string($token) && $token !== '';
+					} catch (\Exception $e) {
+						// fall back to old re-share behavior if the remote server
+						// doesn't support flat re-shares (was introduced with Nextcloud 9.1)
+						$this->removeShareFromTable($share);
+						$shareId = $this->createFederatedShare($share);
+					}
+					if ($send) {
+						$this->updateSuccessfulReshare($shareId, $token);
+						$this->storeRemoteId($shareId, $remoteId);
+					} else {
+						$this->removeShareFromTable($share);
+						$message_t = $this->l->t('File is already shared with %s', [$shareWith]);
+						throw new \Exception($message_t);
+					}
+				} else {
+					$shareId = $this->createFederatedShare($share);
+				}
+		*/
 		$shareId = $this->createScienceMeshShare($share);
 		
 		$data = $this->getRawShare($shareId);
@@ -300,7 +300,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$remoteId = $remoteShare['remote_id'];
 		$remote = $remoteShare['remote'];
 
-		list($token, $remoteId) = $this->notifications->requestReShare(
+		[$token, $remoteId] = $this->notifications->requestReShare(
 			$token,
 			$remoteId,
 			$shareId,
@@ -412,9 +412,9 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$remoteId = $this->getRemoteId($share);
 		// if the local user is the owner we send the permission change to the initiator
 		if ($this->userManager->userExists($share->getShareOwner())) {
-			list(, $remote) = $this->addressHandler->splitUserRemote($share->getSharedBy());
+			[, $remote] = $this->addressHandler->splitUserRemote($share->getSharedBy());
 		} else { // ... if not we send the permission change to the owner
-			list(, $remote) = $this->addressHandler->splitUserRemote($share->getShareOwner());
+			[, $remote] = $this->addressHandler->splitUserRemote($share->getShareOwner());
 		}
 		$this->notifications->sendPermissionChange($remote, $remoteId, $share->getToken(), $share->getPermissions());
 	}
@@ -519,19 +519,19 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 */
 	public function delete(IShare $share) {
 		// throw new Exception("Whoah");
-/*
-		list(, $remote) = $this->addressHandler->splitUserRemote($share->getSharedWith());
+		/*
+				list(, $remote) = $this->addressHandler->splitUserRemote($share->getSharedWith());
 
-		// if the local user is the owner we can send the unShare request directly...
-		if ($this->userManager->userExists($share->getShareOwner())) {
-			$this->notifications->sendRemoteUnShare($remote, $share->getId(), $share->getToken());
-			$this->revokeShare($share, true);
-		} else { // ... if not we need to correct ID for the unShare request
-			$remoteId = $this->getRemoteId($share);
-			$this->notifications->sendRemoteUnShare($remote, $remoteId, $share->getToken());
-			$this->revokeShare($share, false);
-		}
-*/
+				// if the local user is the owner we can send the unShare request directly...
+				if ($this->userManager->userExists($share->getShareOwner())) {
+					$this->notifications->sendRemoteUnShare($remote, $share->getId(), $share->getToken());
+					$this->revokeShare($share, true);
+				} else { // ... if not we need to correct ID for the unShare request
+					$remoteId = $this->getRemoteId($share);
+					$this->notifications->sendRemoteUnShare($remote, $remoteId, $share->getToken());
+					$this->revokeShare($share, false);
+				}
+		*/
 		// only remove the share when all messages are send to not lose information
 		// about the share to early
 		$this->removeShareFromTable($share);
@@ -555,9 +555,9 @@ class ScienceMeshShareProvider implements IShareProvider {
 		// also send a unShare request to the initiator, if this is a different user than the owner
 		if ($share->getShareOwner() !== $share->getSharedBy()) {
 			if ($isOwner) {
-				list(, $remote) = $this->addressHandler->splitUserRemote($share->getSharedBy());
+				[, $remote] = $this->addressHandler->splitUserRemote($share->getSharedBy());
 			} else {
-				list(, $remote) = $this->addressHandler->splitUserRemote($share->getShareOwner());
+				[, $remote] = $this->addressHandler->splitUserRemote($share->getShareOwner());
 			}
 			$remoteId = $this->getRemoteId($share);
 			$this->notifications->sendRevokeShare($remote, $remoteId, $share->getToken());
@@ -893,7 +893,30 @@ class ScienceMeshShareProvider implements IShareProvider {
 
 		return $share;
 	}
+	/**
+	 * Create a share object from a database row from external shares
+	 *
+	 * @param array $data
+	 * @return IShare
+	 * @throws InvalidShare
+	 * @throws ShareNotFound
+	 */
+	private function createExternalShareObject($data) {
+		$share = new Share($this->rootFolder, $this->userManager);
+		$share->setId((int)$data['id'])
+			->setShareType((int)$data['share_type'])
+			->setShareOwner($data['owner'])
+			->setSharedBy($data['owner'])
+			->setToken($data['share_token'])
+			->setSharedWith($data['user']);
+		$shareTime = new \DateTime();
+		$shareTime->setTimestamp((int)$data['stime']);
+		$share->setShareTime($shareTime);
+		$share->setNodeId((int)$data['file_source']);
+		$share->setProviderId($this->identifier());
 
+		return $share;
+	}
 	/**
 	 * Get the node with file $id for $user
 	 *
@@ -1098,6 +1121,25 @@ class ScienceMeshShareProvider implements IShareProvider {
 		while ($data = $cursor->fetch()) {
 			try {
 				$share = $this->createShareObject($data);
+			} catch (InvalidShare $e) {
+				continue;
+			} catch (ShareNotFound $e) {
+				continue;
+			}
+
+			yield $share;
+		}
+		$cursor->closeCursor();
+	}
+	
+	public function getExternalShares(): iterable {
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->select('*')
+			->from('share_external');
+		$cursor = $qb->execute();
+		while ($data = $cursor->fetch()) {
+			try {
+				$share = $this->createExternalShareObject($data);
 			} catch (InvalidShare $e) {
 				continue;
 			} catch (ShareNotFound $e) {
