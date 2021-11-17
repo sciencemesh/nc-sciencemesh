@@ -322,4 +322,10 @@ class NextcloudAdapterTest extends PHPUnit_Framework_TestCase {
 
 		$this->assertEquals([], $result);
 	}*/
+
+	public function testSetVisibility() {
+		$result = $this->directory->setVisibility('someDir', 'visible');
+
+		$this->assertEquals(false, $result);
+	}
 }
