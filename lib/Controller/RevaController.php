@@ -956,6 +956,7 @@ class RevaController extends Controller {
 		$providerDomain = $this->request->getParam("provider_domain");
 		// $ownerDisplayName display name of the user who shared the item
 		$ownerDisplayName = $this->request->getParam("owner_display_name");
+		$ownerName = $this->request->getParam("owner_opaque_id");
 		// $protocol (e,.g. ['name' => 'webdav', 'options' => ['username' => 'john', 'permissions' => 31]])
 		$protocol = $this->request->getParam("protocol");
 		$opaqueId = $md["opaque_id"];
@@ -965,7 +966,6 @@ class RevaController extends Controller {
 		$name = end($opaqueIdExploded);
 		// $sharedByDisplayName display name of the user who shared the resource
 		$sharedByDisplayName = '';
-		$ownerName = substr($opaqueIdExploded[0],strlen("fileid-"));
 		$description = '';
 		$grantee = $g["grantee"];
 		$granteeId = $grantee["Id"];
