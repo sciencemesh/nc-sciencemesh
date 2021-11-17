@@ -2,7 +2,7 @@
 
 namespace OCA\ScienceMesh\Share;
 
-class ScienceMeshId {
+class ScienceMeshUserId {
 	private $idp;
 	private $opaque_id;
 	private $type;
@@ -32,20 +32,20 @@ class ScienceMeshId {
 			$idp = $id['idp'];
 			$opaque_id = $id['opaque_id'];
 			$type = $id['type'];
-			return new ScienceMeshId($idp, $opaque_id, $type);
+			return new ScienceMeshUserId($idp, $opaque_id, $type);
 		} else {
 			throw new \DomainException(
 				__CLASS__ .
 				'::fromJson: unable to parse ' .
 				$json .
-				' into ScienceMeshId, necessary fields are $idp, $opaque_id and $type.'
+				' into ScienceMeshUserId, necessary fields are $idp, $opaque_id and $type.'
 			);
 		}
 	}
 
 	public static function fromArray($arr){
 		$json = json_encode($arr);
-		return ScienceMeshId::fromJson($json);
+		return ScienceMeshUserId::fromJson($json);
 	}
 
 	public function asJson(){
