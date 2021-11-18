@@ -5,6 +5,10 @@ namespace OCA\ScienceMesh\Tests\Unit;
 use PHPUnit_Framework_TestCase;
 
 class ScienceMeshShareTest extends PHPUnit_Framework_TestCase {
+	//remove warning, delete after real tests get into the branch
+	public function testNothing() {
+		$this->assertEquals(true, true);
+	}
 	/*
 		public function testFromJson() {  //TODO
 			return(false);
