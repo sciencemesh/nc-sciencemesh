@@ -111,30 +111,30 @@ class RevaController extends Controller {
 		parent::__construct($AppName, $request);
 		require_once(__DIR__.'/../../vendor/autoload.php');
 
-		$this->rootFolder 										= $rootFolder;
-		$this->request										 		= $request;
-		$this->session 												= $session;
-		$this->userManager 										= $userManager;
-		$this->urlGenerator 									= $urlGenerator;
+		$this->rootFolder = $rootFolder;
+		$this->request = $request;
+		$this->session = $session;
+		$this->userManager = $userManager;
+		$this->urlGenerator = $urlGenerator;
 
-		$this->config 												= new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
+		$this->config = new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
 
-		$this->trashManager										= $trashManager;
-		$this->shareManager										= $shareManager;
-		$this->groupManager 									= $groupManager;
+		$this->trashManager = $trashManager;
+		$this->shareManager = $shareManager;
+		$this->groupManager = $groupManager;
 		$this->cloudFederationProviderManager = $cloudFederationProviderManager;
-		$this->factory 												= $factory;
-		$this->cloudIdManager 								= $cloudIdManager;
-		$this->logger 												= $logger;
-		$this->appManager 										= $appManager;
-		$this->l 															= $l10n;
+		$this->factory = $factory;
+		$this->cloudIdManager = $cloudIdManager;
+		$this->logger = $logger;
+		$this->appManager = $appManager;
+		$this->l = $l10n;
 
-		$this->userFolder 										= $this->rootFolder->getUserFolder($userId);
+		$this->userFolder = $this->rootFolder->getUserFolder($userId);
 		// Create the Nextcloud Adapter
-		$adapter						 									= new NextcloudAdapter($this->userFolder);
-		$this->filesystem 										= new \League\Flysystem\Filesystem($adapter);
-		$this->baseUrl 												= $this->getStorageUrl($userId); // Where is that used?
-		$this->shareProvider 									= $shareProvider;
+		$adapter = new NextcloudAdapter($this->userFolder);
+		$this->filesystem = new \League\Flysystem\Filesystem($adapter);
+		$this->baseUrl = $this->getStorageUrl($userId); // Where is that used?
+		$this->shareProvider = $shareProvider;
 	}
 
 	/**
@@ -407,12 +407,12 @@ class RevaController extends Controller {
 	 */
 	public function CreateDir($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path"); // FIXME: sanitize the input
-		try{
+		try {
 			$this->filesystem->createDir($path);
 		} catch (NotPermittedException $e) {
 			return new JSONResponse(["error" => "Could not create directory."], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
-			return new JSONResponse("OK", Http::STATUS_OK);
+		return new JSONResponse("OK", Http::STATUS_OK);
 	}
 
 	/**
@@ -700,13 +700,13 @@ class RevaController extends Controller {
 	public function Upload($userId, $path) {
 		$contents = $this->request->put;
 		if ($this->filesystem->has("/sciencemesh" . $path)) {
-			if($this->filesystem->update("/sciencemesh" . $path, $contents)){
+			if ($this->filesystem->update("/sciencemesh" . $path, $contents)) {
 				return new JSONResponse("OK", Http::STATUS_OK);
 			}
 			return new JSONResponse(["error" => "Update failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
-		if($this->filesystem->write("/sciencemesh" . $path, $contents)){
+		if ($this->filesystem->write("/sciencemesh" . $path, $contents)) {
 			return new JSONResponse("CREATED", Http::STATUS_CREATED);
 		}
 		return new JSONResponse(["error" => "Create failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
@@ -963,40 +963,40 @@ class RevaController extends Controller {
 	 */
 
 	public function addReceivedShare($userId) {
-		$md 							= $this->request->getParam("md");
-		$g 								= $this->request->getParam("g");
+		$md = $this->request->getParam("md");
+		$g = $this->request->getParam("g");
 		// $providerId resource UID on the provider side
-		$providerId				= $this->request->getParam("provider_id");
+		$providerId = $this->request->getParam("provider_id");
 		// $resourceType ('file', 'calendar',...)
-		$resourceType 		= $this->request->getParam("resource_type");
-		$providerDomain 	= $this->request->getParam("provider_domain");
+		$resourceType = $this->request->getParam("resource_type");
+		$providerDomain = $this->request->getParam("provider_domain");
 		// $ownerDisplayName display name of the user who shared the item
 		$ownerDisplayName = $this->request->getParam("owner_display_name");
 		// $protocol (e,.g. ['name' => 'webdav', 'options' => ['username' => 'john', 'permissions' => 31]])
-		$protocol					= $this->request->getParam("protocol");
+		$protocol = $this->request->getParam("protocol");
 
-		$opaqueId 				= $md["opaque_id"];
-		$opaqueIdDecoded 	= urldecode($opaqueId);
+		$opaqueId = $md["opaque_id"];
+		$opaqueIdDecoded = urldecode($opaqueId);
 		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
 		//$name resource name (e.g. document.odt)
-		$name 						= end($opaqueIdExploded);
+		$name = end($opaqueIdExploded);
 		// $sharedByDisplayName display name of the user who shared the resource
-		$ownerName				= substr($opaqueIdExploded[0],strlen("fileid-"));
-		$grantee 					= $g["grantee"];
-		$granteeId 				= $grantee["Id"];
-		$granteeIdUserId 	= $granteeId["UserId"];
-		$shareType 				= $this->getShareType($grantee["type"]);
+		$ownerName = substr($opaqueIdExploded[0],strlen("fileid-"));
+		$grantee = $g["grantee"];
+		$granteeId = $grantee["Id"];
+		$granteeIdUserId = $granteeId["UserId"];
+		$shareType = $this->getShareType($grantee["type"]);
 
 		$sharedByDisplayName = '';
 		$description = '';
 		$shareWith = null;
 		$owner = null;
 
-		if($userId != null && $granteeIdUserId["idp"] != null){
+		if ($userId != null && $granteeIdUserId["idp"] != null) {
 			$shareWith = $userId."@".$granteeIdUserId["idp"];
 		}
 		// $owner provider specific UID of the user who owns the resource
-		if($ownerName != null || $providerDomain != null){
+		if ($ownerName != null || $providerDomain != null) {
 			$owner = $ownerName."@".$providerDomain;
 		}
 		// $sharedBy provider specific UID of the user who shared the resource
@@ -1331,14 +1331,14 @@ class RevaController extends Controller {
 	}
 
 	private function shareProviderResharingRights(string $userId, IShare $share, $node): bool {
-					if ($share->getShareOwner() === $userId) {
-									return true;
-					}
-					// we check that current user have parent resharing rights on the current file
-					if ($node !== null && ($node->getPermissions() & Constants::PERMISSION_SHARE) !== 0) {
-									return true;
-					}
-					return false;
+		if ($share->getShareOwner() === $userId) {
+			return true;
+		}
+		// we check that current user have parent resharing rights on the current file
+		if ($node !== null && ($node->getPermissions() & Constants::PERMISSION_SHARE) !== 0) {
+			return true;
+		}
+		return false;
 	}
 
 	//

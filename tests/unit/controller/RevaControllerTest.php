@@ -6,7 +6,6 @@ use PHPUnit_Framework_TestCase;
 
 use OCA\ScienceMesh\Controller\RevaController;
 use OCA\ScienceMesh\Service\UserService;
-use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
 
 /**
  * @covers \OCA\ScienceMesh\Controller\RevaController
@@ -46,31 +45,29 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	];
 
 	public function setUp() {
+		$this->rootFolder = $this->getMockBuilder("OCP\Files\IRootFolder")->getMock();
+		$this->request = $this->getMockBuilder("OCP\IRequest")->getMock();
+		$this->session = $this->getMockBuilder("OCP\ISession")->getMock();
+		$this->userManager = $this->getMockBuilder("OCP\IUserManager")->getMock();
+		$this->urlGenerator = $this->getMockBuilder("OCP\IURLGenerator")->getMock();
 
+		$this->config = $this->getMockBuilder("OCP\IConfig")->getMock();
+		$this->userService = new UserService($this->session);
 
-		$this->rootFolder											= $this->getMockBuilder("OCP\Files\IRootFolder")->getMock();
-		$this->request 												= $this->getMockBuilder("OCP\IRequest")->getMock();
-		$this->session												= $this->getMockBuilder("OCP\ISession")->getMock();
-		$this->userManager 										= $this->getMockBuilder("OCP\IUserManager")->getMock();
-		$this->urlGenerator 									= $this->getMockBuilder("OCP\IURLGenerator")->getMock();
-
-		$this->config 												= $this->getMockBuilder("OCP\IConfig")->getMock();
-		$this->userService 										= new UserService($this->session);
-
-		$this->trashManager 									= $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashManager")->getMock();
-		$this->shareManager 									= $this->getMockBuilder("OCP\Share\IManager")->getMock();
-		$this->groupManager									 	= $this->getMockBuilder("OCP\IGroupManager")->getMock();
+		$this->trashManager = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashManager")->getMock();
+		$this->shareManager = $this->getMockBuilder("OCP\Share\IManager")->getMock();
+		$this->groupManager = $this->getMockBuilder("OCP\IGroupManager")->getMock();
 		$this->cloudFederationProviderManager = $this->getMockBuilder("OCP\Federation\ICloudFederationProviderManager")->getMock();
-		$this->factory 												= $this->getMockBuilder("OCP\Federation\ICloudFederationFactory")->getMock();
-		$this->cloudIdManager									= $this->getMockBuilder("OCP\Federation\ICloudIdManager")->getMock();
-		$this->logger 												= $this->getMockBuilder("Psr\Log\LoggerInterface")->getMock();
+		$this->factory = $this->getMockBuilder("OCP\Federation\ICloudFederationFactory")->getMock();
+		$this->cloudIdManager = $this->getMockBuilder("OCP\Federation\ICloudIdManager")->getMock();
+		$this->logger = $this->getMockBuilder("Psr\Log\LoggerInterface")->getMock();
 		;
-		$this->appManager 										= $this->getMockBuilder("OCP\App\IAppManager")->getMock();
-		$this->l 															= $this->getMockBuilder("OCP\IL10N")->getMock();
-		$this->shareProvider									= $this->getMockBuilder("OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider")->disableOriginalConstructor()->getMock();
+		$this->appManager = $this->getMockBuilder("OCP\App\IAppManager")->getMock();
+		$this->l = $this->getMockBuilder("OCP\IL10N")->getMock();
+		$this->shareProvider = $this->getMockBuilder("OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider")->disableOriginalConstructor()->getMock();
 
-		$this->userFolder 										= $this->getMockBuilder("OCP\Files\Folder")->getMock();
-		$this->sciencemeshFolder 							= $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$this->userFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$this->sciencemeshFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		// For initializeStorage, see
 		// https://github.com/pondersource/nc-sciencemesh/blob/febe370de013cd8cd21d323c66d00cba54671dd7/lib/Controller/RevaController.php#L60-L64
 		$this->rootFolder->method("getUserFolder")->willReturn($this->userFolder);
@@ -79,7 +76,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 
 		$this->sciencemeshFolder->method("nodeExists")->willReturn(true);
 		$this->sciencemeshFolder->method("getPath")->willReturn("/sciencemesh");
-
 	}
 	protected static function getMethod($name) {
 		$RevaControllerReflect = new \ReflectionClass('OCA\ScienceMesh\Controller\RevaController');
@@ -1266,7 +1262,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$this->userFolder->method('get')
- 			->willThrowException(new \OCP\Files\InvalidPathException);
+			->willThrowException(new \OCP\Files\InvalidPathException);
 		$result = $controller->Upload($this->userId, "/test.json");
 		$this->assertEquals($result->getStatus(),500);
 	}
@@ -1425,7 +1421,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
 		$this->expectException(\OCP\AppFramework\OCS\OCSNotFoundException::class);
 		$paramsMap = [
-			["md", null,["opaque_id" => NULL]],
+			["md", null,["opaque_id" => null]],
 			["g", null,["grantee" => ["Id" => ["UserId" => ["idp" => "localhost:8080","opaque_id" => "einstein","type" => 1]]],"permissions" => ["permissions" => ["get_path" => true]]]]
 		];
 		$this->request->method("getParam")
