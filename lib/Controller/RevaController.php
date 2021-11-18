@@ -3,6 +3,7 @@
 namespace OCA\ScienceMesh\Controller;
 
 use OCA\ScienceMesh\NextcloudAdapter;
+use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
 
 use OCA\Files_Trashbin\Trash\ITrashManager;
 
@@ -104,34 +105,36 @@ class RevaController extends Controller {
 		ICloudIdManager $cloudIdManager,
 		LoggerInterface $logger,
 		IAppManager $appManager,
-		IL10N $l10n
+		IL10N $l10n,
+		ScienceMeshShareProvider $shareProvider
 	) {
 		parent::__construct($AppName, $request);
 		require_once(__DIR__.'/../../vendor/autoload.php');
 
-		$this->rootFolder = $rootFolder;
-		$this->request = $request;
-		$this->session = $session;
-		$this->userManager = $userManager;
-		$this->urlGenerator = $urlGenerator;
+		$this->rootFolder 										= $rootFolder;
+		$this->request										 		= $request;
+		$this->session 												= $session;
+		$this->userManager 										= $userManager;
+		$this->urlGenerator 									= $urlGenerator;
 
-		$this->config = new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
+		$this->config 												= new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
 
-		$this->trashManager = $trashManager;
-		$this->shareManager = $shareManager;
-		$this->groupManager = $groupManager;
+		$this->trashManager										= $trashManager;
+		$this->shareManager										= $shareManager;
+		$this->groupManager 									= $groupManager;
 		$this->cloudFederationProviderManager = $cloudFederationProviderManager;
-		$this->factory = $factory;
-		$this->cloudIdManager = $cloudIdManager;
-		$this->logger = $logger;
-		$this->appManager = $appManager;
-		$this->l = $l10n;
+		$this->factory 												= $factory;
+		$this->cloudIdManager 								= $cloudIdManager;
+		$this->logger 												= $logger;
+		$this->appManager 										= $appManager;
+		$this->l 															= $l10n;
 
-		$this->userFolder = $this->rootFolder->getUserFolder($userId);
+		$this->userFolder 										= $this->rootFolder->getUserFolder($userId);
 		// Create the Nextcloud Adapter
-		$adapter = new NextcloudAdapter($this->userFolder);
-		$this->filesystem = new \League\Flysystem\Filesystem($adapter);
-		$this->baseUrl = $this->getStorageUrl($userId); // Where is that used?
+		$adapter						 									= new NextcloudAdapter($this->userFolder);
+		$this->filesystem 										= new \League\Flysystem\Filesystem($adapter);
+		$this->baseUrl 												= $this->getStorageUrl($userId); // Where is that used?
+		$this->shareProvider 									= $shareProvider;
 	}
 
 	/**
@@ -352,10 +355,7 @@ class RevaController extends Controller {
 		} elseif ($granteeType == 2) {
 			return 'group';
 		}
-		return new JSONResponse(
-			['message' => 'Internal error at ' . $this->urlGenerator->getBaseUrl()],
-			Http::STATUS_BAD_REQUEST
-		);
+		return null;
 	}
 	/**
 	 * @param int
@@ -695,19 +695,18 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+	 * @throws \OCP\Files\InvalidPathException
 	 */
 	public function Upload($userId, $path) {
 		$contents = $this->request->put;
 		if ($this->filesystem->has("/sciencemesh" . $path)) {
-			$success = $this->filesystem->update("/sciencemesh" . $path, $contents);
-			if ($success) {
+			if($this->filesystem->update("/sciencemesh" . $path, $contents)){
 				return new JSONResponse("OK", Http::STATUS_OK);
-			} else {
-				return new JSONResponse(["error" => "Update failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 			}
+			return new JSONResponse(["error" => "Update failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
-		$success = $this->filesystem->write("/sciencemesh" . $path, $contents);
-		if ($success) {
+
+		if($this->filesystem->write("/sciencemesh" . $path, $contents)){
 			return new JSONResponse("CREATED", Http::STATUS_CREATED);
 		}
 		return new JSONResponse(["error" => "Create failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
@@ -964,35 +963,42 @@ class RevaController extends Controller {
 	 */
 
 	public function addReceivedShare($userId) {
-		$md = $this->request->getParam("md");
-		$g = $this->request->getParam("g");
+		$md 							= $this->request->getParam("md");
+		$g 								= $this->request->getParam("g");
 		// $providerId resource UID on the provider side
-		$providerId = $this->request->getParam("provider_id");
+		$providerId				= $this->request->getParam("provider_id");
 		// $resourceType ('file', 'calendar',...)
-		$resourceType = $this->request->getParam("resource_type");
-		$providerDomain = $this->request->getParam("provider_domain");
+		$resourceType 		= $this->request->getParam("resource_type");
+		$providerDomain 	= $this->request->getParam("provider_domain");
 		// $ownerDisplayName display name of the user who shared the item
 		$ownerDisplayName = $this->request->getParam("owner_display_name");
 		// $protocol (e,.g. ['name' => 'webdav', 'options' => ['username' => 'john', 'permissions' => 31]])
-		$protocol = $this->request->getParam("protocol");
-		$opaqueId = $md["opaque_id"];
-		$opaqueIdDecoded = urldecode($opaqueId);
+		$protocol					= $this->request->getParam("protocol");
+
+		$opaqueId 				= $md["opaque_id"];
+		$opaqueIdDecoded 	= urldecode($opaqueId);
 		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
 		//$name resource name (e.g. document.odt)
-		$name = end($opaqueIdExploded);
+		$name 						= end($opaqueIdExploded);
 		// $sharedByDisplayName display name of the user who shared the resource
-		$sharedByDisplayName = '';
-		$ownerName = substr($opaqueIdExploded[0],strlen("fileid-"));
-		$description = '';
-		$grantee = $g["grantee"];
-		$granteeId = $grantee["Id"];
-		$granteeIdUserId = $granteeId["UserId"];
-		$shareWith = $userId."@".$granteeIdUserId["idp"];
-		// $owner provider specific UID of the user who owns the resource
-		$owner = $ownerName."@".$providerDomain;
+		$ownerName				= substr($opaqueIdExploded[0],strlen("fileid-"));
+		$grantee 					= $g["grantee"];
+		$granteeId 				= $grantee["Id"];
+		$granteeIdUserId 	= $granteeId["UserId"];
+		$shareType 				= $this->getShareType($grantee["type"]);
 
-		//$shareType ('group' or 'user' share)
-		$shareType = $this->getShareType($grantee["type"]);
+		$sharedByDisplayName = '';
+		$description = '';
+		$shareWith = null;
+		$owner = null;
+
+		if($userId != null && $granteeIdUserId["idp"] != null){
+			$shareWith = $userId."@".$granteeIdUserId["idp"];
+		}
+		// $owner provider specific UID of the user who owns the resource
+		if($ownerName != null || $providerDomain != null){
+			$owner = $ownerName."@".$providerDomain;
+		}
 		// $sharedBy provider specific UID of the user who shared the resource
 		$sharedBy = $owner;
 
@@ -1007,10 +1013,9 @@ class RevaController extends Controller {
 		) {
 			return new JSONResponse(
 				['message' => 'Missing arguments'],
-				Http::STATUS_BAD_REQUEST
+				Http::STATUS_OK
 			);
 		}
-
 		$cloudId = $this->cloudIdManager->resolveCloudId($shareWith);
 		$shareWith = $cloudId->getUser();
 
@@ -1041,7 +1046,6 @@ class RevaController extends Controller {
 			$sharedBy = $owner;
 			$sharedByDisplayName = $ownerDisplayName;
 		}
-
 		try {
 			$provider = $this->cloudFederationProviderManager->getCloudFederationProvider($resourceType);
 			$share = $this->factory->getCloudFederationShare($shareWith, $name, $description, $providerId, $owner, $ownerDisplayName, $sharedBy, $sharedByDisplayName, '', $shareType, $resourceType);
@@ -1060,10 +1064,9 @@ class RevaController extends Controller {
 		} catch (\Exception $e) {
 			return new JSONResponse(
 				['message' => 'Internal error at ' . $this->urlGenerator->getBaseUrl()],
-				Http::STATUS_BAD_REQUEST
+				Http::STATUS_INTERNAL_SERVER_ERROR
 			);
 		}
-
 		$user = $this->userManager->get($shareWith);
 		$recipientDisplayName = '';
 		if ($user) {
@@ -1184,32 +1187,26 @@ class RevaController extends Controller {
 			foreach ($shares as $share) {
 				array_push($responses,$this->shareInfoToResourceInfo($share));
 			}
-			return new JSONResponse($responses, Http::STATUS_OK);
-		} elseif ($shares == []) {
-			return new JSONResponse($shares, Http::STATUS_OK);
 		}
+		return new JSONResponse($responses, Http::STATUS_OK);
 	}
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
-	 *
 	 * ListReceivedShares returns the list of shares the user has access.
 	 */
 	public function ListReceivedShares($userId) {
 		$responses = [];
-		$shares = $this->shareManager->getSharedWith($userId,IShare::TYPE_REMOTE);
+		$shares = $this->shareProvider->getExternalShares();
 		if ($shares) {
 			foreach ($shares as $share) {
 				$response = $this->shareInfoToResourceInfo($share);
 				$response["state"] = 2;
 				array_push($responses, $response);
 			}
-			return new JSONResponse($responses, Http::STATUS_OK);
-		} elseif ($shares == []) {
-			return new JSONResponse($shares, Http::STATUS_OK);
 		}
-		//return new JSONResponse(["error" => "ListReceivedShares failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
+		return new JSONResponse($responses, Http::STATUS_OK);
 	}
 	/**
 	 * @PublicPage
