@@ -338,19 +338,28 @@ class NextcloudAdapterTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(false, $result);
 	}
 
-	/*public function testListContets() {
-		//$this->getMetadataSetup();
+	public function testWriteNotFound() {
 		$this->folder
 			->expects($this->once())
 			->method('get')
-			->with($this->equalTo('some/path/to/file'))
-			->willReturn($this->node);
+			->with($this->equalTo('.'))
+			->will($this->throwException(new \OCP\Files\NotFoundException()));
+	
+		$result = $this->directory->write('.', 'newPath', $this->config);
 
+		$this->assertEquals(false, $result);
+	}
 
-		$result = $this->directory->listContents('some/path/to/file', false);
+	public function testWriteStreamFalse() {
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('path1'));
 
-		$this->assertEquals([], $result);
-	}*/
+		$result = $this->directory->writeStream('path1', 'test', $this->config);
+
+		$this->assertEquals(false, $result);
+	}
 
 	public function testSetVisibility() {
 		$result = $this->directory->setVisibility('someDir', 'visible');
