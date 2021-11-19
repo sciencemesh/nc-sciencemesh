@@ -107,6 +107,18 @@ class NextcloudAdapterTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(false, $result);
 	}
 
+	public function testDeleteNotFound() {
+		$this->folder
+			->expects($this->once())
+			->method('get')
+			->with($this->equalTo('someDir'))
+			->will($this->throwException(new \OCP\Files\NotFoundException()));
+	
+		$result = $this->directory->delete('someDir');
+
+		$this->assertEquals(false, $result);
+	}
+
 	public function testDeleteDirNotFound() {
 		$this->folder
 			->expects($this->once())
