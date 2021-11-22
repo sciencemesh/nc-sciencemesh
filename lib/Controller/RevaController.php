@@ -325,33 +325,24 @@ class RevaController extends Controller {
 	 * @return int $shareId
 	 * @throws OCSNotFoundException
 	 */
-	private function getShareIdByPath($path){
-		if($path) {
-			try {
-				$node = $this->userFolder->get('sciencemesh/'.$path);
-				$this->lock($node);
-			} catch (NotFoundException $e) {
-				throw new OCSNotFoundException(
-					$this->l->t('Wrong path, file/folder doesn\'t exist')
-				);
-			} catch (LockedException $e) {
-				throw new OCSNotFoundException($this->l->t('Could not lock node'));
-			}
-			$shareId = $node->getId();
-			error_log('id: '.$shareId);
-			return $shareId;
-		}
-		return false;
-	}
-
-	private function getGranteeType($granteeType) {
-		if ($granteeType == 1) {
-			return 'user';
-		} elseif ($granteeType == 2) {
-			return 'group';
-		}
-		return null;
-	}
+	// private function getShareIdByPath($path){
+	// 	if($path) {
+	// 		try {
+	// 			$node = $this->userFolder->get('sciencemesh/'.$path);
+	// 			$this->lock($node);
+	// 		} catch (NotFoundException $e) {
+	// 			throw new OCSNotFoundException(
+	// 				$this->l->t('Wrong path, file/folder doesn\'t exist')
+	// 			);
+	// 		} catch (LockedException $e) {
+	// 			throw new OCSNotFoundException($this->l->t('Could not lock node'));
+	// 		}
+	// 		$shareId = $node->getId();
+	// 		error_log('id: '.$shareId);
+	// 		return $shareId;
+	// 	}
+	// 	return false;
+	// }
 	/**
 	 * @param int
 	 *
@@ -801,8 +792,10 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function addReceivedShare($userId) {
-		$md = $this->request->getParam("md");
-		$g = $this->request->getParam("g");
+		$md 						= $this->request->getParam("md");
+		$g 							= $this->request->getParam("g");
+		$providerDomain = $this->request->getParam("provider_domain");
+		$providerId		 	= $this->request->getParam("provider_id");
 		// $providerId resource UID on the provider side
 		$providerId = $this->request->getParam("provider_id");
 		// $resourceType ('file', 'calendar',...)
@@ -812,6 +805,8 @@ class RevaController extends Controller {
 		$ownerDisplayName = $this->request->getParam("owner_display_name");
 		// $protocol (e,.g. ['name' => 'webdav', 'options' => ['username' => 'john', 'permissions' => 31]])
 		$protocol = $this->request->getParam("protocol");
+		$protocolName = $protocol["options"];
+		$sharedSecret = $protocolName["sharedSecret"];
 
 		$opaqueId = $md["opaque_id"];
 		$opaqueIdDecoded = urldecode($opaqueId);
@@ -824,11 +819,8 @@ class RevaController extends Controller {
 		$granteeId = $grantee["Id"];
 		$granteeIdUserId = $granteeId["UserId"];
 
-		$sharedByDisplayName = '';
-		$description = '';
 		$shareWith = null;
 		$owner = null;
-
 		if ($userId != null && $granteeIdUserId["idp"] != null) {
 			$shareWith = $userId."@".$granteeIdUserId["idp"];
 		}
@@ -838,13 +830,13 @@ class RevaController extends Controller {
 		}
 		// $sharedBy provider specific UID of the user who shared the resource
 		$sharedBy = $owner;
-
 		// check if all required parameters are set
 		if ($shareWith === null ||
 			$name === null ||
 			$providerId === null ||
 			$owner === null ||
 			$resourceType === null ||
+			$protocol === null ||
 			!isset($protocol['name'])
 		) {
 			return new JSONResponse(
@@ -852,54 +844,8 @@ class RevaController extends Controller {
 				Http::STATUS_BAD_REQUEST
 			);
 		}
-		$cloudId = $this->cloudIdManager->resolveCloudId($shareWith);
-		$shareWith = $cloudId->getUser();
-		// if no explicit display name is given, we use the uid as display name
-		$ownerDisplayName = $ownerDisplayName === null ? $owner : $ownerDisplayName;
-		$sharedByDisplayName = $sharedByDisplayName === null ? $sharedBy : $sharedByDisplayName;
-
-		// sharedBy* parameter is optional, if nothing is set we assume that it is the same user as the owner
-		if ($sharedBy === null) {
-			$sharedBy = $owner;
-			$sharedByDisplayName = $ownerDisplayName;
-		}
-		try {
-			$provider = $this->cloudFederationProviderManager->getCloudFederationProvider($resourceType);
-			$share = $this->factory->getCloudFederationShare($shareWith, $name, $description, $providerId, $owner, $ownerDisplayName, $sharedBy, $sharedByDisplayName, '', $shareType, $resourceType);
-			$share->setProtocol($protocol);
-			$provider->shareReceived($share);
-			$share->setShareType(IShare::TYPE_SCIENCEMESH);
-		} catch (ProviderDoesNotExistsException $e) {
-			return new JSONResponse(
-				['message' => $e->getMessage()],
-				Http::STATUS_NOT_IMPLEMENTED
-			);
-		} catch (ProviderCouldNotAddShareException $e) {
-			return new JSONResponse(
-				['message' => $e->getMessage()],
-				Http::STATUS_BAD_REQUEST
-			);
-		} catch (\Exception $e) {
-			return new JSONResponse(
-				['message' => 'Internal error at ' . $this->urlGenerator->getBaseUrl()],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}
-		$user = $this->userManager->get($shareWith);
-		$recipientDisplayName = '';
-		if ($user) {
-			$recipientDisplayName = $user->getDisplayName();
-		}
-		try {
-			$share = $this->shareManager->createShare($share);
-		} catch (GenericShareException $e) {
-			\OC::$server->getLogger()->logException($e);
-			$code = $e->getCode() === 0 ? 403 : $e->getCode();
-			throw new OCSException($e->getHint(), $code);
-		} catch (\Exception $e) {
-			\OC::$server->getLogger()->logException($e);
-			throw new OCSForbiddenException($e->getMessage(), $e);
-		}
+		// share_token -> opaque_id ?
+		$this->shareProvider->addReceivedShareToDB(IShare::TYPE_SCIENCEMESH,$providerDomain,$providerId, $opaqueId,$sharedSecret,$name,$sharedBy,$userId,);
 		$response = '{"id":{},"resource_id":{},"permissions":{"permissions":{"add_grant":true,"create_container":true,"delete":true,"get_path":true,"get_quota":true,"initiate_file_download":true,"initiate_file_upload":true,"list_grants":true,"list_container":true,"list_file_versions":true,"list_recycle":true,"move":true,"remove_grant":true,"purge_recycle":true,"restore_file_version":true,"restore_recycle_item":true,"stat":true,"update_grant":true,"deny_grant":true}},"grantee":{"Id":{"UserId":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1}}},"owner":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"creator":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"ctime":{"seconds":1234567890},"mtime":{"seconds":1234567890}}';
 		return new JSONResponse(json_decode($response), 201);
 	}
@@ -928,7 +874,7 @@ class RevaController extends Controller {
 	 *
 	 * Unshare deletes the share pointed by ref.
 	 */
-	public function Unshare($userId) {
+	 public function Unshare($userId) {
 		error_log("call Unshare");
 		$spec = $this->request->getParam("Spec");
 		$id = $spec["Id"];
@@ -1077,109 +1023,90 @@ class RevaController extends Controller {
 		}
 		return new JSONResponse(["error" => "UpdateReceivedShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
+	// protected function canDeleteShare(\OCP\Share\IShare $share,String $userId): bool {
+	// 				// A file with permissions 0 can't be accessed by us. So Don't show it
+	// 				if ($share->getPermissions() === 0) {
+	// 								return false;
+	// 				}
+	// 				// if the user is the recipient, i can unshare
+	// 				// the share with self
+	// 				if ($share->getShareType() === IShare::TYPE_USER &&
+	// 								$share->getSharedWith() === $userId
+	// 				) {
+	// 								return true;
+	// 				}
+	// 				// The owner of the file and the creator of the share
+	// 				// can always delete the share
+	// 				if ($share->getShareOwner() === $userId ||
+	// 								$share->getSharedBy() === $userId
+	// 				) {
+	// 								return true;
+	// 				}
+	// 				return false;
+	// }
 
-	/**
-	 * map login name to internal LDAP UID if a LDAP backend is in use
-	 *
-	 * @param string $uid
-	 * @return string mixed
-	 */
-	private function mapUid($uid) {
-		// FIXME this should be a method in the user management instead
-		$this->logger->debug('shareWith before, ' . $uid, ['app' => $this->appName]);
-		\OCP\Util::emitHook(
-			'\OCA\Files_Sharing\API\Server2Server',
-			'preLoginNameUsedAsUserName',
-			['uid' => &$uid]
-		);
-		$this->logger->debug('shareWith after, ' . $uid, ['app' => $this->appName]);
-
-		return $uid;
-	}
-	protected function canDeleteShare(\OCP\Share\IShare $share,String $userId): bool {
-					// A file with permissions 0 can't be accessed by us. So Don't show it
-					if ($share->getPermissions() === 0) {
-									return false;
-					}
-					// if the user is the recipient, i can unshare
-					// the share with self
-					if ($share->getShareType() === IShare::TYPE_USER &&
-									$share->getSharedWith() === $userId
-					) {
-									return true;
-					}
-					// The owner of the file and the creator of the share
-					// can always delete the share
-					if ($share->getShareOwner() === $userId ||
-									$share->getSharedBy() === $userId
-					) {
-									return true;
-					}
-					return false;
-	}
-
-
-	/**
-	 * Since we have multiple providers but the OCS Share API v1 does
-	 * not support this we need to check all backends.
-	 *
-	 * @param string $id
-	 * @return \OCP\Share\IShare
-	 * @throws ShareNotFound
-	 */
-	private function getShareById(string $id,string $userId): IShare {
-		$share = null;
-
-		// First check if it is an internal share.
-		try {
-			$share = $this->shareManager->getShareById('ocinternal:' . $id, $userId);
-			return $share;
-		} catch (ShareNotFound $e) {
-			// Do nothing, just try the other share type
-		}
-
-
-		try {
-			if ($this->shareManager->shareProviderExists(IShare::TYPE_CIRCLE)) {
-				$share = $this->shareManager->getShareById('ocCircleShare:' . $id, $userId);
-				return $share;
-			}
-		} catch (ShareNotFound $e) {
-			// Do nothing, just try the other share type
-		}
-
-		try {
-			if ($this->shareManager->shareProviderExists(IShare::TYPE_EMAIL)) {
-				$share = $this->shareManager->getShareById('ocMailShare:' . $id, $userId);
-				return $share;
-			}
-		} catch (ShareNotFound $e) {
-			// Do nothing, just try the other share type
-		}
-
-		try {
-			$share = $this->shareManager->getShareById('ocRoomShare:' . $id, $userId);
-			return $share;
-		} catch (ShareNotFound $e) {
-			// Do nothing, just try the other share type
-		}
-
-		try {
-			if ($this->shareManager->shareProviderExists(IShare::TYPE_DECK)) {
-				$share = $this->shareManager->getShareById('deck:' . $id, $userId);
-				return $share;
-			}
-		} catch (ShareNotFound $e) {
-			// Do nothing, just try the other share type
-		}
-
-		if (!$this->shareManager->outgoingServer2ServerSharesAllowed()) {
-			throw new ShareNotFound();
-		}
-		$share = $this->shareManager->getShareById('ocFederatedSharing:' . $id, $userId);
-
-		return $share;
-	}
+	//
+	// /**
+	//  * Since we have multiple providers but the OCS Share API v1 does
+	//  * not support this we need to check all backends.
+	//  *
+	//  * @param string $id
+	//  * @return \OCP\Share\IShare
+	//  * @throws ShareNotFound
+	//  */
+	// private function getShareById(string $id,string $userId): IShare {
+	// 	$share = null;
+	//
+	// 	// First check if it is an internal share.
+	// 	try {
+	// 		$share = $this->shareManager->getShareById('ocinternal:' . $id, $userId);
+	// 		return $share;
+	// 	} catch (ShareNotFound $e) {
+	// 		// Do nothing, just try the other share type
+	// 	}
+	//
+	//
+	// 	try {
+	// 		if ($this->shareManager->shareProviderExists(IShare::TYPE_CIRCLE)) {
+	// 			$share = $this->shareManager->getShareById('ocCircleShare:' . $id, $userId);
+	// 			return $share;
+	// 		}
+	// 	} catch (ShareNotFound $e) {
+	// 		// Do nothing, just try the other share type
+	// 	}
+	//
+	// 	try {
+	// 		if ($this->shareManager->shareProviderExists(IShare::TYPE_EMAIL)) {
+	// 			$share = $this->shareManager->getShareById('ocMailShare:' . $id, $userId);
+	// 			return $share;
+	// 		}
+	// 	} catch (ShareNotFound $e) {
+	// 		// Do nothing, just try the other share type
+	// 	}
+	//
+	// 	try {
+	// 		$share = $this->shareManager->getShareById('ocRoomShare:' . $id, $userId);
+	// 		return $share;
+	// 	} catch (ShareNotFound $e) {
+	// 		// Do nothing, just try the other share type
+	// 	}
+	//
+	// 	try {
+	// 		if ($this->shareManager->shareProviderExists(IShare::TYPE_DECK)) {
+	// 			$share = $this->shareManager->getShareById('deck:' . $id, $userId);
+	// 			return $share;
+	// 		}
+	// 	} catch (ShareNotFound $e) {
+	// 		// Do nothing, just try the other share type
+	// 	}
+	//
+	// 	if (!$this->shareManager->outgoingServer2ServerSharesAllowed()) {
+	// 		throw new ShareNotFound();
+	// 	}
+	// 	$share = $this->shareManager->getShareById('ocFederatedSharing:' . $id, $userId);
+	//
+	// 	return $share;
+	// }
 	/**
 	 * Does the user have read permission on the share
 	 *

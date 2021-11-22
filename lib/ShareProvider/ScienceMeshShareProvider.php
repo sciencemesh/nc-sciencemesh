@@ -349,19 +349,30 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @param int $shareType
 	 * @return int
 	 */
-	private function addShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $uidOwner, $permissions, $token, $shareType) {
+	private function addReceivedShareToDB($share_type, $remote, $remote_id, $share_token, $password, $name, $owner, $usr, $mountpoint, $mountpoint_hash, $accepted) {
 		$qb = $this->dbConnection->getQueryBuilder();
-		$qb->insert('share')
+		$qb->insert('share_external')
 			->setValue('share_type', $qb->createNamedParameter($shareType))
-			->setValue('item_type', $qb->createNamedParameter($itemType))
-			->setValue('item_source', $qb->createNamedParameter($itemSource))
-			->setValue('file_source', $qb->createNamedParameter($itemSource))
-			->setValue('share_with', $qb->createNamedParameter($shareWith))
-			->setValue('uid_owner', $qb->createNamedParameter($uidOwner))
-			->setValue('uid_initiator', $qb->createNamedParameter($sharedBy))
-			->setValue('permissions', $qb->createNamedParameter($permissions))
-			->setValue('token', $qb->createNamedParameter($token))
-			->setValue('stime', $qb->createNamedParameter(time()));
+			->setValue('remote', $qb->createNamedParameter($remote))
+			->setValue('remote_id', $qb->createNamedParameter($remote_id))
+			->setValue('share_token', $qb->createNamedParameter($share_token))
+			->setValue('password', $qb->createNamedParameter($password))
+			->setValue('name', $qb->createNamedParameter($name))
+			->setValue('owner', $qb->createNamedParameter($owner))
+			->setValue('user', $qb->createNamedParameter($user))
+			->setValue('mountpoint', $qb->createNamedParameter($mountpoint))
+			->setValue('$mountpoint_hash', $qb->createNamedParameter($mountpoint_hash))
+			->setValue('accepted', $qb->createNamedParameter($accepted))
+
+			// ->setValue('item_type', $qb->createNamedParameter($itemType))
+			// ->setValue('item_source', $qb->createNamedParameter($itemSource))
+			// ->setValue('file_source', $qb->createNamedParameter($itemSource))
+			// ->setValue('share_with', $qb->createNamedParameter($shareWith))
+			// ->setValue('uid_owner', $qb->createNamedParameter($uidOwner))
+			// ->setValue('uid_initiator', $qb->createNamedParameter($sharedBy))
+			// ->setValue('permissions', $qb->createNamedParameter($permissions))
+			// ->setValue('token', $qb->createNamedParameter($token))
+			// ->setValue('stime', $qb->createNamedParameter(time()));
 
 		/*
 		 * Added to fix https://github.com/owncloud/core/issues/22215
@@ -374,6 +385,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 
 		return (int)$id;
 	}
+
 
 	/**
 	 * Update a share
