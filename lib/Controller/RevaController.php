@@ -344,7 +344,7 @@ class RevaController extends Controller {
 		return false;
 	}
 
-	private function getShareType($granteeType) {
+	private function getGranteeType($granteeType) {
 		if ($granteeType == 1) {
 			return 'user';
 		} elseif ($granteeType == 2) {
@@ -978,7 +978,7 @@ class RevaController extends Controller {
 		$grantee = $g["grantee"];
 		$granteeId = $grantee["Id"];
 		$granteeIdUserId = $granteeId["UserId"];
-		$shareType = $this->getShareType($grantee["type"]);
+		$granteeType = $this->getGranteeType($grantee["type"]);
 
 		$sharedByDisplayName = '';
 		$description = '';
@@ -1109,7 +1109,7 @@ class RevaController extends Controller {
 		error_log("getSharesBy(): ".json_encode($testSharesBy)." len: ".count($testSharesBy));
 		$shareId = $this->getShareIdByPath($path);
 		try {
-			$share = $this->getShareById(26.$userId);
+			$share = $this->getShareById(26,$userId);
 		} catch (ShareNotFound $e) {
 			error_log("getShareById fails");
 			throw new OCSNotFoundException($this->l->t('Wrong share ID, share doesn\'t exist'));
@@ -1175,7 +1175,7 @@ class RevaController extends Controller {
 		$opaqueIdCreator = ["opaque_id"];
 		$typeCreator = ["type"];
 		$responses = [];
-		$shares = $this->shareManager->getSharesBy($userId, 6);
+		$shares = $this->shareProvider->getAllShares();
 		if ($shares) {
 			foreach ($shares as $share) {
 				array_push($responses,$this->shareInfoToResourceInfo($share));
