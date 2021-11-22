@@ -87,7 +87,7 @@ ifeq (, $(composer))
 else
 	composer install --prefer-dist
 endif
-
+	-git apply --directory=vendor/phpunit/php-code-coverage phpunit.patch
 # Installs npm dependencies
 .PHONY: npm
 npm:
@@ -108,7 +108,6 @@ clean:
 distclean: clean
 	rm -rf vendor
 	rm -rf node_modules
-	rm -rf js/vendor
 	rm -rf js/node_modules
 
 # Builds the source and appstore package
