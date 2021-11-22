@@ -849,7 +849,7 @@ class RevaController extends Controller {
 		) {
 			return new JSONResponse(
 				['message' => 'Missing arguments'],
-				Http::STATUS_OK
+				Http::STATUS_BAD_REQUEST
 			);
 		}
 		$cloudId = $this->cloudIdManager->resolveCloudId($shareWith);
