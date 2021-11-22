@@ -727,8 +727,6 @@ class RevaController extends Controller {
 		$sendPasswordByTalk = null;
 		$expireDate = '';
 		$label = '';
-		$shareType = IShare::TYPE_LINK;
-
 		$md = $this->request->getParam("md");
 		$g = $this->request->getParam("g");
 		$opaqueId = $md["opaque_id"];
@@ -746,13 +744,11 @@ class RevaController extends Controller {
 		$resourcePermissions = $sharePermissions["permissions"];
 		$permissions = $this->getPermissionsCode($resourcePermissions);
 		$share = $this->shareManager->newShare();
-
 		if ($permissions === null) {
 			$permissions = $this->config->getAppValue('core', 'shareapi_default_permissions', Constants::PERMISSION_ALL);
 		}
 		// Verify path
 		if ($name === "") {
-			error_log('name: '.$name);
 			throw new OCSNotFoundException($this->l->t('Please specify a file or folder path'));
 		}
 		try {
@@ -779,158 +775,7 @@ class RevaController extends Controller {
 		if ($path->getStorage()->instanceOfStorage(Storage::class)) {
 			$permissions &= ~($permissions & ~$path->getPermissions());
 		}
-
-		if ($shareType === IShare::TYPE_USER) {
-			// Valid user is required to share
-			if ($shareWith === null || !$this->userManager->userExists($shareWith)) {
-				throw new OCSNotFoundException($this->l->t('Please specify a valid user'));
-			}
-			$share->setSharedWith($shareWith);
-			$share->setPermissions($permissions);
-		} elseif ($shareType === IShare::TYPE_GROUP) {
-			if (!$this->shareManager->allowGroupSharing()) {
-				throw new OCSNotFoundException($this->l->t('Group sharing is disabled by the administrator'));
-			}
-
-			// Valid group is required to share
-			if ($shareWith === null || !$this->groupManager->groupExists($shareWith)) {
-				throw new OCSNotFoundException($this->l->t('Please specify a valid group'));
-			}
-			$share->setSharedWith($shareWith);
-			$share->setPermissions($permissions);
-		} elseif ($shareType === IShare::TYPE_LINK
-			|| $shareType === IShare::TYPE_EMAIL) {
-
-			// Can we even share links?
-			if (!$this->shareManager->shareApiAllowLinks()) {
-				throw new OCSNotFoundException($this->l->t('Public link sharing is disabled by the administrator'));
-			}
-
-			if ($publicUpload === 'true') {
-				// Check if public upload is allowed
-				if (!$this->shareManager->shareApiLinkAllowPublicUpload()) {
-					throw new OCSForbiddenException($this->l->t('Public upload disabled by the administrator'));
-				}
-
-				// Public upload can only be set for folders
-				if ($path instanceof \OCP\Files\File) {
-					throw new OCSNotFoundException($this->l->t('Public upload is only possible for publicly shared folders'));
-				}
-
-				$permissions = Constants::PERMISSION_READ |
-					Constants::PERMISSION_CREATE |
-					Constants::PERMISSION_UPDATE |
-					Constants::PERMISSION_DELETE;
-			} else {
-				$permissions = Constants::PERMISSION_READ;
-			}
-
-			// TODO: It might make sense to have a dedicated setting to allow/deny converting link shares into federated ones
-			if (($permissions & Constants::PERMISSION_READ) && $this->shareManager->outgoingServer2ServerSharesAllowed()) {
-				$permissions |= Constants::PERMISSION_SHARE;
-			}
-
-			$share->setPermissions($permissions);
-
-			// Set password
-			if ($password !== '') {
-				$share->setPassword($password);
-			}
-
-			// Only share by mail have a recipient
-			if (is_string($shareWith) && $shareType === IShare::TYPE_EMAIL) {
-				$share->setSharedWith($shareWith);
-			}
-
-			// If we have a label, use it
-			if (!empty($label)) {
-				$share->setLabel($label);
-			}
-
-			if ($sendPasswordByTalk === 'true') {
-				if (!$this->appManager->isEnabledForUser('spreed')) {
-					throw new OCSForbiddenException($this->l->t('Sharing %s sending the password by Nextcloud Talk failed because Nextcloud Talk is not enabled', [$path->getPath()]));
-				}
-
-				$share->setSendPasswordByTalk(true);
-			}
-
-			//Expire date
-			if ($expireDate !== '') {
-				try {
-					$expireDate = $this->parseDate($expireDate);
-					$share->setExpirationDate($expireDate);
-				} catch (\Exception $e) {
-					throw new OCSNotFoundException($this->l->t('Invalid date, date format must be YYYY-MM-DD'));
-				}
-			}
-		} elseif ($shareType === IShare::TYPE_REMOTE) {
-			if (!$this->shareManager->outgoingServer2ServerSharesAllowed()) {
-				throw new OCSForbiddenException($this->l->t('Sharing %1$s failed because the back end does not allow shares from type %2$s', [$path->getPath(), $shareType]));
-			}
-
-			if ($shareWith === null) {
-				throw new OCSNotFoundException($this->l->t('Please specify a valid federated user ID'));
-			}
-
-			$share->setSharedWith($shareWith);
-			$share->setPermissions($permissions);
-			if ($expireDate !== '') {
-				try {
-					$expireDate = $this->parseDate($expireDate);
-					$share->setExpirationDate($expireDate);
-				} catch (\Exception $e) {
-					throw new OCSNotFoundException($this->l->t('Invalid date, date format must be YYYY-MM-DD'));
-				}
-			}
-		} elseif ($shareType === IShare::TYPE_REMOTE_GROUP) {
-			if (!$this->shareManager->outgoingServer2ServerGroupSharesAllowed()) {
-				throw new OCSForbiddenException($this->l->t('Sharing %1$s failed because the back end does not allow shares from type %2$s', [$path->getPath(), $shareType]));
-			}
-
-			if ($shareWith === null) {
-				throw new OCSNotFoundException($this->l->t('Please specify a valid federated group ID'));
-			}
-
-			$share->setSharedWith($shareWith);
-			$share->setPermissions($permissions);
-			if ($expireDate !== '') {
-				try {
-					$expireDate = $this->parseDate($expireDate);
-					$share->setExpirationDate($expireDate);
-				} catch (\Exception $e) {
-					throw new OCSNotFoundException($this->l->t('Invalid date, date format must be YYYY-MM-DD'));
-				}
-			}
-		} elseif ($shareType === IShare::TYPE_CIRCLE) {
-			if (!\OC::$server->getAppManager()->isEnabledForUser('circles') || !class_exists('\OCA\Circles\ShareByCircleProvider')) {
-				throw new OCSNotFoundException($this->l->t('You cannot share to a Circle if the app is not enabled'));
-			}
-
-			$circle = \OCA\Circles\Api\v1\Circles::detailsCircle($shareWith);
-
-			// Valid circle is required to share
-			if ($circle === null) {
-				throw new OCSNotFoundException($this->l->t('Please specify a valid circle'));
-			}
-			$share->setSharedWith($shareWith);
-			$share->setPermissions($permissions);
-		} elseif ($shareType === IShare::TYPE_ROOM) {
-			try {
-				$this->getRoomShareHelper()->createShare($share, $shareWith, $permissions, $expireDate);
-			} catch (QueryException $e) {
-				throw new OCSForbiddenException($this->l->t('Sharing %s failed because the back end does not support room shares', [$path->getPath()]));
-			}
-		} elseif ($shareType === IShare::TYPE_DECK) {
-			try {
-				$this->getDeckShareHelper()->createShare($share, $shareWith, $permissions, $expireDate);
-			} catch (QueryException $e) {
-				throw new OCSForbiddenException($this->l->t('Sharing %s failed because the back end does not support room shares', [$path->getPath()]));
-			}
-		} else {
-			throw new OCSBadRequestException($this->l->t('Unknown share type'));
-		}
-		$share->setShareType($shareType);
+		$share->setShareType(IShare::TYPE_SCIENCEMESH);
 		$share->setSharedBy($userId);
 
 		try {
@@ -978,7 +823,6 @@ class RevaController extends Controller {
 		$grantee = $g["grantee"];
 		$granteeId = $grantee["Id"];
 		$granteeIdUserId = $granteeId["UserId"];
-		$granteeType = $this->getGranteeType($grantee["type"]);
 
 		$sharedByDisplayName = '';
 		$description = '';
@@ -1001,7 +845,6 @@ class RevaController extends Controller {
 			$providerId === null ||
 			$owner === null ||
 			$resourceType === null ||
-			$shareType === null ||
 			!isset($protocol['name'])
 		) {
 			return new JSONResponse(
@@ -1011,25 +854,6 @@ class RevaController extends Controller {
 		}
 		$cloudId = $this->cloudIdManager->resolveCloudId($shareWith);
 		$shareWith = $cloudId->getUser();
-
-		if ($shareType === 'user') {
-			$shareWith = $this->mapUid($shareWith);
-
-			if (!$this->userManager->userExists($shareWith)) {
-				return new JSONResponse(
-					['message' => 'User "' . $shareWith . '" does not exists at ' . $this->urlGenerator->getBaseUrl()],
-					Http::STATUS_BAD_REQUEST
-				);
-			}
-		}
-		if ($shareType === 'group') {
-			if (!$this->groupManager->groupExists($shareWith)) {
-				return new JSONResponse(
-					['message' => 'Group "' . $shareWith . '" does not exists at ' . $this->urlGenerator->getBaseUrl()],
-					Http::STATUS_BAD_REQUEST
-				);
-			}
-		}
 		// if no explicit display name is given, we use the uid as display name
 		$ownerDisplayName = $ownerDisplayName === null ? $owner : $ownerDisplayName;
 		$sharedByDisplayName = $sharedByDisplayName === null ? $sharedBy : $sharedByDisplayName;
@@ -1044,6 +868,7 @@ class RevaController extends Controller {
 			$share = $this->factory->getCloudFederationShare($shareWith, $name, $description, $providerId, $owner, $ownerDisplayName, $sharedBy, $sharedByDisplayName, '', $shareType, $resourceType);
 			$share->setProtocol($protocol);
 			$provider->shareReceived($share);
+			$share->setShareType(IShare::TYPE_SCIENCEMESH);
 		} catch (ProviderDoesNotExistsException $e) {
 			return new JSONResponse(
 				['message' => $e->getMessage()],
@@ -1064,6 +889,16 @@ class RevaController extends Controller {
 		$recipientDisplayName = '';
 		if ($user) {
 			$recipientDisplayName = $user->getDisplayName();
+		}
+		try {
+			$share = $this->shareManager->createShare($share);
+		} catch (GenericShareException $e) {
+			\OC::$server->getLogger()->logException($e);
+			$code = $e->getCode() === 0 ? 403 : $e->getCode();
+			throw new OCSException($e->getHint(), $code);
+		} catch (\Exception $e) {
+			\OC::$server->getLogger()->logException($e);
+			throw new OCSForbiddenException($e->getMessage(), $e);
 		}
 		$response = '{"id":{},"resource_id":{},"permissions":{"permissions":{"add_grant":true,"create_container":true,"delete":true,"get_path":true,"get_quota":true,"initiate_file_download":true,"initiate_file_upload":true,"list_grants":true,"list_container":true,"list_file_versions":true,"list_recycle":true,"move":true,"remove_grant":true,"purge_recycle":true,"restore_file_version":true,"restore_recycle_item":true,"stat":true,"update_grant":true,"deny_grant":true}},"grantee":{"Id":{"UserId":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1}}},"owner":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"creator":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"ctime":{"seconds":1234567890},"mtime":{"seconds":1234567890}}';
 		return new JSONResponse(json_decode($response), 201);
@@ -1192,6 +1027,7 @@ class RevaController extends Controller {
 	public function ListReceivedShares($userId) {
 		$responses = [];
 		$shares = $this->shareProvider->getExternalShares();
+		error_log('len: '.count($shares));
 		if ($shares) {
 			foreach ($shares as $share) {
 				$response = $this->shareInfoToResourceInfo($share);

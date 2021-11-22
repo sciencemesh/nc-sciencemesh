@@ -216,7 +216,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 				}
 		*/
 		$shareId = $this->createScienceMeshShare($share);
-		
+
 		$data = $this->getRawShare($shareId);
 		return $this->createShareObject($data);
 	}
@@ -1131,11 +1131,14 @@ class ScienceMeshShareProvider implements IShareProvider {
 		}
 		$cursor->closeCursor();
 	}
-	
+
 	public function getExternalShares(): iterable {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->select('*')
-			->from('share_external');
+			->from('share_external')
+			->where(
+				$qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_SCIENCEMESH))
+			);
 		$cursor = $qb->execute();
 		while ($data = $cursor->fetch()) {
 			try {
