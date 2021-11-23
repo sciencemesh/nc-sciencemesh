@@ -785,6 +785,9 @@ class RevaController extends Controller {
 		// $resourceType ('file', 'calendar',...)
 		$resourceType 		= $this->request->getParam("resource_type");
 		$providerDomain 	= $this->request->getParam("provider_domain");
+
+		$ownerName = $this->request->getParam("owner_opaque_id");
+
 		// $protocol (e,.g. ['name' => 'webdav', 'options' => ['username' => 'john', 'permissions' => 31]])
 		$protocol 				= $this->request->getParam("protocol");
 		$protocolName = $protocol["options"];
@@ -796,6 +799,8 @@ class RevaController extends Controller {
 		//$name resource name (e.g. document.odt)
 		$name = end($opaqueIdExploded);
 		// $sharedByDisplayName display name of the user who shared the resource
+		$sharedByDisplayName = '';
+		$description = '';
 		$ownerName = substr($opaqueIdExploded[0],strlen("fileid-"));
 		$grantee = $g["grantee"];
 		$granteeId = $grantee["Id"];
@@ -877,10 +882,10 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
    * @return Http\DataResponse|JSONResponse
 	 *
-	 * ListShares returns the shares created by the user. If md is provided is not nil,
+	 * ListSentShares returns the shares created by the user. If md is provided is not nil,
 	 * it returns only shares attached to the given resource.
 	 */
-	public function ListShares($userId) {
+	public function ListSentShares($userId) {
 		$requests = $this->request->getParams();
 		$request = array_values($requests)[2];
 		$type = $request["type"];
