@@ -364,15 +364,15 @@ class ScienceMeshShareProvider implements IShareProvider {
 			->setValue('$mountpoint_hash', $qb->createNamedParameter($mountpoint_hash))
 			->setValue('accepted', $qb->createNamedParameter($accepted));
 
-			// ->setValue('item_type', $qb->createNamedParameter($itemType))
-			// ->setValue('item_source', $qb->createNamedParameter($itemSource))
-			// ->setValue('file_source', $qb->createNamedParameter($itemSource))
-			// ->setValue('share_with', $qb->createNamedParameter($shareWith))
-			// ->setValue('uid_owner', $qb->createNamedParameter($uidOwner))
-			// ->setValue('uid_initiator', $qb->createNamedParameter($sharedBy))
-			// ->setValue('permissions', $qb->createNamedParameter($permissions))
-			// ->setValue('token', $qb->createNamedParameter($token))
-			// ->setValue('stime', $qb->createNamedParameter(time()));
+		// ->setValue('item_type', $qb->createNamedParameter($itemType))
+		// ->setValue('item_source', $qb->createNamedParameter($itemSource))
+		// ->setValue('file_source', $qb->createNamedParameter($itemSource))
+		// ->setValue('share_with', $qb->createNamedParameter($shareWith))
+		// ->setValue('uid_owner', $qb->createNamedParameter($uidOwner))
+		// ->setValue('uid_initiator', $qb->createNamedParameter($sharedBy))
+		// ->setValue('permissions', $qb->createNamedParameter($permissions))
+		// ->setValue('token', $qb->createNamedParameter($token))
+		// ->setValue('stime', $qb->createNamedParameter(time()));
 
 		/*
 		 * Added to fix https://github.com/owncloud/core/issues/22215

@@ -23,21 +23,16 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TextPlainResponse;
 use OCP\AppFramework\Controller;
-use OCP\AppFramework\OCS\OCSForbiddenException;
 use OCP\AppFramework\OCS\OCSBadRequestException;
 use OCP\AppFramework\OCS\OCSNotFoundException;
-use OCP\AppFramework\QueryException;
 
 use OCA\CloudFederationAPI\Config;
-use OCP\Federation\Exceptions\ProviderCouldNotAddShareException;
-use OCP\Federation\Exceptions\ProviderDoesNotExistsException;
 use OCP\Federation\ICloudFederationFactory;
 use OCP\Federation\ICloudFederationProviderManager;
 use OCP\Federation\ICloudIdManager;
 
 use OCP\Share\IManager;
 use OCP\Share\IShare;
-use OCP\Share\Exceptions\ShareNotFound;
 
 use OCP\Constants;
 
@@ -361,7 +356,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function AddGrant($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
@@ -373,7 +368,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function Authenticate($userId) {
 		$password = $this->request->getParam("password");
@@ -391,7 +386,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 * @throws \OCP\Files\NotPermittedException
 	 */
 	public function CreateDir($userId) {
@@ -408,7 +403,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 * @throws \OCP\Files\NotPermittedException
 	 */
 	public function CreateHome($userId) {
@@ -428,7 +423,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function CreateReference($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: normalize incoming path
@@ -439,7 +434,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 * @throws FileNotFoundException
 	 */
 	public function Delete($userId) {
@@ -456,7 +451,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function EmptyRecycle($userId) {
 		$user = $this->userManager->get($userId);
@@ -476,7 +471,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function GetMD($userId) {
 		$ref = $this->request->getParam("ref");
@@ -494,7 +489,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function GetPathByID($userId) {
 		// in progress
@@ -508,7 +503,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function InitiateUpload($userId) {
 		$response = [
@@ -522,7 +517,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 */
 
 	public function ListFolder($userId) {
@@ -543,7 +538,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function ListGrants($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
@@ -554,7 +549,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function ListRecycle($userId) {
 		$user = $this->userManager->get($userId);
@@ -589,7 +584,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function ListRevisions($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
@@ -600,7 +595,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 */
 	// public function Move($userId) {
 	// 	$from = $this->request->getParam("from");
@@ -616,7 +611,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function RemoveGrant($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
@@ -628,7 +623,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function RestoreRecycleItem($userId) {
 		$key = $this->request->getParam("key");
@@ -654,7 +649,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function RestoreRevision($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
@@ -666,7 +661,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function SetArbitraryMetadata($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
@@ -679,7 +674,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function UnsetArbitraryMetadata($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
@@ -690,7 +685,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function UpdateGrant($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
@@ -702,7 +697,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function Upload($userId, $path) {
 		$contents = $this->request->put;
@@ -722,15 +717,15 @@ class RevaController extends Controller {
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 *
 	 * @throws NotFoundException
 	 * @throws OCSNotFoundException
 	 * Create a new share in fn with the given access control list.
 	 */
 	public function addSentShare($userId) {
-		$md	= $this->request->getParam("md");
-		$g 	= $this->request->getParam("g");
+		$md = $this->request->getParam("md");
+		$g = $this->request->getParam("g");
 
 		$opaqueId = $md["opaque_id"];
 		$opaqueIdDecoded = urldecode($opaqueId);
@@ -776,20 +771,20 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function addReceivedShare($userId) {
-		$md 							= $this->request->getParam("md");
-		$g 								= $this->request->getParam("g");
-		$providerDomain 	= $this->request->getParam("provider_domain");
-		$providerId		 		= $this->request->getParam("provider_id");
+		$md = $this->request->getParam("md");
+		$g = $this->request->getParam("g");
+		$providerDomain = $this->request->getParam("provider_domain");
+		$providerId = $this->request->getParam("provider_id");
 		// $providerId resource UID on the provider side
-		$providerId				= $this->request->getParam("provider_id");
+		$providerId = $this->request->getParam("provider_id");
 		// $resourceType ('file', 'calendar',...)
-		$resourceType 		= $this->request->getParam("resource_type");
-		$providerDomain 	= $this->request->getParam("provider_domain");
+		$resourceType = $this->request->getParam("resource_type");
+		$providerDomain = $this->request->getParam("provider_domain");
 
 		$ownerName = $this->request->getParam("owner_opaque_id");
 
 		// $protocol (e,.g. ['name' => 'webdav', 'options' => ['username' => 'john', 'permissions' => 31]])
-		$protocol 				= $this->request->getParam("protocol");
+		$protocol = $this->request->getParam("protocol");
 		$protocolName = $protocol["options"];
 		$sharedSecret = $protocolName["sharedSecret"];
 
@@ -839,7 +834,7 @@ class RevaController extends Controller {
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 *
 	 * GetShare gets the information for a share by the given ref.
 	 */
@@ -858,7 +853,7 @@ class RevaController extends Controller {
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 *
 	 */
 	public function UpdateShare($userId) {
@@ -880,7 +875,7 @@ class RevaController extends Controller {
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 *
 	 * ListSentShares returns the shares created by the user. If md is provided is not nil,
 	 * it returns only shares attached to the given resource.
@@ -906,7 +901,7 @@ class RevaController extends Controller {
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 * ListReceivedShares returns the list of shares the user has access.
 	 */
 	public function ListReceivedShares($userId) {
@@ -924,7 +919,7 @@ class RevaController extends Controller {
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 *
 	 * GetReceivedShare returns the information for a received share the user has access.
 	 */
@@ -943,7 +938,7 @@ class RevaController extends Controller {
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
-   * @return Http\DataResponse|JSONResponse
+	 * @return Http\DataResponse|JSONResponse
 	 *
 	 * UpdateReceivedShare updates the received share with share state.
 	 */
