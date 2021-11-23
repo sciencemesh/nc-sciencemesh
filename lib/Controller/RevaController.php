@@ -711,6 +711,10 @@ class RevaController extends Controller {
 		}
 		return new JSONResponse(["error" => "Create failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
+	public function GetUser($userId) {
+		var_dump('test');
+		exit;
+	}
 
 	/**
 	 * @PublicPage
