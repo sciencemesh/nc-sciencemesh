@@ -1809,7 +1809,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 				]
 			);
 		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
-		$this->shareProvider->method("getAllShares")
+		$this->shareProvider->method("getSentShares")
 			->willReturn([$testShare]);
 		$result = $controller->ListSentShares($this->userId);
 		$responses = [[
@@ -1896,7 +1896,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 					]
 				]
 			);
-		$this->shareProvider->method("getAllShares")
+		$this->shareProvider->method("getSentShares")
 			->willReturn([]);
 		$result = $controller->ListSentShares($this->userId);
 		$this->assertEquals($result->getData(),[]);
@@ -1911,7 +1911,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
-		$this->shareProvider->method("getExternalShares")
+		$this->shareProvider->method("getReceivedShares")
 			->willReturn([$testShare]);
 		$responses = [[
 			"id" => [
@@ -1982,7 +1982,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->groupManager, $this->cloudFederationProviderManager,
 		$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
-		$this->shareProvider->method("getExternalShares")
+		$this->shareProvider->method("getReceivedShares")
 			->willReturn([]);
 		$result = $controller->ListReceivedShares($this->userId);
 

@@ -840,6 +840,22 @@ class RevaController extends Controller {
 		];
 		return new JSONResponse($response, 201);
 	}
+
+	/**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 *
+	 * Remove Share from share table
+	 */
+	public function Unshare($userId) {
+		$opaque_id = $this->request->getParam("Spec")["Id"]["opaque_id"];
+		if ($this->shareProvider->unshareByOpaqueId($userId, $opaque_id)) {
+			return new JSONResponse();
+		} else {
+			return new JSONResponse([],Http::STATUS_NO_CONTENT);
+		}
+	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -899,7 +915,7 @@ class RevaController extends Controller {
 		$opaqueIdCreator = ["opaque_id"];
 		$typeCreator = ["type"];
 		$responses = [];
-		$shares = $this->shareProvider->getAllShares();
+		$shares = $this->shareProvider->getSentShares($userId);
 		if ($shares) {
 			foreach ($shares as $share) {
 				array_push($responses,$this->shareInfoToResourceInfo($share));
@@ -915,7 +931,7 @@ class RevaController extends Controller {
 	 */
 	public function ListReceivedShares($userId) {
 		$responses = [];
-		$shares = $this->shareProvider->getExternalShares();
+		$shares = $this->shareProvider->getReceivedShares($userId);
 		if ($shares) {
 			foreach ($shares as $share) {
 				$response = $this->shareInfoToResourceInfo($share);

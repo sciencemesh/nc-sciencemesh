@@ -1164,6 +1164,35 @@ class ScienceMeshShareProvider implements IShareProvider {
 			->where(
 				$qb->expr()->eq('share_type', $qb->createNamedParameter(14))//$this::SHARE_TYPE_SCIENCEMESH))
 			);
+		$cursor = $qb->execute();
+		while ($data = $cursor->fetch()) {
+			try {
+				$share = $this->createShareObject($data);
+			} catch (InvalidShare $e) {
+				continue;
+			} catch (ShareNotFound $e) {
+				continue;
+			}
+
+			yield $share;
+		}
+		$cursor->closeCursor();
+	}
+
+	public function getSentShares($userId): iterable {
+		$qb = $this->dbConnection->getQueryBuilder();
+
+		$qb->select('*')
+			->from('share')
+			->where(
+				$qb->expr()->eq('share_type', $qb->createNamedParameter(14))//$this::SHARE_TYPE_SCIENCEMESH))
+			)
+			->andWhere(
+				$qb->expr()->or(
+					$qb->expr()->eq('uid_initiator', $qb->createNamedParameter($userId)),
+					$qb->expr()->eq('uid_owner',$qb->createNamedParameter($userId))
+				)
+			);
 
 		$cursor = $qb->execute();
 		while ($data = $cursor->fetch()) {
@@ -1180,12 +1209,15 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$cursor->closeCursor();
 	}
 
-	public function getExternalShares(): iterable {
+	public function getReceivedShares($userId): iterable {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->select('*')
 			->from('share_external')
 			->where(
 				$qb->expr()->eq('share_type', $qb->createNamedParameter(14))//$this::SHARE_TYPE_SCIENCEMESH))
+			)
+			->andWhere(
+				$qb->expr()->eq('user', $qb->createNamedParameter($userId))
 			);
 		$cursor = $qb->execute();
 		while ($data = $cursor->fetch()) {
@@ -1200,5 +1232,33 @@ class ScienceMeshShareProvider implements IShareProvider {
 			yield $share;
 		}
 		$cursor->closeCursor();
+	}
+
+	public function unshareByOpaqueId($userId, $opaque_id) {
+		$decoded = urldecode($opaque_id);
+		$exploded = explode("/", $opaque_id);
+		$filename = end($exploded);
+		$username = substr($exploded[0], strlen("fileid-"));
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->select('fileid')
+			->from('filecache')
+			->where(
+				$qb->expr()->eq('name', $qb->createNamedParameter($filename))
+			);
+		$cursor = $qb->execute();
+		$data = $cursor->fetch();
+		if (!$data) {
+			return false;
+		}
+		$id = $data['fileid'];
+		$qb->delete('share')
+			->where(
+				$qb->expr()->eq('uid_owner', $qb->createNamedParameter($userId))
+			)
+			->andWhere(
+				$qb->expr()->eq('item_source', $qb->createNamedParameter($id))
+			);
+		$qb->execute();
+		return true;
 	}
 }
