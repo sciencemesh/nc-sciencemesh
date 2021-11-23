@@ -232,7 +232,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 */
 	protected function createScienceMeshShare(IShare $share) {
 		$token = "foo"; // $this->tokenHandler->generateToken();
-		$shareId = $this->addShareToDB(
+		$shareId = $this->addSentShareToDB(
 			$share->getNodeId(),
 			$share->getNodeType(),
 			$share->getSharedWith(),
@@ -335,6 +335,45 @@ class ScienceMeshShareProvider implements IShareProvider {
 		}
 
 		throw new ShareNotFound('share not found in share_external table');
+	}
+
+	/**
+	 * add share to the database and return the ID
+	 *
+	 * @param int $itemSource
+	 * @param string $itemType
+	 * @param string $shareWith
+	 * @param string $sharedBy
+	 * @param string $uidOwner
+	 * @param int $permissions
+	 * @param string $token
+	 * @param int $shareType
+	 * @return int
+	 */
+	private function addSentShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $uidOwner, $permissions, $token, $shareType) {
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->insert('share')
+			->setValue('share_type', $qb->createNamedParameter($shareType))
+			->setValue('item_type', $qb->createNamedParameter($itemType))
+			->setValue('item_source', $qb->createNamedParameter($itemSource))
+			->setValue('file_source', $qb->createNamedParameter($itemSource))
+			->setValue('share_with', $qb->createNamedParameter($shareWith))
+			->setValue('uid_owner', $qb->createNamedParameter($uidOwner))
+			->setValue('uid_initiator', $qb->createNamedParameter($sharedBy))
+			->setValue('permissions', $qb->createNamedParameter($permissions))
+			->setValue('token', $qb->createNamedParameter($token))
+			->setValue('stime', $qb->createNamedParameter(time()));
+
+		/*
+		 * Added to fix https://github.com/owncloud/core/issues/22215
+		 * Can be removed once we get rid of ajax/share.php
+		 */
+		$qb->setValue('file_target', $qb->createNamedParameter(''));
+
+		$qb->execute();
+		$id = $qb->getLastInsertId();
+
+		return (int)$id;
 	}
 
 	/**

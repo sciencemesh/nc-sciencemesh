@@ -743,9 +743,7 @@ class RevaController extends Controller {
 		$sharePermissions = $g["permissions"];
 		$resourcePermissions = $sharePermissions["permissions"];
 		$permissions = $this->getPermissionsCode($resourcePermissions);
-
 		$share = $this->shareManager->newShare();
-
 		try {
 			$path = $this->userFolder->get("sciencemesh/".$name);
 		} catch (NotFoundException $e) {
@@ -759,6 +757,10 @@ class RevaController extends Controller {
 		}
 		$share->setShareType(14);//IShare::TYPE_SCIENCEMESH);
 		$share->setSharedBy($userId);
+		$share->setSharedWith($shareWith);
+		$share->setShareOwner($userId);
+		$share->setPermissions($permissions);
+		$this->shareProvider->create($share);
 		// @TODO We need to use ScienceMeshShareProvider to store the share addSentShareToDB()
 		$response = $this->shareInfoToResourceInfo($share);
 		return new JSONResponse($response, Http::STATUS_CREATED);
