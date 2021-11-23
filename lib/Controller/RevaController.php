@@ -47,7 +47,6 @@ use OCP\App\IAppManager;
 use OCP\Lock\ILockingProvider;
 use OCP\Lock\LockedException;
 use OCP\IL10N;
-use OCA\ScienceMesh\User\ScienceMeshUserId;
 
 class RevaController extends Controller {
 
@@ -716,12 +715,12 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
-     *
-     * Get user list.
+	 *
+	 * Get user list.
 	 */
 	public function GetUser($userId) {
 		if ($this->userManager->userExists($userId)) {
-			return new JSONResponse(['opaque_id' => $userId]);
+			return new JSONResponse(['opaque_id' => $userId], Http::STATUS_OK);
 		}
 		return new JSONResponse(
 			['message' => 'User not exist'],
