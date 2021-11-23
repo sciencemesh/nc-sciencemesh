@@ -165,4 +165,5 @@ coverage:
 test: composer
 	$(CURDIR)/vendor/bin/phplint ./ --exclude=vendor
 	$(CURDIR)/vendor/phpunit/phpunit/phpunit -c phpunit.xml
-	$(CURDIR)/vendor/phpunit/phpunit/phpunit -c phpunit.integration.xml
+# see https://github.com/pondersource/sciencemesh-nextcloud/issues/51
+# $(CURDIR)/vendor/phpunit/phpunit/phpunit -c phpunit.integration.xml

@@ -1172,10 +1172,10 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
 	 *
-	 * ListShares returns the shares created by the user. If md is provided is not nil,
+	 * ListSentShares returns the shares created by the user. If md is provided is not nil,
 	 * it returns only shares attached to the given resource.
 	 */
-	public function ListShares($userId) {
+	public function ListSentShares($userId) {
 		$requests = $this->request->getParams();
 		$request = array_values($requests)[2];
 		$type = $request["type"];

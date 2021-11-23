@@ -1939,7 +1939,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->UpdateShare($this->userId);
 		$this->assertEquals($result->getStatus(),500);
 	}
-	public function testListShares() {
+	public function testListSentShares() {
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
@@ -1951,7 +1951,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			->willReturn(
 				[
 					"POST",
-					"/apps/sciencemesh/~tester/api/share/ListShares",
+					"/apps/sciencemesh/~tester/api/share/ListSentShares",
 					[
 						"type" => 4,
 						"Term" => [
@@ -1967,7 +1967,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
 		$this->shareManager->method("getSharesBy")
 			->willReturn([$testShare]);
-		$result = $controller->ListShares($this->userId);
+		$result = $controller->ListSentShares($this->userId);
 		$responses = [[
 			"id" => [
 				"map" => null,
@@ -2027,7 +2027,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getData(),$responses);
 		$this->assertEquals($result->getStatus(),200);
 	}
-	public function testListSharesEmpty() {
+	public function testListSentSharesEmpty() {
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
@@ -2039,7 +2039,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			->willReturn(
 				[
 					"POST",
-					"/apps/sciencemesh/~tester/api/share/ListShares",
+					"/apps/sciencemesh/~tester/api/share/ListSentShares",
 					[
 						"type" => 4,
 						"Term" => [
@@ -2054,7 +2054,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			);
 		$this->shareManager->method("getSharesBy")
 			->willReturn([]);
-		$result = $controller->ListShares($this->userId);
+		$result = $controller->ListSentShares($this->userId);
 		$this->assertEquals($result->getData(),[]);
 		$this->assertEquals($result->getStatus(),200);
 	}
