@@ -19,6 +19,8 @@ function curlPost($apiPath, $params = []) {
 	curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params, JSON_PRETTY_PRINT));
 	curl_setopt($ch, CURLOPT_USERPWD, API_USER.":".API_PASS);
 	curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+	curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: application/json'));
+
 	$output = curl_exec($ch);
 	curl_close($ch);
 
@@ -36,39 +38,49 @@ class SharesCrudTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testCrudCycleForReceived() {
-    $output = curlPost("ocm/ListReceivedShares", []);
-		$this->assertEquals("[]", $output);
-    // $output = curlPost("ocm/addReceivedShare", [
-		// 	"md" => [
-		// 		"opaque_id" => "fileid-einstein%2Fmy-folder",
-		// 	],
-		// 	"g" => [
-		// 		"grantee" => [
-		// 			"type" => 1,
-		// 		],
-		// 		"Id" => [
-		// 			"UserId" => [
-		// 				"idp" => "cesnet.cz",
-		// 				"opaque_id" => "marie",
-		// 				"type" => 1,
-		// 			],
-		// 		],
-		// 	],
-		// 	"provider_domain" => "cern.ch",
-		// 	"resource_type" => "file",
-		// 	"provider_id" => 2,
-		// 	"owner_display_name" => "Albert Einstein",
-		// 	"protocol" => [
-		// 		"name" => "webdav",
-		// 		"options" => [
-		// 			"sharedSecret" => "secret",
-		// 			"permissions" => "webdav-property",
-		// 		],
-		// 	],
-		// ]);
-		// $this->assertEquals("[]", $output);
-    // $output = curlPost("ocm/ListReceivedShares", []);
-		// $this->assertEquals("[]", $output);
+    $json = curlPost("ocm/ListReceivedShares", []);
+		$output = json_decode($json);
+
+		$this->assertEquals(0, count($output));
+    $json = curlPost("ocm/addReceivedShare", [
+			"md" => [
+				"opaque_id" => "fileid-einstein%2Fmy-folder",
+			],
+			"g" => [
+				"grantee" => [
+					"type" => 1,
+					"Id" => [
+						"UserId" => [
+							"idp" => "cesnet.cz",
+							"opaque_id" => "marie",
+							"type" => 1,
+						],
+					],
+				],
+			],
+			"provider_domain" => "cern.ch",
+			"resource_type" => "file",
+			"provider_id" => 2,
+			"owner_display_name" => "Albert Einstein",
+			"protocol" => [
+				"name" => "webdav",
+				"options" => [
+					"sharedSecret" => "secret",
+					"permissions" => "webdav-property",
+				],
+			],
+		]);
+		$output = json_decode($json, true);
+		$this->assertEquals([], $output["id"]);
+		$this->assertEquals([], $output["resource_id"]);
+		$this->assertEquals(true, $output["permissions"]["permissions"]["add_grant"]);
+		// etcetera... these are currently still all hard-coded!
+		// See https://github.com/pondersource/nc-sciencemesh/issues/162
+
+    $json = curlPost("ocm/ListReceivedShares", []);
+		$output = json_decode($json);
+
+		$this->assertEquals(1, count($output));
     // $output = curlPost("ocm/UnShare", []);
 		// $this->assertEquals("[]", $output);
     // $output = curlPost("ocm/ListReceivedShares", []);
