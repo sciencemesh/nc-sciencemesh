@@ -4,10 +4,11 @@ namespace OCA\ScienceMesh\Tests\Integration\SharesCrud;
 
 
 use PHPUnit_Framework_TestCase;
+use OCP\AppFramework\App;
 
 const API_USER = "alice";
 const API_PASS = "alice123";
-const API_BASE = "https://nc1.docker/index.php/apps/sciencemesh/~alice/api/";
+const API_BASE = "https://nc1.docker/index.php/apps/sciencemesh/~" . API_USER . "/api/";
 
 function curlPost($apiPath, $params = []) {
 	$ch = curl_init();
@@ -27,6 +28,12 @@ function curlPost($apiPath, $params = []) {
 	return $output;
 }
 
+function countReceivedShares(){
+	$json = curlPost("ocm/ListReceivedShares", []);
+	$output = json_decode($json);
+	return count($output);
+}
+	
 /**
  * This test lists shares, creates one, lists them again, removes it, lists them again
  * At least that's the plan :)
@@ -35,14 +42,17 @@ class SharesCrudTest extends PHPUnit_Framework_TestCase {
 	private $container;
 
 	public function setUp() {
+		parent::setUp();
+		$app = new App('sciencemesh');
+		$appContainer = $app->getContainer();
+		$serverContainer = $appContainer->getServer();
+		$appConfig = $serverContainer->getAppConfig();
 	}
 
 	public function testCrudCycleForReceived() {
-    $json = curlPost("ocm/ListReceivedShares", []);
-		$output = json_decode($json);
+		$countBefore = countReceivedShares();
 
-		$this->assertEquals(0, count($output));
-    $json = curlPost("ocm/addReceivedShare", [
+		$json = curlPost("ocm/addReceivedShare", [
 			"md" => [
 				"opaque_id" => "fileid-einstein%2Fmy-folder",
 			],
@@ -77,13 +87,15 @@ class SharesCrudTest extends PHPUnit_Framework_TestCase {
 		// etcetera... these are currently still all hard-coded!
 		// See https://github.com/pondersource/nc-sciencemesh/issues/162
 
-    $json = curlPost("ocm/ListReceivedShares", []);
-		$output = json_decode($json);
-
-		$this->assertEquals(1, count($output));
-    // $output = curlPost("ocm/UnShare", []);
-		// $this->assertEquals("[]", $output);
-    // $output = curlPost("ocm/ListReceivedShares", []);
-		// $this->assertEquals("[]", $output);
+		$this->assertEquals($countBefore+1, countReceivedShares());
+   		$output = curlPost("ocm/Unshare", [
+			   "Spec" => [
+				   "Id" => [
+					"opaque_id" => "fileid-einstein%2Fmy-folder"
+				   ]
+			   ]
+		   ]);
+		
+		$this->assertEquals($countBefore, countReceivedShares());
 	}
 }
