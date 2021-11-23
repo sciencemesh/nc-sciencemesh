@@ -2,7 +2,6 @@
 
 namespace OCA\ScienceMesh\Tests\Integration\SharesCrud;
 
-
 use PHPUnit_Framework_TestCase;
 use OCP\AppFramework\App;
 
@@ -20,7 +19,7 @@ function curlPost($apiPath, $params = []) {
 	curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params, JSON_PRETTY_PRINT));
 	curl_setopt($ch, CURLOPT_USERPWD, API_USER.":".API_PASS);
 	curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-	curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: application/json'));
+	curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/json']);
 
 	$output = curl_exec($ch);
 	curl_close($ch);
@@ -28,16 +27,16 @@ function curlPost($apiPath, $params = []) {
 	return $output;
 }
 
-function countReceivedShares(){
+function countReceivedShares() {
 	$json = curlPost("ocm/ListReceivedShares", []);
 	$output = json_decode($json);
 	return count($output);
 }
 	
 /**
- * This test lists shares, creates one, lists them again, removes it, lists them again
- * At least that's the plan :)
- */
+	 * This test lists shares, creates one, lists them again, removes it, lists them again
+	 * At least that's the plan :)
+	 */
 class SharesCrudTest extends PHPUnit_Framework_TestCase {
 	private $container;
 
@@ -87,14 +86,14 @@ class SharesCrudTest extends PHPUnit_Framework_TestCase {
 		// etcetera... these are currently still all hard-coded!
 		// See https://github.com/pondersource/nc-sciencemesh/issues/162
 
-		$this->assertEquals($countBefore+1, countReceivedShares());
-   		$output = curlPost("ocm/Unshare", [
-			   "Spec" => [
-				   "Id" => [
+		$this->assertEquals($countBefore + 1, countReceivedShares());
+		$output = curlPost("ocm/Unshare", [
+			"Spec" => [
+				"Id" => [
 					"opaque_id" => "fileid-einstein%2Fmy-folder"
-				   ]
-			   ]
-		   ]);
+				]
+			]
+		]);
 		
 		$this->assertEquals($countBefore, countReceivedShares());
 	}
