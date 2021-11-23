@@ -349,10 +349,23 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @param int $shareType
 	 * @return int
 	 */
-	private function addReceivedShareToDB($share_type, $remote, $remote_id, $share_token, $password, $name, $owner, $usr, $mountpoint, $mountpoint_hash, $accepted) {
+	public function addReceivedShareToDB($remote, $remote_id, $share_token, $password, $name, $owner, $user) {
+		$share_type = IShare::TYPE_SCIENCEMESH;
+		$mountpoint = "{{TemporaryMountPointName#" . $name . "}}";
+		$mountpoint_hash = md5($mountpoint);
+		$qbt = $this->dbConnection->getQueryBuilder();
+		$qbt->select('*')
+			->from('share_external')
+			->where($qbt->expr()->eq('user', $qbt->createNamedParameter($user)))
+			->andWhere($qbt->expr()->eq('mountpoint_hash', $qbt->createNamedParameter($mountpoint_hash)));
+		$cursor = $qbt->execute();
+		if ($data = $cursor->fetch()) {
+			return $data['id'];
+		};
+		$accepted = IShare::STATUS_PENDING;
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->insert('share_external')
-			->setValue('share_type', $qb->createNamedParameter($shareType))
+			->setValue('share_type', $qb->createNamedParameter($share_type))
 			->setValue('remote', $qb->createNamedParameter($remote))
 			->setValue('remote_id', $qb->createNamedParameter($remote_id))
 			->setValue('share_token', $qb->createNamedParameter($share_token))
@@ -361,25 +374,8 @@ class ScienceMeshShareProvider implements IShareProvider {
 			->setValue('owner', $qb->createNamedParameter($owner))
 			->setValue('user', $qb->createNamedParameter($user))
 			->setValue('mountpoint', $qb->createNamedParameter($mountpoint))
-			->setValue('$mountpoint_hash', $qb->createNamedParameter($mountpoint_hash))
+			->setValue('mountpoint_hash', $qb->createNamedParameter($mountpoint_hash))
 			->setValue('accepted', $qb->createNamedParameter($accepted));
-
-		// ->setValue('item_type', $qb->createNamedParameter($itemType))
-		// ->setValue('item_source', $qb->createNamedParameter($itemSource))
-		// ->setValue('file_source', $qb->createNamedParameter($itemSource))
-		// ->setValue('share_with', $qb->createNamedParameter($shareWith))
-		// ->setValue('uid_owner', $qb->createNamedParameter($uidOwner))
-		// ->setValue('uid_initiator', $qb->createNamedParameter($sharedBy))
-		// ->setValue('permissions', $qb->createNamedParameter($permissions))
-		// ->setValue('token', $qb->createNamedParameter($token))
-		// ->setValue('stime', $qb->createNamedParameter(time()));
-
-		/*
-		 * Added to fix https://github.com/owncloud/core/issues/22215
-		 * Can be removed once we get rid of ajax/share.php
-		 */
-		$qb->setValue('file_target', $qb->createNamedParameter(''));
-
 		$qb->execute();
 		$id = $qb->getLastInsertId();
 

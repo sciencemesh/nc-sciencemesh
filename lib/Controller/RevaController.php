@@ -771,65 +771,72 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function addReceivedShare($userId) {
-		$md = $this->request->getParam("md");
-		$g = $this->request->getParam("g");
 		$providerDomain = $this->request->getParam("provider_domain");
 		$providerId = $this->request->getParam("provider_id");
-		// $providerId resource UID on the provider side
-		$providerId = $this->request->getParam("provider_id");
-		// $resourceType ('file', 'calendar',...)
-		$resourceType = $this->request->getParam("resource_type");
-		$providerDomain = $this->request->getParam("provider_domain");
-
-		$ownerName = $this->request->getParam("owner_opaque_id");
-
-		// $protocol (e,.g. ['name' => 'webdav', 'options' => ['username' => 'john', 'permissions' => 31]])
-		$protocol = $this->request->getParam("protocol");
-		$protocolName = $protocol["options"];
-		$sharedSecret = $protocolName["sharedSecret"];
-
-		$opaqueId = $md["opaque_id"];
-		$opaqueIdDecoded = urldecode($opaqueId);
-		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
-		//$name resource name (e.g. document.odt)
-		$name = end($opaqueIdExploded);
-		// $sharedByDisplayName display name of the user who shared the resource
-		$sharedByDisplayName = '';
-		$description = '';
-		$ownerName = substr($opaqueIdExploded[0],strlen("fileid-"));
-		$grantee = $g["grantee"];
-		$granteeId = $grantee["Id"];
-		$granteeIdUserId = $granteeId["UserId"];
-
-		$shareWith = null;
-		$owner = null;
-		if ($userId != null && $granteeIdUserId["idp"] != null) {
-			$shareWith = $userId."@".$granteeIdUserId["idp"];
-		}
-		// $owner provider specific UID of the user who owns the resource
-		if ($ownerName != null || $providerDomain != null) {
-			$owner = $ownerName."@".$providerDomain;
-		}
-		// $sharedBy provider specific UID of the user who shared the resource
-		$sharedBy = $owner;
-		// check if all required parameters are set
-		if ($shareWith === null ||
-			$name === null ||
-			$providerId === null ||
-			$owner === null ||
-			$resourceType === null ||
-			$protocol === null ||
-			!isset($protocol['name'])
+		$opaqueId = urldecode($this->request->getParam("md")["opaque_id"]);
+		$sharedSecret = $this->request->getParam("protocol")["options"]["sharedSecret"] || '';
+		$exploded = explode("/", $opaqueId);
+		$name = end($exploded);
+		$sharedBy = substr($exploded[0], strlen("fileid-"));
+		if (
+			!isset($providerDomain) ||
+			!isset($providerId) ||
+			!isset($opaqueId) ||
+			!isset($name) ||
+			!isset($sharedBy) ||
+			!isset($userId)
 		) {
 			return new JSONResponse(
-				['message' => 'Missing arguments'],
+				['message' => 'Missing arguments: $providerDomain: ' . $providerDomain . ' $providerId: ' . $providerId . ' $opaqueId: ' . $opaqueId . ' $name: ' . $name . ' $sharedBy: ' . $sharedBy . ' $userId: ' . $userId],
 				Http::STATUS_BAD_REQUEST
 			);
 		}
-		// share_token -> opaque_id ?
-		//$this->shareProvider->addReceivedShareToDB(IShare::TYPE_SCIENCEMESH,$providerDomain,$providerId, $opaqueId,$sharedSecret,$name,$sharedBy,$userId,);
-		$response = '{"id":{},"resource_id":{},"permissions":{"permissions":{"add_grant":true,"create_container":true,"delete":true,"get_path":true,"get_quota":true,"initiate_file_download":true,"initiate_file_upload":true,"list_grants":true,"list_container":true,"list_file_versions":true,"list_recycle":true,"move":true,"remove_grant":true,"purge_recycle":true,"restore_file_version":true,"restore_recycle_item":true,"stat":true,"update_grant":true,"deny_grant":true}},"grantee":{"Id":{"UserId":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1}}},"owner":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"creator":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"ctime":{"seconds":1234567890},"mtime":{"seconds":1234567890}}';
-		return new JSONResponse(json_decode($response), 201);
+		$id = $this->shareProvider
+			->addReceivedShareToDB(
+				$providerDomain,
+				$providerId,
+				$opaqueId,
+				$sharedSecret,
+				$name,
+				$sharedBy,
+				$userId);
+		$response = [
+			"id" => $id,
+			"resource_id" => $opaqueId,
+			"permissions" => [
+				"permissions" => [
+					"add_grant" => true,
+					"create_container" => true,
+					"delete" => true,
+					"get_path" => true,
+					"get_quota" => true,
+					"initiate_file_download" => true,
+					"initiate_file_upload" => true,
+					"list_grants" => true,
+					"list_container" => true,
+					"list_file_versions" => true,
+					"list_recycle" => true,
+					"move" => true,
+					"remove_grant" => true,
+					"purge_recycle" => true,
+					"restore_file_version" => true,
+					"restore_recycle_item" => true,
+					"stat" => true,
+					"update_grant" => true,
+					"deny_grant" => true
+				]
+			],
+			"grantee" => $this->request->getParam("g")["grantee"],
+			"owner" => $this->request->getParam("g")["grantee"]["Id"]["UserId"],
+			"creator" => $this->request->getParam("g")["grantee"]["Id"]["UserId"],
+			"ctime" => [
+				"seconds" => 1234567890
+			],
+			"mtime" => [
+				"seconds" => 1234567890
+			]
+		];
+		return new JSONResponse($response, 201);
 	}
 	/**
 	 * @PublicPage
