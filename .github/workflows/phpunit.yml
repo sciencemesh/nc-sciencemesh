@@ -68,9 +68,9 @@ jobs:
         working-directory: apps/${{ env.APP_NAME }}
         run: ./vendor/phpunit/phpunit/phpunit -c phpunit.xml
 
-      - name: PHPUnit integration
-        working-directory: apps/${{ env.APP_NAME }}
-        run: ./vendor/phpunit/phpunit/phpunit -c phpunit.integration.xml
+#      - name: PHPUnit integration
+#        working-directory: apps/${{ env.APP_NAME }}
+#        run: ./vendor/phpunit/phpunit/phpunit -c phpunit.integration.xml
 
   mysql:
     runs-on: ubuntu-latest
