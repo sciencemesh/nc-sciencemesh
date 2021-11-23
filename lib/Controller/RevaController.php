@@ -361,6 +361,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 */
 	public function AddGrant($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
@@ -372,6 +373,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 */
 	public function Authenticate($userId) {
 		$password = $this->request->getParam("password");
@@ -389,6 +391,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 * @throws \OCP\Files\NotPermittedException
 	 */
 	public function CreateDir($userId) {
@@ -405,6 +408,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 * @throws \OCP\Files\NotPermittedException
 	 */
 	public function CreateHome($userId) {
@@ -424,6 +428,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 */
 	public function CreateReference($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: normalize incoming path
@@ -434,6 +439,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 * @throws FileNotFoundException
 	 */
 	public function Delete($userId) {
@@ -450,6 +456,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 */
 	public function EmptyRecycle($userId) {
 		$user = $this->userManager->get($userId);
@@ -469,6 +476,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 */
 	public function GetMD($userId) {
 		$ref = $this->request->getParam("ref");
@@ -486,6 +494,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 */
 	public function GetPathByID($userId) {
 		// in progress
@@ -499,6 +508,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 */
 	public function InitiateUpload($userId) {
 		$response = [
@@ -512,6 +522,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 */
 
 	public function ListFolder($userId) {
@@ -532,6 +543,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 */
 	public function ListGrants($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
@@ -542,6 +554,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 */
 	public function ListRecycle($userId) {
 		$user = $this->userManager->get($userId);
@@ -576,6 +589,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 */
 	public function ListRevisions($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
@@ -586,6 +600,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 */
 	// public function Move($userId) {
 	// 	$from = $this->request->getParam("from");
@@ -601,6 +616,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 */
 	public function RemoveGrant($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
@@ -612,6 +628,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 */
 	public function RestoreRecycleItem($userId) {
 		$key = $this->request->getParam("key");
@@ -637,6 +654,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 */
 	public function RestoreRevision($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
@@ -648,6 +666,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 */
 	public function SetArbitraryMetadata($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
@@ -660,6 +679,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 */
 	public function UnsetArbitraryMetadata($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
@@ -670,6 +690,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 */
 	public function UpdateGrant($userId) {
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
@@ -681,6 +702,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+   * @return Http\DataResponse|JSONResponse
 	 */
 	public function Upload($userId, $path) {
 		$contents = $this->request->put;
@@ -700,43 +722,35 @@ class RevaController extends Controller {
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
-	 * @NoSameSiteCookieRequired
-	 * @suppress PhanUndeclaredClassMethod
+   * @return Http\DataResponse|JSONResponse
 	 *
-	 * @return DataResponse
 	 * @throws NotFoundException
-	 * @throws OCSBadRequestException
-	 * @throws OCSException
-	 * @throws OCSForbiddenException
 	 * @throws OCSNotFoundException
-	 * @throws InvalidPathException
 	 * Create a new share in fn with the given access control list.
 	 */
 	public function addSentShare($userId) {
-		$md = $this->request->getParam("md");
-		$g = $this->request->getParam("g");
-		$opaqueId = $md["opaque_id"];
+		$md	= $this->request->getParam("md");
+		$g 	= $this->request->getParam("g");
 
+		$opaqueId = $md["opaque_id"];
 		$opaqueIdDecoded = urldecode($opaqueId);
 		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
 		//$name resource name (e.g. document.odt)
 		$name = end($opaqueIdExploded);
+		if ($name === "") {
+			throw new OCSNotFoundException($this->l->t('Please specify a file or folder path'));
+		}
 		$grantee = $g["grantee"];
 		$granteeId = $grantee["Id"];
 		$granteeIdUserId = $granteeId["UserId"];
 		$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
-		$sharePermissions = $g["permissions"];
 
+		$sharePermissions = $g["permissions"];
 		$resourcePermissions = $sharePermissions["permissions"];
 		$permissions = $this->getPermissionsCode($resourcePermissions);
+
 		$share = $this->shareManager->newShare();
-		if ($permissions === null) {
-			$permissions = $this->config->getAppValue('core', 'shareapi_default_permissions', Constants::PERMISSION_ALL);
-		}
-		// Verify path
-		if ($name === "") {
-			throw new OCSNotFoundException($this->l->t('Please specify a file or folder path'));
-		}
+
 		try {
 			$path = $this->userFolder->get("sciencemesh/".$name);
 		} catch (NotFoundException $e) {
@@ -748,29 +762,9 @@ class RevaController extends Controller {
 		} catch (LockedException $e) {
 			throw new OCSNotFoundException($this->l->t('Could not create share'));
 		}
-		// Shares always require read permissions
-		$permissions |= Constants::PERMISSION_READ;
-
-		if ($path instanceof \OCP\Files\File) {
-			// Single file shares should never have delete or create permissions
-			$permissions &= ~Constants::PERMISSION_DELETE;
-			$permissions &= ~Constants::PERMISSION_CREATE;
-		}
-		if ($path->getStorage()->instanceOfStorage(Storage::class)) {
-			$permissions &= ~($permissions & ~$path->getPermissions());
-		}
 		$share->setShareType(IShare::TYPE_SCIENCEMESH);
 		$share->setSharedBy($userId);
-
-		try {
-		} catch (GenericShareException $e) {
-			\OC::$server->getLogger()->logException($e);
-			$code = $e->getCode() === 0 ? 403 : $e->getCode();
-			throw new OCSException($e->getHint(), $code);
-		} catch (\Exception $e) {
-			\OC::$server->getLogger()->logException($e);
-			throw new OCSForbiddenException($e->getMessage(), $e);
-		}
+		// @TODO We need to use ScienceMeshShareProvider to store the share addSentShareToDB()
 		$response = $this->shareInfoToResourceInfo($share);
 		return new JSONResponse($response, Http::STATUS_CREATED);
 	}
@@ -779,8 +773,6 @@ class RevaController extends Controller {
 	 *
 	 * @NoCSRFRequired
 	 * @PublicPage
-	 * @BruteForceProtection(action=receiveFederatedShare)
-	 *
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function addReceivedShare($userId) {
@@ -844,7 +836,7 @@ class RevaController extends Controller {
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
-	 * @NoSameSiteCookieRequired
+   * @return Http\DataResponse|JSONResponse
 	 *
 	 * GetShare gets the information for a share by the given ref.
 	 */
@@ -859,61 +851,13 @@ class RevaController extends Controller {
 		}
 		return new JSONResponse(["error" => "GetShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
-	 * @NoSameSiteCookieRequired
-	 *
-	 * Unshare deletes the share pointed by ref.
-	 */
-	 public function Unshare($userId) {
-		error_log("call Unshare");
-		$spec = $this->request->getParam("Spec");
-		$id = $spec["Id"];
-		$opaqueId = $id["opaque_id"];
-		$opaqueIdDecoded = urldecode($opaqueId);
-		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
-		//$name resource name (e.g. document.odt)
-		$name = end($opaqueIdExploded);
-		$path = $this->getPathByOpaqueId($opaqueIdExploded);
-		error_log("name: ".$name);
-		error_log("path: ".$path);
-		$testSharesBy = $this->shareManager->getSharesBy($userId,IShare::TYPE_LINK);
-		error_log("getSharesBy(): ".json_encode($testSharesBy)." len: ".count($testSharesBy));
-		$shareId = $this->getShareIdByPath($path);
-		try {
-			$share = $this->getShareById(26,$userId);
-		} catch (ShareNotFound $e) {
-			error_log("getShareById fails");
-			throw new OCSNotFoundException($this->l->t('Wrong share ID, share doesn\'t exist'));
-		}
-		try {
-			$this->lock($share->getNode());
-		} catch (LockedException $e) {
-			throw new OCSNotFoundException($this->l->t('Could not delete share'));
-		}
-
-		if (!$this->canAccessShare($share,$userId)) {
-			throw new OCSNotFoundException($this->l->t('Wrong share ID, share doesn\'t exist'));
-		}
-
-		if (!$this->canDeleteShare($share,$userId)) {
-			throw new OCSForbiddenException($this->l->t('Could not delete share'));
-		}
-		try{
-			$this->shareManager->deleteShare($share);
-		} catch (\InvalidArgumentException $e) {
-			return new JSONResponse(["error" => "Unshare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-		return new JSONResponse("OK", Http::STATUS_OK);
-	}
-	/**
-	 * @PublicPage
-	 * @NoCSRFRequired
-	 * @NoSameSiteCookieRequired
+   * @return Http\DataResponse|JSONResponse
 	 *
 	 */
-
 	public function UpdateShare($userId) {
 		$ref = $this->request->getParam("ref");
 		$spec = $ref["Spec"];
@@ -933,7 +877,7 @@ class RevaController extends Controller {
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
-	 * @NoSameSiteCookieRequired
+   * @return Http\DataResponse|JSONResponse
 	 *
 	 * ListShares returns the shares created by the user. If md is provided is not nil,
 	 * it returns only shares attached to the given resource.
@@ -959,13 +903,12 @@ class RevaController extends Controller {
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
-	 * @NoSameSiteCookieRequired
+   * @return Http\DataResponse|JSONResponse
 	 * ListReceivedShares returns the list of shares the user has access.
 	 */
 	public function ListReceivedShares($userId) {
 		$responses = [];
 		$shares = $this->shareProvider->getExternalShares();
-		error_log('len: '.count($shares));
 		if ($shares) {
 			foreach ($shares as $share) {
 				$response = $this->shareInfoToResourceInfo($share);
@@ -978,7 +921,7 @@ class RevaController extends Controller {
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
-	 * @NoSameSiteCookieRequired
+   * @return Http\DataResponse|JSONResponse
 	 *
 	 * GetReceivedShare returns the information for a received share the user has access.
 	 */
@@ -997,7 +940,7 @@ class RevaController extends Controller {
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
-	 * @NoSameSiteCookieRequired
+   * @return Http\DataResponse|JSONResponse
 	 *
 	 * UpdateReceivedShare updates the received share with share state.
 	 */
@@ -1015,90 +958,6 @@ class RevaController extends Controller {
 		}
 		return new JSONResponse(["error" => "UpdateReceivedShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
-	// protected function canDeleteShare(\OCP\Share\IShare $share,String $userId): bool {
-	// 				// A file with permissions 0 can't be accessed by us. So Don't show it
-	// 				if ($share->getPermissions() === 0) {
-	// 								return false;
-	// 				}
-	// 				// if the user is the recipient, i can unshare
-	// 				// the share with self
-	// 				if ($share->getShareType() === IShare::TYPE_USER &&
-	// 								$share->getSharedWith() === $userId
-	// 				) {
-	// 								return true;
-	// 				}
-	// 				// The owner of the file and the creator of the share
-	// 				// can always delete the share
-	// 				if ($share->getShareOwner() === $userId ||
-	// 								$share->getSharedBy() === $userId
-	// 				) {
-	// 								return true;
-	// 				}
-	// 				return false;
-	// }
-
-	//
-	// /**
-	//  * Since we have multiple providers but the OCS Share API v1 does
-	//  * not support this we need to check all backends.
-	//  *
-	//  * @param string $id
-	//  * @return \OCP\Share\IShare
-	//  * @throws ShareNotFound
-	//  */
-	// private function getShareById(string $id,string $userId): IShare {
-	// 	$share = null;
-	//
-	// 	// First check if it is an internal share.
-	// 	try {
-	// 		$share = $this->shareManager->getShareById('ocinternal:' . $id, $userId);
-	// 		return $share;
-	// 	} catch (ShareNotFound $e) {
-	// 		// Do nothing, just try the other share type
-	// 	}
-	//
-	//
-	// 	try {
-	// 		if ($this->shareManager->shareProviderExists(IShare::TYPE_CIRCLE)) {
-	// 			$share = $this->shareManager->getShareById('ocCircleShare:' . $id, $userId);
-	// 			return $share;
-	// 		}
-	// 	} catch (ShareNotFound $e) {
-	// 		// Do nothing, just try the other share type
-	// 	}
-	//
-	// 	try {
-	// 		if ($this->shareManager->shareProviderExists(IShare::TYPE_EMAIL)) {
-	// 			$share = $this->shareManager->getShareById('ocMailShare:' . $id, $userId);
-	// 			return $share;
-	// 		}
-	// 	} catch (ShareNotFound $e) {
-	// 		// Do nothing, just try the other share type
-	// 	}
-	//
-	// 	try {
-	// 		$share = $this->shareManager->getShareById('ocRoomShare:' . $id, $userId);
-	// 		return $share;
-	// 	} catch (ShareNotFound $e) {
-	// 		// Do nothing, just try the other share type
-	// 	}
-	//
-	// 	try {
-	// 		if ($this->shareManager->shareProviderExists(IShare::TYPE_DECK)) {
-	// 			$share = $this->shareManager->getShareById('deck:' . $id, $userId);
-	// 			return $share;
-	// 		}
-	// 	} catch (ShareNotFound $e) {
-	// 		// Do nothing, just try the other share type
-	// 	}
-	//
-	// 	if (!$this->shareManager->outgoingServer2ServerSharesAllowed()) {
-	// 		throw new ShareNotFound();
-	// 	}
-	// 	$share = $this->shareManager->getShareById('ocFederatedSharing:' . $id, $userId);
-	//
-	// 	return $share;
-	// }
 	/**
 	 * Does the user have read permission on the share
 	 *
