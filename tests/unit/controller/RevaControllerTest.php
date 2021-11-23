@@ -1590,7 +1590,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testUnshare() {
-		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
@@ -1612,7 +1611,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getStatus(),200);
 	}
 	public function testUnshareFails() {
-		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
