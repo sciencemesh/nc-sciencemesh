@@ -163,7 +163,8 @@ class ScienceMeshShareProvider implements IShareProvider {
 		/*
 		 * Check if file is not already shared with the remote user
 		 */
-		$alreadyShared = $this->getSharedWith($shareWith, $this::SHARE_TYPE_SCIENCEMESH, $share->getNode(), 1, 0);
+		//$alreadyShared = $this->getSharedWith($shareWith, $this::SHARE_TYPE_SCIENCEMESH, $share->getNode(), 1, 0);
+		$alreadyShared = $this->getSharedWith($shareWith, 14, $share->getNode(), 1, 0);
 		if (!empty($alreadyShared)) {
 			$message = 'Sharing %1$s failed, because this item is already shared with %2$s';
 			$message_t = $this->l->t('Sharing %1$s failed, because this item is already shared with user %2$s', [$share->getNode()->getName(), $shareWith]);
@@ -350,7 +351,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @return int
 	 */
 	public function addReceivedShareToDB($remote, $remote_id, $share_token, $password, $name, $owner, $user) {
-		$share_type = IShare::TYPE_SCIENCEMESH;
+		$share_type = 14;//IShare::TYPE_SCIENCEMESH;
 		$mountpoint = "{{TemporaryMountPointName#" . $name . "}}";
 		$mountpoint_hash = md5($mountpoint);
 		$qbt = $this->dbConnection->getQueryBuilder();
@@ -590,7 +591,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->delete('share')
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($shareId)))
-			->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_SCIENCEMESH)));
+			->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(14)));//$this::SHARE_TYPE_SCIENCEMESH)));
 		$qb->execute();
 
 		$qb->delete('federated_reshares')
@@ -622,7 +623,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 				$qb->expr()->eq('item_type', $qb->createNamedParameter('folder'))
 			))
 			->andWhere(
-				$qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_SCIENCEMESH))
+				$qb->expr()->eq('share_type', $qb->createNamedParameter(14))//$this::SHARE_TYPE_SCIENCEMESH))
 			);
 
 		/**
@@ -962,7 +963,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$qb = $this->dbConnection->getQueryBuilder();
 
 		$qb->delete('share')
-			->where($qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_SCIENCEMESH)))
+			->where($qb->expr()->eq('share_type', $qb->createNamedParameter(14)))//$this::SHARE_TYPE_SCIENCEMESH)))
 			->andWhere($qb->expr()->eq('uid_owner', $qb->createNamedParameter($uid)))
 			->execute();
 	}
@@ -1089,7 +1090,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->select('share_with', 'token', 'file_source')
 			->from('share')
-			->where($qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_SCIENCEMESH)))
+			->where($qb->expr()->eq('share_type', $qb->createNamedParameter(14)))//$this::SHARE_TYPE_SCIENCEMESH)))
 			->andWhere($qb->expr()->in('file_source', $qb->createNamedParameter($ids, IQueryBuilder::PARAM_INT_ARRAY)))
 			->andWhere($qb->expr()->orX(
 				$qb->expr()->eq('item_type', $qb->createNamedParameter('file')),
@@ -1122,7 +1123,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$qb->select('*')
 			->from('share')
 			->where(
-				$qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_SCIENCEMESH))
+				$qb->expr()->eq('share_type', $qb->createNamedParameter(14))//$this::SHARE_TYPE_SCIENCEMESH))
 			);
 
 		$cursor = $qb->execute();
@@ -1145,7 +1146,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$qb->select('*')
 			->from('share_external')
 			->where(
-				$qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_SCIENCEMESH))
+				$qb->expr()->eq('share_type', $qb->createNamedParameter(14))//$this::SHARE_TYPE_SCIENCEMESH))
 			);
 		$cursor = $qb->execute();
 		while ($data = $cursor->fetch()) {

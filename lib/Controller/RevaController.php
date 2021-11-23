@@ -757,7 +757,7 @@ class RevaController extends Controller {
 		} catch (LockedException $e) {
 			throw new OCSNotFoundException($this->l->t('Could not create share'));
 		}
-		$share->setShareType(IShare::TYPE_SCIENCEMESH);
+		$share->setShareType(14);//IShare::TYPE_SCIENCEMESH);
 		$share->setSharedBy($userId);
 		// @TODO We need to use ScienceMeshShareProvider to store the share addSentShareToDB()
 		$response = $this->shareInfoToResourceInfo($share);
