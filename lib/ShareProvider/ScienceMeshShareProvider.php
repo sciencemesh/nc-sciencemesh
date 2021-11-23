@@ -362,7 +362,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 			->setValue('user', $qb->createNamedParameter($user))
 			->setValue('mountpoint', $qb->createNamedParameter($mountpoint))
 			->setValue('$mountpoint_hash', $qb->createNamedParameter($mountpoint_hash))
-			->setValue('accepted', $qb->createNamedParameter($accepted))
+			->setValue('accepted', $qb->createNamedParameter($accepted));
 
 			// ->setValue('item_type', $qb->createNamedParameter($itemType))
 			// ->setValue('item_source', $qb->createNamedParameter($itemSource))

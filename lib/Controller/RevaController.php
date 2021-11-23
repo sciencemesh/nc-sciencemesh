@@ -16,7 +16,7 @@ use OCP\IConfig;
 
 use OCP\Files\IRootFolder;
 use OCP\Files\NotPermittedException;
-
+use \OCP\Files\NotFoundException;
 use League\Flysystem\FileNotFoundException;
 
 use OCP\AppFramework\Http;
@@ -312,14 +312,14 @@ class RevaController extends Controller {
 		}
 		return $permissionsCode;
 	}
-	private function getPathByOpaqueId($opaqueIdExploded){
-		$path = '';
-		for ($x = 1; $x <= count($opaqueIdExploded)-2; $x++) {
-			$path = $path.$opaqueIdExploded[$x].'/';
-		}
-		$path = $path.end($opaqueIdExploded);
-		return $path;
-	}
+	// private function getPathByOpaqueId($opaqueIdExploded){
+	// 	$path = '';
+	// 	for ($x = 1; $x <= count($opaqueIdExploded)-2; $x++) {
+	// 		$path = $path.$opaqueIdExploded[$x].'/';
+	// 	}
+	// 	$path = $path.end($opaqueIdExploded);
+	// 	return $path;
+	// }
 	/**
 	 * @param string $opaqueId
 	 * @return int $shareId
@@ -776,19 +776,17 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function addReceivedShare($userId) {
-		$md 						= $this->request->getParam("md");
-		$g 							= $this->request->getParam("g");
-		$providerDomain = $this->request->getParam("provider_domain");
-		$providerId		 	= $this->request->getParam("provider_id");
+		$md 							= $this->request->getParam("md");
+		$g 								= $this->request->getParam("g");
+		$providerDomain 	= $this->request->getParam("provider_domain");
+		$providerId		 		= $this->request->getParam("provider_id");
 		// $providerId resource UID on the provider side
-		$providerId = $this->request->getParam("provider_id");
+		$providerId				= $this->request->getParam("provider_id");
 		// $resourceType ('file', 'calendar',...)
-		$resourceType = $this->request->getParam("resource_type");
-		$providerDomain = $this->request->getParam("provider_domain");
-		// $ownerDisplayName display name of the user who shared the item
-		$ownerDisplayName = $this->request->getParam("owner_display_name");
+		$resourceType 		= $this->request->getParam("resource_type");
+		$providerDomain 	= $this->request->getParam("provider_domain");
 		// $protocol (e,.g. ['name' => 'webdav', 'options' => ['username' => 'john', 'permissions' => 31]])
-		$protocol = $this->request->getParam("protocol");
+		$protocol 				= $this->request->getParam("protocol");
 		$protocolName = $protocol["options"];
 		$sharedSecret = $protocolName["sharedSecret"];
 
@@ -965,7 +963,6 @@ class RevaController extends Controller {
 	 * @param string userid
 	 * @param boolean $checkGroups check groups as well?
 	 * @return boolean
-	 * @throws NotFoundException
 	 *
 	 * @suppress PhanUndeclaredClassMethod
 	 */
