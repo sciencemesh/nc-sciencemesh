@@ -1589,7 +1589,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getStatus(),500);
 	}
 
-	public function testUnshare(){
+	public function testUnshare() {
 		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
@@ -1601,8 +1601,8 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->request->method("getParam")
 			->willReturn(
 				[
-				"Id"=>[
-					"opaque_id"=>"some-share-id"
+					"Id" => [
+						"opaque_id" => "some-share-id"
 					]
 				]
 				);
@@ -1611,7 +1611,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->Unshare($this->userId);
 		$this->assertEquals($result->getStatus(),200);
 	}
-	public function testUnshareFails(){
+	public function testUnshareFails() {
 		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
@@ -1623,8 +1623,8 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->request->method("getParam")
 			->willReturn(
 				[
-				"Id"=>[
-					"opaque_id"=>"some-share-id"
+					"Id" => [
+						"opaque_id" => "some-share-id"
 					]
 				]
 				);
