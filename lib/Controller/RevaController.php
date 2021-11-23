@@ -713,11 +713,6 @@ class RevaController extends Controller {
 	 * Create a new share in fn with the given access control list.
 	 */
 	public function addSentShare($userId) {
-		$publicUpload = 'false';
-		$password = '';
-		$sendPasswordByTalk = null;
-		$expireDate = '';
-		$label = '';
 		$md = $this->request->getParam("md");
 		$g = $this->request->getParam("g");
 		$opaqueId = $md["opaque_id"];
@@ -747,9 +742,7 @@ class RevaController extends Controller {
 		} catch (NotFoundException $e) {
 			return new JSONResponse(["error" => "Share failed. Resource Path not found"], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
-
 		$share->setNode($path);
-
 		try {
 			$this->lock($share->getNode());
 		} catch (LockedException $e) {
@@ -770,7 +763,6 @@ class RevaController extends Controller {
 		$share->setSharedBy($userId);
 
 		try {
-			$share = $this->shareManager->createShare($share);
 		} catch (GenericShareException $e) {
 			\OC::$server->getLogger()->logException($e);
 			$code = $e->getCode() === 0 ? 403 : $e->getCode();
@@ -845,7 +837,7 @@ class RevaController extends Controller {
 			);
 		}
 		// share_token -> opaque_id ?
-		$this->shareProvider->addReceivedShareToDB(IShare::TYPE_SCIENCEMESH,$providerDomain,$providerId, $opaqueId,$sharedSecret,$name,$sharedBy,$userId,);
+		//$this->shareProvider->addReceivedShareToDB(IShare::TYPE_SCIENCEMESH,$providerDomain,$providerId, $opaqueId,$sharedSecret,$name,$sharedBy,$userId,);
 		$response = '{"id":{},"resource_id":{},"permissions":{"permissions":{"add_grant":true,"create_container":true,"delete":true,"get_path":true,"get_quota":true,"initiate_file_download":true,"initiate_file_upload":true,"list_grants":true,"list_container":true,"list_file_versions":true,"list_recycle":true,"move":true,"remove_grant":true,"purge_recycle":true,"restore_file_version":true,"restore_recycle_item":true,"stat":true,"update_grant":true,"deny_grant":true}},"grantee":{"Id":{"UserId":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1}}},"owner":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"creator":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"ctime":{"seconds":1234567890},"mtime":{"seconds":1234567890}}';
 		return new JSONResponse(json_decode($response), 201);
 	}
