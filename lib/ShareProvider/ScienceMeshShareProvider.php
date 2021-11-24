@@ -1280,7 +1280,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		}
 		$id = $data['fileid'];
 		$qb->select('*')
-			->from('share')
+			->from('share_external')
 			->where(
 				$qb->expr()->eq('uid_owner', $qb->createNamedParameter($userId))
 			)
