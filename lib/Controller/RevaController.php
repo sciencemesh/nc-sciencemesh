@@ -861,6 +861,8 @@ class RevaController extends Controller {
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
+	 * @return Http\DataResponse|JSONResponse
+
 	 *
 	 * Remove Share from share table
 	 */
@@ -969,13 +971,13 @@ class RevaController extends Controller {
 		$spec = $this->request->getParam("Spec");
 		$Id = $spec["Id"];
 		$opaqueId = $Id["opaque_id"];
-		$share = $this->shareManager->getShareById($opaqueId,$userId);
+		$share = $this->shareProvider->getReceivedShareByOpaqueId($userId,$opaqueId);
 		if ($share) {
 			$response = $this->shareInfoToResourceInfo($share);
 			$response["state"] = 2;
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
-		return new JSONResponse(["error" => "GetReceivedShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
+		return new JSONResponse(["error" => "GetReceivedShare failed"],Http::STATUS_NO_CONTENT);
 	}
 	/**
 	 * @PublicPage

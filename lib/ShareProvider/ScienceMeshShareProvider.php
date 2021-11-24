@@ -1261,4 +1261,39 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$qb->execute();
 		return true;
 	}
+	public function getReceivedShareByOpaqueId($userId, $opaque_id) {
+		error_log("call getReceivedShareByOpaqueId");
+		$decoded = urldecode($opaque_id);
+		$exploded = explode("/", $opaque_id);
+		$filename = end($exploded);
+		$username = substr($exploded[0], strlen("fileid-"));
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->select('fileid')
+			->from('filecache')
+			->where(
+				$qb->expr()->eq('name', $qb->createNamedParameter($filename))
+			);
+		$cursor = $qb->execute();
+		$data = $cursor->fetch();
+		if (!$data) {
+			return false;
+		}
+		$id = $data['fileid'];
+		$qb->select('*')
+			->from('share')
+			->where(
+				$qb->expr()->eq('uid_owner', $qb->createNamedParameter($userId))
+			)
+			->andWhere(
+				$qb->expr()->eq('item_source', $qb->createNamedParameter($id))
+			);
+		$qb->execute();
+		try {
+			$share = $this->createShareObject($data);
+		} catch (InvalidShare $e) {
+			throw new ShareNotFound();
+		}
+		$cursor->closeCursor();
+		return $share;
+	}
 }
