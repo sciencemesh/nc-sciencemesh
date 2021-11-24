@@ -511,7 +511,6 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-
 	public function ListFolder($userId) {
 		$ref = $this->request->getParam("ref");
 		$path = "sciencemesh" . $ref["path"]; // FIXME: sanitize!
@@ -1030,88 +1029,4 @@ class RevaController extends Controller {
 		}
 		return false;
 	}
-
-	//
-	// /**
-	//  * @param string $viewer
-	//  * @param Node $node
-	//  * @param bool $sharedWithMe
-	//  * @param bool $reShares
-	//  * @param bool $subFiles
-	//  * @param bool $includeTags
-	//  *
-	//  * @return array
-	//  * @throws NotFoundException
-	//  * @throws OCSBadRequestException
-//	 */
-// 		private function getFormattedShares(
-// 			string $viewer,
-// 			$node = null,
-// 			bool $sharedWithMe = false,
-// 			bool $reShares = false,
-// 			bool $subFiles = false,
-// 			bool $includeTags = false,
-// 			string $userId
-// 		): array {
-// 			if ($sharedWithMe) {
-// 				return $this->getSharedWithMe($node, $includeTags);
-// 			}
-//
-// 			if ($subFiles) {
-// 				return $this->getSharesInDir($node);
-// 			}
-//
-// 			$shares = $this->getSharesFromNode($viewer, $node, $reShares);
-//
-// 			$known = $formatted = $miniFormatted = [];
-// 			$resharingRight = false;
-// 			foreach ($shares as $share) {
-// 				try {
-// 					$share->getNode();
-// 				} catch (NotFoundException $e) {
-// 					/*
-// 					 * Ignore shares where we can't get the node
-// 					 * For example deleted shares
-// 					 */
-// 					continue;
-// 				}
-//
-// 				if (in_array($share->getId(), $known)
-// 					|| ($share->getSharedWith() === $userId && $share->getShareType() === IShare::TYPE_USER)) {
-// 					continue;
-// 				}
-//
-// 				$known[] = $share->getId();
-// 				try {
-// 					/** @var IShare $share */
-// 					$format = $this->formatShare($share, $node);
-// 					$formatted[] = $format;
-//
-// 					// let's also build a list of shares created
-// 					// by the current user only, in case
-// 					// there is no resharing rights
-// 					if ($share->getSharedBy() === $userId) {
-// 						$miniFormatted[] = $format;
-// 					}
-//
-// 					// check if one of those share is shared with me
-// 					// and if I have resharing rights on it
-// 					if (!$resharingRight && $this->shareProviderResharingRights($userId, $share, $node)) {
-// 						$resharingRight = true;
-// 					}
-// 				} catch (InvalidPathException | NotFoundException $e) {
-// 				}
-// 			}
-//
-// 			if (!$resharingRight) {
-// 				$formatted = $miniFormatted;
-// 			}
-//
-// 			if ($includeTags) {
-// 				$formatted =
-// 					Helper::populateTags($formatted, 'file_source', \OC::$server->getTagManager());
-// 			}
-//
-// 			return $formatted;
-// 		}
 }
