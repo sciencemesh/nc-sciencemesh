@@ -4,4 +4,5 @@
 ?>
 <main class="sciencemesh-container sciencemesh-launcher">
 ScienceMesh launcher goes here
+<?php echo($_['reva']); ?>
 </main>
