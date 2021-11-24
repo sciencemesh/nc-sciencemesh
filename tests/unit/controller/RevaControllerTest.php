@@ -294,7 +294,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->groupManager, $this->cloudFederationProviderManager,
 			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
-		$response = json_encode(["id" => ["idp" => "cesnet.cz","opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type" => 1]]);
+		$response = ["id" => ["idp" => "cesnet.cz","opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type" => 1]];
 		$result = $controller->GetUser($this->userId);
 		$this->assertEquals($result->getData(), $response);
 	}
