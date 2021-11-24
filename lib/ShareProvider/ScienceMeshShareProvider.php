@@ -429,7 +429,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @param IShare $share
 	 * @return IShare The share object
 	 */
-	public function updateSentShare(IShare $share) {
+	public function update(IShare $share) {
 		/*
 		 * We allow updating the permissions of sciencemesh shares
 		 */

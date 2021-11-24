@@ -872,20 +872,16 @@ class RevaController extends Controller {
 	 *
 	 */
 	public function UpdateSentShare($userId) {
-		$ref = $this->request->getParam("ref");
-		$spec = $ref["Spec"];
-		$id = $spec["Id"];
-		$opaqueId = $id["opaque_id"];
-		$p = $this->request->getParam("p");
-		$permissions = $p["permissions"];
+		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
+		$permissions = $this->request->getParam("p")["permissions"];
 		$permissionsCode = $this->getPermissionsCode($permissions);
-		$share = $this->shareManager->getShareById($opaqueId);
-		$updated = $this->shareManager->updateShare($share, $permissionsCode);
-		if ($updated) {
-			$response = $this->shareInfoToResourceInfo($updated);
-			return new JSONResponse($response, Http::STATUS_OK);
+		if(!($share = $this->shareProvider->getSentShareByOpaqueId($userId,$opaqueId))){
+			return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
-		return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
+		$share->setPermissions($permissionsCode);
+		$shareUpdated = $this->shareProvider->update($share);
+		$response = $this->shareInfoToResourceInfo($shareUpdated);
+		return new JSONResponse($response, Http::STATUS_OK);
 	}
 	/**
 	 * @PublicPage

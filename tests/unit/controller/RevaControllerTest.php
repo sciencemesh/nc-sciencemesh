@@ -1654,7 +1654,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->Unshare($this->userId);
 		$this->assertEquals($result->getStatus(),204);
 	}
-	public function testUpdateShare() {
+	public function testUpdateSentShare() {
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
@@ -1670,9 +1670,9 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		];
 		$this->request->method("getParam")
 			->will($this->returnValueMap($paramsMap));
-		$this->shareManager->method("getShareById")
+		$this->shareProvider->method("getSentShareByOpaqueId")
 			->willReturn($testShare);
-		$this->shareManager->method("updateShare")
+		$this->shareProvider->method("update")
 			->willReturn($testShareUpdated);
 		$response = [
 			"id" => [
@@ -1730,11 +1730,11 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 				"seconds" => 1234567890
 			]
 		];
-		$result = $controller->UpdateShare($this->userId);
+		$result = $controller->UpdateSentShare($this->userId);
 		$this->assertEquals($result->getData(),$response);
 		$this->assertEquals($result->getStatus(),200);
 	}
-	public function testUpdateShareFails() {
+	public function testUpdateSentShareFails() {
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
@@ -1749,11 +1749,9 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		];
 		$this->request->method("getParam")
 			->will($this->returnValueMap($paramsMap));
-		$this->shareManager->method("getShareById")
-			->willReturn($testShare);
-		$this->shareManager->method("updateShare")
+		$this->shareProvider->method("getSentShareByOpaqueId")
 			->willReturn(false);
-		$result = $controller->UpdateShare($this->userId);
+		$result = $controller->UpdateSentShare($this->userId);
 		$this->assertEquals($result->getStatus(),500);
 	}
 	public function testListSentShares() {
