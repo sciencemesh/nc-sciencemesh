@@ -711,6 +711,23 @@ class RevaController extends Controller {
 		}
 		return new JSONResponse(["error" => "Create failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
+	/**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @NoSameSiteCookieRequired
+	 *
+	 * Get user list.
+	 */
+	public function GetUser($userId) {
+		$response = ["id" => ["idp" => "cesnet.cz","opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type" => 1]];
+		if ($this->userManager->userExists($userId)) {
+			return new JSONResponse($response, Http::STATUS_OK);
+		}
+		return new JSONResponse(
+			['message' => 'User does not exist'],
+			Http::STATUS_NOT_FOUND
+		);
+	}
 
 	/**
 	 * @PublicPage
