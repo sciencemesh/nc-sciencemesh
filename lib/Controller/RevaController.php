@@ -724,7 +724,7 @@ class RevaController extends Controller {
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
 		return new JSONResponse(
-			['message' => 'User not exist'],
+			['message' => 'User does not exist'],
 			Http::STATUS_NOT_FOUND
 		);
 	}
