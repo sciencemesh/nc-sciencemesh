@@ -888,6 +888,24 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 *
+	 * UpdateReceivedShare updates the received share with share state.
+	 */
+	public function UpdateReceivedShare($userId) {
+
+		if(!($share = $this->shareProvider->getReceivedShareByOpaqueId($userId,"how to get share?, we don't have opaque_id"))){
+			return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+		$share->setPermissions($permissionsCode);
+		$shareUpdated = $this->shareProvider->update($share);
+		$response = $this->shareInfoToResourceInfo($shareUpdated);
+		$response["state"] = 2;
+		return new JSONResponse($response, Http::STATUS_OK);
+	}
+	/**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @return Http\DataResponse|JSONResponse
+	 *
 	 * ListSentShares returns the shares created by the user. If md is provided is not nil,
 	 * it returns only shares attached to the given resource.
 	 */
@@ -964,27 +982,6 @@ class RevaController extends Controller {
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
 		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_NO_CONTENT);
-	}
-	/**
-	 * @PublicPage
-	 * @NoCSRFRequired
-	 * @return Http\DataResponse|JSONResponse
-	 *
-	 * UpdateReceivedShare updates the received share with share state.
-	 */
-	public function UpdateReceivedShare($userId) {
-		$ref = $this->request->getParam("ref");
-		$Spec = $ref["Spec"];
-		$Id = $Spec["Id"];
-		$opaqueId = $Id["opaque_id"];
-		$share = $this->shareManager->getShareById($opaqueId,$userId);
-		$updated = $this->shareManager->updateShare($share, 5);
-		if ($updated) {
-			$response = $this->shareInfoToResourceInfo($updated);
-			$response["state"] = 2;
-			return new JSONResponse($response, Http::STATUS_OK);
-		}
-		return new JSONResponse(["error" => "UpdateReceivedShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
 	/**
 	 * Does the user have read permission on the share
