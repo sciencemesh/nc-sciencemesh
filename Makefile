@@ -87,7 +87,7 @@ ifeq (, $(composer))
 else
 	composer install --prefer-dist
 endif
-
+	-git apply --directory=vendor/phpunit/php-code-coverage phpunit.patch
 # Installs npm dependencies
 .PHONY: npm
 npm:
@@ -108,7 +108,6 @@ clean:
 distclean: clean
 	rm -rf vendor
 	rm -rf node_modules
-	rm -rf js/vendor
 	rm -rf js/node_modules
 
 # Builds the source and appstore package
@@ -158,8 +157,13 @@ appstore:
 	--exclude="../$(app_name)/js/.*" \
 	--exclude-vcs \
 	
+.PHONY: coverage
+coverage:
+	XDEBUG_MODE=coverage ./vendor/bin/phpunit --coverage-text
+
 .PHONY: test
 test: composer
 	$(CURDIR)/vendor/bin/phplint ./ --exclude=vendor
 	$(CURDIR)/vendor/phpunit/phpunit/phpunit -c phpunit.xml
-	$(CURDIR)/vendor/phpunit/phpunit/phpunit -c phpunit.integration.xml
+# see https://github.com/pondersource/sciencemesh-nextcloud/issues/51
+# $(CURDIR)/vendor/phpunit/phpunit/phpunit -c phpunit.integration.xml

@@ -5,3 +5,4 @@ vendor/*
 tests/coverage
 cov.html/
 .php_cs.cache
+build/tools/composer.phar
