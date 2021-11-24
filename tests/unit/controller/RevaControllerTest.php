@@ -262,8 +262,17 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->GetUser($this->userId);
 		$this->assertEquals($result->getData(), $response);
 	}
-
-
+	public function testGetUserFails() {
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+		  $this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$result = $controller->GetUser("fakeUserame");
+		$this->assertEquals($result->getStatus(),404);
+	}
 	public function testAuthenticateWrong() {
 		$this->request->method("getParam")->willReturn("whatever");
 		$this->userManager->method("checkPassword")->willReturn(false);
@@ -1267,7 +1276,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->Upload($this->userId, "/fakeFile.json");
 		$this->assertEquals($result->getStatus(),500);
 	}
-
 	public function testAddSentShare() {
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
@@ -1503,7 +1511,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->addReceivedShare($this->userId);
 		$this->assertEquals($result->getStatus(),201);
 	}
-	public function testGetShare() {
+	public function testGetSentShare() {
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
@@ -1520,7 +1528,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 					]
 				]
 				);
-		$this->shareManager->method("getShareById")
+		$this->shareProvider->method("getSentShareByOpaqueId")
 			->willReturn($testShare);
 		$response = [
 			"id" => [
@@ -1578,7 +1586,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 				"seconds" => 1234567890
 			]
 		];
-		$result = $controller->GetShare($this->userId);
+		$result = $controller->GetSentShare($this->userId);
 		$this->assertEquals($result->getData(),$response);
 		$this->assertEquals($result->getStatus(),200);
 	}
@@ -1598,10 +1606,10 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 					]
 				]
 				);
-		$this->shareManager->method("getShareById")
+		$this->shareProvider->method("getSentShareByOpaqueId")
 			->willReturn(false);
-		$result = $controller->GetShare($this->userId);
-		$this->assertEquals($result->getStatus(),500);
+		$result = $controller->GetSentShare($this->userId);
+		$this->assertEquals($result->getStatus(),204);
 	}
 
 	public function testUnshare() {
@@ -1971,7 +1979,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 					]
 				]
 				);
-		$this->shareManager->method("getShareById")
+		$this->shareProvider->method("getReceivedShareByOpaqueId")
 			->willReturn($testShare);
 		$response = [
 			"id" => [
@@ -2053,7 +2061,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->shareManager->method("getShareById")
 			->willReturn(null);
 		$result = $controller->GetReceivedShare($this->userId);
-		$this->assertEquals($result->getStatus(),500);
+		$this->assertEquals($result->getStatus(),204);
 	}
 	public function testUpdateReceivedShare() {
 		$controller = new RevaController(

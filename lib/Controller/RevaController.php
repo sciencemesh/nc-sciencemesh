@@ -307,14 +307,6 @@ class RevaController extends Controller {
 		}
 		return $permissionsCode;
 	}
-	// private function getPathByOpaqueId($opaqueIdExploded){
-	// 	$path = '';
-	// 	for ($x = 1; $x <= count($opaqueIdExploded)-2; $x++) {
-	// 		$path = $path.$opaqueIdExploded[$x].'/';
-	// 	}
-	// 	$path = $path.end($opaqueIdExploded);
-	// 	return $path;
-	// }
 	/**
 	 * @param string $opaqueId
 	 * @return int $shareId
@@ -976,7 +968,7 @@ class RevaController extends Controller {
 			$response = $this->shareInfoToResourceInfo($share);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
-		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_STATUS_NO_CONTENT);
+		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_NO_CONTENT);
 	}
 	/**
 	 * @PublicPage
