@@ -134,16 +134,32 @@ To check the [RevaCotroller.php](https://github.com/pondersource/nc-sciencemesh/
 
 ### addReceivedShare()
 
-    curl -v -H  'Content-Type:application/json' -X POST -d '{"md":{"opaque_id":"fileid-einstein%2Fmy-folder"},"g":{"grantee":{"type":1,"Id":{"UserId":{"idp":"cesnet.cz","opaque_id":"marie","type":1}}}},"provider_domain":"cern.ch","resource_type":"file","provider_id":2,"owner_display_name":"Albert Einstein","protocol":{"name":"webdav","options":{"sharedSecret":"secret","permissions":"webdav-property"}}}' http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/addReceivedShare
+    curl -v -H  'Content-Type:application/json' -X POST -d '{"md":{"opaque_id":"fileid-einstein%2Fmy-folder"},"g":{"grantee":{"type":1,"Id":{"UserId":{"idp":"cesnet.cz","opaque_id":"marie","type":1}}}},"provider_domain":"cern.ch","resource_type":"file","provider_id":2,"protocol":{"name":"webdav","options":{"sharedSecret":"secret","permissions":"webdav-property"}}}' http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/addReceivedShare
 
-    
+
+### addSentShare
+ 
+    curl -v -H  'Content-Type:application/json'  -X POST -d '{"md":{"storage_id":"123e4567-e89b-12d3-a456-426655440000","opaque_id":"fileid-marie%2FtestFile.json"},"g":{"grantee":{"type":1,"Id":{"UserId":{"idp":"cernbox.cern.ch","opaque_id":"einstein","type":1}}},"permissions":{"permissions":{"get_path":true,"initiate_file_download":true,"list_container":true,"list_file_versions":true,"stat":true}}}}'  http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/addSentShare
+       
 ### ListReceivedShares()
 
     curl -X POST http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/ListReceivedShares
     
-### addSentShare()
+### ListSentShares()
+  
+  curl -X POST http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/ListShares
+   
+### Unshare()
 
-    curl -v -H  'Content-Type:application/json'  -X POST -d '{"md":{"storage_id":"123e4567-e89b-12d3-a456-426655440000","opaque_id":"fileid-marie%2FtestFile.json"},"g":{"grantee":{"type":1,"Id":{"UserId":{"idp":"cernbox.cern.ch","opaque_id":"einstein","type":1}}},"permissions":{"permissions":{"get_path":true,"initiate_file_download":true,"list_container":true,"list_file_versions":true,"stat":true}}}}'  http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/addSentShare
+curl -v -H  'Content-Type:application/json' -X POST -d  '{"Spec":{"Id":{"opaque_id":"fileid-marie%2FtestFile.json"}}}' http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/Unshare
+
+### GetReceivedShare()
+
+curl -v -H  'Content-Type:application/json' -X POST -d  '{"Spec":{"Id":{"opaque_id":"some-share-id"}}}' http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/GetReceivedShare
 
 
-    
+### GetSentShare()
+
+curl -v -H  'Content-Type:application/json' -X POST -d  '{"Spec":{"Id":{"opaque_id":"some-share-id"}}}' http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/GetSentShare
+
+
