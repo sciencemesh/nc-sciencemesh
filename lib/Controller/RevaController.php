@@ -874,26 +874,6 @@ class RevaController extends Controller {
 			return new JSONResponse([],Http::STATUS_NO_CONTENT);
 		}
 	}
-
-	/**
-	 * @PublicPage
-	 * @NoCSRFRequired
-	 * @return Http\DataResponse|JSONResponse
-	 *
-	 * GetSentShare gets the information for a share by the given ref.
-	 */
-	public function GetSentShare($userId) {
-		$spec = $this->request->getParam("Spec");
-		$Id = $spec["Id"];
-		$opaqueId = $Id["opaque_id"];
-		$share = $this->shareManager->getShareById($opaqueId);
-		if ($share) {
-			$response = $this->shareInfoToResourceInfo($share);
-			return new JSONResponse($response, Http::STATUS_OK);
-		}
-		return new JSONResponse(["error" => "GetShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
-	}
-
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -978,6 +958,25 @@ class RevaController extends Controller {
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
 		return new JSONResponse(["error" => "GetReceivedShare failed"],Http::STATUS_NO_CONTENT);
+	}
+
+	/**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @return Http\DataResponse|JSONResponse
+	 *
+	 * GetSentShare gets the information for a share by the given ref.
+	 */
+	public function GetSentShare($userId) {
+		$spec = $this->request->getParam("Spec");
+		$Id = $spec["Id"];
+		$opaqueId = $Id["opaque_id"];
+		$share = $this->shareProvider->getSentShareByOpaqueId($userId,$opaqueId);
+		if ($share) {
+			$response = $this->shareInfoToResourceInfo($share);
+			return new JSONResponse($response, Http::STATUS_OK);
+		}
+		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_STATUS_NO_CONTENT);
 	}
 	/**
 	 * @PublicPage
