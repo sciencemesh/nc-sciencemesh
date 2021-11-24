@@ -424,12 +424,12 @@ class ScienceMeshShareProvider implements IShareProvider {
 
 
 	/**
-	 * Update a share
+	 * Update a sent share
 	 *
 	 * @param IShare $share
 	 * @return IShare The share object
 	 */
-	public function update(IShare $share) {
+	public function updateSentShare(IShare $share) {
 		/*
 		 * We allow updating the permissions of sciencemesh shares
 		 */
@@ -448,7 +448,31 @@ class ScienceMeshShareProvider implements IShareProvider {
 
 		return $share;
 	}
+	/**
+	 * Update a received share
+	 *
+	 * @param IShare $share
+	 * @return IShare The share object
+	 */
+	public function updateReceivedShare(IShare $share) {
+		/*
+		 * We allow updating the permissions of sciencemesh shares
+		 */
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->update('share_external')
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($share->getId())))
+				->set('permissions', $qb->createNamedParameter($share->getPermissions()))
+				->set('uid_owner', $qb->createNamedParameter($share->getShareOwner()))
+				->set('uid_initiator', $qb->createNamedParameter($share->getSharedBy()))
+				->execute();
 
+		// send the updated permission to the owner/initiator, if they are not the same
+		if ($share->getShareOwner() !== $share->getSharedBy()) {
+			$this->sendPermissionUpdate($share);
+		}
+
+		return $share;
+	}
 	/**
 	 * send the updated permission to the owner/initiator, if they are not the same
 	 *
