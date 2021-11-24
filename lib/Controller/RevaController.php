@@ -382,9 +382,16 @@ class RevaController extends Controller {
 			// FIXME: this should match the expected result format in Reva.
 			$result = array(
 				"UserId" => $userId,
-				"Scope" => array()
+				"Username" => $userId,
+				"Mail" => $userId . "@pondersource.nl",
+				"MailVerified" => true,
+				"DisplayName" => $userId,
+				"Groups" => array(),
+				"UIDNumber" => 123,
+				"GIDNumber" => 789,
+				"Opaque" => array(),
+				"Scopes" => array()
 			);
-			
 			return new JSONResponse($result, Http::STATUS_OK);
 		}
 		return new JSONResponse("Username / password not recognized", 401);
