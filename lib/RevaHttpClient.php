@@ -22,13 +22,13 @@
 
 namespace OCA\ScienceMesh;
 
-/** 
-  * Class RevaHttpClient
-  *
-  * This class is a helper to handle the outbound HTTP connections from Nextcloud to Reva
-  *
-  * @package OCA\ScienceMesh\RevaHttpClient
-  */
+/**
+ * Class RevaHttpClient
+ *
+ * This class is a helper to handle the outbound HTTP connections from Nextcloud to Reva
+ *
+ * @package OCA\ScienceMesh\RevaHttpClient
+ */
 class RevaHttpClient {
 	private $client;
 	private $revaUrl;
@@ -46,7 +46,7 @@ class RevaHttpClient {
 		$this->curlDebug = true;
 	}
 
-	private function curlGet($url, $params=[]) {
+	private function curlGet($url, $params = []) {
 		$ch = curl_init();
 		if (sizeof($params)) {
 			$url .= "?" . http_build_query($params);
@@ -80,7 +80,7 @@ curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
 		
 		return $output;
 	}
-	private function curlPost($url, $params=[]) {
+	private function curlPost($url, $params = []) {
 		$ch = curl_init();
 
 // FIXME: Remove these;
@@ -100,14 +100,14 @@ curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
 		$output = curl_exec($ch);
 		curl_close($ch);
 		return $output;
-	}		
+	}
 
-	public function revaGet($method, $params=[]) {
+	public function revaGet($method, $params = []) {
 		$url = $this->revaUrl . $method;
 		return $this->curlGet($url, $params);
 	}
 		
-	public function revaPost($method, $params=[]) {
+	public function revaPost($method, $params = []) {
 		$url = $this->revaUrl . $method;
 		return $this->curlPost($url, $params);
 	}

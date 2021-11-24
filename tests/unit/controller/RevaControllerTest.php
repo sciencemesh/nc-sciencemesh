@@ -4,14 +4,13 @@ namespace OCA\ScienceMesh\Tests\Unit\Controller;
 
 use PHPUnit_Framework_TestCase;
 
-use OCP\AppFramework\Http\TemplateResponse;
-use OCP\Files\IRootFolder;
 use OCA\ScienceMesh\Controller\RevaController;
 use OCA\ScienceMesh\Service\UserService;
 
-
+/**
+ * @covers \OCA\ScienceMesh\Controller\RevaController
+ */
 class RevaControllerTest extends PHPUnit_Framework_TestCase {
-
 	private $appName = "sciencemesh";
 	private $rootFolder;
 	private $request;
@@ -30,13 +29,14 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	private $logger;
 	private $appManager;
 	private $l;
-
+	private $shareProvider;
 
 	private $lockedNode;
 	private $controller;
 
 	public $existingsMap = [
 		["sciencemesh/not/found", false],
+		["sciencemesh/fakeFile.json", false],
 		["sciencemesh/test", true],
 		["sciencemesh/test.json", true],
 		["sciencemesh/some/path", true],
@@ -45,41 +45,196 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	];
 
 	public function setUp() {
+		$this->rootFolder = $this->getMockBuilder("OCP\Files\IRootFolder")->getMock();
+		$this->request = $this->getMockBuilder("OCP\IRequest")->getMock();
+		$this->session = $this->getMockBuilder("OCP\ISession")->getMock();
+		$this->userManager = $this->getMockBuilder("OCP\IUserManager")->getMock();
+		$this->urlGenerator = $this->getMockBuilder("OCP\IURLGenerator")->getMock();
 
-		$this->rootFolder                     = $this->getMockBuilder("OCP\Files\IRootFolder")->getMock();
-		$this->request                        = $this->getMockBuilder("OCP\IRequest")->getMock();
-		$this->session                        = $this->getMockBuilder("OCP\ISession")->getMock();
-		$this->userManager                    = $this->getMockBuilder("OCP\IUserManager")->getMock();
-		$this->urlGenerator                   = $this->getMockBuilder("OCP\IURLGenerator")->getMock();
+		$this->config = $this->getMockBuilder("OCP\IConfig")->getMock();
+		$this->userService = new UserService($this->session);
 
-		$this->config                         = $this->getMockBuilder("OCP\IConfig")->getMock();
-		$this->userService                    = new UserService($this->session);
-
-		$this->trashManager                   = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashManager")->getMock();
-		$this->shareManager                   = $this->getMockBuilder("OCP\Share\IManager")->getMock();
-		$this->groupManager                   = $this->getMockBuilder("OCP\IGroupManager")->getMock();
+		$this->trashManager = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashManager")->getMock();
+		$this->shareManager = $this->getMockBuilder("OCP\Share\IManager")->getMock();
+		$this->groupManager = $this->getMockBuilder("OCP\IGroupManager")->getMock();
 		$this->cloudFederationProviderManager = $this->getMockBuilder("OCP\Federation\ICloudFederationProviderManager")->getMock();
-		$this->factory                        = $this->getMockBuilder("OCP\Federation\ICloudFederationFactory")->getMock();
-		$this->cloudIdManager                 = $this->getMockBuilder("OCP\Federation\ICloudIdManager")->getMock();
-		$this->logger                         = $this->getMockBuilder("Psr\Log\LoggerInterface")->getMock();;
-		$this->appManager 										= $this->getMockBuilder("OCP\App\IAppManager")->getMock();
-		$this->l 															= $this->getMockBuilder("OCP\IL10N")->getMock();
+		$this->factory = $this->getMockBuilder("OCP\Federation\ICloudFederationFactory")->getMock();
+		$this->cloudIdManager = $this->getMockBuilder("OCP\Federation\ICloudIdManager")->getMock();
+		$this->logger = $this->getMockBuilder("Psr\Log\LoggerInterface")->getMock();
+		;
+		$this->appManager = $this->getMockBuilder("OCP\App\IAppManager")->getMock();
+		$this->l = $this->getMockBuilder("OCP\IL10N")->getMock();
+		$this->shareProvider = $this->getMockBuilder("OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider")->disableOriginalConstructor()->getMock();
 
-		$this->userFolder                     = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$this->userFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$this->sciencemeshFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		// For initializeStorage, see
 		// https://github.com/pondersource/nc-sciencemesh/blob/febe370de013cd8cd21d323c66d00cba54671dd7/lib/Controller/RevaController.php#L60-L64
 		$this->rootFolder->method("getUserFolder")->willReturn($this->userFolder);
-		$this->sciencemeshFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$this->userFolder->method("nodeExists")
 			->will($this->returnValueMap($this->existingsMap));
 
 		$this->sciencemeshFolder->method("nodeExists")->willReturn(true);
 		$this->sciencemeshFolder->method("getPath")->willReturn("/sciencemesh");
-
+	}
+	protected static function getMethod($name) {
+		$RevaControllerReflect = new \ReflectionClass('OCA\ScienceMesh\Controller\RevaController');
+		$method = $RevaControllerReflect->getMethod($name);
+		$method->setAccessible(true);
+		return $method;
+	}
+	public function testParseDate() {
+		$parseDate = self::getMethod('parseDate');
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+		  $this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$response = $parseDate->invokeArgs($controller, ['2021-11-11']);
+		$date = new \DateTime('2021-11-11');
+		$date->setTime(0, 0, 0);
+		$this->assertEquals($response, $date);
+	}
+	public function testParseDateException() {
+		$parseDate = self::getMethod('parseDate');
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$this->expectException(\Exception::class);
+		$parseDate->invokeArgs($controller, ['123456789']);
+	}
+	public function testcanAccessShareGetPermissions() {
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$testShare->method("getPermissions")->willReturn(0);
+		$canAccessShare = self::getMethod('canAccessShare');
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$response = $canAccessShare->invokeArgs($controller, [$testShare,"marie"]);
+		$this->assertEquals($response, false);
+	}
+	public function testcanAccessShareGetSharedOwnerOrGetSharedBy() {
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$testShare->method("getPermissions")->willReturn(12);
+		$testShare->method("getSharedBy")->willReturn("marie");
+		$testShare->method("getShareOwner")->willReturn("marie");
+		$canAccessShare = self::getMethod('canAccessShare');
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$response = $canAccessShare->invokeArgs($controller, [$testShare,"marie"]);
+		$this->assertEquals($response, true);
+	}
+	public function testcanAccessShare() {
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$testFile = $this->getMockBuilder("OCP\Files\File")->getMock();
+		$testFile->method('getPermissions')->willReturn(16);
+		$testShare->method("getPermissions")->willReturn(16);
+		$testShare->method("getSharedBy")->willReturn("einstein");
+		$testShare->method("getShareOwner")->willReturn("einstein");
+		$canAccessShare = self::getMethod('canAccessShare');
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$this->userFolder->method('getById')
+			->willReturn([$testFile]);
+		$response = $canAccessShare->invokeArgs($controller, [$testShare,"marie"]);
+		$this->assertEquals($response,true);
+	}
+	public function testcanAccessShareFails() {
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$testShare->method("getPermissions")->willReturn(16);
+		$testShare->method("getSharedBy")->willReturn("einstein");
+		$testShare->method("getShareOwner")->willReturn("einstein");
+		$canAccessShare = self::getMethod('canAccessShare');
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$response = $canAccessShare->invokeArgs($controller, [$testShare,"marie"]);
+		$this->assertEquals($response,false);
+	}
+	public function testshareProviderResharingRightsOwner() {
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$testFile = $this->getMockBuilder("OCP\Files\File")->getMock();
+		$testShare->method("getShareOwner")->willReturn("marie");
+		$shareProviderResharingRights = self::getMethod('shareProviderResharingRights');
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$response = $shareProviderResharingRights->invokeArgs($controller, ["marie",$testShare,$testFile]);
+		$this->assertEquals($response, true);
+	}
+	public function testshareProviderResharingRightsPermissions() {
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$testFile = $this->getMockBuilder("OCP\Files\File")->getMock();
+		$testFile->method("getPermissions")->willReturn("20");
+		$testShare->method("getShareOwner")->willReturn("einstein");
+		$shareProviderResharingRights = self::getMethod('shareProviderResharingRights');
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$response = $shareProviderResharingRights->invokeArgs($controller, ["marie",$testShare,$testFile]);
+		$this->assertEquals($response, true);
+	}
+	public function testshareProviderResharingRightsFails() {
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$testShare->method("getShareOwner")->willReturn("einstein");
+		$shareProviderResharingRights = self::getMethod('shareProviderResharingRights');
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$response = $shareProviderResharingRights->invokeArgs($controller, ["marie",$testShare,null]);
+		$this->assertEquals($response, false);
+	}
+	public function testAddGrant() {
+		$this->request->method("getParam")->willReturn("/test");
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+		  $this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$result = $controller->AddGrant($this->userId);
+		$this->assertEquals($result->getData(), "Not implemented");
 	}
 
 	public function testAuthenticateOK() {
-		$user =  $this->getMockBuilder("OCP\IUser")->getMock();
+		$user = $this->getMockBuilder("OCP\IUser")->getMock();
 		$this->request->method("getParam")->willReturn("whatever");
 		$this->userManager->method("checkPassword")->willReturn($user);
 		$controller = new RevaController(
@@ -87,12 +242,54 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$result = $controller->Authenticate($this->userId);
 		$this->assertEquals($result->getData(), "Logged in");
 	}
 
+	public function testGetUserThatExists() {
+		$user = $this->getMockBuilder("OCP\IUser")->getMock();
+		$this->userManager
+			->method("userExists")
+			->with($this->equalTo("einstein"))
+			->willReturn(true);
+		$this->request->method("getParam")->willReturn("einstein");
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+		  $this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$response = [
+			"id" => [
+				"idp" => "some-domain.com",
+				"opaque_id" => "einstein",
+				"type" => 1
+			]
+		];
+		$result = $controller->GetUser("alice");
+		$this->assertEquals($result->getData(), $response);
+	}
+
+	public function testGetUserThatDoesNotExist() {
+		$user = $this->getMockBuilder("OCP\IUser")->getMock();
+		$this->userManager
+			->method("userExists")
+			->with($this->equalTo("archimedes"))
+			->willReturn(false);
+		$this->request->method("getParam")->willReturn("archimedes");
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+		  $this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$result = $controller->GetUser("alice");
+		$this->assertEquals($result->getStatus(), 404);
+	}
 
 	public function testAuthenticateWrong() {
 		$this->request->method("getParam")->willReturn("whatever");
@@ -102,56 +299,101 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$result = $controller->Authenticate($this->userId);
 		$this->assertEquals($result->getData(), "Username / password not recognized");
 	}
-
-
-	public function testCreateDir(){
+	public function testCreateDir() {
+		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$this->request->method("getParam")->willReturn("/test");
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
-		$this->userFolder->expects($this->once())
-			->method("newFolder")
-			->with($this->equalTo("sciencemesh/test"));
+		$this->userFolder->method("newFolder")
+			->willReturn($testFolder);
 		$result = $controller->createDir($this->userId);
 		$this->assertEquals($result->getData(), "OK");
 	}
-
-
-	public function testCreateHome(){
+	public function testCreateDirFails() {
+		$this->request->method("getParam")->willReturn("/test");
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$this->userFolder->method("newFolder")
+			->willThrowException(new \OCP\Files\NotPermittedException());
+		$result = $controller->createDir($this->userId);
+		$this->assertEquals($result->getStatus(), 500);
+	}
+	public function testCreateHome() {
+		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
+		$this->userFolder->method("newFolder")
+		->willReturn($testFolder);
 		$result = $controller->CreateHome($this->userId);
 		$this->assertEquals($result->getData(), "OK");
 	}
-
-	public function testCreateReference(){
+	public function testCreateHomeCREATED() {
+		$rootFolder = $this->getMockBuilder("OCP\Files\IRootFolder")->getMock();
+		$userFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$rootFolder->method("getUserFolder")->willReturn($userFolder);
+		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$controller = new RevaController(
+			$this->appName, $rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$this->userFolder->method("newFolder")
+		->willReturn($testFolder);
+		$result = $controller->CreateHome($this->userId);
+		$this->assertEquals($result->getData(), 'CREATED');
+	}
+	public function testCreateHomeException() {
+		$rootFolder = $this->getMockBuilder("OCP\Files\IRootFolder")->getMock();
+		$userFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$rootFolder->method("getUserFolder")->willReturn($userFolder);
+		$controller = new RevaController(
+			$this->appName, $rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$userFolder->method("newFolder")
+			->willThrowException(new \OCP\Files\NotPermittedException());
+		$result = $controller->CreateHome($this->userId);
+		$this->assertEquals($result->getStatus(), 500);
+	}
+	public function testCreateReference() {
 		$this->request->method("getParam")->willReturn("/test");
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
- 		$result = $controller->CreateReference($this->userId);
+		$result = $controller->CreateReference($this->userId);
 		$this->assertEquals($result->getData(), "Not implemented");
 	}
 
-	public function testDelete(){
+	public function testDelete() {
 		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$paramsMap = [
 			["sciencemesh", $this->sciencemeshFolder],
@@ -166,16 +408,33 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 
 		$testFolder->expects($this->once())->method("delete");
 		$result = $controller->Delete($this->userId);
 		$this->assertEquals($result->getData(), "OK");
 	}
-
-	public function testEmptyRecycle(){
-		$user =  $this->getMockBuilder("OCP\IUser")->getMock();
+	public function testDeleteFails() {
+		$paramsMap = [
+			["sciencemesh", $this->sciencemeshFolder],
+		];
+		$this->userFolder->method("get")
+			->with($this->equalTo("sciencemesh/fakeFile.json"))
+			->willThrowException(new \League\Flysystem\FileNotFoundException("sciencemesh/fakeFile.json"));
+		$this->request->method("getParam")->willReturn("/fakeFile.json");
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+		  $this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$result = $controller->Delete($this->userId);
+		$this->assertEquals($result->getStatus(), 500);
+	}
+	public function testEmptyRecycle() {
+		$user = $this->getMockBuilder("OCP\IUser")->getMock();
 		$this->userManager->method("get")->willReturn($user);
 		$item1 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
 		$item1->method("getOriginalLocation")
@@ -192,24 +451,24 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->trashManager->method("removeItem")
 			->willReturn(null);
 
-			$controller = new RevaController(
+		$controller = new RevaController(
 				$this->appName, $this->rootFolder, $this->request, $this->session,
 				$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			  $this->userService, $this->trashManager , $this->shareManager,
 				$this->groupManager, $this->cloudFederationProviderManager,
-				$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+				$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 			);
 		$this->trashManager
 			->expects($this->once())
 			->method("removeItem")
-			->with($this->callback(function($subject){
+			->with($this->callback(function ($subject) {
 				return ($subject->getOriginalLocation() == 'sciencemesh/something/a-file.json');
 			}));
 		$result = $controller->EmptyRecycle($this->userId);
 		$this->assertEquals($result->getData(), "OK");
 	}
 
-	public function testGetMDFolder(){
+	public function testGetMDFolder() {
 		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$this->userFolder->method("get")
 			->with($this->equalTo("sciencemesh/some/path"))
@@ -223,62 +482,62 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$metadata = [
 			"opaque" => [
-					"map" => NULL,
+				"map" => null,
 			],
 			"type" => 2,
 			"id" => [
-					"opaque_id" => "fileid-/some/path"
+				"opaque_id" => "fileid-/some/path"
 			],
 			"checksum" => [
-					"type" => 0,
-					"sum" => "",
+				"type" => 0,
+				"sum" => "",
 			],
 			"etag" => "deadbeef",
 			"mime_type" => "directory",
 			"mtime" => [
-					"seconds" => 1234567890
+				"seconds" => 1234567890
 			],
 			"path" => "/some/path",
 			"permission_set" => [
-					"add_grant" => false,
-					"create_container" => false,
-					"delete" => false,
-					"get_path" => false,
-					"get_quota" => false,
-					"initiate_file_download" => false,
-					"initiate_file_upload" => false,
-					// "listGrants => false,
-					// "listContainer => false,
-					// "listFileVersions => false,
-					// "listRecycle => false,
-					// "move => false,
-					// "removeGrant => false,
-					// "purgeRecycle => false,
-					// "restoreFileVersion => false,
-					// "restoreRecycleItem => false,
-					// "stat => false,
-					// "updateGrant => false,
-					// "denyGrant => false,
+				"add_grant" => false,
+				"create_container" => false,
+				"delete" => false,
+				"get_path" => false,
+				"get_quota" => false,
+				"initiate_file_download" => false,
+				"initiate_file_upload" => false,
+				// "listGrants => false,
+				// "listContainer => false,
+				// "listFileVersions => false,
+				// "listRecycle => false,
+				// "move => false,
+				// "removeGrant => false,
+				// "purgeRecycle => false,
+				// "restoreFileVersion => false,
+				// "restoreRecycleItem => false,
+				// "stat => false,
+				// "updateGrant => false,
+				// "denyGrant => false,
 			],
 			"size" => 12345,
 			"canonical_metadata" => [
-					"target" => NULL,
+				"target" => null,
 			],
 			"arbitrary_metadata" => [
-					"metadata" => [
-							"some" => "arbi",
-							"trary" => "meta",
-							"da" => "ta",
-					],
+				"metadata" => [
+					"some" => "arbi",
+					"trary" => "meta",
+					"da" => "ta",
+				],
 			],
 			"owner" => [
 				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
 			],
-	  ];
+		];
 		$this->userFolder->method("getPath")
 			->willReturn("");
 		$this->userFolder->method("get")
@@ -297,7 +556,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getData(), $metadata);
 	}
 
-	public function testGetMDFile(){
+	public function testGetMDFile() {
 		$testFile = $this->getMockBuilder("OCP\Files\File")->getMock();
 		$this->userFolder->method("get")
 			->with($this->equalTo("sciencemesh/test.json"))
@@ -312,68 +571,64 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$metadata = [
 			"opaque" => [
-					"map" => NULL,
+				"map" => null,
 			],
 			"type" => 1,
 			"id" => [
-					"opaque_id" => "fileid-/test.json"
+				"opaque_id" => "fileid-/test.json"
 			],
 			"checksum" => [
-					"type" => 0,
-					"sum" => "",
+				"type" => 0,
+				"sum" => "",
 			],
 			"etag" => "deadbeef",
 			"mime_type" => "application/json",
 			"mtime" => [
-					"seconds" => 1234567890
+				"seconds" => 1234567890
 			],
 			"path" => "/test.json",
 			"permission_set" => [
-					"add_grant" => false,
-					"create_container" => false,
-					"delete" => false,
-					"get_path" => false,
-					"get_quota" => false,
-					"initiate_file_download" => false,
-					"initiate_file_upload" => false,
-					// "listGrants => false,
-					// "listContainer => false,
-					// "listFileVersions => false,
-					// "listRecycle => false,
-					// "move => false,
-					// "removeGrant => false,
-					// "purgeRecycle => false,
-					// "restoreFileVersion => false,
-					// "restoreRecycleItem => false,
-					// "stat => false,
-					// "updateGrant => false,
-					// "denyGrant => false,
+				"add_grant" => false,
+				"create_container" => false,
+				"delete" => false,
+				"get_path" => false,
+				"get_quota" => false,
+				"initiate_file_download" => false,
+				"initiate_file_upload" => false,
+				// "listGrants => false,
+				// "listContainer => false,
+				// "listFileVersions => false,
+				// "listRecycle => false,
+				// "move => false,
+				// "removeGrant => false,
+				// "purgeRecycle => false,
+				// "restoreFileVersion => false,
+				// "restoreRecycleItem => false,
+				// "stat => false,
+				// "updateGrant => false,
+				// "denyGrant => false,
 			],
 			"size" => 12345,
 			"canonical_metadata" => [
-					"target" => NULL,
+				"target" => null,
 			],
 			"arbitrary_metadata" => [
-					"metadata" => [
-							"some" => "arbi",
-							"trary" => "meta",
-							"da" => "ta",
-					],
+				"metadata" => [
+					"some" => "arbi",
+					"trary" => "meta",
+					"da" => "ta",
+				],
 			],
 			"owner" => [
 				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
 			],
-	  ];
+		];
 		$this->userFolder->method("getPath")->willReturn("");
-		$this->userFolder->method("get")
-			->with($this->equalTo("sciencemesh/test.json"))
-			->willReturn($testFile);
-
-			$this->request->method("getParam")
+		$this->request->method("getParam")
 			->with($this->equalTo("ref"))
 			->willReturn([
 				"resource_id" => [
@@ -385,12 +640,36 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->GetMD($this->userId);
 		$this->assertEquals($result->getData(),$metadata);
 	}
+	public function testGetMDFails() {
+		$this->userFolder->method("get")
+			->with($this->equalTo("sciencemesh/fakeFile.json"))
+			->willReturn(false);
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
 
-	public function testGetPathByID(){
+		$this->userFolder->method("getPath")->willReturn("");
+		$this->request->method("getParam")
+			->with($this->equalTo("ref"))
+			->willReturn([
+				"resource_id" => [
+					"storage_id" => "storage-id",
+					"opaque_id" => "opaque-id"
+				],
+				"path" => "/fakeFile.json"
+			]);
+		$result = $controller->GetMD($this->userId);
+		$this->assertEquals($result->getStatus(),404);
+	}
 
+	public function testGetPathByID() {
 		$paramsMap = [
-			["storage_id",NULL,"some-storage-id"],
-			["opaque_id",NULL,"some-opaque-id"]
+			["storage_id",null,"some-storage-id"],
+			["opaque_id",null,"some-opaque-id"]
 		];
 		$this->request->method("getParam")
 								->will($this->returnValueMap($paramsMap));
@@ -399,14 +678,13 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$result = $controller->GetPathByID($this->userId);
 		$this->assertEquals($result->getStatus(),200);
 	}
 
-	public function testInitiateUpload(){
-
+	public function testInitiateUpload() {
 		$response = [
 			"simple" => "yes",
 			"tus" => "yes"
@@ -416,13 +694,13 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$result = $controller->InitiateUpload($this->userId);
 		$this->assertEquals($result->getData(),$response);
 	}
 
-	public function testListFolderRoot(){
+	public function testListFolderRoot() {
 		// $testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$this->request->method("getParam")
 			->with(($this->equalTo("ref")))
@@ -451,78 +729,78 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->userFolder->method("getPath")->willReturn("");
 		$this->sciencemeshFolder->method("getPath")->willReturn("/sciencemesh");
 
-		$folderContentsJSONData =  [
+		$folderContentsJSONData = [
 			[
 				"opaque" => [
-						"map" => NULL,
+					"map" => null,
 				],
 				"type" => 1,
 				"id" => [
-						"opaque_id" => "fileid-/test.json"
+					"opaque_id" => "fileid-/test.json"
 				],
 				"checksum" => [
-						"type" => 0,
-						"sum" => "",
+					"type" => 0,
+					"sum" => "",
 				],
 				"etag" => "deadbeef",
 				"mime_type" => "application/json",
 				"mtime" => [
-						"seconds" => 1234567890
+					"seconds" => 1234567890
 				],
 				"path" => "/test.json",
 				"permission_set" => [
-						"add_grant" => false,
-						"create_container" => false,
-						"delete" => false,
-						"get_path" => false,
-						"get_quota" => false,
-						"initiate_file_download" => false,
-						"initiate_file_upload" => false,
-						// "listGrants => false,
-						// "listContainer => false,
-						// "listFileVersions => false,
-						// "listRecycle => false,
-						// "move => false,
-						// "removeGrant => false,
-						// "purgeRecycle => false,
-						// "restoreFileVersion => false,
-						// "restoreRecycleItem => false,
-						// "stat => false,
-						// "updateGrant => false,
-						// "denyGrant => false,
+					"add_grant" => false,
+					"create_container" => false,
+					"delete" => false,
+					"get_path" => false,
+					"get_quota" => false,
+					"initiate_file_download" => false,
+					"initiate_file_upload" => false,
+					// "listGrants => false,
+					// "listContainer => false,
+					// "listFileVersions => false,
+					// "listRecycle => false,
+					// "move => false,
+					// "removeGrant => false,
+					// "purgeRecycle => false,
+					// "restoreFileVersion => false,
+					// "restoreRecycleItem => false,
+					// "stat => false,
+					// "updateGrant => false,
+					// "denyGrant => false,
 				],
 				"size" => 12345,
 				"canonical_metadata" => [
-						"target" => NULL,
+					"target" => null,
 				],
 				"arbitrary_metadata" => [
-						"metadata" => [
-								"some" => "arbi",
-								"trary" => "meta",
-								"da" => "ta",
-						],
+					"metadata" => [
+						"some" => "arbi",
+						"trary" => "meta",
+						"da" => "ta",
+					],
 				],
 				"owner" => [
 					"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
 				],
 			],
 		];
-	  $folderContentsObjects = [ $testFile ];
+		$folderContentsObjects = [ $testFile ];
 		$this->sciencemeshFolder->method("getDirectoryListing")
 			->willReturn($folderContentsObjects);
-			$controller = new RevaController(
+		$controller = new RevaController(
 				$this->appName, $this->rootFolder, $this->request, $this->session,
 				$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			  $this->userService, $this->trashManager , $this->shareManager,
 				$this->groupManager, $this->cloudFederationProviderManager,
-				$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+				$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 			);
 
 		$result = $controller->ListFolder($this->userId);
 		$this->assertEquals($result->getData(),$folderContentsJSONData);
 	}
 
-	public function testListFolderNotFound(){
+	public function testListFolderNotFound() {
 		$this->request->method("getParam")
 			->with(($this->equalTo("ref")))
 			->willReturn([
@@ -535,16 +813,16 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 
 		$paramsMap = [
 			["sciencemesh",$this->sciencemeshFolder],
-			["not/found", NULL]
+			["not/found", null]
 		];
 		$this->sciencemeshFolder->method("getDirectoryListing")
 			->willReturn(false);
-			$controller = new RevaController(
+		$controller = new RevaController(
 				$this->appName, $this->rootFolder, $this->request, $this->session,
 				$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			  $this->userService, $this->trashManager , $this->shareManager,
 				$this->groupManager, $this->cloudFederationProviderManager,
-				$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+				$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 			);
 		$this->userFolder->method("get")
 			->will($this->returnValueMap($paramsMap));
@@ -553,8 +831,8 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getStatus(), 404);
 	}
 
-		public function testListFolderEmpty(){
-			$this->request->method("getParam")
+	public function testListFolderEmpty() {
+		$this->request->method("getParam")
 				->with(($this->equalTo("ref")))
 				->willReturn([
 					"resource_id" => [
@@ -564,22 +842,22 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 					"path" => "/emptyFolder"
 				]);
 
-			$this->sciencemeshFolder->method("getDirectoryListing")
+		$this->sciencemeshFolder->method("getDirectoryListing")
 				->willReturn(false);
-				$controller = new RevaController(
+		$controller = new RevaController(
 					$this->appName, $this->rootFolder, $this->request, $this->session,
 					$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 				  $this->userService, $this->trashManager , $this->shareManager,
 					$this->groupManager, $this->cloudFederationProviderManager,
-					$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+					$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 				);
 
-			$result = $controller->ListFolder($this->userId);
-			$this->assertEquals($result->getData(), []);
-			$this->assertEquals($result->getStatus(), 200);
-		}
+		$result = $controller->ListFolder($this->userId);
+		$this->assertEquals($result->getData(), []);
+		$this->assertEquals($result->getStatus(), 200);
+	}
 
-	public function testListFolderOther(){
+	public function testListFolderOther() {
 		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$this->request->method("getParam")
 			->with(($this->equalTo("ref")))
@@ -606,110 +884,109 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		];
 		$this->userFolder->method("get")
 								->will($this->returnValueMap($paramsMap));
-		$folderContentsJSONData =  [
+		$folderContentsJSONData = [
 			[
 				"opaque" => [
-						"map" => NULL,
+					"map" => null,
 				],
 				"type" => 1,
 				"id" => [
-						"opaque_id" => "fileid-/some/path/test.json"
+					"opaque_id" => "fileid-/some/path/test.json"
 				],
 				"checksum" => [
-						"type" => 0,
-						"sum" => "",
+					"type" => 0,
+					"sum" => "",
 				],
 				"etag" => "deadbeef",
 				"mime_type" => "application/json",
 				"mtime" => [
-						"seconds" => 1234567890
+					"seconds" => 1234567890
 				],
 				"path" => "/some/path/test.json",
 				"permission_set" => [
-						"add_grant" => false,
-						"create_container" => false,
-						"delete" => false,
-						"get_path" => false,
-						"get_quota" => false,
-						"initiate_file_download" => false,
-						"initiate_file_upload" => false,
-						// "listGrants => false,
-						// "listContainer => false,
-						// "listFileVersions => false,
-						// "listRecycle => false,
-						// "move => false,
-						// "removeGrant => false,
-						// "purgeRecycle => false,
-						// "restoreFileVersion => false,
-						// "restoreRecycleItem => false,
-						// "stat => false,
-						// "updateGrant => false,
-						// "denyGrant => false,
+					"add_grant" => false,
+					"create_container" => false,
+					"delete" => false,
+					"get_path" => false,
+					"get_quota" => false,
+					"initiate_file_download" => false,
+					"initiate_file_upload" => false,
+					// "listGrants => false,
+					// "listContainer => false,
+					// "listFileVersions => false,
+					// "listRecycle => false,
+					// "move => false,
+					// "removeGrant => false,
+					// "purgeRecycle => false,
+					// "restoreFileVersion => false,
+					// "restoreRecycleItem => false,
+					// "stat => false,
+					// "updateGrant => false,
+					// "denyGrant => false,
 				],
 				"size" => 12345,
 				"canonical_metadata" => [
-						"target" => NULL,
+					"target" => null,
 				],
 				"arbitrary_metadata" => [
-						"metadata" => [
-								"some" => "arbi",
-								"trary" => "meta",
-								"da" => "ta",
-						],
+					"metadata" => [
+						"some" => "arbi",
+						"trary" => "meta",
+						"da" => "ta",
+					],
 				],
 				"owner" => [
 					"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
 				],
 			],
 		];
-	  $folderContentsObjects = [ $testFile ];
+		$folderContentsObjects = [ $testFile ];
 		$testFolder->method("getDirectoryListing")
 			->willReturn($folderContentsObjects);
-			$controller = new RevaController(
+		$controller = new RevaController(
 				$this->appName, $this->rootFolder, $this->request, $this->session,
 				$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			  $this->userService, $this->trashManager , $this->shareManager,
 				$this->groupManager, $this->cloudFederationProviderManager,
-				$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+				$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 			);
 
 		$result = $controller->ListFolder($this->userId);
 		$this->assertEquals($result->getData(),$folderContentsJSONData);
 	}
 
-	public function testListGrants(){
+	public function testListGrants() {
 		$this->request->method("getParam")->willReturn("/test.json");
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$result = $controller->ListGrants($this->userId);
 		$this->assertEquals($result->getData(),"Not implemented");
 	}
 
-	public function testListRecycle(){
-
+	public function testListRecycle() {
 		$data = [
 			[
-			"opaque" => [
-				"map" => NULL,
-			],
-			"key" => "/some/path/to/file1.json",
-			"ref"	=> [
-				"resource_id" => [
-					"map" => NULL,
+				"opaque" => [
+					"map" => null,
 				],
-				"path" => "/some/path/to/file1.json",
-			],
-			"size" => 12345,
-			"deletion_time" => [
-				"seconds" => 1234567890
-			]
-		]];
-		$user =  $this->getMockBuilder("OCP\IUser")->getMock();
+				"key" => "/some/path/to/file1.json",
+				"ref" => [
+					"resource_id" => [
+						"map" => null,
+					],
+					"path" => "/some/path/to/file1.json",
+				],
+				"size" => 12345,
+				"deletion_time" => [
+					"seconds" => 1234567890
+				]
+			]];
+		$user = $this->getMockBuilder("OCP\IUser")->getMock();
 		$this->userManager->method("get")->willReturn($user);
 		$item1 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
 		$item1->method("getOriginalLocation")
@@ -734,23 +1011,23 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$result = $controller->ListRecycle($this->userId);
 		$this->assertEquals($result->getData(),$data);
 	}
 
-	public function testListRevisions(){
+	public function testListRevisions() {
 		$this->request->method("getParam")->willReturn("/test.json");
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$result = $controller->ListRevisions($this->userId);
-		//$this->assertEquals($result->getData(),"Not implemented");
+		$this->assertEquals($result->getData(),"Not implemented");
 	}
 //
 	// FIX ISSUE # 20
@@ -768,27 +1045,27 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	// 		$this->appName, $this->rootFolder, $this->request, $this->session,
 	// 		$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 	// 		  $this->userService, $this->trashManager , $this->shareManager,
-  // $this->groupManager, $this->cloudFederationProviderManager,
-  // $this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+	// $this->groupManager, $this->cloudFederationProviderManager,
+	// $this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 	// 	);
 	// 	$result = $controller->Move($this->userId);
 	// 	$this->assertEquals($result->getData(),"OK");
 	// }
 
-	public function testRemoveGrant(){
+	public function testRemoveGrant() {
 		$this->request->method("getParam")->willReturn("/test.json");
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$result = $controller->RemoveGrant($this->userId);
 		$this->assertEquals($result->getData(),"Not implemented");
 	}
 
-	public function testRestoreRecycleItem(){
+	public function testRestoreRecycleItem() {
 		// we are using original location as the RecycleItem's
 		// unique key string, see:
 		// https://github.com/cs3org/cs3apis/blob/6eab4643f5113a54f4ce4cd8cb462685d0cdd2ef/cs3/storage/provider/v1beta1/resources.proto#L318
@@ -802,7 +1079,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		// we don't look at getParam("restoreRef")
 		// because the nextcloud trash manager doesn't support restoring
 		// to a different location.
-		$user =  $this->getMockBuilder("OCP\IUser")->getMock();
+		$user = $this->getMockBuilder("OCP\IUser")->getMock();
 		$this->userManager->method("get")->willReturn($user);
 		$item1 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
 		$item1->method("getOriginalLocation")
@@ -826,71 +1103,105 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->trashManager
 			->expects($this->once())
 			->method("restoreItem");
-			$controller = new RevaController(
+		$controller = new RevaController(
 				$this->appName, $this->rootFolder, $this->request, $this->session,
 				$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			  $this->userService, $this->trashManager , $this->shareManager,
 				$this->groupManager, $this->cloudFederationProviderManager,
-				$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+				$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 			);
 
 		$result = $controller->RestoreRecycleItem($this->userId);
 		$this->assertEquals($result->getData(),"OK");
 	}
+	public function testRestoreRecycleItemFails() {
+		$this->request->method("getParam")
+			->with($this->equalTo("key"))
+		  ->willReturn("/FAKE/path.txt");
 
-	public function testRestoretRevision(){
+		$user = $this->getMockBuilder("OCP\IUser")->getMock();
+		$this->userManager->method("get")->willReturn($user);
+		$item1 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
+		$item1->method("getOriginalLocation")
+			->willReturn("something/unrelated/to/science.mesh");
+		$item2 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
+		$item2->method("getOriginalLocation")
+			->willReturn("sciencemesh/somethingElse/file2.json");
+		$item3 = $this->getMockBuilder("OCA\Files_Trashbin\Trash\ITrashItem")->getMock();
+		$item3->method("getOriginalLocation")
+			->willReturn("sciencemesh/some/key/that/is/really/a/path.txt");
+
+		$trashItems = [
+			$item1,
+			$item2,
+			$item3,
+		];
+		$this->trashManager->method("listTrashRoot")
+			->willReturn($trashItems);
+		$controller = new RevaController(
+				$this->appName, $this->rootFolder, $this->request, $this->session,
+				$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			  $this->userService, $this->trashManager , $this->shareManager,
+				$this->groupManager, $this->cloudFederationProviderManager,
+				$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+			);
+
+		$result = $controller->RestoreRecycleItem($this->userId);
+		$this->assertEquals($result->getStatus(),404);
+	}
+
+	public function testRestoretRevision() {
 		$this->request->method("getParam")->willReturn("/test.json");
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$result = $controller->RestoreRevision($this->userId);
 		$this->assertEquals($result->getData(),"Not implemented");
 	}
 
-	public function testSetArbitraryMetadatan(){
+	public function testSetArbitraryMetadatan() {
 		$this->request->method("getParam")->willReturn("/test.json");
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$result = $controller->SetArbitraryMetadata($this->userId);
 		$this->assertEquals($result->getData(),"Not implemented");
 	}
 
-	public function testUnsetArbitraryMetadata(){
+	public function testUnsetArbitraryMetadata() {
 		$this->request->method("getParam")->willReturn("/test.json");
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$result = $controller->UnsetArbitraryMetadata($this->userId);
 		$this->assertEquals($result->getData(),"Not implemented");
 	}
 
-	public function testUpdateGrant(){
+	public function testUpdateGrant() {
 		$this->request->method("getParam")->willReturn("/test.json");
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$result = $controller->UpdateGrant($this->userId);
 		$this->assertEquals($result->getData(),"Not implemented");
 	}
-
-	public function testUpload(){
+	public function testUploadOK() {
 		$testFile = $this->getMockBuilder("OCP\Files\File")->getMock();
 		$this->userFolder->method("get")
 			->with($this->equalTo("sciencemesh/test.json"))
@@ -900,41 +1211,106 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$testFile->method("getPath")
 			->willReturn("/sciencemesh/test.json");
 		$testFile->method('putContent')->willReturn(null);
-		$this->request->method("getParam")->willReturn("/test.json");
 		$this->request->put = "some-content";
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$testFile->expects($this->once())
 			->method('putContent')
-			->with($this->equalTo("some-content"));;
+			->with($this->equalTo("some-content"));
+		;
 
 		$this->userFolder->method("getPath")
 			->willReturn("");
 		$result = $controller->Upload($this->userId, "/test.json");
 		$this->assertEquals($result->getData(),"OK");
+		$this->assertEquals($result->getStatus(),200);
+	}
+	public function testUploadCREATED() {
+		$testFile = $this->getMockBuilder("OCP\Files\File")->getMock();
+		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$this->userFolder->method("get")
+			->willReturn($testFolder);
+		$testFile->method("getPath")
+			->willReturn("/sciencemesh/fakeFile.json");
+		$this->request->put = "some-content";
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$this->userFolder->method("getPath")
+			->willReturn("");
+		$this->userFolder->method("newFolder")
+				->willReturn(true);
+		$testFolder->expects($this->once())
+				->method("newFile")
+				->willReturn(true);
+		$result = $controller->Upload($this->userId, "/fakeFile.json");
+		$this->assertEquals($result->getData(),"CREATED");
+		$this->assertEquals($result->getStatus(),201);
 	}
 
-	public function testAddSentShare(){
+	public function testUploadFailUpdate() {
+		$testFile = $this->getMockBuilder("OCP\Files\File")->getMock();
+		$this->request->put = "some-content";
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$this->userFolder->method('get')
+			->willThrowException(new \OCP\Files\InvalidPathException);
+		$result = $controller->Upload($this->userId, "/test.json");
+		$this->assertEquals($result->getStatus(),500);
+	}
+
+	public function testUploadFailCreate() {
+		$testFile = $this->getMockBuilder("OCP\Files\File")->getMock();
+		$this->userFolder->method("get")
+			->willThrowException(new \OCP\Files\InvalidPathException());
+		$testFile->method("getPath")
+			->willReturn("/sciencemesh/fakeFile.json");
+		$this->request->put = "some-content";
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$this->userFolder->method("getPath")
+			->willReturn("");
+		$this->userFolder->method("newFile")
+				->willThrowException(new \OCP\Files\InvalidPathException);
+		$result = $controller->Upload($this->userId, "/fakeFile.json");
+		$this->assertEquals($result->getStatus(),500);
+	}
+
+	public function testAddSentShare() {
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
-		$testFolder 			= $this->getMockBuilder("OCP\Files\Folder")->getMock();
-		$testShare 				= $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
 		$testCreatedShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
-		$testLockedNode   = $this->getMockBuilder("OCP\Files\Node")->getMock();
-		$storage 					= $this->getMockBuilder("\OC\Files\Storage\Storage")->getMock();
+		$testLockedNode = $this->getMockBuilder("OCP\Files\Node")->getMock();
+		$storage = $this->getMockBuilder("\OC\Files\Storage\Storage")->getMock();
 		$paramsMap = [
-			["md", NULL,["opaque_id"=>"fileid-marie%2FtestFile.json"]],
-			["g", NULL,["grantee"=>["Id"=>["UserId"=>["idp"=>"localhost:8080","opaque_id"=>"einstein","type"=>1]]],"permissions"=>["permissions"=>["get_path"=>true]]]]
+			["md", null,["opaque_id" => "fileid-marie%2FtestFile.json"]],
+			["g", null,["grantee" => ["Id" => ["UserId" => ["idp" => "localhost:8080","opaque_id" => "einstein","type" => 1]]],"permissions" => ["permissions" => ["get_path" => true]]]]
 		];
 		$this->request->method("getParam")
 			->will($this->returnValueMap($paramsMap));
@@ -959,89 +1335,181 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			->willReturn($storage);
 
 		$response = [
-			"id"=>[
-	    	"map" => NULL,
+			"id" => [
+				"map" => null,
 			],
-			"resource_id"=>[
-	    	"map" => NULL,
+			"resource_id" => [
+				"map" => null,
 			],
-			"permissions"=>[
-				"permissions"=>[
-					"add_grant"=>true,
-					"create_container"=>true,
-					"delete"=>true,
-					"get_path"=>true,
-					"get_quota"=>true,
-					"initiate_file_download"=>true,
-					"initiate_file_upload"=>true,
-					"list_grants"=>true,
-					"list_container"=>true,
-					"list_file_versions"=>true,
-					"list_recycle"=>true,
-					"move"=>true,
-					"remove_grant"=>true,
-					"purge_recycle"=>true,
-					"restore_file_version"=>true,
-					"restore_recycle_item"=>true,
-					"stat"=>true,
-					"update_grant"=>true,
-					"deny_grant"=>true
+			"permissions" => [
+				"permissions" => [
+					"add_grant" => true,
+					"create_container" => true,
+					"delete" => true,
+					"get_path" => true,
+					"get_quota" => true,
+					"initiate_file_download" => true,
+					"initiate_file_upload" => true,
+					"list_grants" => true,
+					"list_container" => true,
+					"list_file_versions" => true,
+					"list_recycle" => true,
+					"move" => true,
+					"remove_grant" => true,
+					"purge_recycle" => true,
+					"restore_file_version" => true,
+					"restore_recycle_item" => true,
+					"stat" => true,
+					"update_grant" => true,
+					"deny_grant" => true
 				]
 			],
-			"grantee"=>[
-				"Id"=>[
-					"UserId"=>[
-						"idp"=>"0.0.0.0:19000",
-						"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-						"type"=>1
+			"grantee" => [
+				"Id" => [
+					"UserId" => [
+						"idp" => "0.0.0.0:19000",
+						"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+						"type" => 1
 					]
 				]
 			],
-			"owner"=>[
-				"idp"=>"0::.0.0.0:19000",
-				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-				"type"=>1
+			"owner" => [
+				"idp" => "0::.0.0.0:19000",
+				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type" => 1
 			],
-			"creator"=>[
-				"idp"=>"0.0.0.0:19000",
-				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-				"type"=>1
+			"creator" => [
+				"idp" => "0.0.0.0:19000",
+				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type" => 1
 			],
-			"ctime"=>[
-				"seconds"=>1234567890
+			"ctime" => [
+				"seconds" => 1234567890
 			],
-			"mtime"=>[
-				"seconds"=>1234567890
+			"mtime" => [
+				"seconds" => 1234567890
 			]
 		];
-		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
-
 		$result = $controller->addSentShare($this->userId);
 		$this->assertEquals($result->getData(),$response);
 		$this->assertEquals($result->getStatus(),201);
 	}
-
-	public function testAddReceivedShare(){
+	public function testAddSentShareNotFoundException() {
+		$this->userFolder->method("get")
+			->with($this->equalTo("sciencemesh/fakeFile.json"))
+			->willThrowException(new \OCP\Files\NotFoundException);
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+		  $this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$paramsMap = [
+			["md", null,["opaque_id" => "fileid-marie%2FfakeFile.json"]],
+			["g", null,["grantee" => ["Id" => ["UserId" => ["idp" => "localhost:8080","opaque_id" => "einstein","type" => 1]]],"permissions" => ["permissions" => ["get_path" => true]]]]
+		];
+		$this->request->method("getParam")
+			->will($this->returnValueMap($paramsMap));
+		$this->shareManager->method("newShare")
+			->willReturn($testShare);
+		$result = $controller->addSentShare($this->userId);
+		$this->assertEquals($result->getStatus(),500);
+	}
+	public function testAddSentShareOCSNotFoundException() {
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+		  $this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$this->expectException(\OCP\AppFramework\OCS\OCSNotFoundException::class);
+		$paramsMap = [
+			["md", null,["opaque_id" => null]],
+			["g", null,["grantee" => ["Id" => ["UserId" => ["idp" => "localhost:8080","opaque_id" => "einstein","type" => 1]]],"permissions" => ["permissions" => ["get_path" => true]]]]
+		];
+		$this->request->method("getParam")
+			->will($this->returnValueMap($paramsMap));
+		$this->shareManager->method("newShare")
+			->willReturn($testShare);
+		$controller->addSentShare($this->userId);
+	}
+	public function testAddSentShareLockedException() {
+		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
-		$cloudId				  = $this->getMockBuilder("OCP\Federation\ICloudId")->getMock();
-		$provider 				= $this->getMockBuilder("OCP\Federation\ICloudFederationProvider")->getMock();
-		$share					  = $this->getMockBuilder("OCP\Federation\ICloudFederationShare")->getMock();
-		$user 						= $this->getMockBuilder("OCP\IUser")->getMock();
+		$this->expectException(\OCP\AppFramework\OCS\OCSNotFoundException::class);
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$this->userFolder->method("get")
+			->willReturn($testFolder);
+		$testShare->method("getNode")
+			->willThrowException(new \OCP\Lock\LockedException("testFile.json"));
+		$paramsMap = [
+			["md", null,["opaque_id" => "fileid-marie%2FtestFile.json"]],
+			["g", null,["grantee" => ["Id" => ["UserId" => ["idp" => "localhost:8080","opaque_id" => "einstein","type" => 1]]],"permissions" => ["permissions" => ["get_path" => true]]]]
+		];
+		$this->request->method("getParam")
+			->will($this->returnValueMap($paramsMap));
+		$this->shareManager->method("newShare")
+			->willReturn($testShare);
+		$controller->addSentShare($this->userId);
+	}
+	public function testAddReceivedShareMissingArgs() {
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$cloudId = $this->getMockBuilder("OCP\Federation\ICloudId")->getMock();
+		$provider = $this->getMockBuilder("OCP\Federation\ICloudFederationProvider")->getMock();
+		$share = $this->getMockBuilder("OCP\Federation\ICloudFederationShare")->getMock();
+		$user = $this->getMockBuilder("OCP\IUser")->getMock();
 
 		$paramsMap = [
-			["md",NULL,["opaque_id"=>"fileid-einstein%2Fmy-folder"]],
-			["g",NULL,["grantee"=>["type"=>1,"Id"=>["UserId"=>["idp"=>"cesnet.cz","opaque_id"=>"marie","type"=>1]]]]],
-			["provider_domain",NULL,"cern.ch"],
-			["resource_type",NULL,"file"],
-			["provider_id",NULL,2],
-			["owner_display_name",NULL,"Albert Einstein"],
-			["protocol",NULL,["name"=>"webdav","options"=>["sharedSecret"=>"secret","permissions"=>"webdav-property"]]]
+			["md",null,["opaque_id" => null]],
+			["g",null,["grantee" => ["type" => null,"Id" => ["UserId" => ["idp" => null,"opaque_id" => null,"type" => 1]]]]],
+			["provider_domain",null,null],
+			["resource_type",null,"file"],
+			["provider_id",null,2],
+			["owner_display_name",null,"Albert Einstein"],
+			["protocol",null,["name" => "webdav","options" => ["sharedSecret" => "secret","permissions" => "webdav-property"]]]
+		];
+		$this->request->method("getParam")
+			->will($this->returnValueMap($paramsMap));
+		$result = $controller->addReceivedShare($this->userId);
+		$this->assertEquals($result->getStatus(),400);
+	}
+	public function testAddReceivedShare() {
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$cloudId = $this->getMockBuilder("OCP\Federation\ICloudId")->getMock();
+		$provider = $this->getMockBuilder("OCP\Federation\ICloudFederationProvider")->getMock();
+		$share = $this->getMockBuilder("OCP\Federation\ICloudFederationShare")->getMock();
+		$user = $this->getMockBuilder("OCP\IUser")->getMock();
+
+		$paramsMap = [
+			["md",null,["opaque_id" => "fileid-einstein%2Fmy-folder"]],
+			["g",null,["grantee" => ["type" => 1,"Id" => ["UserId" => ["idp" => "cesnet.cz","opaque_id" => "marie","type" => 1]]]]],
+			["provider_domain",null,"cern.ch"],
+			["resource_type",null,"file"],
+			["provider_id",null,2],
+			["owner_display_name",null,"Albert Einstein"],
+			["protocol",null,["name" => "webdav","options" => ["sharedSecret" => "secret","permissions" => "webdav-property"]]]
 		];
 		$this->request->method("getParam")
 			->will($this->returnValueMap($paramsMap));
@@ -1059,555 +1527,165 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			->willReturn($share);
 		$this->userManager->method("get")
 			->willReturn($user);
-
-
 		$result = $controller->addReceivedShare($this->userId);
-		$response = '{"id":{},"resource_id":{},"permissions":{"permissions":{"add_grant":true,"create_container":true,"delete":true,"get_path":true,"get_quota":true,"initiate_file_download":true,"initiate_file_upload":true,"list_grants":true,"list_container":true,"list_file_versions":true,"list_recycle":true,"move":true,"remove_grant":true,"purge_recycle":true,"restore_file_version":true,"restore_recycle_item":true,"stat":true,"update_grant":true,"deny_grant":true}},"grantee":{"Id":{"UserId":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1}}},"owner":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"creator":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"ctime":{"seconds":1234567890},"mtime":{"seconds":1234567890}}';
-
-		$this->assertEquals($result->getData(),json_decode($response));
 		$this->assertEquals($result->getStatus(),201);
 	}
-	public function testGetShare(){
+	public function testGetShare() {
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
 			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
-		);
-		$testFolder 			= $this->getMockBuilder("OCP\Files\Folder")->getMock();
-		$testShare 				= $this->getMockBuilder("OCP\Share\IShare")->getMock();
-		$testCreatedShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
-		$testLockedNode   = $this->getMockBuilder("OCP\Files\Node")->getMock();
-		$storage 					= $this->getMockBuilder("\OC\Files\Storage\Storage")->getMock();
-		$paramsMap = [
-			["md", NULL,["opaque_id"=>"fileid-marie%2FtestFile.json"]],
-			["g", NULL,["grantee"=>["Id"=>["UserId"=>["idp"=>"localhost:8080","opaque_id"=>"einstein","type"=>1]]],"permissions"=>["permissions"=>["get_path"=>true]]]]
-		];
-		$this->request->method("getParam")
-			->will($this->returnValueMap($paramsMap));
-		$this->shareManager->method("newShare")
-			->willReturn($testShare);
-		$testShare->method("getNode")
-			->willReturn($testLockedNode);
-		$this->userFolder->method("get")
-			->willReturn($testFolder);
-		$this->shareManager->method("shareApiAllowLinks")
-			->willReturn(true);
-		$this->shareManager->method("shareApiLinkAllowPublicUpload")
-			->willReturn(true);
-		$this->appManager->method("isEnabledForUser")
-			->willReturn(true);
-		$this->shareManager->method("createShare")
-			->willReturn($testCreatedShare);
-		$this->userFolder->method("get")
-			->with($this->equalTo("sciencemesh/testFile.json"))
-			->willReturn($testFolder);
-		$testFolder->method("getStorage")
-			->willReturn($storage);
-
-		$response = [
-			"id"=>[
-	    	"map" => NULL,
-			],
-			"resource_id"=>[
-	    	"map" => NULL,
-			],
-			"permissions"=>[
-				"permissions"=>[
-					"add_grant"=>true,
-					"create_container"=>true,
-					"delete"=>true,
-					"get_path"=>true,
-					"get_quota"=>true,
-					"initiate_file_download"=>true,
-					"initiate_file_upload"=>true,
-					"list_grants"=>true,
-					"list_container"=>true,
-					"list_file_versions"=>true,
-					"list_recycle"=>true,
-					"move"=>true,
-					"remove_grant"=>true,
-					"purge_recycle"=>true,
-					"restore_file_version"=>true,
-					"restore_recycle_item"=>true,
-					"stat"=>true,
-					"update_grant"=>true,
-					"deny_grant"=>true
-				]
-			],
-			"grantee"=>[
-				"Id"=>[
-					"UserId"=>[
-						"idp"=>"0.0.0.0:19000",
-						"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-						"type"=>1
-					]
-				]
-			],
-			"owner"=>[
-				"idp"=>"0::.0.0.0:19000",
-				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-				"type"=>1
-			],
-			"creator"=>[
-				"idp"=>"0.0.0.0:19000",
-				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-				"type"=>1
-			],
-			"ctime"=>[
-				"seconds"=>1234567890
-			],
-			"mtime"=>[
-				"seconds"=>1234567890
-			]
-		];
-		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
-
-		$result = $controller->Share($this->userId);
-		$this->assertEquals($result->getData(),$response);
-		$this->assertEquals($result->getStatus(),201);
-	}
-
-	// public function testUnshare(){
-	// 	$controller = new RevaController(
-	// 		$this->appName, $this->rootFolder, $this->request, $this->session,
-	// 		$this->userManager, $this->urlGenerator, $this->userId, $this->config,
-	// 	  $this->userService, $this->trashManager , $this->shareManager,
-	// 		$this->groupManager, $this->cloudFederationProviderManager,
-	// 		$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
-	// 	);
-	// 	$this->request->method("getParam")
-	// 		->willReturn(
-	// 			[
-	// 			"Id"=>[
-	// 				"opaque_id"=>"some-share-id"
-	// 				]
-	// 			]
-	// 			);
-	// 	$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
-	// 	$this->shareManager->method("getShareById")
-	// 		->willReturn($testShare);
-	// 	$this->shareManager->method("deleteShare")
-	// 		->willReturn(true);
-	// 	$result = $controller->Unshare($this->userId);
-	// 	$this->assertEquals($result->getData(),"OK");
-	// 	$this->assertEquals($result->getStatus(),200);
-	// }
-
-	public function testUpdateShare(){
-		$controller = new RevaController(
-			$this->appName, $this->rootFolder, $this->request, $this->session,
-			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
-		  $this->userService, $this->trashManager , $this->shareManager,
-  		$this->groupManager, $this->cloudFederationProviderManager,
-  		$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
-		);
-		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
-		$testShareUpdated = $this->getMockBuilder("OCP\Share\IShare")->getMock();
-		$paramsMap = [
-			["ref", NULL,["Spec"=>["Id"=>["opaque_id"=>"some-share-id"]]]],
-			["p", NULL,	["permissions"=>["add_grant"=>true,"create_container"=>true,"delete"=>true,"get_path"=>true,"get_quota"=>true,"initiate_file_download"=>true,"initiate_file_upload"=>true,"list_grants"=>true,"list_container"=>true,"list_file_versions"=>true,"list_recycle"=>true,"move"=>true,"remove_grant"=>true,"purge_recycle"=>true,"restore_file_version"=>true,"restore_recycle_item"=>true,	"stat"=>true,"update_grant"=>true,"deny_grant"=>true]]]
-		];
-		$this->request->method("getParam")
-			->will($this->returnValueMap($paramsMap));
-		$this->shareManager->method("getShareById")
-			->willReturn($testShare);
-		$this->shareManager->method("updateShare")
-			->willReturn($testShareUpdated);
-		$response = [
-			"id"=>[
-				"map" => NULL,
-			],
-			"resource_id"=>[
-				"map" => NULL,
-			],
-			"permissions"=>[
-				"permissions"=>[
-					"add_grant"=>true,
-					"create_container"=>true,
-					"delete"=>true,
-					"get_path"=>true,
-					"get_quota"=>true,
-					"initiate_file_download"=>true,
-					"initiate_file_upload"=>true,
-					"list_grants"=>true,
-					"list_container"=>true,
-					"list_file_versions"=>true,
-					"list_recycle"=>true,
-					"move"=>true,
-					"remove_grant"=>true,
-					"purge_recycle"=>true,
-					"restore_file_version"=>true,
-					"restore_recycle_item"=>true,
-					"stat"=>true,
-					"update_grant"=>true,
-					"deny_grant"=>true
-				]
-			],
-			"grantee"=>[
-				"Id"=>[
-					"UserId"=>[
-						"idp"=>"0.0.0.0:19000",
-						"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-						"type"=>1
-					]
-				]
-			],
-			"owner"=>[
-				"idp"=>"0::.0.0.0:19000",
-				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-				"type"=>1
-			],
-			"creator"=>[
-				"idp"=>"0.0.0.0:19000",
-				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-				"type"=>1
-			],
-			"ctime"=>[
-				"seconds"=>1234567890
-			],
-			"mtime"=>[
-				"seconds"=>1234567890
-			]
-		];
-		$result = $controller->UpdateShare($this->userId);
-		$this->assertEquals($result->getData(),$response);
-		$this->assertEquals($result->getStatus(),200);
-	}
-	public function testListShares(){
-		$controller = new RevaController(
-			$this->appName, $this->rootFolder, $this->request, $this->session,
-			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
-		  $this->userService, $this->trashManager , $this->shareManager,
-  		$this->groupManager, $this->cloudFederationProviderManager,
-  		$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
-		);
-		$this->request->method("getParams")
-			->willReturn(
-				[
-					"POST",
-					"/apps/sciencemesh/~tester/api/share/ListShares",
-					[
-						"type"=>4,
-						"Term"=>[
-							"Creator"=>[
-								"idp"=>"0.0.0.0=>19000",
-								"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-								"type"=>1
-								]
-							]
-						]
-				]
-			);
-		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
-		$this->shareManager->method("getSharesBy")
-			->willReturn([$testShare]);
-		$result = $controller->ListShares($this->userId);
-		$responses =[[
-			"id"=>[
-				"map" => NULL,
-			],
-			"resource_id"=>[
-				"map" => NULL,
-			],
-			"permissions"=>[
-				"permissions"=>[
-					"add_grant"=>true,
-					"create_container"=>true,
-					"delete"=>true,
-					"get_path"=>true,
-					"get_quota"=>true,
-					"initiate_file_download"=>true,
-					"initiate_file_upload"=>true,
-					"list_grants"=>true,
-					"list_container"=>true,
-					"list_file_versions"=>true,
-					"list_recycle"=>true,
-					"move"=>true,
-					"remove_grant"=>true,
-					"purge_recycle"=>true,
-					"restore_file_version"=>true,
-					"restore_recycle_item"=>true,
-					"stat"=>true,
-					"update_grant"=>true,
-					"deny_grant"=>true
-				]
-			],
-			"grantee"=>[
-				"Id"=>[
-					"UserId"=>[
-						"idp"=>"0.0.0.0:19000",
-						"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-						"type"=>1
-					]
-				]
-			],
-			"owner"=>[
-				"idp"=>"0::.0.0.0:19000",
-				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-				"type"=>1
-			],
-			"creator"=>[
-				"idp"=>"0.0.0.0:19000",
-				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-				"type"=>1
-			],
-			"ctime"=>[
-				"seconds"=>1234567890
-			],
-			"mtime"=>[
-				"seconds"=>1234567890
-			]
-		]];
-		$this->assertEquals($result->getData(),$responses);
-		$this->assertEquals($result->getStatus(),200);
-	}
-	public function testListSharesEmpty(){
-		$controller = new RevaController(
-			$this->appName, $this->rootFolder, $this->request, $this->session,
-			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
-		  $this->userService, $this->trashManager , $this->shareManager,
-  		$this->groupManager, $this->cloudFederationProviderManager,
-  		$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
-		);
-		$this->request->method("getParams")
-			->willReturn(
-				[
-					"POST",
-					"/apps/sciencemesh/~tester/api/share/ListShares",
-					[
-						"type"=>4,
-						"Term"=>[
-							"Creator"=>[
-								"idp"=>"0.0.0.0=>19000",
-								"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-								"type"=>1
-								]
-							]
-						]
-				]
-			);
-		$this->shareManager->method("getSharesBy")
-			->willReturn([]);
-		$result = $controller->ListShares($this->userId);
-		$this->assertEquals($result->getData(),[]);
-		$this->assertEquals($result->getStatus(),200);
-	}
-	public function testListReceivedShares(){
-		$controller = new RevaController(
-			$this->appName, $this->rootFolder, $this->request, $this->session,
-			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
-		  $this->userService, $this->trashManager , $this->shareManager,
-  		$this->groupManager, $this->cloudFederationProviderManager,
-  		$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
-		);
-		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
-		$this->request->method("getParams")
-			->willReturn(
-				[
-					"POST",
-					"/apps/sciencemesh/~tester/api/share/ListShares",
-					[
-						"type"=>4,
-						"Term"=>[
-							"Creator"=>[
-								"idp"=>"0.0.0.0=>19000",
-								"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-								"type"=>1
-								]
-							]
-						]
-				]
-			);
-		$this->shareManager->method("getSharedWith")
-			->willReturn([$testShare]);
-		$responses =[[
-			"id"=>[
-				"map" => NULL,
-			],
-			"resource_id"=>[
-				"map" => NULL,
-			],
-			"permissions"=>[
-				"permissions"=>[
-					"add_grant"=>true,
-					"create_container"=>true,
-					"delete"=>true,
-					"get_path"=>true,
-					"get_quota"=>true,
-					"initiate_file_download"=>true,
-					"initiate_file_upload"=>true,
-					"list_grants"=>true,
-					"list_container"=>true,
-					"list_file_versions"=>true,
-					"list_recycle"=>true,
-					"move"=>true,
-					"remove_grant"=>true,
-					"purge_recycle"=>true,
-					"restore_file_version"=>true,
-					"restore_recycle_item"=>true,
-					"stat"=>true,
-					"update_grant"=>true,
-					"deny_grant"=>true
-				]
-			],
-			"grantee"=>[
-				"Id"=>[
-					"UserId"=>[
-						"idp"=>"0.0.0.0:19000",
-						"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-						"type"=>1
-					]
-				]
-			],
-			"owner"=>[
-				"idp"=>"0::.0.0.0:19000",
-				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-				"type"=>1
-			],
-			"creator"=>[
-				"idp"=>"0.0.0.0:19000",
-				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-				"type"=>1
-			],
-			"ctime"=>[
-				"seconds"=>1234567890
-			],
-			"mtime"=>[
-				"seconds"=>1234567890
-			],
-			"state"=>2
-		]];
-		$result = $controller->ListReceivedShares($this->userId);
-		$this->assertEquals($result->getData(),$responses);
-		$this->assertEquals($result->getStatus(),200);
-	}
-	public function testListReceivedSharesEmpty(){
-		$controller = new RevaController(
-			$this->appName, $this->rootFolder, $this->request, $this->session,
-			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
-		  $this->userService, $this->trashManager , $this->shareManager,
-  		$this->groupManager, $this->cloudFederationProviderManager,
-  		$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
-		);
-		$this->request->method("getParams")
-			->willReturn(
-				[
-					"POST",
-					"/apps/sciencemesh/~tester/api/share/ListShares",
-					[
-						"type"=>4,
-						"Term"=>[
-							"Creator"=>[
-								"idp"=>"0.0.0.0=>19000",
-								"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-								"type"=>1
-								]
-							]
-						]
-				]
-			);
-		$this->shareManager->method("getSharedWith")
-			->willReturn([]);
-		$result = $controller->ListReceivedShares($this->userId);
-
-		$this->assertEquals($result->getData(),[]);
-		$this->assertEquals($result->getStatus(),200);
-	}
-	public function testGetReceivedShare(){
-		$controller = new RevaController(
-			$this->appName, $this->rootFolder, $this->request, $this->session,
-			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
-		  $this->userService, $this->trashManager , $this->shareManager,
-			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
 		$this->request->method("getParam")
 			->willReturn(
 				[
-				"Id"=>[
-					"opaque_id"=>"some-share-id"
+					"Id" => [
+						"opaque_id" => "some-share-id"
 					]
 				]
 				);
 		$this->shareManager->method("getShareById")
 			->willReturn($testShare);
 		$response = [
-			"id"=>[
-				"map" => NULL,
+			"id" => [
+				"map" => null,
 			],
-			"resource_id"=>[
-				"map" => NULL,
+			"resource_id" => [
+				"map" => null,
 			],
-			"permissions"=>[
-				"permissions"=>[
-					"add_grant"=>true,
-					"create_container"=>true,
-					"delete"=>true,
-					"get_path"=>true,
-					"get_quota"=>true,
-					"initiate_file_download"=>true,
-					"initiate_file_upload"=>true,
-					"list_grants"=>true,
-					"list_container"=>true,
-					"list_file_versions"=>true,
-					"list_recycle"=>true,
-					"move"=>true,
-					"remove_grant"=>true,
-					"purge_recycle"=>true,
-					"restore_file_version"=>true,
-					"restore_recycle_item"=>true,
-					"stat"=>true,
-					"update_grant"=>true,
-					"deny_grant"=>true
+			"permissions" => [
+				"permissions" => [
+					"add_grant" => true,
+					"create_container" => true,
+					"delete" => true,
+					"get_path" => true,
+					"get_quota" => true,
+					"initiate_file_download" => true,
+					"initiate_file_upload" => true,
+					"list_grants" => true,
+					"list_container" => true,
+					"list_file_versions" => true,
+					"list_recycle" => true,
+					"move" => true,
+					"remove_grant" => true,
+					"purge_recycle" => true,
+					"restore_file_version" => true,
+					"restore_recycle_item" => true,
+					"stat" => true,
+					"update_grant" => true,
+					"deny_grant" => true
 				]
 			],
-			"grantee"=>[
-				"Id"=>[
-					"UserId"=>[
-						"idp"=>"0.0.0.0:19000",
-						"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-						"type"=>1
+			"grantee" => [
+				"Id" => [
+					"UserId" => [
+						"idp" => "0.0.0.0:19000",
+						"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+						"type" => 1
 					]
 				]
 			],
-			"owner"=>[
-				"idp"=>"0::.0.0.0:19000",
-				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-				"type"=>1
+			"owner" => [
+				"idp" => "0::.0.0.0:19000",
+				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type" => 1
 			],
-			"creator"=>[
-				"idp"=>"0.0.0.0:19000",
-				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-				"type"=>1
+			"creator" => [
+				"idp" => "0.0.0.0:19000",
+				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type" => 1
 			],
-			"ctime"=>[
-				"seconds"=>1234567890
+			"ctime" => [
+				"seconds" => 1234567890
 			],
-			"mtime"=>[
-				"seconds"=>1234567890
-			],
-			"state"=>2
+			"mtime" => [
+				"seconds" => 1234567890
+			]
 		];
-		$result = $controller->GetReceivedShare($this->userId);
+		$result = $controller->GetShare($this->userId);
 		$this->assertEquals($result->getData(),$response);
 		$this->assertEquals($result->getStatus(),200);
 	}
-	public function testUpdateReceivedShare(){
+	public function testGetShareFails() {
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$this->request->method("getParam")
+			->willReturn(
+				[
+					"Id" => [
+						"opaque_id" => "some-share-id"
+					]
+				]
+				);
+		$this->shareManager->method("getShareById")
+			->willReturn(false);
+		$result = $controller->GetShare($this->userId);
+		$this->assertEquals($result->getStatus(),500);
+	}
+
+	public function testUnshare() {
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
-  		$this->groupManager, $this->cloudFederationProviderManager,
-  		$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$this->request->method("getParam")
+			->willReturn(
+				[
+					"Id" => [
+						"opaque_id" => "some-share-id"
+					]
+				]
+				);
+		$this->shareProvider->method("unshareByOpaqueId")
+			->willReturn(true);
+		$result = $controller->Unshare($this->userId);
+		$this->assertEquals($result->getStatus(),200);
+	}
+	public function testUnshareFails() {
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$this->request->method("getParam")
+			->willReturn(
+				[
+					"Id" => [
+						"opaque_id" => "some-share-id"
+					]
+				]
+				);
+		$this->shareProvider->method("unshareByOpaqueId")
+			->willReturn(false);
+		$result = $controller->Unshare($this->userId);
+		$this->assertEquals($result->getStatus(),204);
+	}
+	public function testUpdateShare() {
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+		  $this->userService, $this->trashManager , $this->shareManager,
+		$this->groupManager, $this->cloudFederationProviderManager,
+		$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
 		$testShareUpdated = $this->getMockBuilder("OCP\Share\IShare")->getMock();
 		$paramsMap = [
-			["ref", NULL,["Spec"=>["Id"=>["opaque_id"=>"some-share-id"]]]],
-			["p", NULL,	["permissions"=>["add_grant"=>true,"create_container"=>true,"delete"=>true,"get_path"=>true,"get_quota"=>true,"initiate_file_download"=>true,"initiate_file_upload"=>true,"list_grants"=>true,"list_container"=>true,"list_file_versions"=>true,"list_recycle"=>true,"move"=>true,"remove_grant"=>true,"purge_recycle"=>true,"restore_file_version"=>true,"restore_recycle_item"=>true,	"stat"=>true,"update_grant"=>true,"deny_grant"=>true]]]
+			["ref", null,["Spec" => ["Id" => ["opaque_id" => "some-share-id"]]]],
+			["p", null,	["permissions" => ["add_grant" => true,"create_container" => true,"delete" => true,"get_path" => true,"get_quota" => true,"initiate_file_download" => true,"initiate_file_upload" => true,"list_grants" => true,"list_container" => true,"list_file_versions" => true,"list_recycle" => true,"move" => true,"remove_grant" => true,"purge_recycle" => true,"restore_file_version" => true,"restore_recycle_item" => true,	"stat" => true,"update_grant" => true,"deny_grant" => true]]]
 		];
 		$this->request->method("getParam")
 			->will($this->returnValueMap($paramsMap));
@@ -1616,65 +1694,495 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->shareManager->method("updateShare")
 			->willReturn($testShareUpdated);
 		$response = [
-			"id"=>[
-				"map" => NULL,
+			"id" => [
+				"map" => null,
 			],
-			"resource_id"=>[
-				"map" => NULL,
+			"resource_id" => [
+				"map" => null,
 			],
-			"permissions"=>[
-				"permissions"=>[
-					"add_grant"=>true,
-					"create_container"=>true,
-					"delete"=>true,
-					"get_path"=>true,
-					"get_quota"=>true,
-					"initiate_file_download"=>true,
-					"initiate_file_upload"=>true,
-					"list_grants"=>true,
-					"list_container"=>true,
-					"list_file_versions"=>true,
-					"list_recycle"=>true,
-					"move"=>true,
-					"remove_grant"=>true,
-					"purge_recycle"=>true,
-					"restore_file_version"=>true,
-					"restore_recycle_item"=>true,
-					"stat"=>true,
-					"update_grant"=>true,
-					"deny_grant"=>true
+			"permissions" => [
+				"permissions" => [
+					"add_grant" => true,
+					"create_container" => true,
+					"delete" => true,
+					"get_path" => true,
+					"get_quota" => true,
+					"initiate_file_download" => true,
+					"initiate_file_upload" => true,
+					"list_grants" => true,
+					"list_container" => true,
+					"list_file_versions" => true,
+					"list_recycle" => true,
+					"move" => true,
+					"remove_grant" => true,
+					"purge_recycle" => true,
+					"restore_file_version" => true,
+					"restore_recycle_item" => true,
+					"stat" => true,
+					"update_grant" => true,
+					"deny_grant" => true
 				]
 			],
-			"grantee"=>[
-				"Id"=>[
-					"UserId"=>[
-						"idp"=>"0.0.0.0:19000",
-						"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-						"type"=>1
+			"grantee" => [
+				"Id" => [
+					"UserId" => [
+						"idp" => "0.0.0.0:19000",
+						"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+						"type" => 1
 					]
 				]
 			],
-			"owner"=>[
-				"idp"=>"0::.0.0.0:19000",
-				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-				"type"=>1
+			"owner" => [
+				"idp" => "0::.0.0.0:19000",
+				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type" => 1
 			],
-			"creator"=>[
-				"idp"=>"0.0.0.0:19000",
-				"opaque_id"=>"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-				"type"=>1
+			"creator" => [
+				"idp" => "0.0.0.0:19000",
+				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type" => 1
 			],
-			"ctime"=>[
-				"seconds"=>1234567890
+			"ctime" => [
+				"seconds" => 1234567890
 			],
-			"mtime"=>[
-				"seconds"=>1234567890
+			"mtime" => [
+				"seconds" => 1234567890
+			]
+		];
+		$result = $controller->UpdateShare($this->userId);
+		$this->assertEquals($result->getData(),$response);
+		$this->assertEquals($result->getStatus(),200);
+	}
+	public function testUpdateShareFails() {
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+		  $this->userService, $this->trashManager , $this->shareManager,
+		$this->groupManager, $this->cloudFederationProviderManager,
+		$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$paramsMap = [
+			["ref", null,["Spec" => ["Id" => ["opaque_id" => "some-share-id"]]]],
+			["p", null,	["permissions" => ["add_grant" => true,"create_container" => true,"delete" => true,"get_path" => true,"get_quota" => true,"initiate_file_download" => true,"initiate_file_upload" => true,"list_grants" => true,"list_container" => true,"list_file_versions" => true,"list_recycle" => true,"move" => true,"remove_grant" => true,"purge_recycle" => true,"restore_file_version" => true,"restore_recycle_item" => true,	"stat" => true,"update_grant" => true,"deny_grant" => true]]]
+		];
+		$this->request->method("getParam")
+			->will($this->returnValueMap($paramsMap));
+		$this->shareManager->method("getShareById")
+			->willReturn($testShare);
+		$this->shareManager->method("updateShare")
+			->willReturn(false);
+		$result = $controller->UpdateShare($this->userId);
+		$this->assertEquals($result->getStatus(),500);
+	}
+	public function testListSentShares() {
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+		  $this->userService, $this->trashManager , $this->shareManager,
+		$this->groupManager, $this->cloudFederationProviderManager,
+		$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$this->request->method("getParams")
+			->willReturn(
+				[
+					"POST",
+					"/apps/sciencemesh/~tester/api/share/ListSentShares",
+					[
+						"type" => 4,
+						"Term" => [
+							"Creator" => [
+								"idp" => "0.0.0.0=>19000",
+								"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+								"type" => 1
+							]
+						]
+					]
+				]
+			);
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$this->shareProvider->method("getSentShares")
+			->willReturn([$testShare]);
+		$result = $controller->ListSentShares($this->userId);
+		$responses = [[
+			"id" => [
+				"map" => null,
 			],
-			"state"=>2
+			"resource_id" => [
+				"map" => null,
+			],
+			"permissions" => [
+				"permissions" => [
+					"add_grant" => true,
+					"create_container" => true,
+					"delete" => true,
+					"get_path" => true,
+					"get_quota" => true,
+					"initiate_file_download" => true,
+					"initiate_file_upload" => true,
+					"list_grants" => true,
+					"list_container" => true,
+					"list_file_versions" => true,
+					"list_recycle" => true,
+					"move" => true,
+					"remove_grant" => true,
+					"purge_recycle" => true,
+					"restore_file_version" => true,
+					"restore_recycle_item" => true,
+					"stat" => true,
+					"update_grant" => true,
+					"deny_grant" => true
+				]
+			],
+			"grantee" => [
+				"Id" => [
+					"UserId" => [
+						"idp" => "0.0.0.0:19000",
+						"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+						"type" => 1
+					]
+				]
+			],
+			"owner" => [
+				"idp" => "0::.0.0.0:19000",
+				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type" => 1
+			],
+			"creator" => [
+				"idp" => "0.0.0.0:19000",
+				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type" => 1
+			],
+			"ctime" => [
+				"seconds" => 1234567890
+			],
+			"mtime" => [
+				"seconds" => 1234567890
+			]
+		]];
+		$this->assertEquals($result->getData(),$responses);
+		$this->assertEquals($result->getStatus(),200);
+	}
+	public function testListSentSharesEmpty() {
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+		  $this->userService, $this->trashManager , $this->shareManager,
+		$this->groupManager, $this->cloudFederationProviderManager,
+		$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$this->request->method("getParams")
+			->willReturn(
+				[
+					"POST",
+					"/apps/sciencemesh/~tester/api/share/ListSentShares",
+					[
+						"type" => 4,
+						"Term" => [
+							"Creator" => [
+								"idp" => "0.0.0.0=>19000",
+								"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+								"type" => 1
+							]
+						]
+					]
+				]
+			);
+		$this->shareProvider->method("getSentShares")
+			->willReturn([]);
+		$result = $controller->ListSentShares($this->userId);
+		$this->assertEquals($result->getData(),[]);
+		$this->assertEquals($result->getStatus(),200);
+	}
+	public function testListReceivedShares() {
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+		  $this->userService, $this->trashManager , $this->shareManager,
+		$this->groupManager, $this->cloudFederationProviderManager,
+		$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$this->shareProvider->method("getReceivedShares")
+			->willReturn([$testShare]);
+		$responses = [[
+			"id" => [
+				"map" => null,
+			],
+			"resource_id" => [
+				"map" => null,
+			],
+			"permissions" => [
+				"permissions" => [
+					"add_grant" => true,
+					"create_container" => true,
+					"delete" => true,
+					"get_path" => true,
+					"get_quota" => true,
+					"initiate_file_download" => true,
+					"initiate_file_upload" => true,
+					"list_grants" => true,
+					"list_container" => true,
+					"list_file_versions" => true,
+					"list_recycle" => true,
+					"move" => true,
+					"remove_grant" => true,
+					"purge_recycle" => true,
+					"restore_file_version" => true,
+					"restore_recycle_item" => true,
+					"stat" => true,
+					"update_grant" => true,
+					"deny_grant" => true
+				]
+			],
+			"grantee" => [
+				"Id" => [
+					"UserId" => [
+						"idp" => "0.0.0.0:19000",
+						"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+						"type" => 1
+					]
+				]
+			],
+			"owner" => [
+				"idp" => "0::.0.0.0:19000",
+				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type" => 1
+			],
+			"creator" => [
+				"idp" => "0.0.0.0:19000",
+				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type" => 1
+			],
+			"ctime" => [
+				"seconds" => 1234567890
+			],
+			"mtime" => [
+				"seconds" => 1234567890
+			],
+			"state" => 2
+		]];
+		$result = $controller->ListReceivedShares($this->userId);
+		$this->assertEquals($result->getData(),$responses);
+		$this->assertEquals($result->getStatus(),200);
+	}
+	public function testListReceivedSharesEmpty() {
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+		  $this->userService, $this->trashManager , $this->shareManager,
+		$this->groupManager, $this->cloudFederationProviderManager,
+		$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$this->shareProvider->method("getReceivedShares")
+			->willReturn([]);
+		$result = $controller->ListReceivedShares($this->userId);
+
+		$this->assertEquals($result->getData(),[]);
+		$this->assertEquals($result->getStatus(),200);
+	}
+	public function testGetReceivedShare() {
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+		  $this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$this->request->method("getParam")
+			->willReturn(
+				[
+					"Id" => [
+						"opaque_id" => "some-share-id"
+					]
+				]
+				);
+		$this->shareManager->method("getShareById")
+			->willReturn($testShare);
+		$response = [
+			"id" => [
+				"map" => null,
+			],
+			"resource_id" => [
+				"map" => null,
+			],
+			"permissions" => [
+				"permissions" => [
+					"add_grant" => true,
+					"create_container" => true,
+					"delete" => true,
+					"get_path" => true,
+					"get_quota" => true,
+					"initiate_file_download" => true,
+					"initiate_file_upload" => true,
+					"list_grants" => true,
+					"list_container" => true,
+					"list_file_versions" => true,
+					"list_recycle" => true,
+					"move" => true,
+					"remove_grant" => true,
+					"purge_recycle" => true,
+					"restore_file_version" => true,
+					"restore_recycle_item" => true,
+					"stat" => true,
+					"update_grant" => true,
+					"deny_grant" => true
+				]
+			],
+			"grantee" => [
+				"Id" => [
+					"UserId" => [
+						"idp" => "0.0.0.0:19000",
+						"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+						"type" => 1
+					]
+				]
+			],
+			"owner" => [
+				"idp" => "0::.0.0.0:19000",
+				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type" => 1
+			],
+			"creator" => [
+				"idp" => "0.0.0.0:19000",
+				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type" => 1
+			],
+			"ctime" => [
+				"seconds" => 1234567890
+			],
+			"mtime" => [
+				"seconds" => 1234567890
+			],
+			"state" => 2
+		];
+		$result = $controller->GetReceivedShare($this->userId);
+		$this->assertEquals($result->getData(),$response);
+		$this->assertEquals($result->getStatus(),200);
+	}
+	public function testGetReceivedShareFails() {
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$this->request->method("getParam")
+			->willReturn(
+				[
+					"Id" => [
+						"opaque_id" => "some-share-id"
+					]
+				]
+				);
+		$this->shareManager->method("getShareById")
+			->willReturn(null);
+		$result = $controller->GetReceivedShare($this->userId);
+		$this->assertEquals($result->getStatus(),500);
+	}
+	public function testUpdateReceivedShare() {
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+		  $this->userService, $this->trashManager , $this->shareManager,
+		$this->groupManager, $this->cloudFederationProviderManager,
+		$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$testShareUpdated = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$paramsMap = [
+			["ref", null,["Spec" => ["Id" => ["opaque_id" => "some-share-id"]]]],
+			["p", null,	["permissions" => ["add_grant" => true,"create_container" => true,"delete" => true,"get_path" => true,"get_quota" => true,"initiate_file_download" => true,"initiate_file_upload" => true,"list_grants" => true,"list_container" => true,"list_file_versions" => true,"list_recycle" => true,"move" => true,"remove_grant" => true,"purge_recycle" => true,"restore_file_version" => true,"restore_recycle_item" => true,	"stat" => true,"update_grant" => true,"deny_grant" => true]]]
+		];
+		$this->request->method("getParam")
+			->will($this->returnValueMap($paramsMap));
+		$this->shareManager->method("getShareById")
+			->willReturn($testShare);
+		$this->shareManager->method("updateShare")
+			->willReturn($testShareUpdated);
+		$response = [
+			"id" => [
+				"map" => null,
+			],
+			"resource_id" => [
+				"map" => null,
+			],
+			"permissions" => [
+				"permissions" => [
+					"add_grant" => true,
+					"create_container" => true,
+					"delete" => true,
+					"get_path" => true,
+					"get_quota" => true,
+					"initiate_file_download" => true,
+					"initiate_file_upload" => true,
+					"list_grants" => true,
+					"list_container" => true,
+					"list_file_versions" => true,
+					"list_recycle" => true,
+					"move" => true,
+					"remove_grant" => true,
+					"purge_recycle" => true,
+					"restore_file_version" => true,
+					"restore_recycle_item" => true,
+					"stat" => true,
+					"update_grant" => true,
+					"deny_grant" => true
+				]
+			],
+			"grantee" => [
+				"Id" => [
+					"UserId" => [
+						"idp" => "0.0.0.0:19000",
+						"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+						"type" => 1
+					]
+				]
+			],
+			"owner" => [
+				"idp" => "0::.0.0.0:19000",
+				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type" => 1
+			],
+			"creator" => [
+				"idp" => "0.0.0.0:19000",
+				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"type" => 1
+			],
+			"ctime" => [
+				"seconds" => 1234567890
+			],
+			"mtime" => [
+				"seconds" => 1234567890
+			],
+			"state" => 2
 		];
 		$result = $controller->UpdateReceivedShare($this->userId);
 		$this->assertEquals($result->getData(),$response);
 		$this->assertEquals($result->getStatus(),200);
 	}
-
+	public function testUpdateReceivedShareFails() {
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$paramsMap = [
+			["ref", null,["Spec" => ["Id" => ["opaque_id" => "some-share-id"]]]],
+			["p", null,	["permissions" => ["add_grant" => true,"create_container" => true,"delete" => true,"get_path" => true,"get_quota" => true,"initiate_file_download" => true,"initiate_file_upload" => true,"list_grants" => true,"list_container" => true,"list_file_versions" => true,"list_recycle" => true,"move" => true,"remove_grant" => true,"purge_recycle" => true,"restore_file_version" => true,"restore_recycle_item" => true,	"stat" => true,"update_grant" => true,"deny_grant" => true]]]
+		];
+		$this->request->method("getParam")
+			->will($this->returnValueMap($paramsMap));
+		$this->shareManager->method("getShareById")
+			->willReturn($testShare);
+		$this->shareManager->method("updateShare")
+			->willReturn(false);
+		$result = $controller->UpdateReceivedShare($this->userId);
+		$this->assertEquals($result->getStatus(),500);
+	}
 }
