@@ -878,9 +878,9 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 *
-	 * GetShare gets the information for a share by the given ref.
+	 * GetSentShare gets the information for a share by the given ref.
 	 */
-	public function GetShare($userId) {
+	public function GetSentShare($userId) {
 		$spec = $this->request->getParam("Spec");
 		$Id = $spec["Id"];
 		$opaqueId = $Id["opaque_id"];

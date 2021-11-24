@@ -35,7 +35,7 @@ return [
 		['name' => 'reva#Upload', 'url' => '/~{userId}/api/storage/Upload/{path}', 'verb' => 'PUT'],
 		['name' => 'reva#addSentShare', 'url' => '/~{userId}/api/ocm/addSentShare', 'verb' => 'POST'],
 		['name' => 'reva#addReceivedShare', 'url' => '/~{userId}/api/ocm/addReceivedShare', 'verb' => 'POST'],
-		['name' => 'reva#GetShare', 'url' => '/~{userId}/api/ocm/GetShare', 'verb' => 'POST'],
+		['name' => 'reva#GetSentShare', 'url' => '/~{userId}/api/ocm/GetSentShare', 'verb' => 'POST'],
 		['name' => 'reva#Unshare', 'url' => '/~{userId}/api/ocm/Unshare', 'verb' => 'POST'],
 		['name' => 'reva#UpdateShare', 'url' => '/~{userId}/api/ocm/UpdateShare', 'verb' => 'POST'],
 		['name' => 'reva#ListSentShares', 'url' => '/~{userId}/api/ocm/ListSentShares', 'verb' => 'POST'],
