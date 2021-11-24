@@ -871,7 +871,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 *
 	 */
-	public function UpdateShare($userId) {
+	public function UpdateSentShare($userId) {
 		$ref = $this->request->getParam("ref");
 		$spec = $ref["Spec"];
 		$id = $spec["Id"];
@@ -885,7 +885,7 @@ class RevaController extends Controller {
 			$response = $this->shareInfoToResourceInfo($updated);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
-		return new JSONResponse(["error" => "UpdateShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
+		return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
 	/**
 	 * @PublicPage
