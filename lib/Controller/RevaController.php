@@ -719,8 +719,9 @@ class RevaController extends Controller {
 	 * Get user list.
 	 */
 	public function GetUser($userId) {
+		$response = json_encode(["id" => ["idp" => "cesnet.cz","opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type" => 1]]);
 		if ($this->userManager->userExists($userId)) {
-			return new JSONResponse(['opaque_id' => $userId], Http::STATUS_OK);
+			return new JSONResponse($response, Http::STATUS_OK);
 		}
 		return new JSONResponse(
 			['message' => 'User not exist'],
