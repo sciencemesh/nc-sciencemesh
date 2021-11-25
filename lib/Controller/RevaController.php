@@ -737,6 +737,26 @@ class RevaController extends Controller {
 			Http::STATUS_NOT_FOUND
 		);
 	}
+	/**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @NoSameSiteCookieRequired
+	 *
+	 * Get user list.
+	 */
+	public function GenerateInviteToken($userId) {
+		$param = $this->request->getParam('opaque');
+		$map = $param['map'];
+		
+		$request = [
+			'opaque' => [
+				'map' => [
+					'key' => 'test123',
+					'value' => 'test123'
+				]
+			]
+		];
+	}
 
 	/**
 	 * @PublicPage
