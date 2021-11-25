@@ -997,43 +997,4 @@ class RevaController extends Controller {
 		}
 		return new JSONResponse(["error" => "UpdateReceivedShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
-	/**
-	 * Does the user have read permission on the share
-	 *
-	 * @param \OCP\Share\IShare $share the share to check
-	 * @param string userid
-	 * @param boolean $checkGroups check groups as well?
-	 * @return boolean
-	 *
-	 * @suppress PhanUndeclaredClassMethod
-	 */
-	protected function canAccessShare(\OCP\Share\IShare $share,string $userId, bool $checkGroups = true): bool {
-		// A file with permissions 0 can't be accessed by us. So Don't show it
-		if ($share->getPermissions() === 0) {
-			return false;
-		}
-		// Owner of the file and the sharer of the file can always get share
-		if ($share->getShareOwner() === $userId
-			|| $share->getSharedBy() === $userId) {
-			return true;
-		}
-		// Have reshare rights on the shared file/folder ?
-		// Does the currentUser have access to the shared file?
-		$files = $this->userFolder->getById($share->getNodeId());
-		if (!empty($files) && $this->shareProviderResharingRights($userId, $share, $files[0])) {
-			return true;
-		}
-		return false;
-	}
-
-	private function shareProviderResharingRights(string $userId, IShare $share, $node): bool {
-		if ($share->getShareOwner() === $userId) {
-			return true;
-		}
-		// we check that current user have parent resharing rights on the current file
-		if ($node !== null && ($node->getPermissions() & Constants::PERMISSION_SHARE) !== 0) {
-			return true;
-		}
-		return false;
-	}
 }
