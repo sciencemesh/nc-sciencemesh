@@ -953,9 +953,7 @@ class RevaController extends Controller {
 	 * GetReceivedShare returns the information for a received share the user has access.
 	 */
 	public function GetReceivedShare($userId) {
-		$spec = $this->request->getParam("Spec");
-		$Id = $spec["Id"];
-		$opaqueId = $Id["opaque_id"];
+		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$share = $this->shareProvider->getReceivedShareByOpaqueId($userId,$opaqueId);
 		if ($share) {
 			$response = $this->shareInfoToResourceInfo($share);
@@ -982,44 +980,5 @@ class RevaController extends Controller {
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
 		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_NO_CONTENT);
-	}
-	/**
-	 * Does the user have read permission on the share
-	 *
-	 * @param \OCP\Share\IShare $share the share to check
-	 * @param string userid
-	 * @param boolean $checkGroups check groups as well?
-	 * @return boolean
-	 *
-	 * @suppress PhanUndeclaredClassMethod
-	 */
-	protected function canAccessShare(\OCP\Share\IShare $share,string $userId, bool $checkGroups = true): bool {
-		// A file with permissions 0 can't be accessed by us. So Don't show it
-		if ($share->getPermissions() === 0) {
-			return false;
-		}
-		// Owner of the file and the sharer of the file can always get share
-		if ($share->getShareOwner() === $userId
-			|| $share->getSharedBy() === $userId) {
-			return true;
-		}
-		// Have reshare rights on the shared file/folder ?
-		// Does the currentUser have access to the shared file?
-		$files = $this->userFolder->getById($share->getNodeId());
-		if (!empty($files) && $this->shareProviderResharingRights($userId, $share, $files[0])) {
-			return true;
-		}
-		return false;
-	}
-
-	private function shareProviderResharingRights(string $userId, IShare $share, $node): bool {
-		if ($share->getShareOwner() === $userId) {
-			return true;
-		}
-		// we check that current user have parent resharing rights on the current file
-		if ($node !== null && ($node->getPermissions() & Constants::PERMISSION_SHARE) !== 0) {
-			return true;
-		}
-		return false;
 	}
 }
