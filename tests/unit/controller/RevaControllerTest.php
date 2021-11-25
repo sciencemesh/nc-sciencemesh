@@ -248,9 +248,13 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getData(), "Logged in");
 	}
 
-	public function testGetUser() {
+	public function testGetUserThatExists() {
 		$user = $this->getMockBuilder("OCP\IUser")->getMock();
-		$this->userManager->method("userExists")->willReturn($user);
+		$this->userManager
+			->method("userExists")
+			->with($this->equalTo("einstein"))
+			->willReturn(true);
+		$this->request->method("getParam")->willReturn("einstein");
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
@@ -258,11 +262,28 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->groupManager, $this->cloudFederationProviderManager,
 			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
-		$response = ["id" => ["idp" => "cesnet.cz","opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type" => 1]];
-		$result = $controller->GetUser($this->userId);
+		$response = [
+			"id" => [
+				"idp" => "some-domain.com",
+				"opaque_id" => "einstein",
+				"type" => 1
+			]
+		];
+		$result = $controller->GetUser("alice");
 		$this->assertEquals($result->getData(), $response);
 	}
+<<<<<<< HEAD
 	public function testGetUserFails() {
+=======
+
+	public function testGetUserThatDoesNotExist() {
+		$user = $this->getMockBuilder("OCP\IUser")->getMock();
+		$this->userManager
+			->method("userExists")
+			->with($this->equalTo("archimedes"))
+			->willReturn(false);
+		$this->request->method("getParam")->willReturn("archimedes");
+>>>>>>> main
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
@@ -270,9 +291,16 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->groupManager, $this->cloudFederationProviderManager,
 			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
+<<<<<<< HEAD
 		$result = $controller->GetUser("fakeUserame");
 		$this->assertEquals($result->getStatus(),404);
 	}
+=======
+		$result = $controller->GetUser("alice");
+		$this->assertEquals($result->getStatus(), 404);
+	}
+
+>>>>>>> main
 	public function testAuthenticateWrong() {
 		$this->request->method("getParam")->willReturn("whatever");
 		$this->userManager->method("checkPassword")->willReturn(false);

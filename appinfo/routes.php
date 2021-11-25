@@ -11,7 +11,7 @@
 return [
 	'routes' => [
 
-		['name' => 'reva#Authenticate', 'url' => '/~{userId}/api/storage/Authenticate', 'verb' => 'POST'],
+		['name' => 'reva#Authenticate', 'url' => '/~{userId}/api/auth/Authenticate', 'verb' => 'POST'],
 		['name' => 'reva#AddGrant', 'url' => '/~{userId}/api/storage/AddGrant', 'verb' => 'POST'],
 		['name' => 'reva#CreateDir', 'url' => '/~{userId}/api/storage/CreateDir', 'verb' => 'POST'],
 		['name' => 'reva#CreateHome', 'url' => '/~{userId}/api/storage/CreateHome', 'verb' => 'POST'],
