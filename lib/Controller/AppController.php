@@ -108,12 +108,12 @@ class AppController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function invitations() {
-		$invitationsData = array(
-			"invite_token" => "4d6196c0-5a59-4db5-bf5a-8e41991051f8", 
+		$invitationsData = [
+			"invite_token" => "4d6196c0-5a59-4db5-bf5a-8e41991051f8",
 			"user_id" => "cernbox.cern.ch",
-			"opaque_id" =>"4c510ada-c86b-4815-8820-42cdf82c3d51" ,
-			"type" => 1 
-		);
+			"opaque_id" => "4c510ada-c86b-4815-8820-42cdf82c3d51" ,
+			"type" => 1
+		];
 		$templateResponse = new TemplateResponse('sciencemesh', 'invitations', $invitationsData);
 		$policy = new ContentSecurityPolicy();
 		$policy->addAllowedStyleDomain("data:");
