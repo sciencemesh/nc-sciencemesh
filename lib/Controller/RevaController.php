@@ -23,7 +23,6 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TextPlainResponse;
 use OCP\AppFramework\Controller;
-use OCP\AppFramework\OCS\OCSBadRequestException;
 use OCP\AppFramework\OCS\OCSNotFoundException;
 
 use OCA\CloudFederationAPI\Config;
@@ -34,7 +33,6 @@ use OCP\Federation\ICloudIdManager;
 use OCP\Share\IManager;
 use OCP\Share\IShare;
 
-use OCP\Constants;
 
 use Psr\Log\LoggerInterface;
 
@@ -860,7 +858,7 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
-
+	 *
 	 *
 	 * Remove Share from share table
 	 */
