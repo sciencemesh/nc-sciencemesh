@@ -272,7 +272,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->GetUser("alice");
 		$this->assertEquals($result->getData(), $response);
 	}
-
 	public function testGetUserThatDoesNotExist() {
 		$user = $this->getMockBuilder("OCP\IUser")->getMock();
 		$this->userManager
