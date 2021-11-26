@@ -124,8 +124,12 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 
 	public function testAuthenticateOK() {
 		$user = $this->getMockBuilder("OCP\IUser")->getMock();
-		$this->request->method("getParam")->willReturn("whatever");
-		$this->userManager->method("checkPassword")->willReturn($user);
+		$this->request->method("getParam")
+		  ->with($this->equalTo("clientSecret"))
+			->willReturn("something-very-secret");
+		$this->userManager->method("checkPassword")
+		  ->with($this->equalTo($this->userId), $this->equalTo("something-very-secret"))
+			->willReturn($user);
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
@@ -133,8 +137,25 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->groupManager, $this->cloudFederationProviderManager,
 			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
-		$result = $controller->Authenticate($this->userId);
-		$this->assertEquals($result->getData(), "Logged in");
+		$jsonResponse = $controller->Authenticate($this->userId);
+		$this->assertEquals($jsonResponse->getData(), [
+			"user" => [
+				"id" => [
+					"idp" => "some-idp",
+					"opaque_id" => $this->userId,
+					"type" => 1,
+				],
+			],
+			"scopes" => [
+				"user" => [
+					"resource" => [
+						"decoder" => "json",
+						"value" => "eyJyZXNvdXJjZV9pZCI6eyJzdG9yYWdlX2lkIjoic3RvcmFnZS1pZCIsIm9wYXF1ZV9pZCI6Im9wYXF1ZS1pZCJ9LCJwYXRoIjoic29tZS9maWxlL3BhdGgudHh0In0=",
+					],
+					"role" => 1,
+				],
+			],
+		]);
 	}
 
 	public function testGetUserThatExists() {
