@@ -147,7 +147,7 @@ To check the [RevaCotroller.php](https://github.com/pondersource/nc-sciencemesh/
     
 ### ListSentShares()
   
-  curl -X POST http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/ListShares
+  curl -X POST http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/ListSentShares
    
 ### Unshare()
 
