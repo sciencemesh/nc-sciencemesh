@@ -379,7 +379,25 @@ class RevaController extends Controller {
 		// but we take the username from the path
 		$auth = $this->userManager->checkPassword($userId,$password);
 		if ($auth) {
-			return new JSONResponse("Logged in", Http::STATUS_OK);
+			$obj = [
+				"user" => [
+					"id" => [
+						"idp" => "some-idp",
+						"opaque_id" => $userId,
+						"type" => 1,
+					],
+				],
+				"scopes" => [
+					"user" => [
+						"resource" => [
+							"decoder" => "json",
+							"value" => "eyJyZXNvdXJjZV9pZCI6eyJzdG9yYWdlX2lkIjoic3RvcmFnZS1pZCIsIm9wYXF1ZV9pZCI6Im9wYXF1ZS1pZCJ9LCJwYXRoIjoic29tZS9maWxlL3BhdGgudHh0In0=",
+						],
+						"role" => 1,
+					],
+				],
+			];
+			return new JSONResponse($obj, Http::STATUS_OK);
 		}
 		return new JSONResponse("Username / password not recognized", 401);
 	}
