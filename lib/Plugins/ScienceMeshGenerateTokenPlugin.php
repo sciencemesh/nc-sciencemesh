@@ -28,6 +28,19 @@ class ScienceMeshGenerateTokenPlugin {
 		$this->httpClient = $httpClient;
 	}
 
+	public function getGenerateTokenResponse() {
+		//$result = $this->generateTokenFromReva();// Configure if the reva endpoint will be ready
+
+		$invitationsData = [
+			"invite_token" => "4d6196c0-5a59-4db5-bf5a-8e41991051f8",
+			"user_id" => "cernbox.cern.ch",
+			"opaque_id" => "4c510ada-c86b-4815-8820-42cdf82c3d51" ,
+			"type" => 1
+		];
+
+		return $invitationsData;
+	}
+
 	public function generateTokenFromReva() {
 		$request = [
 			'opaque' => [
