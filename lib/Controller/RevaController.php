@@ -371,10 +371,12 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function Authenticate($userId) {
-		$password = $this->request->getParam("password");
+		$password = $this->request->getParam("clientSecret");
 		// Try e.g.:
-		// curl -v -H 'Content-Type:application/json' -d'{"password":"relativity"}' http://localhost/apps/sciencemesh/~einstein/api/Authenticate
-		// FIXME: https://github.com/pondersource/nc-sciencemesh/issues/3
+		// curl -v -H 'Content-Type:application/json' -d'{"clientSecret":"relativity"}' http://einstein:relativity@localhost/index.php/apps/sciencemesh/~einstein/api/auth/Authenticate
+		// Note that reva will also post `clientID` inside the JSON,
+		// and both username and password are also in http basic auth (will that stay that way? -> see https://github.com/pondersource/nc-sciencemesh/issues/167)
+		// but we take the username from the path
 		$auth = $this->userManager->checkPassword($userId,$password);
 		if ($auth) {
 			return new JSONResponse("Logged in", Http::STATUS_OK);
