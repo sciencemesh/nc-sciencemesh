@@ -1234,16 +1234,12 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$cursor->closeCursor();
 	}
 
-	public function deleteSentShareByOpaqueId($userId, $opaque_id) {
-		$decoded = urldecode($opaque_id);
-		$exploded = explode("/", $opaque_id);
-		$filename = end($exploded);
-		$username = substr($exploded[0], strlen("fileid-"));
+	public function deleteSentShareByName($userId, $name) {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->select('fileid')
 			->from('filecache')
 			->where(
-				$qb->expr()->eq('name', $qb->createNamedParameter($filename))
+				$qb->expr()->eq('name', $qb->createNamedParameter($name))
 			);
 		$id = $data['fileid'];
 		$qb->delete('share')
@@ -1262,7 +1258,6 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$filename = end($exploded);
 		$username = substr($exploded[0], strlen("fileid-"));
 		$qb = $this->dbConnection->getQueryBuilder();
-		$id = $data['fileid'];
 		$qb->select('*')
 			->from('share_external')
 			->where(
@@ -1274,9 +1269,9 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$qb->execute();
 		$cursor = $qb->execute();
 		$data = $cursor->fetch();
-		// if (!$data) {
-		// 	return false;
-		// }
+		if (!$data) {
+			return false;
+		}
 		try {
 			$share = $this->createShareObject($data);
 		} catch (InvalidShare $e) {
@@ -1285,17 +1280,14 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$cursor->closeCursor();
 		return $share;
 	}
-	public function getSentShareByOpaqueId($userId, $opaque_id) {
-		$decoded = urldecode($opaque_id);
-		$exploded = explode("/", $opaque_id);
-		$filename = end($exploded);
-		$username = substr($exploded[0], strlen("fileid-"));
-		$qb = $this->dbConnection->getQueryBuilder();
+	public function getSentShareByName($userId, $name) {
+		$qb = $this->dbConnection->getQueryBuilder($name);
 		$qb->select('fileid')
 			->from('filecache')
 			->where(
-				$qb->expr()->eq('name', $qb->createNamedParameter($filename))
+				$qb->expr()->eq('name', $qb->createNamedParameter($name))
 			);
+		error_log($name);
 		$cursor = $qb->execute();
 		$data = $cursor->fetch();
 		if (!$data) {

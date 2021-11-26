@@ -896,7 +896,8 @@ class RevaController extends Controller {
 	 */
 	public function Unshare($userId) {
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
-		if ($this->shareProvider->deleteSentShareByOpaqueId($userId, $opaqueId)) {
+		$name 		= $this->getNameByOpaqueId($opaqueId);
+		if ($this->shareProvider->deleteSentShareByOpaqueId($userId, $name)) {
 			return new JSONResponse("",Http::STATUS_OK);
 		} else {
 			return new JSONResponse([],Http::STATUS_NO_CONTENT);
@@ -966,6 +967,8 @@ class RevaController extends Controller {
 	public function GetReceivedShare($userId) {
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$share 		= $this->shareProvider->getReceivedShareByOpaqueId($userId,$opaqueId);
+		error_log($opaqueId);
+		error_log($share);
 		if ($share) {
 			$response = $this->shareInfoToResourceInfo($share);
 			$response["state"] = 2;
@@ -983,7 +986,8 @@ class RevaController extends Controller {
 	 */
 	public function GetSentShare($userId) {
 		$opaqueId	= $this->request->getParam("Spec")["Id"]["opaque_id"];
-		$share 		= $this->shareProvider->getSentShareByOpaqueId($userId,$opaqueId);
+		$name = $this->getNameByOpaqueId($opaqueId);
+		$share 		= $this->shareProvider->getSentShareByName($userId,$opaqueId);
 		if ($share) {
 			$response = $this->shareInfoToResourceInfo($share);
 			return new JSONResponse($response, Http::STATUS_OK);
