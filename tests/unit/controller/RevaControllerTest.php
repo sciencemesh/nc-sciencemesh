@@ -1534,7 +1534,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 					]
 				]
 				);
-		$this->shareProvider->method("unshareByOpaqueId")
+		$this->shareProvider->method("deleteSentShareByOpaqueId")
 			->willReturn(true);
 		$result = $controller->Unshare($this->userId);
 		$this->assertEquals($result->getStatus(),200);
@@ -1555,7 +1555,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 					]
 				]
 				);
-		$this->shareProvider->method("unshareByOpaqueId")
+		$this->shareProvider->method("deleteSentShareByOpaqueId")
 			->willReturn(false);
 		$result = $controller->Unshare($this->userId);
 		$this->assertEquals($result->getStatus(),204);
