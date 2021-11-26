@@ -14,6 +14,7 @@ use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Notification\IManager as INotificationManager;
 use OCP\IUserSession;
+use OCA\ScienceMesh\Plugins\ScienceMeshGenerateTokenPlugin;
 
 class AppController extends Controller {
 	private $userId;
@@ -21,8 +22,9 @@ class AppController extends Controller {
 	private $urlGenerator;
 	private $config;
 	private $userSession;
+	private $generateToken;
 
-	public function __construct($AppName, ITimeFactory $timeFactory, INotificationManager $notificationManager, IRequest $request, IConfig $config, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IUserSession $userSession) {
+	public function __construct($AppName, ITimeFactory $timeFactory, INotificationManager $notificationManager, IRequest $request, IConfig $config, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IUserSession $userSession, ScienceMeshGenerateTokenPlugin $generateToken) {
 		parent::__construct($AppName, $request);
 			  
 		$this->userId = $userId;
@@ -33,6 +35,7 @@ class AppController extends Controller {
 		$this->timeFactory = $timeFactory;
 		$this->config = new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
 		$this->userSession = $userSession;
+		$this->generateToken = $generateToken;
 	}
 
 	/**
@@ -108,12 +111,7 @@ class AppController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function invitations() {
-		$invitationsData = [
-			"invite_token" => "4d6196c0-5a59-4db5-bf5a-8e41991051f8",
-			"user_id" => "cernbox.cern.ch",
-			"opaque_id" => "4c510ada-c86b-4815-8820-42cdf82c3d51" ,
-			"type" => 1
-		];
+		$invitationsData = $this->generateToken->getGenerateTokenResponse();
 		$templateResponse = new TemplateResponse('sciencemesh', 'invitations', $invitationsData);
 		$policy = new ContentSecurityPolicy();
 		$policy->addAllowedStyleDomain("data:");
