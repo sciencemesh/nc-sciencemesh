@@ -901,15 +901,6 @@ class RevaController extends Controller {
 	 * it returns only shares attached to the given resource.
 	 */
 	public function ListSentShares($userId) {
-		$requests = $this->request->getParams();
-		$request = array_values($requests)[2];
-		$type = $request["type"];
-		$term = $request["Term"];
-		$creator = $term["Creator"];
-		$idpCreator = $creator["idp"];
-		$opaqueIdCreator = ["opaque_id"];
-		$typeCreator = ["type"];
-		$responses = [];
 		$shares = $this->shareProvider->getSentShares($userId);
 		if ($shares) {
 			foreach ($shares as $share) {

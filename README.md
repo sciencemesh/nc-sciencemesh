@@ -155,7 +155,7 @@ curl -v -H  'Content-Type:application/json' -X POST -d  '{"Spec":{"Id":{"opaque_
 
 ### GetReceivedShare()
 
-curl -v -H  'Content-Type:application/json' -X POST -d  '{"Spec":{"Id":{"opaque_id":"some-share-id"}}}' http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/GetReceivedShare
+curl -v -H  'Content-Type:application/json' -X POST -d  '{"Spec":{"Id":{"opaque_id":"fileid-marie%2FtestFile.json"}}}' http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/GetReceivedShare
 
 
 ### GetSentShare()
