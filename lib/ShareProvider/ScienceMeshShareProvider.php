@@ -1188,7 +1188,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 				$qb->expr()->eq('share_type', $qb->createNamedParameter(14))//$this::SHARE_TYPE_SCIENCEMESH))
 			)
 			->andWhere(
-				$qb->expr()->or(
+				$qb->expr()->orX(
 					$qb->expr()->eq('uid_initiator', $qb->createNamedParameter($userId)),
 					$qb->expr()->eq('uid_owner',$qb->createNamedParameter($userId))
 				)
