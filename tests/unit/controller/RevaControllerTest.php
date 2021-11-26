@@ -248,9 +248,8 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->groupManager, $this->cloudFederationProviderManager,
 			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
-		$json = $controller->Authenticate($this->userId)->getData();
-		$result = json_decode($json);
-		$this->assertEquals($result->getData(), [
+		$jsonResponse = $controller->Authenticate($this->userId);
+		$this->assertEquals($jsonResponse->getData(), [
 			"user" => [
 				"id" => [
 					"idp" => "some-idp",
