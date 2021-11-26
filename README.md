@@ -151,15 +151,16 @@ To check the [RevaCotroller.php](https://github.com/pondersource/nc-sciencemesh/
    
 ### Unshare()
 
+
 curl -v -H  'Content-Type:application/json' -X POST -d  '{"Spec":{"Id":{"opaque_id":"fileid-marie%2FtestFile.json"}}}' http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/Unshare
 
 ### GetReceivedShare()
 
-curl -v -H  'Content-Type:application/json' -X POST -d  '{"Spec":{"Id":{"opaque_id":"fileid-marie%2FtestFile.json"}}}' http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/GetReceivedShare
+curl -v -H  'Content-Type:application/json' -X POST -d  '{"Spec":{"Id":{"opaque_id":"fileid-einstein%2Fmy-folder"}}}' http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/GetReceivedShare
 
 
 ### GetSentShare()
 
-curl -v -H  'Content-Type:application/json' -X POST -d  '{"Spec":{"Id":{"opaque_id":"some-share-id"}}}' http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/GetSentShare
+curl -v -H  'Content-Type:application/json' -X POST -d  '{"Spec":{"Id":{"opaque_id":"fileid-marie%2FtestFile.json"}}}' http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/GetSentShare
 
 
