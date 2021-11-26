@@ -767,7 +767,7 @@ class RevaController extends Controller {
 	public function GenerateInviteToken($userId) {
 		$param = $this->request->getParam('opaque');
 		$map = $param['map'];
-		
+
 		$request = [
 			'opaque' => [
 				'map' => [
@@ -913,7 +913,7 @@ class RevaController extends Controller {
 	 */
 	public function Unshare($userId) {
 		$opaque_id = $this->request->getParam("Spec")["Id"]["opaque_id"];
-		if ($this->shareProvider->unshareByOpaqueId($userId, $opaque_id)) {
+		if ($this->shareProvider->deleteSentShareByOpaqueId($userId, $opaque_id)) {
 			return new JSONResponse("",Http::STATUS_OK);
 		} else {
 			return new JSONResponse([],Http::STATUS_NO_CONTENT);

@@ -1234,7 +1234,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$cursor->closeCursor();
 	}
 
-	public function unshareByOpaqueId($userId, $opaque_id) {
+	public function deleteSentShareByOpaqueId($userId, $opaque_id) {
 		$decoded = urldecode($opaque_id);
 		$exploded = explode("/", $opaque_id);
 		$filename = end($exploded);
