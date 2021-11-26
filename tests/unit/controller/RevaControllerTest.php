@@ -248,8 +248,26 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->groupManager, $this->cloudFederationProviderManager,
 			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
-		$result = $controller->Authenticate($this->userId);
-		$this->assertEquals($result->getData(), "Logged in");
+		$json = $controller->Authenticate($this->userId)->getData();
+		$result = json_decode($json);
+		$this->assertEquals($result->getData(), [
+			"user" => [
+				"id" => [
+					"idp" => "some-idp",
+					"opaque_id" => $this->userId,
+					"type" => 1,
+				],
+			],
+			"scopes" => [
+				"user" => [
+					"resource" => [
+						"decoder" => "json",
+						"value" => "eyJyZXNvdXJjZV9pZCI6eyJzdG9yYWdlX2lkIjoic3RvcmFnZS1pZCIsIm9wYXF1ZV9pZCI6Im9wYXF1ZS1pZCJ9LCJwYXRoIjoic29tZS9maWxlL3BhdGgudHh0In0=",
+					],
+					"role" => 1,
+				],
+			],
+		]);
 	}
 
 	public function testGetUserThatExists() {
