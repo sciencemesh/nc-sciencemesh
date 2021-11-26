@@ -50,9 +50,9 @@ class ScienceMeshGenerateTokenPlugin {
 				'map' => [
 					'key' => 'test123',
 					'value' => [
-                        'decoder' => 'json',
-                        'eyJyZXNvdXJjZV9pZCI6eyJzdG9yYWdlX2lkIjoic3RvcmFnZS1pZCIsIm9wYXF1ZV9pZCI6Im9wYXF1ZS1pZCJ9LCJwYXRoIjoic29tZS9maWxlL3BhdGgudHh0In0='
-                    ]
+						'decoder' => 'json',
+						'eyJyZXNvdXJjZV9pZCI6eyJzdG9yYWdlX2lkIjoic3RvcmFnZS1pZCIsIm9wYXF1ZV9pZCI6Im9wYXF1ZS1pZCJ9LCJwYXRoIjoic29tZS9maWxlL3BhdGgudHh0In0='
+					]
 				]
 			]
 		];
