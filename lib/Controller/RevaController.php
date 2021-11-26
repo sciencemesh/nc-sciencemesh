@@ -388,7 +388,7 @@ class RevaController extends Controller {
 					],
 				],
 				"scopes" => [
-				  "user" => [
+					"user" => [
 						"resource" => [
 							"decoder" => "json",
 							"value" => "eyJyZXNvdXJjZV9pZCI6eyJzdG9yYWdlX2lkIjoic3RvcmFnZS1pZCIsIm9wYXF1ZV9pZCI6Im9wYXF1ZS1pZCJ9LCJwYXRoIjoic29tZS9maWxlL3BhdGgudHh0In0=",
