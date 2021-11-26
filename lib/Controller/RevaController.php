@@ -169,7 +169,6 @@ class RevaController extends Controller {
 		$opaqueIdDecoded = urldecode($opaqueId);
 		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
 		$sharedBy = substr($opaqueIdExploded[0], strlen("fileid-"));
-		error_log($sharedBy);
 		return $sharedBy;
 	}
 	/*
@@ -180,10 +179,10 @@ class RevaController extends Controller {
 		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
 		//$name resource name (e.g. document.odt)
 		$name = end($opaqueIdExploded);
-		if (!$name) {
-			throw new OCSNotFoundException($this->l->t('Please specify a file or folder path'));
+		if ($name) {
+				return $name;
 		}
-		return $name;
+		return false;
 	}
 
 	private function nodeInfoToCS3ResourceInfo(array $nodeInfo) : array {
@@ -750,19 +749,19 @@ class RevaController extends Controller {
 	 *
 	 * Get user list.
 	 */
-	public function GenerateInviteToken($userId) {
-		$param = $this->request->getParam('opaque');
-		$map = $param['map'];
-
-		$request = [
-			'opaque' => [
-				'map' => [
-					'key' => 'test123',
-					'value' => 'test123'
-				]
-			]
-		];
-	}
+	// public function GenerateInviteToken($userId) {
+	// 	$param = $this->request->getParam('opaque');
+	// 	$map = $param['map'];
+	//
+	// 	$request = [
+	// 		'opaque' => [
+	// 			'map' => [
+	// 				'key' => 'test123',
+	// 				'value' => 'test123'
+	// 			]
+	// 		]
+	// 	];
+	// }
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -779,13 +778,24 @@ class RevaController extends Controller {
 		$permissions			= $this->getPermissionsCode($this->request->getParam("g")["permissions"]["permissions"]);
 		$name 						= $this->getNameByOpaqueId($opaqueId);
 		$shareWith 				= $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
-		$share 						= $this->shareManager->newShare();
-
+		if (
+			!isset($granteeIdUserId) ||
+			!isset($opaqueId) ||
+			!isset($granteeIdUserId) ||
+			!isset($permissions) ||
+			!isset($name) ||
+			!isset($shareWith)
+		) {
+			return new JSONResponse(
+				['message' => 'Missing arguments'],Http::STATUS_BAD_REQUEST
+			);
+		}
 		try {
 			$path = $this->userFolder->get("sciencemesh/".$name);
 		} catch (NotFoundException $e) {
-			return new JSONResponse(["error" => "Share failed. Resource Path not found"], Http::STATUS_INTERNAL_SERVER_ERROR);
+			return new JSONResponse(["error" => "Share failed. Resource Path not found"], Http::STATUS_BAD_REQUEST);
 		}
+		$share = $this->shareManager->newShare();
 		$share->setNode($path);
 		try {
 			$this->lock($share->getNode());
