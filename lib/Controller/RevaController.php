@@ -903,8 +903,8 @@ class RevaController extends Controller {
 			return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 		$share->setPermissions($permissionsCode);
-		//	$shareUpdated = $this->shareProvider->update($share);
-		//	$response = $this->shareInfoToResourceInfo($shareUpdated);
+		$shareUpdated = $this->shareProvider->update($share);
+		$response = $this->shareInfoToResourceInfo($shareUpdated);
 		return new JSONResponse($response, Http::STATUS_OK);
 	}
 	/**
