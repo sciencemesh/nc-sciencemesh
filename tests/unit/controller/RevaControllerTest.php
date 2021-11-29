@@ -96,42 +96,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$date->setTime(0, 0, 0);
 		$this->assertEquals($response, $date);
 	}
-	public function testGetSharedByOpaqueId() {
-		$getNameByOpaqueId = self::getMethod('getSharedByOpaqueId');
-		$controller = new RevaController(
-			$this->appName, $this->rootFolder, $this->request, $this->session,
-			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
-			$this->userService, $this->trashManager , $this->shareManager,
-			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
-		);
-		$response = $getNameByOpaqueId->invokeArgs($controller, ["fileid-marie%2FtestFile.json"]);
-		$this->assertEquals($response, "marie");
-	}
-	public function testGetNameByOpaqueId() {
-		$getNameByOpaqueId = self::getMethod('getNameByOpaqueId');
-		$controller = new RevaController(
-			$this->appName, $this->rootFolder, $this->request, $this->session,
-			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
-		  $this->userService, $this->trashManager , $this->shareManager,
-			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
-		);
-		$response = $getNameByOpaqueId->invokeArgs($controller, ["fileid-marie%2FtestFile.json"]);
-		$this->assertEquals($response, "testFile.json");
-	}
-	public function testGetNameByOpaqueIdException() {
-		$getNameByOpaqueId = self::getMethod('getNameByOpaqueId');
-		$controller = new RevaController(
-			$this->appName, $this->rootFolder, $this->request, $this->session,
-			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
-			$this->userService, $this->trashManager , $this->shareManager,
-			$this->groupManager, $this->cloudFederationProviderManager,
-			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
-		);
-		$response = $getNameByOpaqueId->invokeArgs($controller, [null]);
-		$this->assertEquals($response, false);
-	}
 	public function testParseDateException() {
 		$parseDate = self::getMethod('parseDate');
 		$controller = new RevaController(
@@ -1688,7 +1652,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getData(),$response);
 		$this->assertEquals($result->getStatus(),200);
 	}
-	public function testUpdateShareFails() {
+	public function testUpdateSentShareFails() {
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
@@ -1703,9 +1667,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		];
 		$this->request->method("getParam")
 			->will($this->returnValueMap($paramsMap));
-		$this->shareManager->method("getShareById")
-			->willReturn($testShare);
-		$this->shareManager->method("updateShare")
+		$this->shareProvider->method("getSentShareByName")
 			->willReturn(false);
 		$result = $controller->UpdateSentShare($this->userId);
 		$this->assertEquals($result->getStatus(),500);

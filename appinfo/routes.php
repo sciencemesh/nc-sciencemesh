@@ -42,6 +42,7 @@ return [
 		['name' => 'reva#ListShares', 'url' => '/~{userId}/api/ocm/ListShares', 'verb' => 'POST'], // alias for ListSentShares
 		['name' => 'reva#ListreceivedShares', 'url' => '/~{userId}/api/ocm/ListReceivedShares', 'verb' => 'POST'],
 		['name' => 'reva#GetReceivedShare', 'url' => '/~{userId}/api/ocm/GetReceivedShare', 'verb' => 'POST'],
+		['name' => 'reva#UpdateSentShare', 'url' => '/~{userId}/api/ocm/UpdateSentShare', 'verb' => 'POST'],
 		['name' => 'reva#UpdateReceivedShare', 'url' => '/~{userId}/api/ocm/UpdateReceivedShare', 'verb' => 'POST'],
 		['name' => 'reva#GetUser', 'url' => '/~{userId}/api/user/GetUser', 'verb' => 'POST'],
 		/*
