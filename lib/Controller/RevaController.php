@@ -914,11 +914,11 @@ class RevaController extends Controller {
 	public function UpdateReceivedShare($userId) {
 
 		$resourceId = $this->request->getParam("received_share")["share"]["resource_id"];
-		if(!($share = $this->shareProvider->getShareByToken($resourceId))){
+		if(!($share = $this->shareProvider->getReceivedhareByToken($resourceId))){
 			return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 		$share->setPermissions($permissionsCode);
-		$shareUpdated = $this->shareProvider->update($share);
+		$shareUpdated = $this->shareProvider->updateReceivedShare($share);
 		$response = $this->shareInfoToResourceInfo($shareUpdated);
 		$response["state"] = 2;
 		return new JSONResponse($response, Http::STATUS_OK);

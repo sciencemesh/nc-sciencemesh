@@ -163,4 +163,14 @@ curl -v -H  'Content-Type:application/json' -X POST -d  '{"Spec":{"Id":{"opaque_
 
 curl -v -H  'Content-Type:application/json' -X POST -d  '{"Spec":{"Id":{"opaque_id":"fileid-marie%2FtestFile.json"}}}' http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/GetSentShare
 
+### updateSentShare()
+
+ curl -v -H  'Content-Type:application/json'  -X POST -d  '{"ref":{"Spec":{"Id":{"opaque_id":"fileid-marie%2FtestFile.json"}}},"p":{"permissions":{"add_grant":true,"create_container":true,"delete":true,"get_path":true,"get_quota":true,"initiate_file_download":true,"initiate_file_upload":true,"list_grants":true,"list_container":true,"list_file_versions":true,"list_recycle":true,"move":true,"remove_grant":true,"purge_recycle":true,"restore_file_version":true,"restore_recycle_item":true,"stat":true,"update_grant":true,"deny_grant":true}}}' http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/UpdateSentShare
+
+
+### UpdateReceivedShare()
+
+curl -v -H  'Content-Type:application/json'  -X POST -d  '{"received_share":{"share":{"id":{},"resource_id":{"fileid-einstein%2Fmy-folder"},"permissions":{"permissions":{"add_grant":true,"create_container":true,"delete":true,"get_path":true,"get_quota":true,"initiate_file_download":true,"initiate_file_upload":true,"list_grants":true,"list_container":true,"list_file_versions":true,"list_recycle":true,"move":true,"remove_grant":true,"purge_recycle":true,"restore_file_version":true,"restore_recycle_item":true,"stat":true,"update_grant":true,"deny_grant":true}},"grantee":{"Id":{"UserId":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1}}},"owner":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"creator":{"idp":"0.0.0.0:19000","opaque_id":"f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c","type":1},"ctime":{"seconds":1234567890},"mtime":{"seconds":1234567890}},"state":2},"field_mask":{"paths":["state"]}}' http://marie:radioactivity@localhost:8080/index.php/apps/sciencemesh/~marie/api/ocm/UpdatReceivedShare
+
+
 
