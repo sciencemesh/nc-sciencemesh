@@ -35,10 +35,21 @@ class ScienceMeshGenerateTokenPlugin {
 	public function getGenerateTokenResponse() {
 		//$result = $this->generateTokenFromReva();// Configure if the reva endpoint will be ready
 		$invitationsData = [
-			"invite_token" => $this->secureRandom->generate(60, ISecureRandom::CHAR_ALPHANUMERIC),
-			"user_id" => "cernbox.cern.ch",
-			"opaque_id" => $this->userId ,
-			"type" => ScienceMeshUserId::USER_TYPE_PRIMARY
+			"status" => [
+				"code" => 1,
+				"trace" => "00000000000000000000000000000000"
+			],
+			"invite_token" => [
+				"token" => "161405dd-05f0-4806-8b42-1482b3185c63",
+				"user_id" => [
+					"idp" => "some-idp",
+					"opaque_id" => $this->userId,
+					"type" => ScienceMeshUserId::USER_TYPE_PRIMARY
+				],
+				"expiration" => [
+					"seconds" => gmdate("H:i:s", 1638025012)
+				]
+			]
 		];
 
 		return $invitationsData;
@@ -56,7 +67,7 @@ class ScienceMeshGenerateTokenPlugin {
 				]
 			]
 		];
-		$tokenFromReva = $this->httpClient->revaPost('ocm-invite-generate', json_encode($request)); //params will be empty or not fix me
+		$tokenFromReva = $this->httpClient->revaPost('invites/generate', json_encode($request)); //params will be empty or not fix me
 		return $tokenFromReva;
 	}
 }
