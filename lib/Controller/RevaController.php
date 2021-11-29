@@ -874,11 +874,11 @@ class RevaController extends Controller {
 	 *
 	 * Remove Share from share table
 	 */
-	public function DeleteSentShare($userId) {
+	public function Unshare($userId) {
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
 		if ($this->shareProvider->deleteSentShareByName($userId, $name)) {
-			return new JSONResponse("",Http::STATUS_OK);
+			return new JSONResponse("OK",Http::STATUS_OK);
 		} else {
 			return new JSONResponse([],Http::STATUS_NO_CONTENT);
 		}
