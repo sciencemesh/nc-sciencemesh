@@ -1895,7 +1895,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 					]
 				]
 				);
-		$this->shareProvider->method("getReceivedhareByToken")
+		$this->shareProvider->method("getReceivedShareByToken")
 			->willReturn($testShare);
 		$response = [
 			"id" => [
@@ -1974,8 +1974,8 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 					]
 				]
 				);
-		$this->shareManager->method("getShareById")
-			->willReturn(null);
+		$this->shareProvider->method("getReceivedShareByToken")
+			->willThrowException(new \OCP\Share\Exceptions\ShareNotFound());
 		$result = $controller->GetReceivedShare($this->userId);
 		$this->assertEquals($result->getStatus(),400);
 	}
