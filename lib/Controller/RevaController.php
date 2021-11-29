@@ -874,7 +874,7 @@ class RevaController extends Controller {
 	 *
 	 * Remove Share from share table
 	 */
-	public function Unshare($userId) {
+	public function DeleteSentShare($userId) {
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
 		if ($this->shareProvider->deleteSentShareByName($userId, $name)) {

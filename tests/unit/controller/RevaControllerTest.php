@@ -1584,7 +1584,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 				);
 		$this->shareProvider->method("deleteSentShareByName")
 			->willReturn(true);
-		$result = $controller->Unshare($this->userId);
+		$result = $controller->DeleteSentShare($this->userId);
 		$this->assertEquals($result->getStatus(),200);
 	}
 	public function testUnshareFails() {
@@ -1605,7 +1605,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 				);
 		$this->shareProvider->method("deleteSentShareByName")
 			->willReturn(false);
-		$result = $controller->Unshare($this->userId);
+		$result = $controller->DeleteSentShare($this->userId);
 		$this->assertEquals($result->getStatus(),204);
 	}
 	public function testUpdateShare() {
@@ -1917,6 +1917,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getStatus(),200);
 	}
 	public function testGetReceivedShare() {
+		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
@@ -1924,7 +1925,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->groupManager, $this->cloudFederationProviderManager,
 			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
-		$testShare = $this->getMockBuilder("OCP\Share\IShare")->getMock();
 		$this->request->method("getParam")
 			->willReturn(
 				[
@@ -1933,7 +1933,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 					]
 				]
 				);
-		$this->shareProvider->method("getReceivedShareByOpaqueId")
+		$this->shareProvider->method("getReceivedhareByToken")
 			->willReturn($testShare);
 		$response = [
 			"id" => [

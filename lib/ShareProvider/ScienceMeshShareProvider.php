@@ -1280,31 +1280,6 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$qb->execute();
 		return true;
 	}
-	public function getReceivedShareByName($userId, $name) {
-		$qb = $this->dbConnection->getQueryBuilder();
-		$qb->select('*')
-			->from('share_external')
-			->where(
-				$qb->expr()->eq('uid_owner', $qb->createNamedParameter($userId))
-			)
-			->andWhere(
-				$qb->expr()->eq('item_source', $qb->createNamedParameter($id))
-			);
-		$qb->execute();
-		$cursor = $qb->execute();
-		$data = $cursor->fetch();
-		if (!$data) {
-			return false;
-		}
-		try {
-			$share = $this->createShareObject($data);
-		} catch (InvalidShare $e) {
-			throw new ShareNotFound();
-		}
-		$cursor->closeCursor();
-		return $share;
-	}
-
 	public function getSentShareByName($userId, $name) {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->select('fileid')
