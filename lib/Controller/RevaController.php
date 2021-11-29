@@ -911,17 +911,18 @@ class RevaController extends Controller {
 	 *
 	 * UpdateReceivedShare updates the received share with share state.
 	 */
-	// public function UpdateReceivedShare($userId) {
-	//
-	// 	if(!($share = $this->shareProvider->getReceivedShareByOpaqueId($userId,"how to get share?, we don't have opaque_id"))){
-	// 		return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
-	// 	}
-	// 	$share->setPermissions($permissionsCode);
-	// 	$shareUpdated = $this->shareProvider->update($share);
-	// 	$response = $this->shareInfoToResourceInfo($shareUpdated);
-	// 	$response["state"] = 2;
-	// 	return new JSONResponse($response, Http::STATUS_OK);
-	// }
+	public function UpdateReceivedShare($userId) {
+
+		$resourceId = $this->request->getParam("received_share")["share"]["resource_id"];
+		if(!($share = $this->shareProvider->getShareByToken($resourceId))){
+			return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+		$share->setPermissions($permissionsCode);
+		$shareUpdated = $this->shareProvider->update($share);
+		$response = $this->shareInfoToResourceInfo($shareUpdated);
+		$response["state"] = 2;
+		return new JSONResponse($response, Http::STATUS_OK);
+	}
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
