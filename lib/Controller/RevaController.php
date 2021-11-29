@@ -911,7 +911,10 @@ class RevaController extends Controller {
 	 * UpdateReceivedShare updates the received share with share state.
 	 */
 	public function UpdateReceivedShare($userId) {
+		$response = [];
 		$resourceId = $this->request->getParam("received_share")["share"]["resource_id"];
+		$permissions = $this->request->getParam("received_share")["share"]["permissions"];
+		$permissionsCode	= $this->getPermissionsCode($permissions);
 		if(!($share = $this->shareProvider->getReceivedhareByToken(urldecode($resourceId)))){
 			return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}

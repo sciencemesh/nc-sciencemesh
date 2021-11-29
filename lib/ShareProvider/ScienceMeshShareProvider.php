@@ -913,13 +913,11 @@ class ScienceMeshShareProvider implements IShareProvider {
 			->execute();
 		$data = $cursor->fetch();
 		if ($data === false) {
-			error_log("no data");
 			throw new ShareNotFound('Share not found', $this->l->t('Could not find share'));
 		}
 		try {
 			$share = $this->createExternalShareObject($data);
 		} catch (InvalidShare $e) {
-			error_log("invalid share");
 			throw new ShareNotFound('Share not found', $this->l->t('Could not find share'));
 		}
 
@@ -1009,10 +1007,6 @@ class ScienceMeshShareProvider implements IShareProvider {
 			->setSharedBy($data['owner'])
 			->setToken($data['share_token'])
 			->setSharedWith($data['user']);
-		$shareTime = new \DateTime();
-		$shareTime->setTimestamp((int)$data['stime']);
-		$share->setShareTime($shareTime);
-		$share->setNodeId((int)$data['file_source']);
 		$share->setProviderId($this->identifier());
 
 		return $share;
