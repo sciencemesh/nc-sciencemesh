@@ -890,14 +890,17 @@ class RevaController extends Controller {
 	 *
 	 */
 	public function UpdateSentShare($userId) {
-		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
-		$permissions = $this->request->getParam("p")["permissions"];
-		$permissionsCode = $this->getPermissionsCode($permissions);
-		if(!($share = $this->shareProvider->getSentShareByOpaqueId($userId,$opaqueId))){
+		$opaqueId 				= $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
+		$permissions 			= $this->request->getParam("p")["permissions"];
+		$permissionsCode	= $this->getPermissionsCode($permissions);
+		$name							=	$this->getNameByOpaqueId($opaqueId);
+		if(!($share = $this->shareProvider->getSentShareByName($userId,$name))){
 			return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
+		error_log("before up: ".$share->getPermissions());
 		$share->setPermissions($permissionsCode);
 		$shareUpdated = $this->shareProvider->update($share);
+		error_log("before up: ".$shareUpdated->getPermissions());
 		$response = $this->shareInfoToResourceInfo($shareUpdated);
 		return new JSONResponse($response, Http::STATUS_OK);
 	}
@@ -908,17 +911,17 @@ class RevaController extends Controller {
 	 *
 	 * UpdateReceivedShare updates the received share with share state.
 	 */
-	public function UpdateReceivedShare($userId) {
-
-		if(!($share = $this->shareProvider->getReceivedShareByOpaqueId($userId,"how to get share?, we don't have opaque_id"))){
-			return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-		$share->setPermissions($permissionsCode);
-		$shareUpdated = $this->shareProvider->update($share);
-		$response = $this->shareInfoToResourceInfo($shareUpdated);
-		$response["state"] = 2;
-		return new JSONResponse($response, Http::STATUS_OK);
-	}
+	// public function UpdateReceivedShare($userId) {
+	//
+	// 	if(!($share = $this->shareProvider->getReceivedShareByOpaqueId($userId,"how to get share?, we don't have opaque_id"))){
+	// 		return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
+	// 	}
+	// 	$share->setPermissions($permissionsCode);
+	// 	$shareUpdated = $this->shareProvider->update($share);
+	// 	$response = $this->shareInfoToResourceInfo($shareUpdated);
+	// 	$response["state"] = 2;
+	// 	return new JSONResponse($response, Http::STATUS_OK);
+	// }
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -990,7 +993,6 @@ class RevaController extends Controller {
 			$response = $this->shareInfoToResourceInfo($share);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
-		error_log("HUGE MISTAKE");
 		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_NO_CONTENT);
 	}
 }
