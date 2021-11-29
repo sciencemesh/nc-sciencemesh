@@ -1309,17 +1309,32 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$qb->execute();
 		return true;
 	}
-	public function deleteReceivedShareByName($userId, $name) {
+	public function deleteReceivedShareByOpaqueId($userId, $opaqueId) {
+		error_log(urldecode($opaqueId));
 		$qb = $this->dbConnection->getQueryBuilder();
-		$qb->delete('share_external')
+		$qb->select('*')
+			->from('share_external')
 			->where(
 				$qb->expr()->eq('user', $qb->createNamedParameter($userId))
 			)
 			->andWhere(
-				$qb->expr()->eq('name', $qb->createNamedParameter($name))
+				$qb->expr()->eq('share_token', $qb->createNamedParameter($opaqueId))
 			);
 		$cursor = $qb->execute();
-		return true;
+		$data = $cursor->fetch();
+		if(!$data){
+			return false;
+		} else {
+			$qb->delete('share_external')
+				->where(
+					$qb->expr()->eq('user', $qb->createNamedParameter($userId))
+				)
+				->andWhere(
+					$qb->expr()->eq('share_token', $qb->createNamedParameter($opaqueId))
+				);
+			$cursor = $qb->execute();
+			return true;
+		}
 	}
 	public function getSentShareByName($userId, $name) {
 		$qb = $this->dbConnection->getQueryBuilder();

@@ -878,9 +878,13 @@ class RevaController extends Controller {
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
 		if ($this->shareProvider->deleteSentShareByName($userId, $name)) {
-			return new JSONResponse("",Http::STATUS_OK);
+			return new JSONResponse("Deleted Sent Share",Http::STATUS_OK);
 		} else {
-			return new JSONResponse([],Http::STATUS_NO_CONTENT);
+			if($this->shareProvider->deleteReceivedShareByOpaqueId($userId, $opaqueId)){
+				return new JSONResponse("Deleted Received Share",Http::STATUS_OK);
+			} else {
+				return new JSONResponse("Could not find share", Http::STATUS_BAD_REQUEST);
+			}
 		}
 	}
 
