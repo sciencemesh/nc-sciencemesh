@@ -1584,7 +1584,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 				);
 		$this->shareProvider->method("deleteSentShareByName")
 			->willReturn(true);
-		$result = $controller->DeleteSentShare($this->userId);
+		$result = $controller->Unshare($this->userId);
 		$this->assertEquals($result->getStatus(),200);
 	}
 	public function testUnshareFails() {
@@ -1605,7 +1605,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 				);
 		$this->shareProvider->method("deleteSentShareByName")
 			->willReturn(false);
-		$result = $controller->DeleteSentShare($this->userId);
+		$result = $controller->Unshare($this->userId);
 		$this->assertEquals($result->getStatus(),204);
 	}
 	public function testUpdateShare() {
