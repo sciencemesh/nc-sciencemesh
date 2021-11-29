@@ -1322,7 +1322,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 			);
 		$cursor = $qb->execute();
 		$data = $cursor->fetch();
-		if(!$data){
+		if (!$data) {
 			return false;
 		} else {
 			$qb->delete('share_external')

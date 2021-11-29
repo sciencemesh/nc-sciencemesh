@@ -880,7 +880,7 @@ class RevaController extends Controller {
 		if ($this->shareProvider->deleteSentShareByName($userId, $name)) {
 			return new JSONResponse("Deleted Sent Share",Http::STATUS_OK);
 		} else {
-			if($this->shareProvider->deleteReceivedShareByOpaqueId($userId, $opaqueId)){
+			if ($this->shareProvider->deleteReceivedShareByOpaqueId($userId, $opaqueId)) {
 				return new JSONResponse("Deleted Received Share",Http::STATUS_OK);
 			} else {
 				return new JSONResponse("Could not find share", Http::STATUS_BAD_REQUEST);
@@ -895,17 +895,16 @@ class RevaController extends Controller {
 	 *
 	 */
 	public function UpdateSentShare($userId) {
-
-		$opaqueId 				= $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
-		$permissions 			= $this->request->getParam("p")["permissions"];
-		$permissionsCode	= $this->getPermissionsCode($permissions);
-		$name							=	$this->getNameByOpaqueId($opaqueId);
-		if(!($share = $this->shareProvider->getSentShareByName($userId,$name))){
+		$opaqueId = $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
+		$permissions = $this->request->getParam("p")["permissions"];
+		$permissionsCode = $this->getPermissionsCode($permissions);
+		$name = $this->getNameByOpaqueId($opaqueId);
+		if (!($share = $this->shareProvider->getSentShareByName($userId,$name))) {
 			return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 		$share->setPermissions($permissionsCode);
-	//	$shareUpdated = $this->shareProvider->update($share);
-	//	$response = $this->shareInfoToResourceInfo($shareUpdated);
+		//	$shareUpdated = $this->shareProvider->update($share);
+		//	$response = $this->shareInfoToResourceInfo($shareUpdated);
 		return new JSONResponse($response, Http::STATUS_OK);
 	}
 	/**
@@ -919,8 +918,8 @@ class RevaController extends Controller {
 		$response = [];
 		$resourceId = $this->request->getParam("received_share")["share"]["resource_id"];
 		$permissions = $this->request->getParam("received_share")["share"]["permissions"];
-		$permissionsCode	= $this->getPermissionsCode($permissions);
-		if(!($share = $this->shareProvider->getReceivedhareByToken($resourceId))){
+		$permissionsCode = $this->getPermissionsCode($permissions);
+		if (!($share = $this->shareProvider->getReceivedhareByToken($resourceId))) {
 			return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 		$share->setPermissions($permissionsCode);
