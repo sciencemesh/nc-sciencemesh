@@ -895,12 +895,11 @@ class RevaController extends Controller {
 	 *
 	 */
 	public function UpdateSentShare($userId) {
-
-		$opaqueId 				= $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
-		$permissions 			= $this->request->getParam("p")["permissions"];
-		$permissionsCode	= $this->getPermissionsCode($permissions);
-		$name							=	$this->getNameByOpaqueId($opaqueId);
-		if(!($share = $this->shareProvider->getSentShareByName($userId,$name))){
+		$opaqueId = $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
+		$permissions = $this->request->getParam("p")["permissions"];
+		$permissionsCode = $this->getPermissionsCode($permissions);
+		$name = $this->getNameByOpaqueId($opaqueId);
+		if (!($share = $this->shareProvider->getSentShareByName($userId,$name))) {
 			return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 		$share->setPermissions($permissionsCode);
@@ -919,8 +918,8 @@ class RevaController extends Controller {
 		$response = [];
 		$resourceId = $this->request->getParam("received_share")["share"]["resource_id"];
 		$permissions = $this->request->getParam("received_share")["share"]["permissions"];
-		$permissionsCode	= $this->getPermissionsCode($permissions);
-		if(!($share = $this->shareProvider->getReceivedhareByToken(urldecode($resourceId)))){
+		$permissionsCode = $this->getPermissionsCode($permissions);
+		if (!($share = $this->shareProvider->getReceivedhareByToken(urldecode($resourceId)))) {
 			return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 		$share->setPermissions($permissionsCode);
