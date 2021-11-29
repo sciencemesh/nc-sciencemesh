@@ -381,7 +381,11 @@ class RevaController extends Controller {
 		if ($auth) {
 			// FIXME: this should match the expected result format in Reva.
 			$result = array(
-				"UserId" => $userId,
+				"UserId" => array(
+					"opaque_id" => $userId,
+					"idp" => "https://pondersource.nl",
+					"type" => 1
+                        	),
 				"Username" => $userId,
 				"Mail" => $userId . "@pondersource.nl",
 				"MailVerified" => true,
