@@ -23,7 +23,6 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TextPlainResponse;
 use OCP\AppFramework\Controller;
-use OCP\AppFramework\OCS\OCSBadRequestException;
 use OCP\AppFramework\OCS\OCSNotFoundException;
 
 use OCA\CloudFederationAPI\Config;
@@ -34,7 +33,6 @@ use OCP\Federation\ICloudIdManager;
 use OCP\Share\IManager;
 use OCP\Share\IShare;
 
-use OCP\Constants;
 
 use Psr\Log\LoggerInterface;
 
@@ -166,6 +164,25 @@ class RevaController extends Controller {
 		$date->setTime(0, 0, 0);
 
 		return $date;
+	}
+	private function getSharedByOpaqueId($opaqueId) {
+		$opaqueIdDecoded = urldecode($opaqueId);
+		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
+		$sharedBy = substr($opaqueIdExploded[0], strlen("fileid-"));
+		return $sharedBy;
+	}
+	/*
+	* @throws OCSNotFoundException
+	*/
+	private function getNameByOpaqueId($opaqueId) {
+		$opaqueIdDecoded = urldecode($opaqueId);
+		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
+		//$name resource name (e.g. document.odt)
+		$name = end($opaqueIdExploded);
+		if ($name) {
+			return $name;
+		}
+		return false;
 	}
 
 	private function nodeInfoToCS3ResourceInfo(array $nodeInfo) : array {
@@ -307,37 +324,6 @@ class RevaController extends Controller {
 		}
 		return $permissionsCode;
 	}
-	// private function getPathByOpaqueId($opaqueIdExploded){
-	// 	$path = '';
-	// 	for ($x = 1; $x <= count($opaqueIdExploded)-2; $x++) {
-	// 		$path = $path.$opaqueIdExploded[$x].'/';
-	// 	}
-	// 	$path = $path.end($opaqueIdExploded);
-	// 	return $path;
-	// }
-	/**
-	 * @param string $opaqueId
-	 * @return int $shareId
-	 * @throws OCSNotFoundException
-	 */
-	// private function getShareIdByPath($path){
-	// 	if($path) {
-	// 		try {
-	// 			$node = $this->userFolder->get('sciencemesh/'.$path);
-	// 			$this->lock($node);
-	// 		} catch (NotFoundException $e) {
-	// 			throw new OCSNotFoundException(
-	// 				$this->l->t('Wrong path, file/folder doesn\'t exist')
-	// 			);
-	// 		} catch (LockedException $e) {
-	// 			throw new OCSNotFoundException($this->l->t('Could not lock node'));
-	// 		}
-	// 		$shareId = $node->getId();
-	// 		error_log('id: '.$shareId);
-	// 		return $shareId;
-	// 	}
-	// 	return false;
-	// }
 	/**
 	 * @param int
 	 *
@@ -539,7 +525,6 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-
 	public function ListFolder($userId) {
 		$ref = $this->request->getParam("ref");
 		$path = "sciencemesh" . $ref["path"]; // FIXME: sanitize!
@@ -760,27 +745,6 @@ class RevaController extends Controller {
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
-	 * @NoSameSiteCookieRequired
-	 *
-	 * Get user list.
-	 */
-	public function GenerateInviteToken($userId) {
-		$param = $this->request->getParam('opaque');
-		$map = $param['map'];
-
-		$request = [
-			'opaque' => [
-				'map' => [
-					'key' => 'test123',
-					'value' => 'test123'
-				]
-			]
-		];
-	}
-
-	/**
-	 * @PublicPage
-	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 *
 	 * @throws NotFoundException
@@ -788,31 +752,30 @@ class RevaController extends Controller {
 	 * Create a new share in fn with the given access control list.
 	 */
 	public function addSentShare($userId) {
-		$md = $this->request->getParam("md");
-		$g = $this->request->getParam("g");
-
-		$opaqueId = $md["opaque_id"];
-		$opaqueIdDecoded = urldecode($opaqueId);
-		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
-		//$name resource name (e.g. document.odt)
-		$name = end($opaqueIdExploded);
-		if ($name === "") {
-			throw new OCSNotFoundException($this->l->t('Please specify a file or folder path'));
-		}
-		$grantee = $g["grantee"];
-		$granteeId = $grantee["Id"];
-		$granteeIdUserId = $granteeId["UserId"];
+		$granteeIdUserId = $this->request->getParam("g")["grantee"]["Id"]["UserId"];
+		$opaqueId = $this->request->getParam("md")["opaque_id"];
+		$granteeIdUserId = $this->request->getParam("g")["grantee"]["Id"]["UserId"];
+		$permissions = $this->getPermissionsCode($this->request->getParam("g")["permissions"]["permissions"]);
+		$name = $this->getNameByOpaqueId($opaqueId);
 		$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
-
-		$sharePermissions = $g["permissions"];
-		$resourcePermissions = $sharePermissions["permissions"];
-		$permissions = $this->getPermissionsCode($resourcePermissions);
-		$share = $this->shareManager->newShare();
+		if (
+			!isset($granteeIdUserId) ||
+			!isset($opaqueId) ||
+			!isset($granteeIdUserId) ||
+			!isset($permissions) ||
+			!isset($name) ||
+			!isset($shareWith)
+		) {
+			return new JSONResponse(
+				['message' => 'Missing arguments'],Http::STATUS_BAD_REQUEST
+			);
+		}
 		try {
 			$path = $this->userFolder->get("sciencemesh/".$name);
 		} catch (NotFoundException $e) {
-			return new JSONResponse(["error" => "Share failed. Resource Path not found"], Http::STATUS_INTERNAL_SERVER_ERROR);
+			return new JSONResponse(["error" => "Share failed. Resource Path not found"], Http::STATUS_BAD_REQUEST);
 		}
+		$share = $this->shareManager->newShare();
 		$share->setNode($path);
 		try {
 			$this->lock($share->getNode());
@@ -825,7 +788,6 @@ class RevaController extends Controller {
 		$share->setShareOwner($userId);
 		$share->setPermissions($permissions);
 		$this->shareProvider->create($share);
-		// @TODO We need to use ScienceMeshShareProvider to store the share addSentShareToDB()
 		$response = $this->shareInfoToResourceInfo($share);
 		return new JSONResponse($response, Http::STATUS_CREATED);
 	}
@@ -839,11 +801,10 @@ class RevaController extends Controller {
 	public function addReceivedShare($userId) {
 		$providerDomain = $this->request->getParam("provider_domain");
 		$providerId = $this->request->getParam("provider_id");
-		$opaqueId = urldecode($this->request->getParam("md")["opaque_id"]);
+		$opaqueId = $this->request->getParam("md")["opaque_id"];
 		$sharedSecret = $this->request->getParam("protocol")["options"]["sharedSecret"] || '';
-		$exploded = explode("/", $opaqueId);
-		$name = end($exploded);
-		$sharedBy = substr($exploded[0], strlen("fileid-"));
+		$name = $this->getNameByOpaqueId($opaqueId);
+		$sharedBy = $this->getSharedByOpaqueId($opaqueId);
 		if (
 			!isset($providerDomain) ||
 			!isset($providerId) ||
@@ -908,37 +869,20 @@ class RevaController extends Controller {
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
+	 * @return Http\DataResponse|JSONResponse
+	 *
 	 *
 	 * Remove Share from share table
 	 */
-	public function Unshare($userId) {
-		$opaque_id = $this->request->getParam("Spec")["Id"]["opaque_id"];
-		if ($this->shareProvider->deleteSentShareByOpaqueId($userId, $opaque_id)) {
+	public function DeleteSentShare($userId) {
+		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
+		$name = $this->getNameByOpaqueId($opaqueId);
+		if ($this->shareProvider->deleteSentShareByName($userId, $name)) {
 			return new JSONResponse("",Http::STATUS_OK);
 		} else {
 			return new JSONResponse([],Http::STATUS_NO_CONTENT);
 		}
 	}
-
-	/**
-	 * @PublicPage
-	 * @NoCSRFRequired
-	 * @return Http\DataResponse|JSONResponse
-	 *
-	 * GetShare gets the information for a share by the given ref.
-	 */
-	public function GetShare($userId) {
-		$spec = $this->request->getParam("Spec");
-		$Id = $spec["Id"];
-		$opaqueId = $Id["opaque_id"];
-		$share = $this->shareManager->getShareById($opaqueId);
-		if ($share) {
-			$response = $this->shareInfoToResourceInfo($share);
-			return new JSONResponse($response, Http::STATUS_OK);
-		}
-		return new JSONResponse(["error" => "GetShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
-	}
-
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -946,12 +890,8 @@ class RevaController extends Controller {
 	 *
 	 */
 	public function UpdateShare($userId) {
-		$ref = $this->request->getParam("ref");
-		$spec = $ref["Spec"];
-		$id = $spec["Id"];
-		$opaqueId = $id["opaque_id"];
-		$p = $this->request->getParam("p");
-		$permissions = $p["permissions"];
+		$opaqueId = $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
+		$permissions = $this->request->getParam("p")["permissions"];
 		$permissionsCode = $this->getPermissionsCode($permissions);
 		$share = $this->shareManager->getShareById($opaqueId);
 		$updated = $this->shareManager->updateShare($share, $permissionsCode);
@@ -970,14 +910,6 @@ class RevaController extends Controller {
 	 * it returns only shares attached to the given resource.
 	 */
 	public function ListSentShares($userId) {
-		$requests = $this->request->getParams();
-		$request = array_values($requests)[2];
-		$type = $request["type"];
-		$term = $request["Term"];
-		$creator = $term["Creator"];
-		$idpCreator = $creator["idp"];
-		$opaqueIdCreator = ["opaque_id"];
-		$typeCreator = ["type"];
 		$responses = [];
 		$shares = $this->shareProvider->getSentShares($userId);
 		if ($shares) {
@@ -1013,16 +945,35 @@ class RevaController extends Controller {
 	 * GetReceivedShare returns the information for a received share the user has access.
 	 */
 	public function GetReceivedShare($userId) {
-		$spec = $this->request->getParam("Spec");
-		$Id = $spec["Id"];
-		$opaqueId = $Id["opaque_id"];
-		$share = $this->shareManager->getShareById($opaqueId,$userId);
+		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
+		$name = $this->getNameByOpaqueId($opaqueId);
+
+		$share = $this->shareProvider->getReceivedhareByToken(urldecode($opaqueId));
 		if ($share) {
 			$response = $this->shareInfoToResourceInfo($share);
 			$response["state"] = 2;
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
-		return new JSONResponse(["error" => "GetReceivedShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
+		return new JSONResponse(["error" => "GetReceivedShare failed"],Http::STATUS_NO_CONTENT);
+	}
+
+	/**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @return Http\DataResponse|JSONResponse
+	 *
+	 * GetSentShare gets the information for a share by the given ref.
+	 */
+	public function GetSentShare($userId) {
+		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
+		$name = $this->getNameByOpaqueId($opaqueId);
+		$share = $this->shareProvider->getSentShareByName($userId,$name);
+		if ($share) {
+			$response = $this->shareInfoToResourceInfo($share);
+			return new JSONResponse($response, Http::STATUS_OK);
+		}
+		error_log("HUGE MISTAKE");
+		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_NO_CONTENT);
 	}
 	/**
 	 * @PublicPage
@@ -1032,10 +983,7 @@ class RevaController extends Controller {
 	 * UpdateReceivedShare updates the received share with share state.
 	 */
 	public function UpdateReceivedShare($userId) {
-		$ref = $this->request->getParam("ref");
-		$Spec = $ref["Spec"];
-		$Id = $Spec["Id"];
-		$opaqueId = $Id["opaque_id"];
+		$opaqueId = $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
 		$share = $this->shareManager->getShareById($opaqueId,$userId);
 		$updated = $this->shareManager->updateShare($share, 5);
 		if ($updated) {
@@ -1045,127 +993,4 @@ class RevaController extends Controller {
 		}
 		return new JSONResponse(["error" => "UpdateReceivedShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
-	/**
-	 * Does the user have read permission on the share
-	 *
-	 * @param \OCP\Share\IShare $share the share to check
-	 * @param string userid
-	 * @param boolean $checkGroups check groups as well?
-	 * @return boolean
-	 *
-	 * @suppress PhanUndeclaredClassMethod
-	 */
-	protected function canAccessShare(\OCP\Share\IShare $share,string $userId, bool $checkGroups = true): bool {
-		// A file with permissions 0 can't be accessed by us. So Don't show it
-		if ($share->getPermissions() === 0) {
-			return false;
-		}
-		// Owner of the file and the sharer of the file can always get share
-		if ($share->getShareOwner() === $userId
-			|| $share->getSharedBy() === $userId) {
-			return true;
-		}
-		// Have reshare rights on the shared file/folder ?
-		// Does the currentUser have access to the shared file?
-		$files = $this->userFolder->getById($share->getNodeId());
-		if (!empty($files) && $this->shareProviderResharingRights($userId, $share, $files[0])) {
-			return true;
-		}
-		return false;
-	}
-
-	private function shareProviderResharingRights(string $userId, IShare $share, $node): bool {
-		if ($share->getShareOwner() === $userId) {
-			return true;
-		}
-		// we check that current user have parent resharing rights on the current file
-		if ($node !== null && ($node->getPermissions() & Constants::PERMISSION_SHARE) !== 0) {
-			return true;
-		}
-		return false;
-	}
-
-	//
-	// /**
-	//  * @param string $viewer
-	//  * @param Node $node
-	//  * @param bool $sharedWithMe
-	//  * @param bool $reShares
-	//  * @param bool $subFiles
-	//  * @param bool $includeTags
-	//  *
-	//  * @return array
-	//  * @throws NotFoundException
-	//  * @throws OCSBadRequestException
-//	 */
-// 		private function getFormattedShares(
-// 			string $viewer,
-// 			$node = null,
-// 			bool $sharedWithMe = false,
-// 			bool $reShares = false,
-// 			bool $subFiles = false,
-// 			bool $includeTags = false,
-// 			string $userId
-// 		): array {
-// 			if ($sharedWithMe) {
-// 				return $this->getSharedWithMe($node, $includeTags);
-// 			}
-//
-// 			if ($subFiles) {
-// 				return $this->getSharesInDir($node);
-// 			}
-//
-// 			$shares = $this->getSharesFromNode($viewer, $node, $reShares);
-//
-// 			$known = $formatted = $miniFormatted = [];
-// 			$resharingRight = false;
-// 			foreach ($shares as $share) {
-// 				try {
-// 					$share->getNode();
-// 				} catch (NotFoundException $e) {
-// 					/*
-// 					 * Ignore shares where we can't get the node
-// 					 * For example deleted shares
-// 					 */
-// 					continue;
-// 				}
-//
-// 				if (in_array($share->getId(), $known)
-// 					|| ($share->getSharedWith() === $userId && $share->getShareType() === IShare::TYPE_USER)) {
-// 					continue;
-// 				}
-//
-// 				$known[] = $share->getId();
-// 				try {
-// 					/** @var IShare $share */
-// 					$format = $this->formatShare($share, $node);
-// 					$formatted[] = $format;
-//
-// 					// let's also build a list of shares created
-// 					// by the current user only, in case
-// 					// there is no resharing rights
-// 					if ($share->getSharedBy() === $userId) {
-// 						$miniFormatted[] = $format;
-// 					}
-//
-// 					// check if one of those share is shared with me
-// 					// and if I have resharing rights on it
-// 					if (!$resharingRight && $this->shareProviderResharingRights($userId, $share, $node)) {
-// 						$resharingRight = true;
-// 					}
-// 				} catch (InvalidPathException | NotFoundException $e) {
-// 				}
-// 			}
-//
-// 			if (!$resharingRight) {
-// 				$formatted = $miniFormatted;
-// 			}
-//
-// 			if ($includeTags) {
-// 				$formatted =
-// 					Helper::populateTags($formatted, 'file_source', \OC::$server->getTagManager());
-// 			}
-//
-// 			return $formatted;
-// 		}
 }
