@@ -873,6 +873,34 @@ class ScienceMeshShareProvider implements IShareProvider {
 
 		return $share;
 	}
+	/**
+	 * Get a share by token
+	 *
+	 * @param string $token
+	 * @return IShare
+	 * @throws ShareNotFound
+	 */
+	public function getReceivedhareByToken($token) {
+		$qb = $this->dbConnection->getQueryBuilder();
+		$cursor = $qb->select('*')
+			->from('share_external')
+			->where($qb->expr()->eq('share_type', $qb->createNamedParameter(14)))
+			->andWhere($qb->expr()->eq('share_token', $qb->createNamedParameter($token)))
+			->execute();
+		$data = $cursor->fetch();
+		if ($data === false) {
+			error_log("no data");
+			throw new ShareNotFound('Share not found', $this->l->t('Could not find share'));
+		}
+		try {
+			$share = $this->createExternalShareObject($data);
+		} catch (InvalidShare $e) {
+			error_log("invalid share");
+			throw new ShareNotFound('Share not found', $this->l->t('Could not find share'));
+		}
+
+		return $share;
+	}
 
 	/**
 	 * get database row of a give share
@@ -1252,11 +1280,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$qb->execute();
 		return true;
 	}
-	public function getReceivedShareByOpaqueId($userId, $opaque_id) {
-		$decoded = urldecode($opaque_id);
-		$exploded = explode("/", $opaque_id);
-		$filename = end($exploded);
-		$username = substr($exploded[0], strlen("fileid-"));
+	public function getReceivedShareByName($userId, $name) {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->select('*')
 			->from('share_external')
@@ -1280,6 +1304,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$cursor->closeCursor();
 		return $share;
 	}
+
 	public function getSentShareByName($userId, $name) {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->select('fileid')
