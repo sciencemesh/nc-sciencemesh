@@ -1309,6 +1309,18 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$qb->execute();
 		return true;
 	}
+	public function deleteReceivedShareByName($userId, $name) {
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->delete('share_external')
+			->where(
+				$qb->expr()->eq('user', $qb->createNamedParameter($userId))
+			)
+			->andWhere(
+				$qb->expr()->eq('name', $qb->createNamedParameter($name))
+			);
+		$cursor = $qb->execute();
+		return true;
+	}
 	public function getSentShareByName($userId, $name) {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->select('fileid')
