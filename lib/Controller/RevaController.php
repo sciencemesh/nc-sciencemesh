@@ -874,15 +874,20 @@ class RevaController extends Controller {
 	 *
 	 * Remove Share from share table
 	 */
-	public function DeleteSentShare($userId) {
+	public function Unshare($userId) {
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
 		if ($this->shareProvider->deleteSentShareByName($userId, $name)) {
-			return new JSONResponse("",Http::STATUS_OK);
+			return new JSONResponse("Deleted Sent Share",Http::STATUS_OK);
 		} else {
-			return new JSONResponse([],Http::STATUS_NO_CONTENT);
+			if ($this->shareProvider->deleteReceivedShareByOpaqueId($userId, $opaqueId)) {
+				return new JSONResponse("Deleted Received Share",Http::STATUS_OK);
+			} else {
+				return new JSONResponse("Could not find share", Http::STATUS_BAD_REQUEST);
+			}
 		}
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -971,13 +976,13 @@ class RevaController extends Controller {
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
 
-		$share = $this->shareProvider->getReceivedhareByToken(urldecode($opaqueId));
+		$share = $this->shareProvider->getReceivedhareByToken($opaqueId);
 		if ($share) {
 			$response = $this->shareInfoToResourceInfo($share);
 			$response["state"] = 2;
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
-		return new JSONResponse(["error" => "GetReceivedShare failed"],Http::STATUS_NO_CONTENT);
+		return new JSONResponse(["error" => "GetReceivedShare failed"],Http::STATUS_BAD_REQUEST);
 	}
 
 	/**
@@ -995,6 +1000,6 @@ class RevaController extends Controller {
 			$response = $this->shareInfoToResourceInfo($share);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
-		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_NO_CONTENT);
+		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_BAD_REQUEST);
 	}
 }

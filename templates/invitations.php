@@ -14,11 +14,11 @@ script("sciencemesh", "vendor/simplyedit/simply.everything");
 					<div href="#" class="app-content-list-item">
 						<!-- div class="app-content-list-item-star icon-starred"></div -->
 						<div class="app-content-list-item-icon" style="background-color: rgb(151, 72, 96);"></div>
-						<div class="app-content-list-item-line-one"><?php echo $_['invite_token'] ?></div>
+						<div class="app-content-list-item-line-one"><?php echo $_['invite_token']['token'] ?></div>
 						<div class="app-content-list-item-menu">
 							<div class="icon-clippy"></div>
 						</div>
-						<span class="app-content-list-item-details">8 hours left</span>
+						<span class="app-content-list-item-details"><?php echo $_['invite_token']['expiration']['seconds'] ?> left</span>
 						<!--<div class="app-content-list-item-line-two">Copy to clipboard</div>-->
 					</div>
 					<!--<div href="#" class="app-content-list-item">
@@ -32,8 +32,7 @@ script("sciencemesh", "vendor/simplyedit/simply.everything");
 				</div>
 				<div class="app-content-detail">
 					<div class="section">
-						<p>User_ID: <?php echo $_['user_id'] ?></p>
-						<p>Opaque_Id: <?php echo $_['opaque_id'] ?></p>
+						<p>User_ID: <?php echo $_['invite_token']['user_id']['opaque_id'] ?></p>
 					</div>
 				</div>
 				<!--<div class="app-content-detail">
