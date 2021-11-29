@@ -1281,13 +1281,12 @@ class ScienceMeshShareProvider implements IShareProvider {
 		return $share;
 	}
 	public function getSentShareByName($userId, $name) {
-		$qb = $this->dbConnection->getQueryBuilder($name);
+		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->select('fileid')
 			->from('filecache')
 			->where(
 				$qb->expr()->eq('name', $qb->createNamedParameter($name))
 			);
-		error_log($name);
 		$cursor = $qb->execute();
 		$data = $cursor->fetch();
 		if (!$data) {
@@ -1302,7 +1301,11 @@ class ScienceMeshShareProvider implements IShareProvider {
 			->andWhere(
 				$qb->expr()->eq('item_source', $qb->createNamedParameter($id))
 			);
-		$qb->execute();
+		$cursor = $qb->execute();
+		$data = $cursor->fetch();
+		if (!$data) {
+			return false;
+		}
 		try {
 			$share = $this->createShareObject($data);
 		} catch (InvalidShare $e) {

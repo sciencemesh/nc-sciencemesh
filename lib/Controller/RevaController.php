@@ -965,11 +965,12 @@ class RevaController extends Controller {
 	public function GetSentShare($userId) {
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
-		$share = $this->shareProvider->getSentShareByName($userId,$opaqueId);
+		$share = $this->shareProvider->getSentShareByName($userId,$name);
 		if ($share) {
 			$response = $this->shareInfoToResourceInfo($share);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
+		error_log("HUGE MISTAKE");
 		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_NO_CONTENT);
 	}
 	/**
