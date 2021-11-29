@@ -424,7 +424,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 
 
 	/**
-	 * Update a share
+	 * Update a sent share
 	 *
 	 * @param IShare $share
 	 * @return IShare The share object
@@ -448,7 +448,31 @@ class ScienceMeshShareProvider implements IShareProvider {
 
 		return $share;
 	}
+	/**
+	 * Update a received share
+	 *
+	 * @param IShare $share
+	 * @return IShare The share object
+	 */
+	public function updateReceivedShare(IShare $share) {
+		/*
+		 * We allow updating the permissions of sciencemesh shares
+		 */
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->update('share_external')
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($share->getId())))
+				->set('permissions', $qb->createNamedParameter($share->getPermissions()))
+				->set('uid_owner', $qb->createNamedParameter($share->getShareOwner()))
+				->set('uid_initiator', $qb->createNamedParameter($share->getSharedBy()))
+				->execute();
 
+		// send the updated permission to the owner/initiator, if they are not the same
+		if ($share->getShareOwner() !== $share->getSharedBy()) {
+			$this->sendPermissionUpdate($share);
+		}
+
+		return $share;
+	}
 	/**
 	 * send the updated permission to the owner/initiator, if they are not the same
 	 *
@@ -1269,6 +1293,11 @@ class ScienceMeshShareProvider implements IShareProvider {
 			->where(
 				$qb->expr()->eq('name', $qb->createNamedParameter($name))
 			);
+		$cursor = $qb->execute();
+		$data = $cursor->fetch();
+		if (!$data) {
+			return false;
+		}
 		$id = $data['fileid'];
 		$qb->delete('share')
 			->where(
@@ -1279,6 +1308,33 @@ class ScienceMeshShareProvider implements IShareProvider {
 			);
 		$qb->execute();
 		return true;
+	}
+	public function deleteReceivedShareByOpaqueId($userId, $opaqueId) {
+		error_log(urldecode($opaqueId));
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->select('*')
+			->from('share_external')
+			->where(
+				$qb->expr()->eq('user', $qb->createNamedParameter($userId))
+			)
+			->andWhere(
+				$qb->expr()->eq('share_token', $qb->createNamedParameter($opaqueId))
+			);
+		$cursor = $qb->execute();
+		$data = $cursor->fetch();
+		if (!$data) {
+			return false;
+		} else {
+			$qb->delete('share_external')
+				->where(
+					$qb->expr()->eq('user', $qb->createNamedParameter($userId))
+				)
+				->andWhere(
+					$qb->expr()->eq('share_token', $qb->createNamedParameter($opaqueId))
+				);
+			$cursor = $qb->execute();
+			return true;
+		}
 	}
 	public function getSentShareByName($userId, $name) {
 		$qb = $this->dbConnection->getQueryBuilder();
