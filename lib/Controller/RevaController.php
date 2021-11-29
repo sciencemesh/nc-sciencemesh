@@ -165,7 +165,7 @@ class RevaController extends Controller {
 
 		return $date;
 	}
-	private function getSharedByOpaqueId($opaqueId){
+	private function getSharedByOpaqueId($opaqueId) {
 		$opaqueIdDecoded = urldecode($opaqueId);
 		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
 		$sharedBy = substr($opaqueIdExploded[0], strlen("fileid-"));
@@ -174,13 +174,13 @@ class RevaController extends Controller {
 	/*
 	* @throws OCSNotFoundException
 	*/
-	private function getNameByOpaqueId($opaqueId){
-		$opaqueIdDecoded 	= urldecode($opaqueId);
+	private function getNameByOpaqueId($opaqueId) {
+		$opaqueIdDecoded = urldecode($opaqueId);
 		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
 		//$name resource name (e.g. document.odt)
 		$name = end($opaqueIdExploded);
 		if ($name) {
-				return $name;
+			return $name;
 		}
 		return false;
 	}
@@ -752,12 +752,12 @@ class RevaController extends Controller {
 	 * Create a new share in fn with the given access control list.
 	 */
 	public function addSentShare($userId) {
-		$granteeIdUserId	= $this->request->getParam("g")["grantee"]["Id"]["UserId"];
-		$opaqueId					= $this->request->getParam("md")["opaque_id"];
-		$granteeIdUserId 	= $this->request->getParam("g")["grantee"]["Id"]["UserId"];
-		$permissions			= $this->getPermissionsCode($this->request->getParam("g")["permissions"]["permissions"]);
-		$name 						= $this->getNameByOpaqueId($opaqueId);
-		$shareWith 				= $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
+		$granteeIdUserId = $this->request->getParam("g")["grantee"]["Id"]["UserId"];
+		$opaqueId = $this->request->getParam("md")["opaque_id"];
+		$granteeIdUserId = $this->request->getParam("g")["grantee"]["Id"]["UserId"];
+		$permissions = $this->getPermissionsCode($this->request->getParam("g")["permissions"]["permissions"]);
+		$name = $this->getNameByOpaqueId($opaqueId);
+		$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
 		if (
 			!isset($granteeIdUserId) ||
 			!isset($opaqueId) ||
@@ -800,11 +800,11 @@ class RevaController extends Controller {
 	 */
 	public function addReceivedShare($userId) {
 		$providerDomain = $this->request->getParam("provider_domain");
-		$providerId 		= $this->request->getParam("provider_id");
-		$opaqueId 			= $this->request->getParam("md")["opaque_id"];
-		$sharedSecret 	= $this->request->getParam("protocol")["options"]["sharedSecret"] || '';
-		$name 					= $this->getNameByOpaqueId($opaqueId);
-		$sharedBy				= $this->getSharedByOpaqueId($opaqueId);
+		$providerId = $this->request->getParam("provider_id");
+		$opaqueId = $this->request->getParam("md")["opaque_id"];
+		$sharedSecret = $this->request->getParam("protocol")["options"]["sharedSecret"] || '';
+		$name = $this->getNameByOpaqueId($opaqueId);
+		$sharedBy = $this->getSharedByOpaqueId($opaqueId);
 		if (
 			!isset($providerDomain) ||
 			!isset($providerId) ||
@@ -876,8 +876,8 @@ class RevaController extends Controller {
 	 */
 	public function Unshare($userId) {
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
-		$name 		= $this->getNameByOpaqueId($opaqueId);
-		if ($this->shareProvider->deleteSentShareByOpaqueId($userId, $name)) {
+		$name = $this->getNameByOpaqueId($opaqueId);
+		if ($this->shareProvider->deleteSentShareByName($userId, $name)) {
 			return new JSONResponse("",Http::STATUS_OK);
 		} else {
 			return new JSONResponse([],Http::STATUS_NO_CONTENT);
@@ -890,11 +890,11 @@ class RevaController extends Controller {
 	 *
 	 */
 	public function UpdateShare($userId) {
-		$opaqueId 				= $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
-		$permissions			= $this->request->getParam("p")["permissions"];
-		$permissionsCode	= $this->getPermissionsCode($permissions);
-		$share 						= $this->shareManager->getShareById($opaqueId);
-		$updated 					= $this->shareManager->updateShare($share, $permissionsCode);
+		$opaqueId = $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
+		$permissions = $this->request->getParam("p")["permissions"];
+		$permissionsCode = $this->getPermissionsCode($permissions);
+		$share = $this->shareManager->getShareById($opaqueId);
+		$updated = $this->shareManager->updateShare($share, $permissionsCode);
 		if ($updated) {
 			$response = $this->shareInfoToResourceInfo($updated);
 			return new JSONResponse($response, Http::STATUS_OK);
@@ -926,8 +926,8 @@ class RevaController extends Controller {
 	 * ListReceivedShares returns the list of shares the user has access.
 	 */
 	public function ListReceivedShares($userId) {
-		$responses	= [];
-		$shares			= $this->shareProvider->getReceivedShares($userId);
+		$responses = [];
+		$shares = $this->shareProvider->getReceivedShares($userId);
 		if ($shares) {
 			foreach ($shares as $share) {
 				$response = $this->shareInfoToResourceInfo($share);
@@ -946,9 +946,7 @@ class RevaController extends Controller {
 	 */
 	public function GetReceivedShare($userId) {
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
-		$share 		= $this->shareProvider->getReceivedShareByOpaqueId($userId,$opaqueId);
-		error_log($opaqueId);
-		error_log($share);
+		$share = $this->shareProvider->getReceivedShareByOpaqueId($userId,$opaqueId);
 		if ($share) {
 			$response = $this->shareInfoToResourceInfo($share);
 			$response["state"] = 2;
@@ -965,9 +963,9 @@ class RevaController extends Controller {
 	 * GetSentShare gets the information for a share by the given ref.
 	 */
 	public function GetSentShare($userId) {
-		$opaqueId	= $this->request->getParam("Spec")["Id"]["opaque_id"];
+		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
-		$share 		= $this->shareProvider->getSentShareByName($userId,$opaqueId);
+		$share = $this->shareProvider->getSentShareByName($userId,$opaqueId);
 		if ($share) {
 			$response = $this->shareInfoToResourceInfo($share);
 			return new JSONResponse($response, Http::STATUS_OK);
@@ -983,8 +981,8 @@ class RevaController extends Controller {
 	 */
 	public function UpdateReceivedShare($userId) {
 		$opaqueId = $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
-		$share 		= $this->shareManager->getShareById($opaqueId,$userId);
-		$updated 	= $this->shareManager->updateShare($share, 5);
+		$share = $this->shareManager->getShareById($opaqueId,$userId);
+		$updated = $this->shareManager->updateShare($share, 5);
 		if ($updated) {
 			$response = $this->shareInfoToResourceInfo($updated);
 			$response["state"] = 2;
