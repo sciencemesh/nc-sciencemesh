@@ -977,7 +977,7 @@ class RevaController extends Controller {
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
 
-		$share = $this->shareProvider->getReceivedhareByToken($opaqueId);
+		$share = $this->shareProvider->getReceivedShareByToken($opaqueId);
 		if ($share) {
 			$response = $this->shareInfoToResourceInfo($share);
 			$response["state"] = 2;
