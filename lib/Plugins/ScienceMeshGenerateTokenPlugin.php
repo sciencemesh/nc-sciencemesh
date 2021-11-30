@@ -6,7 +6,6 @@ use OCP\IConfig;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use OCA\ScienceMesh\RevaHttpClient;
-use OCP\Security\ISecureRandom;
 use OCA\ScienceMesh\User\ScienceMeshUserId;
 
 class ScienceMeshGenerateTokenPlugin {
@@ -18,22 +17,17 @@ class ScienceMeshGenerateTokenPlugin {
 	/** @var string */
 	private $userId = '';
 	private $httpClient;
-	private $secureRandom;
 
-	public function __construct(IConfig $config, IUserManager $userManager, IUserSession $userSession, RevaHttpClient $httpClient, ISecureRandom $secureRandom) {
+	public function __construct(IConfig $config, IUserManager $userManager, IUserSession $userSession, RevaHttpClient $httpClient) {
 		$this->config = $config;
 		$this->userManager = $userManager;
 		$user = $userSession->getUser();
-		if ($user !== null) {
-			$this->userId = $user->getUID();
-		}
+	
 		$this->shareeEnumeration = $this->config->getAppValue('core', 'shareapi_allow_share_dialog_user_enumeration', 'yes') === 'yes';
 		$this->httpClient = $httpClient;
-		$this->secureRandom = $secureRandom;
 	}
 
 	public function getGenerateTokenResponse() {
-		//$result = $this->generateTokenFromReva();// Configure if the reva endpoint will be ready
 		$invitationsData = [
 			"status" => [
 				"code" => 1,
@@ -43,7 +37,7 @@ class ScienceMeshGenerateTokenPlugin {
 				"token" => "161405dd-05f0-4806-8b42-1482b3185c63",
 				"user_id" => [
 					"idp" => "some-idp",
-					"opaque_id" => $this->userId,
+					"opaque_id" => "einstein",
 					"type" => ScienceMeshUserId::USER_TYPE_PRIMARY
 				],
 				"expiration" => [
@@ -51,7 +45,6 @@ class ScienceMeshGenerateTokenPlugin {
 				]
 			]
 		];
-
 		return $invitationsData;
 	}
 
