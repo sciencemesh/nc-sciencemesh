@@ -919,14 +919,16 @@ class RevaController extends Controller {
 		$resourceId = $this->request->getParam("received_share")["share"]["resource_id"];
 		$permissions = $this->request->getParam("received_share")["share"]["permissions"];
 		$permissionsCode = $this->getPermissionsCode($permissions);
-		if (!($share = $this->shareProvider->getReceivedhareByToken(urldecode($resourceId)))) {
-			return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
+		try {
+			$share = $this->shareProvider->getReceivedShareByToken($resourceId);
+			$share->setPermissions($permissionsCode);
+			$shareUpdate = $this->shareProvider->UpdateReceivedShare($share);
+			$response = $this->shareInfoToResourceInfo($shareUpdate);
+			$response["state"] = 2;
+			return new JSONResponse($response, Http::STATUS_OK);
+		} catch (\Exception $e) {
+			return new JSONResponse(["error" => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
-		$share->setPermissions($permissionsCode);
-		$shareUpdated = $this->shareProvider->updateReceivedShare($share);
-		$response = $this->shareInfoToResourceInfo($shareUpdated);
-		$response["state"] = 2;
-		return new JSONResponse($response, Http::STATUS_OK);
 	}
 	/**
 	 * @PublicPage
@@ -974,14 +976,14 @@ class RevaController extends Controller {
 	public function GetReceivedShare($userId) {
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
-
-		$share = $this->shareProvider->getReceivedhareByToken($opaqueId);
-		if ($share) {
+		try {
+			$share = $this->shareProvider->getReceivedShareByToken($opaqueId);
 			$response = $this->shareInfoToResourceInfo($share);
 			$response["state"] = 2;
 			return new JSONResponse($response, Http::STATUS_OK);
+		} catch (\Exception $e) {
+			return new JSONResponse(["error" => $e->getMessage()],Http::STATUS_BAD_REQUEST);
 		}
-		return new JSONResponse(["error" => "GetReceivedShare failed"],Http::STATUS_BAD_REQUEST);
 	}
 
 	/**
