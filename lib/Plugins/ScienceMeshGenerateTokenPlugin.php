@@ -34,25 +34,28 @@ class ScienceMeshGenerateTokenPlugin {
 
 	public function getGenerateTokenResponse() {
 		//$result = $this->generateTokenFromReva();// Configure if the reva endpoint will be ready
-		$invitationsData = [
-			"status" => [
-				"code" => 1,
-				"trace" => "00000000000000000000000000000000"
-			],
-			"invite_token" => [
-				"token" => "161405dd-05f0-4806-8b42-1482b3185c63",
-				"user_id" => [
-					"idp" => "some-idp",
-					"opaque_id" => $this->userId,
-					"type" => ScienceMeshUserId::USER_TYPE_PRIMARY
+		if ($this->userManager->userExists($this->userId)) {
+			$invitationsData = [
+				"status" => [
+					"code" => 1,
+					"trace" => "00000000000000000000000000000000"
 				],
-				"expiration" => [
-					"seconds" => gmdate("H:i:s", 1638025012)
+				"invite_token" => [
+					"token" => "161405dd-05f0-4806-8b42-1482b3185c63",
+					"user_id" => [
+						"idp" => "some-idp",
+						"opaque_id" => $this->userId,
+						"type" => ScienceMeshUserId::USER_TYPE_PRIMARY
+					],
+					"expiration" => [
+						"seconds" => gmdate("H:i:s", 1638025012)
+					]
 				]
-			]
-		];
-
-		return $invitationsData;
+			];
+			return $invitationsData;
+		}
+		
+		return new JSONResponse("Username / password not recognized", 401);
 	}
 
 	public function generateTokenFromReva() {
