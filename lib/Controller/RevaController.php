@@ -775,6 +775,9 @@ class RevaController extends Controller {
 		} catch (NotFoundException $e) {
 			return new JSONResponse(["error" => "Share failed. Resource Path not found"], Http::STATUS_BAD_REQUEST);
 		}
+		if ($this->shareProvider->getSentShareByName($userId,$name)) {
+			return new JSONResponse(["Already sent this share"], Http::STATUS_ACCEPTED);
+		}
 		$share = $this->shareManager->newShare();
 		$share->setNode($path);
 		try {
@@ -817,6 +820,9 @@ class RevaController extends Controller {
 				['message' => 'Missing arguments: $providerDomain: ' . $providerDomain . ' $providerId: ' . $providerId . ' $opaqueId: ' . $opaqueId . ' $name: ' . $name . ' $sharedBy: ' . $sharedBy . ' $userId: ' . $userId],
 				Http::STATUS_BAD_REQUEST
 			);
+		}
+		if ($this->shareProvider->getReceivedShareByToken($opaqueId)) {
+			return new JSONResponse(["Already received this share"], Http::STATUS_ACCEPTED);
 		}
 		$id = $this->shareProvider
 			->addReceivedShareToDB(

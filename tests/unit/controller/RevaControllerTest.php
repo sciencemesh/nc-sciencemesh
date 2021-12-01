@@ -1324,6 +1324,28 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->addSentShare($this->userId);
 		$this->assertEquals($result->getStatus(),400);
 	}
+	public function testAddSentShareAlreadyShared() {
+		$testFolder = $this->getMockBuilder("OCP\Files\Folder")->getMock();
+		$this->userFolder->method("get")
+			->willReturn($testFolder);
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$paramsMap = [
+			["md", null,["opaque_id" => "fileid-marie%2FfakeFile.json"]],
+			["g", null,["grantee" => ["Id" => ["UserId" => ["idp" => "localhost:8080","opaque_id" => "einstein","type" => 1]]],"permissions" => ["permissions" => ["get_path" => true]]]]
+		];
+		$this->request->method("getParam")
+			->will($this->returnValueMap($paramsMap));
+		$this->shareProvider->method("getSentShareByName")
+			->willReturn(true);
+		$result = $controller->addSentShare($this->userId);
+		$this->assertEquals($result->getStatus(),202);
+	}
 	public function testAddSentShareOCSNotFoundException() {
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
@@ -1387,6 +1409,30 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			->will($this->returnValueMap($paramsMap));
 		$result = $controller->addReceivedShare($this->userId);
 		$this->assertEquals($result->getStatus(),400);
+	}
+	public function testAddReceivedShareAlreadyShared() {
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$paramsMap = [
+			["md",null,["opaque_id" => "fileid-einstein%2Fmy-folder"]],
+			["g",null,["grantee" => ["type" => 1,"Id" => ["UserId" => ["idp" => "cesnet.cz","opaque_id" => "marie","type" => 1]]]]],
+			["provider_domain",null,"cern.ch"],
+			["resource_type",null,"file"],
+			["provider_id",null,2],
+			["owner_display_name",null,"Albert Einstein"],
+			["protocol",null,["name" => "webdav","options" => ["sharedSecret" => "secret","permissions" => "webdav-property"]]]
+		];
+		$this->request->method("getParam")
+			->will($this->returnValueMap($paramsMap));
+		$this->shareProvider->method("getReceivedShareByToken")
+			->willReturn(true);
+		$result = $controller->addReceivedShare($this->userId);
+		$this->assertEquals($result->getStatus(),202);
 	}
 	public function testAddReceivedShare() {
 		$controller = new RevaController(
