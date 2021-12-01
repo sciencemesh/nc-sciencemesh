@@ -1576,7 +1576,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getStatus(),400);
 	}
 
-	public function testUnshare() {
+	public function testUnshareSentShare() {
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
@@ -1593,6 +1593,27 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 				]
 				);
 		$this->shareProvider->method("deleteSentShareByName")
+			->willReturn(true);
+		$result = $controller->Unshare($this->userId);
+		$this->assertEquals($result->getStatus(),200);
+	}
+	public function testUnshareReceivedShare() {
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$this->request->method("getParam")
+			->willReturn(
+				[
+					"Id" => [
+						"opaque_id" => "some-share-id"
+					]
+				]
+				);
+		$this->shareProvider->method("deleteReceivedShareByOpaqueId")
 			->willReturn(true);
 		$result = $controller->Unshare($this->userId);
 		$this->assertEquals($result->getStatus(),200);
