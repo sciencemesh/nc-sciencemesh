@@ -35,15 +35,15 @@ return [
 		['name' => 'reva#Upload', 'url' => '/~{userId}/api/storage/Upload/{path}', 'verb' => 'PUT'],
 		['name' => 'reva#addSentShare', 'url' => '/~{userId}/api/ocm/addSentShare', 'verb' => 'POST'],
 		['name' => 'reva#addReceivedShare', 'url' => '/~{userId}/api/ocm/addReceivedShare', 'verb' => 'POST'],
-		['name' => 'reva#GetSentShare', 'url' => '/~{userId}/api/ocm/GetSentShare', 'verb' => 'POST'],
+		['name' => 'reva#GetShare', 'url' => '/~{userId}/api/ocm/GetShare', 'verb' => 'POST'],
 		['name' => 'reva#Unshare', 'url' => '/~{userId}/api/ocm/Unshare', 'verb' => 'POST'],
 		['name' => 'reva#UpdateShare', 'url' => '/~{userId}/api/ocm/UpdateShare', 'verb' => 'POST'],
-		['name' => 'reva#ListShares', 'url' => '/~{userId}/api/ocm/ListShares', 'verb' => 'POST'],
+		['name' => 'reva#ListSentShares', 'url' => '/~{userId}/api/ocm/ListSentShares', 'verb' => 'POST'],
+		['name' => 'reva#ListShares', 'url' => '/~{userId}/api/ocm/ListShares', 'verb' => 'POST'], // alias for ListSentShares
 		['name' => 'reva#ListreceivedShares', 'url' => '/~{userId}/api/ocm/ListReceivedShares', 'verb' => 'POST'],
 		['name' => 'reva#GetReceivedShare', 'url' => '/~{userId}/api/ocm/GetReceivedShare', 'verb' => 'POST'],
-		['name' => 'reva#UpdateSentShare', 'url' => '/~{userId}/api/ocm/UpdateSentShare', 'verb' => 'POST'],
 		['name' => 'reva#UpdateReceivedShare', 'url' => '/~{userId}/api/ocm/UpdateReceivedShare', 'verb' => 'POST'],
-
+		['name' => 'reva#GetUser', 'url' => '/~{userId}/api/user/GetUser', 'verb' => 'POST'],
 		/*
 		['name' => 'storage#createHome', 'url' => '/~{userId}/CreateHome', 'verb' => 'POST'],
 		['name' => 'storage#listFolder', 'url' => '/~{userId}/ListFolder', 'verb' => 'POST'],
@@ -51,7 +51,7 @@ return [
 		['name' => 'storage#upload', 'url' => '/~{userId}/Upload', 'verb' => 'POST'],
 		['name' => 'storage#handleUpload', 'url' => '/~{userId}/Upload/{path}', 'verb' => 'PUT'],
 		['name' => 'storage#getMD', 'url' => '/~{userId}/GetMD', 'verb' => 'POST'],
-		*/
+*/
 
 		['name' => 'storage#handleGet', 'url' => '/~{userId}/files/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+']],
 		['name' => 'storage#handlePost', 'url' => '/~{userId}/files/{path}', 'verb' => 'POST', 'requirements' => ['path' => '.+']],
@@ -62,7 +62,6 @@ return [
 		['name' => 'app#launcher', 'url' => '/', 'verb' => 'GET'],
 		['name' => 'app#notifications', 'url' => '/notifications', 'verb' => 'GET'],
 		['name' => 'app#invitations', 'url' => '/invitations', 'verb' => 'GET'],
-		['name' => 'app#invitationsGenerate', 'url' => '/invitations/generate', 'verb' => 'GET'],
 		['name' => 'app#contacts', 'url' => '/contacts', 'verb' => 'GET'],
 	]
 ];
