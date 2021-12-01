@@ -201,7 +201,6 @@ class NextcloudAdapter implements AdapterInterface {
 			return [];
 		}
 		if (method_exists($node, 'getDirectoryListing')) {
-			error_log("methd exists on node");
 			$nodes = $node->getDirectoryListing();
 			$result = array_map(function (\OCP\Files\Node $node) {
 				return $this->normalizeNodeInfo($node);

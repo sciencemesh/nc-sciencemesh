@@ -8,6 +8,7 @@ use OCP\IURLGenerator;
 use OCP\IConfig;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\TemplateResponse;
+use OCP\AppFramework\Http\TextPlainResponse;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
@@ -15,6 +16,7 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Notification\IManager as INotificationManager;
 use OCP\IUserSession;
 use OCA\ScienceMesh\RevaHttpClient;
+use OCA\ScienceMesh\Plugins\ScienceMeshGenerateTokenPlugin;
 
 class AppController extends Controller {
 	private $userId;
@@ -22,8 +24,9 @@ class AppController extends Controller {
 	private $urlGenerator;
 	private $config;
 	private $userSession;
+	private $generateToken;
 
-	public function __construct($AppName, ITimeFactory $timeFactory, INotificationManager $notificationManager, IRequest $request, IConfig $config, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IUserSession $userSession) {
+	public function __construct($AppName, ITimeFactory $timeFactory, INotificationManager $notificationManager, IRequest $request, IConfig $config, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IUserSession $userSession, ScienceMeshGenerateTokenPlugin $generateToken) {
 		parent::__construct($AppName, $request);
 			  
 		$this->userId = $userId;
@@ -34,6 +37,7 @@ class AppController extends Controller {
 		$this->timeFactory = $timeFactory;
 		$this->config = new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
 		$this->userSession = $userSession;
+		$this->generateToken = $generateToken;
 	}
 
         /**
@@ -120,8 +124,8 @@ class AppController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function invitations() {
-		$invitationsData = [
-		];
+		//$invitationsData = $this->generateToken->getGenerateTokenResponse();
+		$invitationsData = [];
 		$templateResponse = new TemplateResponse('sciencemesh', 'invitations', $invitationsData);
 		$policy = new ContentSecurityPolicy();
 		$policy->addAllowedStyleDomain("data:");
@@ -130,6 +134,14 @@ class AppController extends Controller {
 		$policy->addAllowedScriptDomain("'unsafe-eval'");
 		$templateResponse->setContentSecurityPolicy($policy);
 		return $templateResponse;
+	}
+	/**
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
+	public function invitationsGenerate() {
+		$invitationsData = $this->generateToken->getGenerateTokenResponse();
+		return new TextPlainResponse($invitationsData, Http::STATUS_OK);
 	}
 
 	/**
