@@ -128,19 +128,23 @@ curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
 		return $this->revaGet('ocm-provider');
 	}
 	public function findAcceptedUsers() {
-		// FIXME: do an actual call to Reva, using ocm-find-accepted-users
+		$users = $this->revaPost('find-accepted-users');
+		return $users;
+
 		/*
-			$users = $this->revaPost('find-accepted-users');
+			$users = [
+				"accepted_users" => [
+					[
+						"id" => [
+							"idp" => "https://revanc2.docker",
+							"opaque_id" => "marie"
+						],
+						"display_name" => "Marie Curie",
+						"mail" => "marie@revanc2.docker"
+					]
+				]
+			];
 			return $users;
 		*/
-		$users = [
-			[
-				"opaqueId" => "123-123",
-				"idp" => "pondersource.nl",
-				"mail" => "alice@pondersource.nl",
-				"displayName" => "Alice ScienceMesh"
-			]
-		];
-		return $users;
 	}
 }

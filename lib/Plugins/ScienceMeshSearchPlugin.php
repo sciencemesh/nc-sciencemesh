@@ -32,8 +32,12 @@ class ScienceMeshSearchPlugin implements ISearchPlugin {
 
 	public function search($search, $limit, $offset, ISearchResult $searchResult) {
 		$users = $this->revaHttpClient->findAcceptedUsers();
+		if (!isset($users['accepted_users'])) {
+			return;
+		}
+		$users = $users['accepted_users'];
 		$users = array_filter($users, function ($user) use ($search) {
-			return (stripos($user['displayName'], $search) !== false);
+			return (stripos($user['display_name'], $search) !== false);
 		});
 		$users = array_slice($users, $offset, $limit);
 
@@ -41,13 +45,13 @@ class ScienceMeshSearchPlugin implements ISearchPlugin {
 		foreach ($users as $user) {
 			$exactResults[] = [
 				"label" => "Label",
-				"uuid" => $user['opaqueId'],
-				"name" => $user['displayName'],
+				"uuid" => $user['id']['opaque_id'],
+				"name" => $user['display_name'],
 				"type" => "ScienceMesh",
 				"value" => [
 					"shareType" => 1000, // FIXME: Replace with SHARE_TYPE_SCIENCEMESH
 					"shareWith" => $user['mail'],
-					"server" => $user['idp']
+					"server" => $user['id']['idp']
 				]
 			];
 		}
