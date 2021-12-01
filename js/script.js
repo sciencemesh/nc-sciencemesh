@@ -7,17 +7,27 @@ document.getElementById('elem').onclick = function () {
         contentType: 'application/json',
         //data: JSON.stringify(note)
     }).done(function (response) {
+        if(response === '' || response === false) {
+            var element = document.getElementById("show_result");
+            element.innerHTML= 'Not connection with reva';
+            $('#test').show(); 
+        } else {
         let token = JSON.parse(response);
-        let invite_token = token.invite_token.token
-        var element = document.getElementById("show_result");
-        element.innerHTML=invite_token;
-        $('#test').show();
-
-        let timestamp = secondsToDhms(token.invite_token.expiration.seconds);
-        var element_timestamp = document.getElementById("timestamp_invalid");
-        element_timestamp.innerHTML=timestamp;
-        $('#timestamp_invalid').show();
-
+        for(tokenData in token) {
+            if(token.hasOwnProperty(tokenData)) {
+                if(tokenData === 'invite_token') {
+                    let invite_token = token.invite_token.token
+                    var element = document.getElementById("show_result");
+                    element.innerHTML=invite_token;
+                    $('#test').show();  
+                    let timestamp = secondsToDhms(token.invite_token.expiration.seconds);
+                    var element_timestamp = document.getElementById("timestamp_invalid");
+                    element_timestamp.innerHTML=timestamp;
+                    $('#timestamp_invalid').show();
+                }
+            }
+        }
+    }
     }).fail(function (response, code) {
         alert('The token is invalid')
     });
