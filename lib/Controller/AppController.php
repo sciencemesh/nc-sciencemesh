@@ -55,7 +55,7 @@ class AppController extends Controller {
 		*/
 		// $revaResult = $revaClient->ocmProvider();
 		$launcherData = [
-		// 	"reva" => json_encode($revaResult, JSON_PRETTY_PRINT)
+			// 	"reva" => json_encode($revaResult, JSON_PRETTY_PRINT)
 		];
 
 		$templateResponse = new TemplateResponse('sciencemesh', 'launcher', $launcherData);
