@@ -358,7 +358,7 @@ class RevaController extends Controller {
 	 */
 	public function Authenticate($userId) {
 		// FIXME: This should be callable without a userId in the url;
-		$userId = $this->request->getParam("clientID");
+		// $userId = $this->request->getParam("clientID");
 		$password = $this->request->getParam("clientSecret");
 
 		// Try e.g.:
