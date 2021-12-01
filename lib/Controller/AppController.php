@@ -43,16 +43,16 @@ class AppController extends Controller {
         /**
          * @NoAdminRequired
          * @NoCSRFRequired
-         */
-        public function launcher() {
-                $revaClient = new RevaHttpClient();
-/*
-				$revaResult = $revaClient->createShare(array(
-						"path" => "/share",
-						"recipientUsername" => "marie",
-						"recipientHost" => "localhost:17000"
-				));
-*/
+	 */
+	public function launcher() {
+		$revaClient = new RevaHttpClient();
+		/*
+			$revaResult = $revaClient->createShare(array(
+				"path" => "/share",
+				"recipientUsername" => "marie",
+				"recipientHost" => "localhost:17000"
+			));
+		*/
 		$revaResult = $revaClient->ocmProvider();
 		$launcherData = array(
 			"reva" => json_encode($revaResult, JSON_PRETTY_PRINT)
