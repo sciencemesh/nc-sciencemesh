@@ -370,30 +370,30 @@ class RevaController extends Controller {
 		if ($auth) {
 
 		// FIXME: this should match the expected result format in Reva.
-			$result = array(
-				"UserId" => array(
+			$result = [
+				"UserId" => [
 					"opaque_id" => $userId,
 					"idp" => "some-idp",
 					"type" => 1
-                        	),
+				],
 				"Username" => $userId,
 				"Mail" => $userId . "@some-idp.org",
 				"MailVerified" => true,
 				"DisplayName" => $userId,
-				"Groups" => array(),
+				"Groups" => [],
 				"UIDNumber" => 123,
 				"GIDNumber" => 789,
-				"Opaque" => array(),
-				"Scopes" => array(
-					"user" => array(
-						"resource" => array(
+				"Opaque" => [],
+				"Scopes" => [
+					"user" => [
+						"resource" => [
 							"decoder" => "json",
 							"value" => "eyJyZXNvdXJjZV9pZCI6eyJzdG9yYWdlX2lkIjoic3RvcmFnZS1pZCIsIm9wYXF1ZV9pZCI6Im9wYXF1ZS1pZCJ9LCJwYXRoIjoic29tZS9maWxlL3BhdGgudHh0In0=",
-						),
+						],
 						"role" => 1,
-					)
-				)
-			);
+					]
+				]
+			];
 			return new JSONResponse($result, Http::STATUS_OK);
 		}
 		return new JSONResponse("Username / password not recognized", 401);

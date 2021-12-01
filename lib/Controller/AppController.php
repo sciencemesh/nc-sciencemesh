@@ -40,25 +40,25 @@ class AppController extends Controller {
 		$this->generateToken = $generateToken;
 	}
 
-        /**
-         * @NoAdminRequired
-         * @NoCSRFRequired
-         */
-        public function launcher() {
-                $revaClient = new RevaHttpClient();
-/*
-                $revaResult = $revaClient->createShare(array(
-                        "path" => "/share",
-                        "recipientUsername" => "marie",
-                        "recipientHost" => "localhost:17000"
-                ));
-*/
-                $revaResult = $revaClient->ocmProvider();  
-                $launcherData = array(
-                        "reva" => json_encode($revaResult, JSON_PRETTY_PRINT)
-                );
+	/**
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
+	public function launcher() {
+		$revaClient = new RevaHttpClient();
+		/*
+			$revaResult = $revaClient->createShare(array(
+				"path" => "/share",
+				"recipientUsername" => "marie",
+				"recipientHost" => "localhost:17000"
+			));
+		*/
+		$revaResult = $revaClient->ocmProvider();
+		$launcherData = [
+			"reva" => json_encode($revaResult, JSON_PRETTY_PRINT)
+		];
 
-                $templateResponse = new TemplateResponse('sciencemesh', 'launcher', $launcherData);
+		$templateResponse = new TemplateResponse('sciencemesh', 'launcher', $launcherData);
 		$policy = new ContentSecurityPolicy();
 		$policy->addAllowedStyleDomain("data:");
 		$policy->addAllowedScriptDomain("'self'");
@@ -91,12 +91,12 @@ class AppController extends Controller {
 			$declineAction->setLabel('decline')->setLink("shared", "GET");
 
 			$notification->setApp('sciencemesh')
-								->setUser($user->getUID())
-								->setDateTime($datetime)
-								->setObject('sciencemesh', dechex($time))
-								->setSubject('remote_share', [$shortMessage])
-								->addAction($acceptAction)
-								->addAction($declineAction)
+				->setUser($user->getUID())
+				->setDateTime($datetime)
+				->setObject('sciencemesh', dechex($time))
+				->setSubject('remote_share', [$shortMessage])
+				->addAction($acceptAction)
+				->addAction($declineAction)
 						;
 			if ($longMessage !== '') {
 				$notification->setMessage('remote_share', [$longMessage]);

@@ -52,9 +52,9 @@ class RevaHttpClient {
 			$url .= "?" . http_build_query($params);
 		}
 
-// FIXME: Remove these;
-curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		// FIXME: Remove these;
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
 
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_TIMEOUT, 10);
@@ -83,9 +83,9 @@ curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
 	private function curlPost($url, $params = []) {
 		$ch = curl_init();
 
-// FIXME: Remove these;
-curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		// FIXME: Remove these;
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
 		
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
