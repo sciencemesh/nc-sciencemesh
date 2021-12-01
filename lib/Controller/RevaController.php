@@ -358,9 +358,9 @@ class RevaController extends Controller {
 	 */
 	public function Authenticate($userId) {
 		// FIXME: This should be callable without a userId in the url;
-		$userId = $this->request->getParam("clientID");
+		// $userId = $this->request->getParam("clientID");
+		$password = $this->request->getParam("clientSecret");
 
-    $password = $this->request->getParam("clientSecret");
 		// Try e.g.:
 		// curl -v -H 'Content-Type:application/json' -d'{"clientSecret":"relativity"}' http://einstein:relativity@localhost/index.php/apps/sciencemesh/~einstein/api/auth/Authenticate
 		// Note that reva will also post `clientID` inside the JSON,
@@ -369,46 +369,32 @@ class RevaController extends Controller {
 		$auth = $this->userManager->checkPassword($userId,$password);
 		if ($auth) {
 
-      // FIXME: this should match the expected result format in Reva.
+		// FIXME: this should match the expected result format in Reva.
 			$result = array(
 				"UserId" => array(
 					"opaque_id" => $userId,
-					"idp" => "https://pondersource.nl",
+					"idp" => "some-idp",
 					"type" => 1
                         	),
 				"Username" => $userId,
-				"Mail" => $userId . "@pondersource.nl",
+				"Mail" => $userId . "@some-idp.org",
 				"MailVerified" => true,
 				"DisplayName" => $userId,
 				"Groups" => array(),
 				"UIDNumber" => 123,
 				"GIDNumber" => 789,
 				"Opaque" => array(),
-				"Scopes" => array()
-			);
-			return new JSONResponse($result, Http::STATUS_OK);
-/*
-    // FIXME: The data structure above will allow logging in to work with reva, but it doesn't have the scope as was below. These should probably merge?
-      $obj = [
-				"user" => [
-					"id" => [
-						"idp" => "some-idp",
-						"opaque_id" => $userId,
-						"type" => 1,
-					],
-				],
-				"scopes" => [
-					"user" => [
-						"resource" => [
+				"Scopes" => array(
+					"user" => array(
+						"resource" => array(
 							"decoder" => "json",
 							"value" => "eyJyZXNvdXJjZV9pZCI6eyJzdG9yYWdlX2lkIjoic3RvcmFnZS1pZCIsIm9wYXF1ZV9pZCI6Im9wYXF1ZS1pZCJ9LCJwYXRoIjoic29tZS9maWxlL3BhdGgudHh0In0=",
-						],
+						),
 						"role" => 1,
-					],
-				],
-			];
-			return new JSONResponse($obj, Http::STATUS_OK);
-*/
+					)
+				)
+			);
+			return new JSONResponse($result, Http::STATUS_OK);
 		}
 		return new JSONResponse("Username / password not recognized", 401);
 	}
