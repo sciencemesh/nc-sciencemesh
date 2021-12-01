@@ -4,6 +4,8 @@ namespace OCA\ScienceMesh\Controller;
 
 use OCA\ScienceMesh\NextcloudAdapter;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
+use OCA\ScienceMesh\Share\ScienceMeshSharePermissions;
+use OCA\ScienceMesh\User\ScienceMeshUserId;
 
 use OCA\Files_Trashbin\Trash\ITrashManager;
 
