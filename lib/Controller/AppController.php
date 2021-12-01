@@ -40,9 +40,9 @@ class AppController extends Controller {
 		$this->generateToken = $generateToken;
 	}
 
-        /**
-         * @NoAdminRequired
-         * @NoCSRFRequired
+	/**
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
 	 */
 	public function launcher() {
 		$revaClient = new RevaHttpClient();
@@ -54,9 +54,9 @@ class AppController extends Controller {
 			));
 		*/
 		$revaResult = $revaClient->ocmProvider();
-		$launcherData = array(
+		$launcherData = [
 			"reva" => json_encode($revaResult, JSON_PRETTY_PRINT)
-		);
+		];
 
 		$templateResponse = new TemplateResponse('sciencemesh', 'launcher', $launcherData);
 		$policy = new ContentSecurityPolicy();
