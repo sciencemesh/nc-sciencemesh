@@ -14,6 +14,7 @@ script("sciencemesh", "vendor/simplyedit/simply.everything");
 		<div id="app-content-wrapper" class="viewcontainer">
 			<main class="sciencemesh-container sciencemesh-launcher">
 				Launcher
+				<?php echo($_['reva']); ?>
 			</main>
 		</div>
 	</div>

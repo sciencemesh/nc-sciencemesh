@@ -41,8 +41,9 @@ class RevaHttpClient {
 	 */
 	public function __construct() {
 		$this->revaUrl = "https://revanc1.docker/ocm/"; // FIXME: Read from config
-		$this->revaUser = "einstein"; // FIXME: Read from config, or generate if this loops back to us anyway;
-		$this->revaPass = "relativity"; // FIXME: Read from config, or generate if this loops back to us anyway;
+		$this->revaUser = "alice"; // FIXME: Read from config, or generate if this loops back to us anyway;
+		$this->revaPass = "alice123"; // FIXME: Read from config, or generate if this loops back to us anyway;
+		$this->curlDebug = true;
 	}
 
 	private function curlGet($url, $params = []) {
@@ -50,6 +51,11 @@ class RevaHttpClient {
 		if (sizeof($params)) {
 			$url .= "?" . http_build_query($params);
 		}
+
+// FIXME: Remove these;
+curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -57,18 +63,35 @@ class RevaHttpClient {
 			curl_setopt($ch, CURLOPT_USERPWD, $this->revaUser.":".$this->revaPass);
 			curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		}
+
+		if ($this->curlDebug) {
+			curl_setopt($ch, CURLOPT_VERBOSE, true);
+			$streamVerboseHandle = fopen('php://temp', 'w+');
+			curl_setopt($ch, CURLOPT_STDERR, $streamVerboseHandle);
+		}
+		
 		$output = curl_exec($ch);
-		curl_close($ch);
+
+		if ($this->curlDebug) {
+			rewind($streamVerboseHandle);
+			$verboseLog = stream_get_contents($streamVerboseHandle);
+			$output = $verboseLog . $output;
+		}
 		
 		return $output;
 	}
 	private function curlPost($url, $params = []) {
 		$ch = curl_init();
+
+// FIXME: Remove these;
+curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
 		
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+		// curl_setopt($ch, CURLOPT_HEADER, true);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params, JSON_PRETTY_PRINT));
 		if ($this->revaUser && $this->revaPass) {
 			curl_setopt($ch, CURLOPT_USERPWD, $this->revaUser.":".$this->revaPass);
@@ -76,7 +99,6 @@ class RevaHttpClient {
 		}
 		$output = curl_exec($ch);
 		curl_close($ch);
-
 		return $output;
 	}
 
@@ -102,20 +124,27 @@ class RevaHttpClient {
 		}
 		return $this->revaPost('send', $params);
 	}
+	public function ocmProvider() {
+		return $this->revaGet('ocm-provider');
+	}
 	public function findAcceptedUsers() {
-		// FIXME: do an actual call to Reva, using ocm-find-accepted-users
+		$users = $this->revaPost('find-accepted-users');
+		return $users;
+
 		/*
-			$users = $this->revaPost('find-accepted-users');
+			$users = [
+				"accepted_users" => [
+					[
+						"id" => [
+							"idp" => "https://revanc2.docker",
+							"opaque_id" => "marie"
+						],
+						"display_name" => "Marie Curie",
+						"mail" => "marie@revanc2.docker"
+					]
+				]
+			];
 			return $users;
 		*/
-		$users = [
-			[
-				"opaqueId" => "123-123",
-				"idp" => "pondersource.nl",
-				"mail" => "alice@pondersource.nl",
-				"displayName" => "Alice ScienceMesh"
-			]
-		];
-		return $users;
 	}
 }

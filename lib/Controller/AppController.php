@@ -14,6 +14,7 @@ use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Notification\IManager as INotificationManager;
 use OCP\IUserSession;
+use OCA\ScienceMesh\RevaHttpClient;
 
 class AppController extends Controller {
 	private $userId;
@@ -35,14 +36,25 @@ class AppController extends Controller {
 		$this->userSession = $userSession;
 	}
 
-	/**
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 */
-	public function launcher() {
-		$launcherData = [
-		];
-		$templateResponse = new TemplateResponse('sciencemesh', 'launcher', $launcherData);
+        /**
+         * @NoAdminRequired
+         * @NoCSRFRequired
+         */
+        public function launcher() {
+                $revaClient = new RevaHttpClient();
+/*
+                $revaResult = $revaClient->createShare(array(
+                        "path" => "/share",
+                        "recipientUsername" => "marie",
+                        "recipientHost" => "localhost:17000"
+                ));
+*/
+                $revaResult = $revaClient->ocmProvider();  
+                $launcherData = array(
+                        "reva" => json_encode($revaResult, JSON_PRETTY_PRINT)
+                );
+
+                $templateResponse = new TemplateResponse('sciencemesh', 'launcher', $launcherData);
 		$policy = new ContentSecurityPolicy();
 		$policy->addAllowedStyleDomain("data:");
 		$policy->addAllowedScriptDomain("'self'");

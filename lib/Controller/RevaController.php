@@ -371,13 +371,32 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function Authenticate($userId) {
-		$password = $this->request->getParam("password");
+		// FIXME: This should be callable without a userId in the url;
+		$userId = $this->request->getParam("clientID");
+		$password = $this->request->getParam("clientSecret");
 		// Try e.g.:
 		// curl -v -H 'Content-Type:application/json' -d'{"password":"relativity"}' http://localhost/apps/sciencemesh/~einstein/api/Authenticate
 		// FIXME: https://github.com/pondersource/nc-sciencemesh/issues/3
 		$auth = $this->userManager->checkPassword($userId,$password);
 		if ($auth) {
-			return new JSONResponse("Logged in", Http::STATUS_OK);
+			// FIXME: this should match the expected result format in Reva.
+			$result = array(
+				"UserId" => array(
+					"opaque_id" => $userId,
+					"idp" => "https://pondersource.nl",
+					"type" => 1
+                        	),
+				"Username" => $userId,
+				"Mail" => $userId . "@pondersource.nl",
+				"MailVerified" => true,
+				"DisplayName" => $userId,
+				"Groups" => array(),
+				"UIDNumber" => 123,
+				"GIDNumber" => 789,
+				"Opaque" => array(),
+				"Scopes" => array()
+			);
+			return new JSONResponse($result, Http::STATUS_OK);
 		}
 		return new JSONResponse("Username / password not recognized", 401);
 	}
