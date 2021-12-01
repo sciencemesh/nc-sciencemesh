@@ -778,6 +778,7 @@ class RevaController extends Controller {
 		if($this->shareProvider->getSentShareByName($userId,$name)){
 			return new JSONResponse(["Already sent this share"], Http::STATUS_ACCEPTED);
 		}
+		$share = $this->shareManager->newShare();
 		$share->setNode($path);
 		try {
 			$this->lock($share->getNode());
