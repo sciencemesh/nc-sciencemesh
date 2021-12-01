@@ -124,9 +124,6 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	public function testAuthenticateOK() {
 		$user = $this->getMockBuilder("OCP\IUser")->getMock();
 		$this->request->method("getParam")
-		  ->with($this->equalTo("clientID"))
-		  	->willReturn($this->userId);
-		$this->request->method("getParam")
 		  ->with($this->equalTo("clientSecret"))
 			->willReturn("something-very-secret");
 		$this->userManager->method("checkPassword")
