@@ -60,12 +60,12 @@ class Version0001Date20211201101630 extends SimpleMigrationStep {
 			\OCP\DB\Types::INTEGER,
 			['notnull' => true]
 		);
-		$share->addColumn(
+		$shares->addColumn(
 			'is_external',
 			\OCP\DB\Types::BOOLEAN,
-			[]
+			['notnull' => false]
 		);
-		$share->addColumn(
+		$shares->addColumn(
 			'foreign_id',
 			\OCP\DB\Types::INTEGER,
 			[]
