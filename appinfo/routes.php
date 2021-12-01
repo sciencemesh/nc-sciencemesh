@@ -63,6 +63,7 @@ return [
 		['name' => 'app#launcher', 'url' => '/', 'verb' => 'GET'],
 		['name' => 'app#notifications', 'url' => '/notifications', 'verb' => 'GET'],
 		['name' => 'app#invitations', 'url' => '/invitations', 'verb' => 'GET'],
+		['name' => 'app#invitationsGenerate', 'url' => '/invitations/generate', 'verb' => 'GET'],
 		['name' => 'app#contacts', 'url' => '/contacts', 'verb' => 'GET'],
 	]
 ];

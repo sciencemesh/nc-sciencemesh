@@ -43,7 +43,7 @@ class ScienceMeshGenerateTokenPluginTest extends PHPUnit_Framework_TestCase {
 	   
 		$sciencMeshToken = new ScienceMeshGenerateTokenPlugin($this->config, $this->userManager,$this->session, $this->httpClient);
 		
-		$this->assertEquals($sciencMeshToken->getGenerateTokenResponse(), $response);
+		$this->assertEquals($sciencMeshToken->getGenerateTokenResponse(), null);
 	}
 
 	public function testGenerateTokenFromReva() {
