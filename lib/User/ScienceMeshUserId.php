@@ -56,12 +56,16 @@ class ScienceMeshUserId {
 		return ScienceMeshUserId::fromJson($json);
 	}
 
-	public function asJson() {
-		return json_encode([
+	public function asArray() {
+		return [
 			'idp' => $this->idp,
 			'opaque_id' => $this->opaque_id,
 			'type' => $this->type
-		]);
+		];
+	}
+
+	public function asJson() {
+		return json_encode($this->asArray());
 	}
 
 	public function getIdp() {
