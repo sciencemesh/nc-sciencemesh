@@ -8,6 +8,7 @@ use OCP\IURLGenerator;
 use OCP\IConfig;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\TemplateResponse;
+use OCP\AppFramework\Http\TextPlainResponse;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
@@ -111,7 +112,8 @@ class AppController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function invitations() {
-		$invitationsData = $this->generateToken->getGenerateTokenResponse();
+		//$invitationsData = $this->generateToken->getGenerateTokenResponse();
+		$invitationsData = [];
 		$templateResponse = new TemplateResponse('sciencemesh', 'invitations', $invitationsData);
 		$policy = new ContentSecurityPolicy();
 		$policy->addAllowedStyleDomain("data:");
@@ -120,6 +122,14 @@ class AppController extends Controller {
 		$policy->addAllowedScriptDomain("'unsafe-eval'");
 		$templateResponse->setContentSecurityPolicy($policy);
 		return $templateResponse;
+	}
+	/**
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
+	public function invitationsGenerate() {
+		$invitationsData = $this->generateToken->getGenerateTokenResponse();
+		return new TextPlainResponse($invitationsData, Http::STATUS_OK);
 	}
 
 	/**
