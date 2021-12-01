@@ -32,7 +32,7 @@ use OCP\Federation\ICloudIdManager;
 
 use OCP\Share\IManager;
 use OCP\Share\IShare;
-
+use OCP\Share\Exceptions\ShareNotFound;
 
 use Psr\Log\LoggerInterface;
 
@@ -821,8 +821,11 @@ class RevaController extends Controller {
 				Http::STATUS_BAD_REQUEST
 			);
 		}
-		if ($this->shareProvider->getReceivedShareByToken($opaqueId)) {
-			return new JSONResponse(["Already received this share"], Http::STATUS_ACCEPTED);
+		try {
+			if ($this->shareProvider->getReceivedShareByToken($opaqueId)) {
+				return new JSONResponse(["Already received this share"], Http::STATUS_ACCEPTED);
+			}
+		} catch (ShareNotFound $e) {
 		}
 		$id = $this->shareProvider
 			->addReceivedShareToDB(

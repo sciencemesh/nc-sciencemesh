@@ -1434,7 +1434,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$result = $controller->addReceivedShare($this->userId);
 		$this->assertEquals($result->getStatus(),202);
 	}
-	public function testAddReceivedShare() {
+	public function testAddReceivedShareOK() {
 		$controller = new RevaController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
@@ -1447,6 +1447,49 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$share = $this->getMockBuilder("OCP\Federation\ICloudFederationShare")->getMock();
 		$user = $this->getMockBuilder("OCP\IUser")->getMock();
 
+		$paramsMap = [
+			["md",null,["opaque_id" => "fileid-einstein%2Fmy-folder"]],
+			["g",null,["grantee" => ["type" => 1,"Id" => ["UserId" => ["idp" => "cesnet.cz","opaque_id" => "marie","type" => 1]]]]],
+			["provider_domain",null,"cern.ch"],
+			["resource_type",null,"file"],
+			["provider_id",null,2],
+			["owner_display_name",null,"Albert Einstein"],
+			["protocol",null,["name" => "webdav","options" => ["sharedSecret" => "secret","permissions" => "webdav-property"]]]
+		];
+		$this->request->method("getParam")
+			->will($this->returnValueMap($paramsMap));
+		$this->shareProvider->method("getReceivedShareByToken")
+			->willThrowException(new \OCP\Share\Exceptions\ShareNotFound());
+		$this->cloudIdManager->method("resolveCloudId")
+			->willReturn($cloudId);
+		$cloudId->method("getUser")
+			->willReturn("marie");
+		$this->userManager->method("userExists")
+			->willReturn(true);
+		$this->urlGenerator->method("getBaseUrl")
+			->willReturn("welcome server2.txt");
+		$this->cloudFederationProviderManager->method("getCloudFederationProvider")
+			->willReturn($provider);
+		$this->factory->method("getCloudFederationShare")
+			->willReturn($share);
+		$this->userManager->method("get")
+			->willReturn($user);
+
+		$result = $controller->addReceivedShare($this->userId);
+		$this->assertEquals($result->getStatus(),201);
+	}
+	public function testAddReceivedShare() {
+		$controller = new RevaController(
+			$this->appName, $this->rootFolder, $this->request, $this->session,
+			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
+			$this->userService, $this->trashManager , $this->shareManager,
+			$this->groupManager, $this->cloudFederationProviderManager,
+			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
+		);
+		$cloudId = $this->getMockBuilder("OCP\Federation\ICloudId")->getMock();
+		$provider = $this->getMockBuilder("OCP\Federation\ICloudFederationProvider")->getMock();
+		$share = $this->getMockBuilder("OCP\Federation\ICloudFederationShare")->getMock();
+		$user = $this->getMockBuilder("OCP\IUser")->getMock();
 		$paramsMap = [
 			["md",null,["opaque_id" => "fileid-einstein%2Fmy-folder"]],
 			["g",null,["grantee" => ["type" => 1,"Id" => ["UserId" => ["idp" => "cesnet.cz","opaque_id" => "marie","type" => 1]]]]],
