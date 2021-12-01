@@ -821,11 +821,11 @@ class RevaController extends Controller {
 				Http::STATUS_BAD_REQUEST
 			);
 		}
-		try{
-			if($this->shareProvider->getReceivedShareByToken($opaqueId)){
+		try {
+			if ($this->shareProvider->getReceivedShareByToken($opaqueId)) {
 				return new JSONResponse(["Already received this share"], Http::STATUS_ACCEPTED);
 			}
-		}catch(ShareNotFound $e){
+		} catch (ShareNotFound $e) {
 		}
 		$id = $this->shareProvider
 			->addReceivedShareToDB(
