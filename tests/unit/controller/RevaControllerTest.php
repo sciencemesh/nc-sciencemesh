@@ -124,6 +124,9 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	public function testAuthenticateOK() {
 		$user = $this->getMockBuilder("OCP\IUser")->getMock();
 		$this->request->method("getParam")
+		  ->with($this->equalTo("clientID"))
+		  	->willReturn($this->userId);
+		$this->request->method("getParam")
 		  ->with($this->equalTo("clientSecret"))
 			->willReturn("something-very-secret");
 		$this->userManager->method("checkPassword")
@@ -137,24 +140,30 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			$this->factory, $this->cloudIdManager,$this->logger,$this->appManager, $this->l,$this->shareProvider,
 		);
 		$jsonResponse = $controller->Authenticate($this->userId);
-		$this->assertEquals($jsonResponse->getData(), [
-			"user" => [
-				"id" => [
-					"idp" => "some-idp",
-					"opaque_id" => $this->userId,
-					"type" => 1,
-				],
-			],
-			"scopes" => [
-				"user" => [
-					"resource" => [
+		$this->assertEquals($jsonResponse->getData(), array(
+			"UserId" => array(
+				"opaque_id" => $this->userId,
+				"idp" => "some-idp",
+				"type" => 1
+			),
+			"Username" => $this->userId,
+			"Mail" => $this->userId . "@some-idp.org",
+			"MailVerified" => true,
+			"DisplayName" => $this->userId,
+			"Groups" => array(),
+			"UIDNumber" => 123,
+			"GIDNumber" => 789,
+			"Opaque" => array(),
+			"Scopes" => array(
+				"user" => array(
+					"resource" => array(
 						"decoder" => "json",
 						"value" => "eyJyZXNvdXJjZV9pZCI6eyJzdG9yYWdlX2lkIjoic3RvcmFnZS1pZCIsIm9wYXF1ZV9pZCI6Im9wYXF1ZS1pZCJ9LCJwYXRoIjoic29tZS9maWxlL3BhdGgudHh0In0=",
-					],
+					),
 					"role" => 1,
-				],
-			],
-		]);
+				)
+			)
+		));
 	}
 
 	public function testGetUserThatExists() {
