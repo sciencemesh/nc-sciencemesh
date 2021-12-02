@@ -1368,4 +1368,84 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$cursor->closeCursor();
 		return $share;
 	}
+	public function getShareByOpaqueId($opaqueId) {
+		$qb = $this->dbConnection->getQueryBuilder();
+		$c = $qb->select('is_external')
+			->from('sciencemesh_shares')
+			->where(
+				$qb->expr()->eq('opaque_id', $qb->createNamedParameter($opaqueId))
+			)
+			->execute();
+		$data = $c->fetch();
+		if (!$data) {
+			return false;
+		}
+		$external = $data['is_external'];
+		$c = $qb->select('*')
+			->from('sciencemesh_shares', 'sms')
+			->innerJoin('sms',$external?'share_external':'share','s',$qb->expr()->eq('sms.foreignId','s.id'))
+			->where(
+				$qb->expr()->eq('sms.opaque_id', $qb->createNamedParameter($opaqueId))
+			)
+			->execute();
+		$data = $c->fetch();
+		if (!$data) {
+			return false;
+		}
+		$res = $external?$this->createScienceMeshExternalShare($data):$this->createScienceMeshShare($data);
+	}
+
+	public function addScienceMeshUser($user) {
+		$idp = $user->getIdp();
+		$opaqueId = $user->getOpaqueId();
+		$type = $user->getType();
+		$qb = $this->dbConnection->getQueryBuilder();
+		$cursor = $qb->select('*')
+			->from('sciencemesh_users')
+			->where(
+				$qb->expr()->eq('idp', $qb->createNamedParameter($idp))
+			)
+			->andWhere(
+				$qb->expr()->eq('opaque_id', $qb->createNamedParameter($opaqueId))
+			)
+			->execute();
+		$data = $cursor->fetch();
+		if (!$data) {
+			$qb->insert('sciencemesh_users')
+				->setValue('idp', $qb->createNamedParameter($idp))
+				->setValue('opaque_id', $qb->createNamedParameter($opaqueId))
+				->setValue('type', $qb->createNamedParameter($type))
+				->execute();
+			return $qb->getLastInsertId();
+		} else {
+			return $data['id'];
+		}
+	}
+
+	public function addScienceMeshShare($share) {
+		if ($share['sciencemesh']['is_external']) {
+			$share['sciencemesh']['foreign_id'] = $this->addReceivedShareToDB(...$share['share']);
+		} else {
+			$share['sciencemesh']['foreign_id'] = $this->createScienceMeshShare($share['share']);
+		}
+		$opaqueId = $share['sciencemesh']['opaque_id'];
+		$resourceId = $share['sciencemesh']['resource_id'];
+		$permissions = $share['sciencemesh']['permissions'];
+		$grantee = $share['sciencemesh']['grantee']?$this->addScienceMeshUser($share['sciencemesh']['grantee']):null;
+		$creator = $share['sciencemesh']['creator']?$this->addScienceMeshUser($share['sciencemesh']['creator']):null;
+		$owner = $share['sciencemesh']['owner']?$this->addScienceMeshUser($share['sciencemesh']['owner']):null;
+
+		exit;
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->insert('sciencemesh_shares')
+			->setValue('opaque_id', $opaqueId)
+			->setValue('resource_id', $resourceId)
+			->setValue('permissions', $permissions)
+			->setValue('grantee', $grantee)
+			->setValue('creator', $creator)
+			->setValue('owner', $owner)
+			->setValue('is_external', $share['sciencemesh']['is_external'])
+			->setValue('foreign_id', $share['sciencemesh']['foreign_id'])
+			->execute();
+	}
 }

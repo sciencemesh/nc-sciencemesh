@@ -3,25 +3,25 @@
 namespace OCA\ScienceMesh\Share;
 
 class ScienceMeshSharePermissions {
-	private $add_grant = false;
-	private $create_container = false;
-	private $delete = false;
-	private $get_path = false;
-	private $get_quota = false;
-	private $initiate_file_download = false;
-	private $initiate_file_upload = false;
-	private $list_grants = false;
-	private $list_container = false;
-	private $list_file_versions = false;
-	private $list_recycle = false;
-	private $move = false;
-	private $remove_grant = false;
-	private $purge_recycle = false;
-	private $restore_file_version = false;
-	private $restore_recycle_item = false;
-	private $stat = false;
-	private $update_grant = false;
-	private $deny_grant = false;
+	private $ADD_GRANT = 1 << 0;
+	private $CREATE_CONTAINER = 1 << 1;
+	private $DELETE = 1 << 2;
+	private $GET_PATH = 1 << 3;
+	private $GET_QUOTA = 1 << 4;
+	private $INITIATE_FILE_DOWNLOAD = 1 << 5;
+	private $INITIATE_FILE_UPLOAD = 1 << 6;
+	private $LIST_GRANTS = 1 << 7;
+	private $LIST_CONTAINER = 1 << 8;
+	private $LIST_FILE_VERSIONS = 1 << 9;
+	private $LIST_RECYCLE = 1 << 10;
+	private $MOVE = 1 << 11;
+	private $REMOVE_GRANT = 1 << 12;
+	private $PURGE_RECYCLE = 1 << 13;
+	private $RESTORE_FILE_VERSION = 1 << 14;
+	private $RESTORE_RECYCLE_ITEM = 1 << 15;
+	private $STAT = 1 << 16;
+	private $UPDATE_GRANT = 1 << 17;
+	private $DENY_GRANT = 1 << 18;
 	public const FIELDS = [
 		'add_grant',
 		'create_container',
@@ -43,6 +43,8 @@ class ScienceMeshSharePermissions {
 		'update_grant',
 		'deny_grant',
 	];
+
+	private $val = 0;
 
 	public static function fromJson($json) {
 		$permission_array = json_decode($json, true);
@@ -71,7 +73,8 @@ class ScienceMeshSharePermissions {
 			'permissions' => []
 		];
 		foreach (ScienceMeshSharePermissions::FIELDS as $key) {
-			$res['permissions'][$key] = $this->$key;
+			$k = strtoupper($key);
+			$res['permissions'][$key] = (bool)$this->val & $this->$k;
 		}
 		return $res;
 	}
@@ -80,10 +83,19 @@ class ScienceMeshSharePermissions {
 		return json_encode($this->getArray());
 	}
 
+	public function getCode() {
+		return $this->val;
+	}
+
 	public function setPermission($key, $value) {
 		if (in_array($key, ScienceMeshSharePermissions::FIELDS)) {
 			if (is_bool($value)) {
-				$this->$key = $value;
+				if ($this->getPermission($key) == $value) {
+					return;
+				} else {
+					$k = strtoupper($key);
+					$value?$this->val += $this->$k:$this->val -= $this->$k;
+				}
 			} else {
 				throw new \InvalidArgumentException(
 					__CLASS__ .
@@ -99,7 +111,8 @@ class ScienceMeshSharePermissions {
 
 	public function getPermission($key) {
 		if (in_array($key, ScienceMeshSharePermissions::FIELDS)) {
-			return $this->$key;
+			$k = strtoupper($key);
+			return (bool)$this->val & $this->$k;
 		} else {
 			throw new \UnexpectedValueException(
 				__CLASS__ .

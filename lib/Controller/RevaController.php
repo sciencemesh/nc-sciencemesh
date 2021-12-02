@@ -4,6 +4,8 @@ namespace OCA\ScienceMesh\Controller;
 
 use OCA\ScienceMesh\NextcloudAdapter;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
+use OCA\ScienceMesh\Share\ScienceMeshSharePermissions;
+use OCA\ScienceMesh\User\ScienceMeshUserId;
 
 use OCA\Files_Trashbin\Trash\ITrashManager;
 
@@ -816,6 +818,31 @@ class RevaController extends Controller {
 		$providerDomain = $this->request->getParam("provider_domain");
 		$providerId = $this->request->getParam("provider_id");
 		$opaqueId = $this->request->getParam("md")["opaque_id"];
+		$resourceId = $this->request->getParam("md")["resource_id"] ?? '';
+		$permissionJson = $this->request->getParam("md")["permissions"] ?? '';
+		if ($permissionJson != '') {
+			$permissions = ScienceMeshSharePermissions::fromJson($permissionJson);
+		} else {
+			$permissions = new ScienceMeshSharePermissions();
+		}
+		$permissionCode = $permissions->getCode();
+		$grantee = null;
+		$owner = null;
+		$creator = null;
+		$granteeArray = $this->request->getParam("g")["grantee"]["Id"]["UserId"] ?? '';
+		if ($granteeArray != '') {
+			$grantee = ScienceMeshUserId::fromArray($granteeArray);
+		}
+		$ownerArray = $this->request->getParam("md")["owner"] ?? '';
+		if ($ownerArray != '') {
+			$owner = ScienceMeshUserId::fromArray($ownerArray);
+		}
+		$creatorArray = $this->request->getParam("md")["creator"] ?? '';
+		if ($creatorArray != '') {
+			$creator = ScienceMeshUserId::fromArray($creatorArray);
+		}
+		$mtime = $this->request->getParam("md")["mtime"] ?? 0;
+		$ctime = $this->request->getParam("md")["ctime"] ?? 0;
 		$sharedSecret = $this->request->getParam("protocol")["options"]["sharedSecret"] || '';
 		$name = $this->getNameByOpaqueId($opaqueId);
 		$sharedBy = $this->getSharedByOpaqueId($opaqueId);
@@ -838,44 +865,39 @@ class RevaController extends Controller {
 			}
 		} catch (ShareNotFound $e) {
 		}
-		$id = $this->shareProvider
-			->addReceivedShareToDB(
-				$providerDomain,
-				$providerId,
-				$opaqueId,
-				$sharedSecret,
-				$name,
-				$sharedBy,
-				$userId);
+		$scienceMeshData = [
+			'opaque_id' => $opaqueId,
+			'resource_id' => $resourceId,
+			'permissions' => $permissionCode,
+			'is_external' => true,
+			'mtime' => $mtime,
+			'ctime' => $ctime
+		];
+
+		$grantee && $scienceMeshData['grantee'] = $grantee;
+		$owner && $scienceMeshData['owner'] = $owner;
+		$creator && $scienceMeshData['creator'] = $creator;
+		$shareData = [
+			$providerDomain,
+			$providerId,
+			$opaqueId,
+			$sharedSecret,
+			$name,
+			$sharedBy,
+			$userId
+		];
+		$id = $this->shareProvider->addScienceMeshShare($scienceMeshData,$shareData);
 		$response = [
 			"id" => $id,
 			"resource_id" => $opaqueId,
-			"permissions" => [
-				"permissions" => [
-					"add_grant" => true,
-					"create_container" => true,
-					"delete" => true,
-					"get_path" => true,
-					"get_quota" => true,
-					"initiate_file_download" => true,
-					"initiate_file_upload" => true,
-					"list_grants" => true,
-					"list_container" => true,
-					"list_file_versions" => true,
-					"list_recycle" => true,
-					"move" => true,
-					"remove_grant" => true,
-					"purge_recycle" => true,
-					"restore_file_version" => true,
-					"restore_recycle_item" => true,
-					"stat" => true,
-					"update_grant" => true,
-					"deny_grant" => true
+			"permissions" => $permissions->getArray(),
+			"grantee" => [
+				"Id" => [
+					"UserId" => $grantee->asArray()
 				]
 			],
-			"grantee" => $this->request->getParam("g")["grantee"],
-			"owner" => $this->request->getParam("g")["grantee"]["Id"]["UserId"],
-			"creator" => $this->request->getParam("g")["grantee"]["Id"]["UserId"],
+			"owner" => $owner?$owner->asArray():[],
+			"creator" => $creator?$creator->asArray():[],
 			"ctime" => [
 				"seconds" => 1234567890
 			],
