@@ -33,7 +33,7 @@ class ScienceMeshAcceptTokenPlugin {
 	}
 
 	public function getAcceptTokenFromReva() {
-        $request = [
+		$request = [
 			'idp' => 'https://cernbox.cern.ch',
 			'token' => 'dbc08800-553b-45d4-ad02-b542199648ab'
 		];
