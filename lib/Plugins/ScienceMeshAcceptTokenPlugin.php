@@ -37,7 +37,7 @@ class ScienceMeshAcceptTokenPlugin {
 			'idp' => 'https://cernbox.cern.ch',
 			'token' => 'dbc08800-553b-45d4-ad02-b542199648ab'
 		];
-		$tokenFromReva = $this->httpClient->revaPost('invites/accept', json_encode($request)); //params will be empty or not fix me
+		$tokenFromReva = $this->httpClient->revaPost('invites/forward', json_encode($request)); //params will be empty or not fix me
 		return $tokenFromReva;
 	}
 }
