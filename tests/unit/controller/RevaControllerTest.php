@@ -1398,7 +1398,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		);
 		$paramsMap = [
 			["md",null,["opaque_id" => null]],
-			["g",null,["grantee" => ["type" => null,"Id" => ["UserId" => ["idp" => null,"opaque_id" => null,"type" => 1]]]]],
+			["g",null,["grantee" => ["type" => null,"Id" => ["UserId" => ["idp" => "cernbox.cern.ch","opaque_id" => "einstein","type" => 1]]]]],
 			["provider_domain",null,null],
 			["resource_type",null,"file"],
 			["provider_id",null,2],

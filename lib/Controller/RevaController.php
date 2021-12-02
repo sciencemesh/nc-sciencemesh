@@ -810,11 +810,14 @@ class RevaController extends Controller {
 		$resourceId = $this->request->getParam("md")["resource_id"] ?? '';
 		$permissionJson = $this->request->getParam("md")["permissions"] ?? '';
 		if ($permissionJson != '') {
-			$permissions = ScienceMeshPermissions::fromJson($permissionJson);
-			$permissionCode = $permissions->getCode();
+			$permissions = ScienceMeshSharePermissions::fromJson($permissionJson);
 		} else {
-			$permissionCode = 0;
+			$permissions = new ScienceMeshSharePermissions();
 		}
+		$permissionCode = $permissions->getCode();
+		$grantee = null;
+		$owner = null;
+		$creator = null;
 		$granteeArray = $this->request->getParam("g")["grantee"]["Id"]["UserId"] ?? '';
 		if ($granteeArray != '') {
 			$grantee = ScienceMeshUserId::fromArray($granteeArray);
@@ -882,8 +885,8 @@ class RevaController extends Controller {
 					"UserId" => $grantee->asArray()
 				]
 			],
-			"owner" => $owner->asArray(),
-			"creator" => $creator->asArray(),
+			"owner" => $owner?$owner->asArray():[],
+			"creator" => $creator?$creator->asArray():[],
 			"ctime" => [
 				"seconds" => 1234567890
 			],
