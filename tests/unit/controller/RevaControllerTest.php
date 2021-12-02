@@ -138,22 +138,28 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		);
 		$jsonResponse = $controller->Authenticate($this->userId);
 		$this->assertEquals($jsonResponse->getData(), [
-			"user" => [
-				"id" => [
-					"idp" => "some-idp",
-					"opaque_id" => $this->userId,
-					"type" => 1,
-				],
+			"UserId" => [
+				"opaque_id" => $this->userId,
+				"idp" => "some-idp",
+				"type" => 1
 			],
-			"scopes" => [
+			"Username" => $this->userId,
+			"Mail" => $this->userId . "@some-idp.org",
+			"MailVerified" => true,
+			"DisplayName" => $this->userId,
+			"Groups" => [],
+			"UIDNumber" => 123,
+			"GIDNumber" => 789,
+			"Opaque" => [],
+			"Scopes" => [
 				"user" => [
 					"resource" => [
 						"decoder" => "json",
 						"value" => "eyJyZXNvdXJjZV9pZCI6eyJzdG9yYWdlX2lkIjoic3RvcmFnZS1pZCIsIm9wYXF1ZV9pZCI6Im9wYXF1ZS1pZCJ9LCJwYXRoIjoic29tZS9maWxlL3BhdGgudHh0In0=",
 					],
 					"role" => 1,
-				],
-			],
+				]
+			]
 		]);
 	}
 

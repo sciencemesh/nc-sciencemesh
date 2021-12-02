@@ -15,6 +15,7 @@ use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Notification\IManager as INotificationManager;
 use OCP\IUserSession;
+use OCA\ScienceMesh\RevaHttpClient;
 use OCA\ScienceMesh\Plugins\ScienceMeshGenerateTokenPlugin;
 
 class AppController extends Controller {
@@ -44,8 +45,19 @@ class AppController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function launcher() {
+		$revaClient = new RevaHttpClient();
+		/*
+			$revaResult = $revaClient->createShare(array(
+				"path" => "/share",
+				"recipientUsername" => "marie",
+				"recipientHost" => "localhost:17000"
+			));
+		*/
+		// $revaResult = $revaClient->ocmProvider();
 		$launcherData = [
+			// 	"reva" => json_encode($revaResult, JSON_PRETTY_PRINT)
 		];
+
 		$templateResponse = new TemplateResponse('sciencemesh', 'launcher', $launcherData);
 		$policy = new ContentSecurityPolicy();
 		$policy->addAllowedStyleDomain("data:");
@@ -79,12 +91,12 @@ class AppController extends Controller {
 			$declineAction->setLabel('decline')->setLink("shared", "GET");
 
 			$notification->setApp('sciencemesh')
-								->setUser($user->getUID())
-								->setDateTime($datetime)
-								->setObject('sciencemesh', dechex($time))
-								->setSubject('remote_share', [$shortMessage])
-								->addAction($acceptAction)
-								->addAction($declineAction)
+				->setUser($user->getUID())
+				->setDateTime($datetime)
+				->setObject('sciencemesh', dechex($time))
+				->setSubject('remote_share', [$shortMessage])
+				->addAction($acceptAction)
+				->addAction($declineAction)
 						;
 			if ($longMessage !== '') {
 				$notification->setMessage('remote_share', [$longMessage]);

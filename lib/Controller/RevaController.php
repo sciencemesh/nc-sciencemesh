@@ -357,7 +357,10 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function Authenticate($userId) {
+		// FIXME: This should be callable without a userId in the url;
+		// $userId = $this->request->getParam("clientID");
 		$password = $this->request->getParam("clientSecret");
+
 		// Try e.g.:
 		// curl -v -H 'Content-Type:application/json' -d'{"clientSecret":"relativity"}' http://einstein:relativity@localhost/index.php/apps/sciencemesh/~einstein/api/auth/Authenticate
 		// Note that reva will also post `clientID` inside the JSON,
@@ -365,25 +368,33 @@ class RevaController extends Controller {
 		// but we take the username from the path
 		$auth = $this->userManager->checkPassword($userId,$password);
 		if ($auth) {
-			$obj = [
-				"user" => [
-					"id" => [
-						"idp" => "some-idp",
-						"opaque_id" => $userId,
-						"type" => 1,
-					],
+
+		// FIXME: this should match the expected result format in Reva.
+			$result = [
+				"UserId" => [
+					"opaque_id" => $userId,
+					"idp" => "some-idp",
+					"type" => 1
 				],
-				"scopes" => [
+				"Username" => $userId,
+				"Mail" => $userId . "@some-idp.org",
+				"MailVerified" => true,
+				"DisplayName" => $userId,
+				"Groups" => [],
+				"UIDNumber" => 123,
+				"GIDNumber" => 789,
+				"Opaque" => [],
+				"Scopes" => [
 					"user" => [
 						"resource" => [
 							"decoder" => "json",
 							"value" => "eyJyZXNvdXJjZV9pZCI6eyJzdG9yYWdlX2lkIjoic3RvcmFnZS1pZCIsIm9wYXF1ZV9pZCI6Im9wYXF1ZS1pZCJ9LCJwYXRoIjoic29tZS9maWxlL3BhdGgudHh0In0=",
 						],
 						"role" => 1,
-					],
-				],
+					]
+				]
 			];
-			return new JSONResponse($obj, Http::STATUS_OK);
+			return new JSONResponse($result, Http::STATUS_OK);
 		}
 		return new JSONResponse("Username / password not recognized", 401);
 	}
