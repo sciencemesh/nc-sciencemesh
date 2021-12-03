@@ -34,6 +34,8 @@ script("sciencemesh", "vendor/simplyedit/simply.everything");
 						<!--<p>To start collaborating with someone on ScienceMesh, enter the received invitation token here.</p>
 						<p>To send an invitation, generate a token in 'Invitations' and send it to them.</p>-->
 						<p id="test_error"></p>
+						<p id="display_name"></p>
+						<p id="provider"></p>
 					</div>
 				</div>
 		</div>

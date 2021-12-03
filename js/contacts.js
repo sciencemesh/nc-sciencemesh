@@ -18,12 +18,25 @@ $.ajax({
                 let accepted_users = token.accepted_users
                 for(accept in accepted_users) {
                     let result = accepted_users[accept].mail;
+
+                    console.log(accepted_users[accept].id.idp)
+                  
                     var element = document.getElementById("show_result");
                     element.innerHTML=result;
                     $('#test').show();
+
+                    var name = accepted_users[accept].display_name
+
+                    var element_name = document.getElementById("display_name");
+                    element_name.innerHTML=name;
+
+                    var provider = accepted_users[accept].id.idp
+
+                    var element_provider = document.getElementById("provider");
+                    element_provider.innerHTML=provider;
                 }
             }
-        }
+        } 
     }
 }
 }).fail(function (response, code) {
@@ -32,7 +45,7 @@ $.ajax({
 });
 document.getElementById('elem').onclick = function () { 
     console.log('clicked');
-    var providerDomain = 'cernbox.cern.ch';
+    var providerDomain = 'https://cesnet.cz';
     var token = document.getElementById('token').value
 
     var data = 'providerDomain=' + encodeURIComponent(providerDomain) +
@@ -55,6 +68,9 @@ document.getElementById('elem').onclick = function () {
                 let test = result.message
                 var element = document.getElementById("test_error");
                 element.innerHTML=test;
+
+                $('#provider').hide();
+                $('#display_name').hide();
             } else {
                 console.log(result)
             }
