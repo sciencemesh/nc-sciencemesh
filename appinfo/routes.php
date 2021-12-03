@@ -65,5 +65,6 @@ return [
 		['name' => 'app#invitations', 'url' => '/invitations', 'verb' => 'GET'],
 		['name' => 'app#invitationsGenerate', 'url' => '/invitations/generate', 'verb' => 'GET'],
 		['name' => 'app#contacts', 'url' => '/contacts', 'verb' => 'GET'],
+		['name' => 'app#contactsAccept', 'url' => '/contacts/accept', 'verb' => 'POST'],
 	]
 ];

@@ -37,7 +37,7 @@ class ScienceMeshAcceptTokenPlugin {
 
 	public function getAcceptTokenFromReva() {
 		$request = [
-			'idp' => $this->request->getParam("idp"),
+			'providerDomain' => $this->request->getParam("providerDomain"),
 			'token' => $this->request->getParam("token")
 		];
 		$tokenFromReva = $this->httpClient->revaPost('invites/forward', http_build_query($request)); //params will be empty or not fix me
