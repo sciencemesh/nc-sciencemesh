@@ -10,9 +10,8 @@ document.getElementById('elem').onclick = function () {
         //data: JSON.stringify(note)
     }).done(function (response) {
         if(response === '' || response === false) {
-            var element = document.getElementById("show_result");
+            var element = document.getElementById("test_1");
             element.innerHTML= 'Not connection with reva';
-            $('#test').show(); 
         } else {
         let token = JSON.parse(response);
         for(tokenData in token) {
@@ -22,10 +21,10 @@ document.getElementById('elem').onclick = function () {
                     var element = document.getElementById("show_result");
                     element.innerHTML=invite_token;
                     $('#test').show();  
-                    let timestamp = secondsToDhms(token.invite_token.expiration.seconds);
-                    var element_timestamp = document.getElementById("timestamp_invalid");
-                    element_timestamp.innerHTML=timestamp;
-                    $('#timestamp_invalid').show();
+                    let provider = token.invite_token.user_id.idp;
+                    var element_provider = document.getElementById("provider");
+                    element_provider.innerHTML=provider;
+                    $('#provider').show();
                 }
             }
         }

@@ -27,8 +27,9 @@ class AppController extends Controller {
 	private $userSession;
 	private $generateToken;
 	private $acceptToken;
+	private $httpClient;
 
-	public function __construct($AppName, ITimeFactory $timeFactory, INotificationManager $notificationManager, IRequest $request, IConfig $config, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IUserSession $userSession, ScienceMeshGenerateTokenPlugin $generateToken, ScienceMeshAcceptTokenPlugin $acceptToken) {
+	public function __construct($AppName, ITimeFactory $timeFactory, INotificationManager $notificationManager, IRequest $request, IConfig $config, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IUserSession $userSession, ScienceMeshGenerateTokenPlugin $generateToken, ScienceMeshAcceptTokenPlugin $acceptToken, RevaHttpClient $httpClient) {
 		parent::__construct($AppName, $request);
 			  
 		$this->userId = $userId;
@@ -171,5 +172,15 @@ class AppController extends Controller {
 	public function contactsAccept() {
 		$contacts = $this->acceptToken->getAcceptTokenResponse();
 		return new TextPlainResponse($contacts, Http::STATUS_OK);
+	}
+
+	/**
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
+	public function contactsFindUsers() {
+		$find_users = $this->acceptToken->findAcceptedUsers();
+		
+		return new TextPlainResponse($find_users, Http::STATUS_OK);
 	}
 }
