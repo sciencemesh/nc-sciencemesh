@@ -7,9 +7,9 @@ $.ajax({
     contentType: 'application/json',
 }).done(function (response) {
     if(response === '' || response === false) {
-        var element = document.getElementById("show_result");
+        var element = document.getElementById("test_error");
         element.innerHTML= 'Not connection with reva';
-        $('#test').show(); 
+        //$('#test').show(); 
     } else {
     let token = JSON.parse(response);
     for(tokenData in token) {
@@ -45,7 +45,21 @@ document.getElementById('elem').onclick = function () {
         contentType: 'application/x-www-form-urlencoded',
         data: data
     }).done(function (response) {
-       console.log(response)
+      
+       if(response === '' || response === false) {
+            var element = document.getElementById("test_error");
+            element.innerHTML= 'Not connection with reva';
+        } else {
+            let result = JSON.parse(response);
+            if(result.hasOwnProperty('message')) {
+                let test = result.message
+                var element = document.getElementById("test_error");
+                element.innerHTML=test;
+            } else {
+                console.log(result)
+            }
+        }
+     
     }).fail(function (response, code) {
         console.log(response)
         //alert('The token is invalid')

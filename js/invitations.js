@@ -10,12 +10,10 @@ document.getElementById('elem').onclick = function () {
         //data: JSON.stringify(note)
     }).done(function (response) {
         if(response === '' || response === false) {
-            var element = document.getElementById("show_result");
+            var element = document.getElementById("test_1");
             element.innerHTML= 'Not connection with reva';
-            $('#test').show(); 
         } else {
         let token = JSON.parse(response);
-        console.log(token)
         for(tokenData in token) {
             if(token.hasOwnProperty(tokenData)) {
                 if(tokenData === 'invite_token') {

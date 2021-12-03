@@ -35,8 +35,9 @@ script("sciencemesh", "vendor/simplyedit/simply.everything");
 				</div>
 				<div class="app-content-detail">
 					<div class="section">
-						<p>To invite someone to collaborate on ScienceMesh, generate a new invite token and send it to them.</p>
-						<p>If you have received an invitation, you can enter that in 'Contacts' to confirm the collaboration.</p>
+						<!--<p>To invite someone to collaborate on ScienceMesh, generate a new invite token and send it to them.</p>
+						<p>If you have received an invitation, you can enter that in 'Contacts' to confirm the collaboration.</p>-->
+						<p id="test_1"></p>
 					</div>
 				</div>
 		</div>
