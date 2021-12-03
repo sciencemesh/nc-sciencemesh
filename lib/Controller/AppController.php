@@ -17,6 +17,7 @@ use OCP\Notification\IManager as INotificationManager;
 use OCP\IUserSession;
 use OCA\ScienceMesh\RevaHttpClient;
 use OCA\ScienceMesh\Plugins\ScienceMeshGenerateTokenPlugin;
+use OCA\ScienceMesh\Plugins\ScienceMeshAcceptTokenPlugin;
 
 class AppController extends Controller {
 	private $userId;
@@ -25,8 +26,9 @@ class AppController extends Controller {
 	private $config;
 	private $userSession;
 	private $generateToken;
+	private $acceptToken;
 
-	public function __construct($AppName, ITimeFactory $timeFactory, INotificationManager $notificationManager, IRequest $request, IConfig $config, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IUserSession $userSession, ScienceMeshGenerateTokenPlugin $generateToken) {
+	public function __construct($AppName, ITimeFactory $timeFactory, INotificationManager $notificationManager, IRequest $request, IConfig $config, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IUserSession $userSession, ScienceMeshGenerateTokenPlugin $generateToken, ScienceMeshAcceptTokenPlugin $acceptToken) {
 		parent::__construct($AppName, $request);
 			  
 		$this->userId = $userId;
@@ -38,6 +40,7 @@ class AppController extends Controller {
 		$this->config = new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
 		$this->userSession = $userSession;
 		$this->generateToken = $generateToken;
+		$this->acceptToken = $acceptToken;
 	}
 
 	/**
@@ -159,5 +162,14 @@ class AppController extends Controller {
 		$policy->addAllowedScriptDomain("'unsafe-eval'");
 		$templateResponse->setContentSecurityPolicy($policy);
 		return $templateResponse;
+	}
+
+	/**
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
+	public function contactsAccept() {
+		$contacts = $this->acceptToken->getAcceptTokenResponse();
+		return new TextPlainResponse($contacts, Http::STATUS_OK);
 	}
 }
