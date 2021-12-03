@@ -34,6 +34,10 @@ class ScienceMeshAcceptTokenPlugin {
 		
 		return $invitationsData;
 	}
+	public function findAcceptedUsers() {
+		$users = $this->httpClient->revaPost('invites/find-accepted-users');
+		return $users;
+	}
 
 	public function getAcceptTokenFromReva() {
 		$request = [

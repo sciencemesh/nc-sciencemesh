@@ -15,6 +15,7 @@ document.getElementById('elem').onclick = function () {
             $('#test').show(); 
         } else {
         let token = JSON.parse(response);
+        console.log(token)
         for(tokenData in token) {
             if(token.hasOwnProperty(tokenData)) {
                 if(tokenData === 'invite_token') {
@@ -22,10 +23,10 @@ document.getElementById('elem').onclick = function () {
                     var element = document.getElementById("show_result");
                     element.innerHTML=invite_token;
                     $('#test').show();  
-                    let timestamp = secondsToDhms(token.invite_token.expiration.seconds);
-                    var element_timestamp = document.getElementById("timestamp_invalid");
-                    element_timestamp.innerHTML=timestamp;
-                    $('#timestamp_invalid').show();
+                    let provider = token.invite_token.user_id.idp;
+                    var element_provider = document.getElementById("provider");
+                    element_provider.innerHTML=provider;
+                    $('#provider').show();
                 }
             }
         }

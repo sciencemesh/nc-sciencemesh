@@ -25,7 +25,7 @@ script("sciencemesh", "vendor/simplyedit/simply.everything");
 						<!-- div class="app-content-list-item-star icon-starred"></div -->
 						<div class="app-content-list-item-icon" style="background-color: rgb(151, 72, 96);"></div>
 						<div class="app-content-list-item-line-one" id="show_result"></div>
-						<div class="app-content-list-item-line-two" id="timestamp_invalid"></div>
+						<div class="app-content-list-item-line-two" id="provider"></div>
 						<div class="app-content-list-item-menu">
 							<div class="icon-clippy"></div>
 						</div>
