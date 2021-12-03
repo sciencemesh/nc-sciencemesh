@@ -12,7 +12,7 @@ class ScienceMeshAcceptTokenPluginTest extends PHPUnit_Framework_TestCase {
 	private $config;
 	private $session;
 	private $httpClient;
-    private $request;
+	private $request;
 
 	public function setUp() {
 		$this->userManager = $this->getMockBuilder("OCP\IUserManager")->getMock();
@@ -21,11 +21,10 @@ class ScienceMeshAcceptTokenPluginTest extends PHPUnit_Framework_TestCase {
 		$this->httpClient = $this->getMockBuilder("OCA\ScienceMesh\RevaHttpClient")->getMock();
 		$this->shareeEnumeration = $this->config->getAppValue('core', 'shareapi_allow_share_dialog_user_enumeration', 'yes') === 'yes';
 		$user = $this->getMockBuilder("OCP\IUser")->getMock();
-        $this->request = $this->getMockBuilder("OCP\IRequest")->getMock();
+		$this->request = $this->getMockBuilder("OCP\IRequest")->getMock();
 	}
 
 	public function testAcceptFromRevaBadRequest() {
-   
 		$sciencMeshAccept = new ScienceMeshAcceptTokenPlugin($this->config, $this->userManager,$this->session, $this->httpClient, $this->request);
 		
 		$this->assertEquals($sciencMeshAccept->getAcceptTokenResponse(), null);
