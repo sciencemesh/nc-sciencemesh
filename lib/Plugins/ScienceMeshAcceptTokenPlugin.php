@@ -6,6 +6,7 @@ use OCP\IConfig;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use OCA\ScienceMesh\RevaHttpClient;
+use OCP\IRequest;
 
 class ScienceMeshAcceptTokenPlugin {
 	protected $shareeEnumeration;
@@ -16,14 +17,16 @@ class ScienceMeshAcceptTokenPlugin {
 	/** @var string */
 	private $userId = '';
 	private $httpClient;
+	private $request;
 
-	public function __construct(IConfig $config, IUserManager $userManager, IUserSession $userSession, RevaHttpClient $httpClient) {
+	public function __construct(IConfig $config, IUserManager $userManager, IUserSession $userSession, RevaHttpClient $httpClient, IRequest $request) {
 		$this->config = $config;
 		$this->userManager = $userManager;
 		$user = $userSession->getUser();
 	
 		$this->shareeEnumeration = $this->config->getAppValue('core', 'shareapi_allow_share_dialog_user_enumeration', 'yes') === 'yes';
 		$this->httpClient = $httpClient;
+		$this->request = $request;
 	}
 
 	public function getAcceptTokenResponse() {
@@ -34,10 +37,10 @@ class ScienceMeshAcceptTokenPlugin {
 
 	public function getAcceptTokenFromReva() {
 		$request = [
-			'idp' => 'https://cernbox.cern.ch',
-			'token' => 'dbc08800-553b-45d4-ad02-b542199648ab'
+			'idp' => $this->request->getParam("idp"),
+			'token' => $this->request->getParam("token")
 		];
-		$tokenFromReva = $this->httpClient->revaPost('invites/forward', json_encode($request)); //params will be empty or not fix me
+		$tokenFromReva = $this->httpClient->revaPost('invites/forward', http_build_query($request)); //params will be empty or not fix me
 		return $tokenFromReva;
 	}
 }
