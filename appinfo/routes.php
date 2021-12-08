@@ -67,5 +67,14 @@ return [
 		['name' => 'app#contacts', 'url' => '/contacts', 'verb' => 'GET'],
 		['name' => 'app#contactsAccept', 'url' => '/contacts/accept', 'verb' => 'POST'],
 		['name' => 'app#contactsFindUsers', 'url' => '/contacts/users', 'verb' => 'GET'],
+
+		['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],
+		['name' => 'page#do_echo', 'url' => '/echo', 'verb' => 'POST'],
+
+		['name' => 'page#get_internal_metrics', 'url' => '/internal_metrics', 'verb' => 'GET'],
+		['name' => 'page#get_metrics', 'url' => '/metrics', 'verb' => 'GET'],
+
+		["name" => "settings#save_settings", "url" => "/ajax/settings/address", "verb" => "PUT"],
+		["name" => "settings#get_settings", "url" => "/ajax/settings", "verb" => "GET"]
 	]
 ];
