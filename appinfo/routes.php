@@ -60,7 +60,9 @@ return [
 		['name' => 'storage#handleDelete', 'url' => '/~{userId}/files/{path}', 'verb' => 'DELETE', 'requirements' => ['path' => '.+']],
 		['name' => 'storage#handleHead', 'url' => '/~{userId}/files/{path}', 'verb' => 'HEAD', 'requirements' => ['path' => '.+']],
 
-		['name' => 'app#launcher', 'url' => '/', 'verb' => 'GET'],
+		// ['name' => 'app#launcher', 'url' => '/', 'verb' => 'GET'],
+		['name' => 'settings#index', 'url' => '/', 'verb' => 'GET'],
+
 		['name' => 'app#notifications', 'url' => '/notifications', 'verb' => 'GET'],
 		['name' => 'app#invitations', 'url' => '/invitations', 'verb' => 'GET'],
 		['name' => 'app#invitationsGenerate', 'url' => '/invitations/generate', 'verb' => 'GET'],
@@ -68,8 +70,6 @@ return [
 		['name' => 'app#contactsAccept', 'url' => '/contacts/accept', 'verb' => 'POST'],
 		['name' => 'app#contactsFindUsers', 'url' => '/contacts/users', 'verb' => 'GET'],
 
-		['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],
-		['name' => 'page#do_echo', 'url' => '/echo', 'verb' => 'POST'],
 
 		['name' => 'page#get_internal_metrics', 'url' => '/internal_metrics', 'verb' => 'GET'],
 		['name' => 'page#get_metrics', 'url' => '/metrics', 'verb' => 'GET'],

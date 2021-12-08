@@ -61,6 +61,8 @@ class SettingsController extends Controller
 	/**
 	 * Print config section
 	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
 	 * @return TemplateResponse
 	 */
 	public function index()
