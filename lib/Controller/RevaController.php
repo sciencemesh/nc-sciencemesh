@@ -281,19 +281,19 @@ class RevaController extends Controller {
 			"grantee" => [
 				"Id" => [
 					"UserId" => [
-						"idp" => $this->serverConfig->getIopUrl(),
+						"idp" => $this->config->getIopUrl(),
 						"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
 						"type" => 1
 					]
 				]
 			],
 			"owner" => [
-				"idp" => $this->serverConfig->getIopUrl(),
+				"idp" => $this->config->getIopUrl(),
 				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
 				"type" => 1
 			],
 			"creator" => [
-				"idp" => $this->serverConfig->getIopUrl(),
+				"idp" => $this->config->getIopUrl(),
 				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
 				"type" => 1
 			],
@@ -359,21 +359,22 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function Authenticate($userId) {
-		// FIXME: This should be callable without a userId in the url;
-		// $userId = $this->request->getParam("clientID");
+		$userId = $this->request->getParam("clientID");
 		$password = $this->request->getParam("clientSecret");
 
 		// Try e.g.:
-		// curl -v -H 'Content-Type:application/json' -d'{"clientSecret":"relativity"}' http://einstein:relativity@localhost/index.php/apps/sciencemesh/~einstein/api/auth/Authenticate
-		// Note that reva will also post `clientID` inside the JSON,
-		// and both username and password are also in http basic auth (will that stay that way? -> see https://github.com/pondersource/nc-sciencemesh/issues/167)
-		// but we take the username from the path
-		$auth = $this->userManager->checkPassword($userId,$password);
+		// curl -v -H 'Content-Type:application/json' -d'{"clientID":"einstein",clientSecret":"relativity"}' http://einstein:relativity@localhost/index.php/apps/sciencemesh/~einstein/api/auth/Authenticate
+		if ($userId == $this->config->getRevaUser()) {
+			error_log("checking loopback secret " . $password . " ?= " . $this->config->getRevaLoopbackSecret());
+			$auth = ($password == $this->config->getRevaLoopbackSecret());
+		} else {
+			$auth = $this->userManager->checkPassword($userId,$password);
+		}
 		if ($auth) {
 			$result = [
 				"user" => [
 					"id" => [
-						"idp" => $this->serverConfig->getIopUrl(),
+						"idp" => $this->config->getIopUrl(),
 						"opaque_id" => $userId,
 						"type" => 1,
 					],
@@ -734,7 +735,7 @@ class RevaController extends Controller {
 		$userToCheck = $this->request->getParam('opaque_id');
 		$response = [
 			"id" => [
-				"idp" => $this->serverConfig->getIopUrl(),
+				"idp" => $this->config->getIopUrl(),
 				"opaque_id" => $userToCheck,
 				"type" => 1
 			]

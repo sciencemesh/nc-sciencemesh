@@ -22,6 +22,8 @@
 
 namespace OCA\ScienceMesh;
 
+use OCP\IConfig;
+
 /**
  * Class RevaHttpClient
  *
@@ -33,7 +35,7 @@ class RevaHttpClient {
 	private $client;
 	private $revaUrl;
 	private $revaUser;
-	private $revePass;
+	private $revaSharedSecret;
 		
 	/**
 	 * RevaHttpClient constructor.
@@ -42,8 +44,8 @@ class RevaHttpClient {
 	public function __construct(IConfig $config) {
 		$this->serverConfig = new \OCA\ScienceMesh\ServerConfig($config);
 		$this->revaUrl = $this->serverConfig->getIopUrl();
-		$this->revaUser = "reva";
-		$this->revaPass = "1234";
+		$this->revaUser = $this->serverConfig->getRevaUser();
+		$this->revaSharedSecret = $this->serverConfig->getRevaLoopbackSecret();
 		$this->curlDebug = true;
 	}
 
@@ -53,15 +55,11 @@ class RevaHttpClient {
 			$url .= "?" . http_build_query($params);
 		}
 
-		// FIXME: Remove these;
-		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		if ($this->revaUser && $this->revaPass) {
-			curl_setopt($ch, CURLOPT_USERPWD, $this->revaUser.":".$this->revaPass);
+		if ($this->revaUser && $this->revaSharedSecret) {
+			curl_setopt($ch, CURLOPT_USERPWD, $this->revaUser.":".$this->revaSharedSecret);
 			curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		}
 
@@ -82,11 +80,8 @@ class RevaHttpClient {
 		return $output;
 	}
 	private function curlPost($url, $params = []) {
+		error_log("POST to Reva $url ".json_encode($params));
 		$ch = curl_init();
-
-		// FIXME: Remove these;
-		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
 		
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -94,8 +89,8 @@ class RevaHttpClient {
 		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
 		// curl_setopt($ch, CURLOPT_HEADER, true);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params, JSON_PRETTY_PRINT));
-		if ($this->revaUser && $this->revaPass) {
-			curl_setopt($ch, CURLOPT_USERPWD, $this->revaUser.":".$this->revaPass);
+		if ($this->revaUser && $this->revaSharedSecret) {
+			curl_setopt($ch, CURLOPT_USERPWD, $this->revaUser.":".$this->revaSharedSecret);
 			curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		}
 		$output = curl_exec($ch);

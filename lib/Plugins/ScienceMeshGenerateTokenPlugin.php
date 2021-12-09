@@ -26,14 +26,14 @@ class ScienceMeshGenerateTokenPlugin {
 		$this->httpClient = $httpClient;
 	}
 
-	public function getGenerateTokenResponse() {
-		$invitationsData = $this->generateTokenFromReva();
+	public function getGenerateTokenResponse($userId) {
+		$invitationsData = $this->generateTokenFromReva($userId);
 		
 		return $invitationsData;
 	}
 
-	public function generateTokenFromReva() {
-		$tokenFromReva = $this->httpClient->revaPost('invites/generate'); //params will be empty or not fix me
+	public function generateTokenFromReva($userId) {
+		$tokenFromReva = $this->httpClient->revaPost('invites/generate', $userId); //params will be empty or not fix me
 		return $tokenFromReva;
 	}
 }

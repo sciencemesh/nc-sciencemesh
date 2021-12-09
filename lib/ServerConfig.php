@@ -4,6 +4,21 @@ namespace OCA\ScienceMesh;
 
 use OCP\IConfig;
 
+function random_str(
+	int $length = 64,
+	string $keyspace = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+): string {
+	if ($length < 1) {
+			throw new \RangeException("Length must be a positive integer");
+	}
+	$pieces = [];
+	$max = mb_strlen($keyspace, '8bit') - 1;
+	for ($i = 0; $i < $length; ++$i) {
+			$pieces []= $keyspace[random_int(0, $max)];
+	}
+	return implode('', $pieces);
+}
+
 /**
  * @package OCA\ScienceMesh
  */
@@ -36,6 +51,22 @@ class ServerConfig {
 	}
 	public function getIopUrl() {
 		return $this->config->getAppValue('sciencemesh','iopUrl');
+	}
+	public function getRevaUser() {
+		$ret = $this->config->getAppValue('sciencemesh','revaUser');
+		if (!$ret) {
+			$ret = 'reva';
+			$this->config->getAppValue('sciencemesh','revaUser', $ret);
+		}
+		return $ret;
+	}
+	public function getRevaLoopbackSecret() {
+		$ret = $this->config->getAppValue('sciencemesh','revaLoopbackSecret');
+		if (!$ret) {
+			$ret = random_str(32);
+			$this->config->setAppValue('sciencemesh','revaLoopbackSecret', $ret);
+		}
+		return $ret;
 	}
 	public function getNumUsers() {
 		return $this->config->getAppValue('sciencemesh','numUsers');

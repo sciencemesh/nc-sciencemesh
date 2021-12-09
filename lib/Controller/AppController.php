@@ -143,8 +143,8 @@ class AppController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
-	public function invitationsGenerate() {
-		$invitationsData = $this->generateToken->getGenerateTokenResponse();
+	public function invitationsGenerate($userId) {
+		$invitationsData = $this->generateToken->getGenerateTokenResponse($userId);
 		return new TextPlainResponse($invitationsData, Http::STATUS_OK);
 	}
 
