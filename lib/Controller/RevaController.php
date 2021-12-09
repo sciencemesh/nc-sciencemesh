@@ -112,7 +112,7 @@ class RevaController extends Controller {
 		$this->userManager = $userManager;
 		$this->urlGenerator = $urlGenerator;
 
-		$this->config = new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
+		$this->config = new \OCA\ScienceMesh\ServerConfig($config);
 
 		$this->trashManager = $trashManager;
 		$this->shareManager = $shareManager;

@@ -39,8 +39,8 @@ class RevaHttpClient {
 	 * RevaHttpClient constructor.
 	 *
 	 */
-	public function __construct(IConfig $config, IURLGenerator $urlGenerator, IUserManager $userManager) {
-		$this->serverConfig = new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
+	public function __construct(IConfig $config) {
+		$this->serverConfig = new \OCA\ScienceMesh\ServerConfig($config);
 		$this->revaUrl = $this->serverConfig->getIopUrl();
 		$this->revaUser = "reva";
 		$this->revaPass = "1234";
