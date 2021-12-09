@@ -39,10 +39,11 @@ class RevaHttpClient {
 	 * RevaHttpClient constructor.
 	 *
 	 */
-	public function __construct() {
-		$this->revaUrl = "https://revanc1.docker/ocm/"; // FIXME: Read from config
-		$this->revaUser = "alice"; // FIXME: Read from config, or generate if this loops back to us anyway;
-		$this->revaPass = "alice123"; // FIXME: Read from config, or generate if this loops back to us anyway;
+	public function __construct(IConfig $config, IURLGenerator $urlGenerator, IUserManager $userManager) {
+		$this->serverConfig = new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
+		$this->revaUrl = $this->serverConfig->getIopUrl();
+		$this->revaUser = "reva";
+		$this->revaPass = "1234";
 		$this->curlDebug = true;
 	}
 

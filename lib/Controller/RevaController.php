@@ -281,19 +281,19 @@ class RevaController extends Controller {
 			"grantee" => [
 				"Id" => [
 					"UserId" => [
-						"idp" => "0.0.0.0:19000",
+						"idp" => $this->serverConfig->getIopUrl(),
 						"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
 						"type" => 1
 					]
 				]
 			],
 			"owner" => [
-				"idp" => "0::.0.0.0:19000",
+				"idp" => $this->serverConfig->getIopUrl(),
 				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
 				"type" => 1
 			],
 			"creator" => [
-				"idp" => "0.0.0.0:19000",
+				"idp" => $this->serverConfig->getIopUrl(),
 				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
 				"type" => 1
 			],
@@ -370,31 +370,23 @@ class RevaController extends Controller {
 		// but we take the username from the path
 		$auth = $this->userManager->checkPassword($userId,$password);
 		if ($auth) {
-
-		// FIXME: this should match the expected result format in Reva.
 			$result = [
-				"UserId" => [
-					"opaque_id" => $userId,
-					"idp" => "some-idp",
-					"type" => 1
+				"user" => [
+					"id" => [
+						"idp" => $this->serverConfig->getIopUrl(),
+						"opaque_id" => $userId,
+						"type" => 1,
+					],
 				],
-				"Username" => $userId,
-				"Mail" => $userId . "@some-idp.org",
-				"MailVerified" => true,
-				"DisplayName" => $userId,
-				"Groups" => [],
-				"UIDNumber" => 123,
-				"GIDNumber" => 789,
-				"Opaque" => [],
-				"Scopes" => [
+				"scopes" => [
 					"user" => [
 						"resource" => [
 							"decoder" => "json",
 							"value" => "eyJyZXNvdXJjZV9pZCI6eyJzdG9yYWdlX2lkIjoic3RvcmFnZS1pZCIsIm9wYXF1ZV9pZCI6Im9wYXF1ZS1pZCJ9LCJwYXRoIjoic29tZS9maWxlL3BhdGgudHh0In0=",
 						],
 						"role" => 1,
-					]
-				]
+					],
+				],
 			];
 			return new JSONResponse($result, Http::STATUS_OK);
 		}
@@ -742,7 +734,7 @@ class RevaController extends Controller {
 		$userToCheck = $this->request->getParam('opaque_id');
 		$response = [
 			"id" => [
-				"idp" => "some-domain.com",
+				"idp" => $this->serverConfig->getIopUrl(),
 				"opaque_id" => $userToCheck,
 				"type" => 1
 			]
