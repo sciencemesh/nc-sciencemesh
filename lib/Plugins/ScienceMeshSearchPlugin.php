@@ -31,7 +31,7 @@ class ScienceMeshSearchPlugin implements ISearchPlugin {
 	}
 
 	public function search($search, $limit, $offset, ISearchResult $searchResult) {
-		$users = $this->revaHttpClient->findAcceptedUsers();
+		$users = $this->revaHttpClient->findAcceptedUsers($this->userId);
 		if (!isset($users['accepted_users'])) {
 			return;
 		}

@@ -44,12 +44,11 @@ class RevaHttpClient {
 	public function __construct(IConfig $config) {
 		$this->serverConfig = new \OCA\ScienceMesh\ServerConfig($config);
 		$this->revaUrl = $this->serverConfig->getIopUrl();
-		$this->revaUser = $this->serverConfig->getRevaUser();
 		$this->revaSharedSecret = $this->serverConfig->getRevaLoopbackSecret();
 		$this->curlDebug = true;
 	}
 
-	private function curlGet($url, $params = []) {
+	private function curlGet($url, $user, $params = []) {
 		$ch = curl_init();
 		if (sizeof($params)) {
 			$url .= "?" . http_build_query($params);
@@ -59,7 +58,7 @@ class RevaHttpClient {
 		curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		if ($this->revaUser && $this->revaSharedSecret) {
-			curl_setopt($ch, CURLOPT_USERPWD, $this->revaUser.":".$this->revaSharedSecret);
+			curl_setopt($ch, CURLOPT_USERPWD, $user.":".$this->revaSharedSecret);
 			curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		}
 
@@ -79,7 +78,7 @@ class RevaHttpClient {
 		
 		return $output;
 	}
-	private function curlPost($url, $params = []) {
+	private function curlPost($url, $user, $params = []) {
 		error_log("POST to Reva $url ".json_encode($params));
 		$ch = curl_init();
 		
@@ -91,7 +90,7 @@ class RevaHttpClient {
 		curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params, JSON_PRETTY_PRINT));
 		if ($this->revaUser && $this->revaSharedSecret) {
-			curl_setopt($ch, CURLOPT_USERPWD, $this->revaUser.":".$this->revaSharedSecret);
+			curl_setopt($ch, CURLOPT_USERPWD, $user.":".$this->revaSharedSecret);
 			curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		}
 		$output = curl_exec($ch);
@@ -99,17 +98,17 @@ class RevaHttpClient {
 		return $output;
 	}
 
-	public function revaGet($method, $params = []) {
+	public function revaGet($method, $user, $params = []) {
 		$url = $this->revaUrl . $method;
-		return $this->curlGet($url, $params);
+		return $this->curlGet($url, $user, $params);
 	}
 		
 	public function revaPost($method, $params = []) {
 		$url = $this->revaUrl . $method;
-		return $this->curlPost($url, $params);
+		return $this->curlPost($url, $user, $params);
 	}
 	
-	public function createShare($params) {
+	public function createShare($user, $params) {
 		if (!isset($params['path'])) {
 			throw new Exception("Missing path", 400);
 		}
@@ -119,13 +118,13 @@ class RevaHttpClient {
 		if (!isset($params['recipientHost'])) {
 			throw new Exception("Missing recipientHost", 400);
 		}
-		return $this->revaPost('send', $params);
+		return $this->revaPost('send', $user, $params);
 	}
 	public function ocmProvider() {
 		return $this->revaGet('ocm-provider');
 	}
-	public function findAcceptedUsers() {
-		$users = $this->revaPost('find-accepted-users');
+	public function findAcceptedUsers($user) {
+		$users = $this->revaPost('find-accepted-users', $user);
 		return $users;
 
 		/*

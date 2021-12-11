@@ -52,14 +52,6 @@ class ServerConfig {
 	public function getIopUrl() {
 		return $this->config->getAppValue('sciencemesh','iopUrl');
 	}
-	public function getRevaUser() {
-		$ret = $this->config->getAppValue('sciencemesh','revaUser');
-		if (!$ret) {
-			$ret = 'einstein'; // FIXME: https://github.com/pondersource/nc-sciencemesh/issues/216
-			$this->config->setAppValue('sciencemesh','revaUser', $ret);
-		}
-		return $ret;
-	}
 	public function getRevaLoopbackSecret() {
 		$ret = $this->config->getAppValue('sciencemesh','revaLoopbackSecret');
 		if (!$ret) {

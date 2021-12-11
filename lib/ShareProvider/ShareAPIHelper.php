@@ -68,10 +68,10 @@ class ShareAPIHelper {
 		$share->setSharedWith($shareWith);
 		$share->setPermissions($permissions);
 		error_log('making rest call to grpc client '. $shareWith);
-		$this->revaHttpClient->createShare([
+		$this->revaHttpClient->createShare('einstein', [
 			'path' => '/home',
 			'recipientUsername' => 'marie',
-			'recipientHost' => 'localhost:17000'
+			'recipientHost' => 'revanc2.docker'
 		]);
 	}
 }
