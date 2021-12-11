@@ -352,6 +352,18 @@ class RevaController extends Controller {
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
+	private function formatUser($user) {
+		return [
+			"id" => [
+				"idp" => $this->config->getIopUrl(),
+				"opaque_id" => $user->getUID(),
+			],
+			"display_name" => $user->getDisplayName(),
+			"email" => $user->getEmailAddress(),
+			"type" => 1,
+		];
+	}
+
 	/**
 	 * @PublicPage
 	 * @NoAdminRequired
@@ -364,21 +376,17 @@ class RevaController extends Controller {
 
 		// Try e.g.:
 		// curl -v -H 'Content-Type:application/json' -d'{"clientID":"einstein",clientSecret":"relativity"}' http://einstein:relativity@localhost/index.php/apps/sciencemesh/~einstein/api/auth/Authenticate
-		if ($userId == $this->config->getRevaUser()) {
-			error_log("checking loopback secret " . $password . " ?= " . $this->config->getRevaLoopbackSecret());
-			$auth = ($password == $this->config->getRevaLoopbackSecret());
+
+    // Ref https://github.com/cs3org/reva/issues/2356
+		if ($password == $this->config->getRevaLoopbackSecret()) {
+			error_log("user " . $userId . " and loopback secret!");
+			$user = $this->userManager->get($userId);
 		} else {
-			$auth = $this->userManager->checkPassword($userId,$password);
+			$user = $this->userManager->checkPassword($userId, $password);
 		}
-		if ($auth) {
+		if ($user) {
 			$result = [
-				"user" => [
-					"id" => [
-						"idp" => $this->config->getIopUrl(),
-						"opaque_id" => $userId,
-						"type" => 1,
-					],
-				],
+				"user" => $this->formatUser($user),
 				"scopes" => [
 					"user" => [
 						"resource" => [
@@ -733,14 +741,9 @@ class RevaController extends Controller {
 	 */
 	public function GetUser($userId) {
 		$userToCheck = $this->request->getParam('opaque_id');
-		$response = [
-			"id" => [
-				"idp" => $this->config->getIopUrl(),
-				"opaque_id" => $userToCheck,
-				"type" => 1
-			]
-		];
 		if ($this->userManager->userExists($userToCheck)) {
+			$user = $this->userManager->get($userToCheck);
+			$response = $this->formatUser($user);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
 		return new JSONResponse(
