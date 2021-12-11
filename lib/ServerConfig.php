@@ -55,8 +55,8 @@ class ServerConfig {
 	public function getRevaUser() {
 		$ret = $this->config->getAppValue('sciencemesh','revaUser');
 		if (!$ret) {
-			$ret = 'reva';
-			$this->config->getAppValue('sciencemesh','revaUser', $ret);
+			$ret = 'einstein'; // FIXME: https://github.com/pondersource/nc-sciencemesh/issues/216
+			$this->config->setAppValue('sciencemesh','revaUser', $ret);
 		}
 		return $ret;
 	}
