@@ -19,13 +19,14 @@ script("sciencemesh", "vendor/simplyedit/simply.everything");
 					</div>
 					<div href="#" class="app-content-list-item">
 						<!-- div class="app-content-list-item-star icon-starred"></div -->
-						<div class="app-content-list-item-icon" id="elem" style="background-color: rgb(31, 72, 96);">+</div>
+						<div class="app-content-list-item-icon" style="background-color: rgb(31, 72, 96);">+</div>
 						<!-- div class="app-content-list-item-line-one">Accept an invitation</div -->
 						<div class="app-content-list-item-line-one" >
 							<input id="token" type="text" placeholder="Enter your token here">
-					     </div>
+							<input id="providerDomain" type="text" placeholder="and its provider domain">
+						</div>
 						<div class="app-content-list-item-menu">
-						 	<div class="icon-add"></div>
+						 	<div class="icon-add" id="elem"></div>
 						</div>
 					</div>
 				</div>

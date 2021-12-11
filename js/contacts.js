@@ -45,7 +45,7 @@ $.ajax({
 });
 document.getElementById('elem').onclick = function () { 
     console.log('clicked');
-    var providerDomain = 'https://cesnet.cz';
+    var providerDomain = document.getElementById('providerDomain').value;
     var token = document.getElementById('token').value
 
     var data = 'providerDomain=' + encodeURIComponent(providerDomain) +

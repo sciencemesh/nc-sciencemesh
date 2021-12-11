@@ -170,7 +170,9 @@ class AppController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function contactsAccept() {
-		$contacts = $this->acceptToken->getAcceptTokenResponse();
+		$providerDomain = $this->request->getParam('providerDomain');
+		$token = $this->request->getParam('token');
+		$contacts = $this->acceptToken->getAcceptTokenResponse($providerDomain, $token);
 		return new TextPlainResponse($contacts, Http::STATUS_OK);
 	}
 

@@ -29,8 +29,8 @@ class ScienceMeshAcceptTokenPlugin {
 		$this->request = $request;
 	}
 
-	public function getAcceptTokenResponse() {
-		$invitationsData = $this->getAcceptTokenFromReva();
+	public function getAcceptTokenResponse($providerDomain, $token) {
+		$invitationsData = $this->getAcceptTokenFromReva($providerDomain, $token);
 		
 		return $invitationsData;
 	}
@@ -39,12 +39,11 @@ class ScienceMeshAcceptTokenPlugin {
 		return $users;
 	}
 
-	public function getAcceptTokenFromReva() {
-		$request = [
-			'providerDomain' => $this->request->getParam("providerDomain"),
-			'token' => $this->request->getParam("token")
-		];
-		$tokenFromReva = $this->httpClient->revaPost('invites/forward', http_build_query($request)); //params will be empty or not fix me
+	public function getAcceptTokenFromReva($providerDomain, $token) {
+		$tokenFromReva = $this->httpClient->revaPost('invites/forward', [
+			'providerDomain' => $providerDomain,
+			'token' => $token
+		]);
 		return $tokenFromReva;
 	}
 }
