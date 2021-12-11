@@ -88,6 +88,7 @@ class RevaHttpClient {
 		curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
 		// curl_setopt($ch, CURLOPT_HEADER, true);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params, JSON_PRETTY_PRINT));
 		if ($this->revaUser && $this->revaSharedSecret) {
 			curl_setopt($ch, CURLOPT_USERPWD, $this->revaUser.":".$this->revaSharedSecret);
