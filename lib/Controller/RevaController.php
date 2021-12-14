@@ -123,6 +123,7 @@ class RevaController extends Controller {
 		$this->logger = $logger;
 		$this->appManager = $appManager;
 		$this->l = $l10n;
+		$this->shareProvider = $shareProvider;
 	}
 	private function init($userId) {
 		$this->checkRevadAuth();
@@ -132,7 +133,6 @@ class RevaController extends Controller {
 		$adapter = new NextcloudAdapter($this->userFolder);
 		$this->filesystem = new \League\Flysystem\Filesystem($adapter);
 		$this->baseUrl = $this->getStorageUrl($userId); // Where is that used?
-		$this->shareProvider = $shareProvider;
 	}
 
 	/**
@@ -173,8 +173,7 @@ class RevaController extends Controller {
 	private function checkRevadAuth() {
 		$authHeader = $this->request->getHeader('X-Reva-Secret');
 		error_log("Auth header $authHeader");
-		$bearerToken = $authHeader.substr(strlen('Bearer '));
-    if ($bearerToken != $this->config->getRevaSharedSecret()) {
+    if ($authHeader != $this->config->getRevaSharedSecret()) {
 		  throw new \OCP\Files\NotPermittedException('Please set an http request header "X-Reva-Secret: <your_shared_secret>"!');
 		}
 	}
@@ -442,9 +441,12 @@ class RevaController extends Controller {
 	 * @throws \OCP\Files\NotPermittedException
 	 */
 	public function CreateHome($userId) {
+		error_log("CreateHome $userId");
 		$this->init($userId);
+		error_log('CreateHome inited');
 		$homeExists = $this->userFolder->nodeExists("sciencemesh");
 		if (!$homeExists) {
+			error_log('CreateHome home does not exist');
 			try {
 				$this->userFolder->newFolder("sciencemesh"); // Create the Sciencemesh directory for storage if it doesn't exist.
 			} catch (NotPermittedException $e) {
@@ -452,6 +454,7 @@ class RevaController extends Controller {
 			}
 			return new JSONResponse("CREATED", Http::STATUS_CREATED);
 		}
+		error_log('CreateHome nothing to do');
 		return new JSONResponse("OK", Http::STATUS_OK);
 	}
 
