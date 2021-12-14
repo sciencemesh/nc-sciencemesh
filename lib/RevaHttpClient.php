@@ -79,7 +79,6 @@ class RevaHttpClient {
 		return $output;
 	}
 	private function curlPost($url, $user, $params = []) {
-		error_log("POST to Reva $url ".json_encode($params));
 		$ch = curl_init();
 		
 		curl_setopt($ch, CURLOPT_URL, $url);
@@ -89,7 +88,8 @@ class RevaHttpClient {
 		// curl_setopt($ch, CURLOPT_HEADER, true);
 		curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params, JSON_PRETTY_PRINT));
-		if ($this->revaUser && $this->revaSharedSecret) {
+		if ($this->revaSharedSecret) {
+			error_log("POST to Reva $url $user:$this->revaSharedSecret ".json_encode($params));
 			curl_setopt($ch, CURLOPT_USERPWD, $user.":".$this->revaSharedSecret);
 			curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		}
@@ -103,7 +103,7 @@ class RevaHttpClient {
 		return $this->curlGet($url, $user, $params);
 	}
 		
-	public function revaPost($method, $params = []) {
+	public function revaPost($method, $user, $params = []) {
 		$url = $this->revaUrl . $method;
 		return $this->curlPost($url, $user, $params);
 	}

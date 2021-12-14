@@ -139,12 +139,13 @@ class AppController extends Controller {
 		$templateResponse->setContentSecurityPolicy($policy);
 		return $templateResponse;
 	}
+
 	/**
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
-	public function invitationsGenerate($userId) {
-		$invitationsData = $this->generateToken->getGenerateTokenResponse($userId);
+	public function invitationsGenerate() {
+		$invitationsData = $this->generateToken->getGenerateTokenResponse($this->userId);
 		return new TextPlainResponse($invitationsData, Http::STATUS_OK);
 	}
 
