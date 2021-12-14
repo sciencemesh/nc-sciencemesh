@@ -123,7 +123,10 @@ class RevaController extends Controller {
 		$this->logger = $logger;
 		$this->appManager = $appManager;
 		$this->l = $l10n;
-
+	}
+	private function init($userId) {
+		$this->checkRevadAuth();
+		error_log("in controller init, getting user folder for $userId");
 		$this->userFolder = $this->rootFolder->getUserFolder($userId);
 		// Create the Nextcloud Adapter
 		$adapter = new NextcloudAdapter($this->userFolder);
@@ -166,6 +169,14 @@ class RevaController extends Controller {
 		$date->setTime(0, 0, 0);
 
 		return $date;
+	}
+	private function checkRevadAuth() {
+		$authHeader = $this->request->getHeader('X-Reva-Secret');
+		error_log("Auth header $authHeader");
+		$bearerToken = $authHeader.substr(strlen('Bearer '));
+    if ($bearerToken != $this->config->getRevaSharedSecret()) {
+		  throw new \OCP\Files\NotPermittedException('Please set an http request header "X-Reva-Secret: <your_shared_secret>"!');
+		}
 	}
 	private function getSharedByOpaqueId($opaqueId) {
 		$opaqueIdDecoded = urldecode($opaqueId);
@@ -347,6 +358,8 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function AddGrant($userId) {
+		$this->init($userId);
+		
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
 		// FIXME: Expected a param with a grant to add here;
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
@@ -371,6 +384,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function Authenticate($userId) {
+		$this->init($userId);
 		$userId = $this->request->getParam("clientID");
 		$password = $this->request->getParam("clientSecret");
 
@@ -382,7 +396,7 @@ class RevaController extends Controller {
 			error_log("user " . $userId . " and loopback secret!");
 			$user = $this->userManager->get($userId);
 		} else {
-			$user = $this->userManager->checkPassword($userId, $password);
+				$user = $this->userManager->checkPassword($userId, $password);
 		}
 		if ($user) {
 			$result = [
@@ -410,6 +424,7 @@ class RevaController extends Controller {
 	 * @throws \OCP\Files\NotPermittedException
 	 */
 	public function CreateDir($userId) {
+		$this->init($userId);
 		$path = "sciencemesh" . $this->request->getParam("path"); // FIXME: sanitize the input
 		try {
 			$this->filesystem->createDir($path);
@@ -427,6 +442,7 @@ class RevaController extends Controller {
 	 * @throws \OCP\Files\NotPermittedException
 	 */
 	public function CreateHome($userId) {
+		$this->init($userId);
 		$homeExists = $this->userFolder->nodeExists("sciencemesh");
 		if (!$homeExists) {
 			try {
@@ -446,6 +462,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function CreateReference($userId) {
+		$this->init($userId);
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: normalize incoming path
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -458,6 +475,7 @@ class RevaController extends Controller {
 	 * @throws FileNotFoundException
 	 */
 	public function Delete($userId) {
+		$this->init($userId);
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: normalize incoming path
 		try {
 			$this->filesystem->delete($path);
@@ -474,6 +492,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function EmptyRecycle($userId) {
+		$this->init($userId);
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
 
@@ -494,6 +513,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function GetMD($userId) {
+		$this->init($userId);
 		$ref = $this->request->getParam("ref");
 		$path = "sciencemesh" . $ref["path"]; // FIXME: normalize incoming path
 		$success = $this->filesystem->has($path);
@@ -512,6 +532,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function GetPathByID($userId) {
+		$this->init($userId);
 		// in progress
 		$path = "subdir/";
 		$storageId = $this->request->getParam("storage_id");
@@ -526,6 +547,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function InitiateUpload($userId) {
+		$this->init($userId);
 		$response = [
 			"simple" => "yes",
 			"tus" => "yes" // FIXME: Not really supporting this;
@@ -540,6 +562,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function ListFolder($userId) {
+		$this->init($userId);
 		$ref = $this->request->getParam("ref");
 		$path = "sciencemesh" . $ref["path"]; // FIXME: sanitize!
 		$success = $this->filesystem->has($path);
@@ -560,6 +583,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function ListGrants($userId) {
+		$this->init($userId);
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
 		return new JSONResponse("Not implemented",Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -571,6 +595,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function ListRecycle($userId) {
+		$this->init($userId);
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
 		$result = [];
@@ -606,6 +631,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function ListRevisions($userId) {
+		$this->init($userId);
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
 		return new JSONResponse("Not implemented",Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -633,6 +659,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function RemoveGrant($userId) {
+		$this->init($userId);
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
 		// FIXME: Expected a grant to remove here;
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
@@ -645,6 +672,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function RestoreRecycleItem($userId) {
+		$this->init($userId);
 		$key = $this->request->getParam("key");
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
@@ -671,6 +699,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function RestoreRevision($userId) {
+		$this->init($userId);
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
 		// FIXME: Expected a revision param here;
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
@@ -683,6 +712,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function SetArbitraryMetadata($userId) {
+		$this->init($userId);
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
 		$metadata = $this->request->getParam("metadata");
 		// FIXME: What do we do with the existing metadata? Just toss it and overwrite with the new value? Or do we merge?
@@ -696,6 +726,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function UnsetArbitraryMetadata($userId) {
+		$this->init($userId);
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -707,6 +738,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function UpdateGrant($userId) {
+		$this->init($userId);
 		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
 		// FIXME: Expected a paramater with the grant(s)
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
@@ -719,6 +751,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function Upload($userId, $path) {
+		$this->init($userId);
 		$contents = $this->request->put;
 		if ($this->filesystem->has("/sciencemesh" . $path)) {
 			if ($this->filesystem->update("/sciencemesh" . $path, $contents)) {
@@ -740,6 +773,7 @@ class RevaController extends Controller {
 	 * Get user list.
 	 */
 	public function GetUser($userId) {
+		$this->init($userId);
 		$userToCheck = $this->request->getParam('opaque_id');
 		if ($this->userManager->userExists($userToCheck)) {
 			$user = $this->userManager->get($userToCheck);
@@ -761,6 +795,7 @@ class RevaController extends Controller {
 	 * Create a new share in fn with the given access control list.
 	 */
 	public function addSentShare($userId) {
+		$this->init($userId);
 		$granteeIdUserId = $this->request->getParam("g")["grantee"]["Id"]["UserId"];
 		$opaqueId = $this->request->getParam("md")["opaque_id"];
 		$granteeIdUserId = $this->request->getParam("g")["grantee"]["Id"]["UserId"];
@@ -811,6 +846,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function addReceivedShare($userId) {
+		$this->init($userId);
 		$providerDomain = $this->request->getParam("provider_domain");
 		$providerId = $this->request->getParam("provider_id");
 		$opaqueId = $this->request->getParam("md")["opaque_id"];
@@ -913,6 +949,7 @@ class RevaController extends Controller {
 	 * Remove Share from share table
 	 */
 	public function Unshare($userId) {
+		$this->init($userId);
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
 		if ($this->shareProvider->deleteSentShareByName($userId, $name)) {
@@ -933,6 +970,7 @@ class RevaController extends Controller {
 	 *
 	 */
 	public function UpdateSentShare($userId) {
+		$this->init($userId);
 		$opaqueId = $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
 		$permissions = $this->request->getParam("p")["permissions"];
 		$permissionsCode = $this->getPermissionsCode($permissions);
@@ -953,6 +991,7 @@ class RevaController extends Controller {
 	 * UpdateReceivedShare updates the received share with share state.
 	 */
 	public function UpdateReceivedShare($userId) {
+		$this->init($userId);
 		$response = [];
 		$resourceId = $this->request->getParam("received_share")["share"]["resource_id"];
 		$permissions = $this->request->getParam("received_share")["share"]["permissions"];
@@ -977,6 +1016,7 @@ class RevaController extends Controller {
 	 * it returns only shares attached to the given resource.
 	 */
 	public function ListSentShares($userId) {
+		$this->init($userId);
 		$responses = [];
 		$shares = $this->shareProvider->getSentShares($userId);
 		if ($shares) {
@@ -993,6 +1033,7 @@ class RevaController extends Controller {
 	 * ListReceivedShares returns the list of shares the user has access.
 	 */
 	public function ListReceivedShares($userId) {
+		$this->init($userId);
 		$responses = [];
 		$shares = $this->shareProvider->getReceivedShares($userId);
 		if ($shares) {
@@ -1012,6 +1053,7 @@ class RevaController extends Controller {
 	 * GetReceivedShare returns the information for a received share the user has access.
 	 */
 	public function GetReceivedShare($userId) {
+		$this->init($userId);
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
 		try {
@@ -1032,6 +1074,7 @@ class RevaController extends Controller {
 	 * GetSentShare gets the information for a share by the given ref.
 	 */
 	public function GetSentShare($userId) {
+		$this->init($userId);
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
 		$share = $this->shareProvider->getSentShareByName($userId,$name);

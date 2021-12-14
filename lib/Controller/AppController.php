@@ -173,7 +173,7 @@ class AppController extends Controller {
 	public function contactsAccept() {
 		$providerDomain = $this->request->getParam('providerDomain');
 		$token = $this->request->getParam('token');
-		$contacts = $this->acceptToken->getAcceptTokenResponse($providerDomain, $token);
+		$contacts = $this->acceptToken->getAcceptTokenResponse($providerDomain, $token, $this->userId);
 		return new TextPlainResponse($contacts, Http::STATUS_OK);
 	}
 
@@ -182,7 +182,7 @@ class AppController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function contactsFindUsers() {
-		$find_users = $this->acceptToken->findAcceptedUsers();
+		$find_users = $this->acceptToken->findAcceptedUsers($this->userId);
 		
 		return new TextPlainResponse($find_users, Http::STATUS_OK);
 	}

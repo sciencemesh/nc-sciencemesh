@@ -35,7 +35,7 @@ class RevaHttpClient {
 	private $client;
 	private $revaUrl;
 	private $revaUser;
-	private $revaSharedSecret;
+	private $revaLoopbackSecret;
 		
 	/**
 	 * RevaHttpClient constructor.
@@ -44,7 +44,7 @@ class RevaHttpClient {
 	public function __construct(IConfig $config) {
 		$this->serverConfig = new \OCA\ScienceMesh\ServerConfig($config);
 		$this->revaUrl = $this->serverConfig->getIopUrl();
-		$this->revaSharedSecret = $this->serverConfig->getRevaLoopbackSecret();
+		$this->revaLoopbackSecret = $this->serverConfig->getRevaLoopbackSecret();
 		$this->curlDebug = true;
 	}
 
@@ -57,8 +57,8 @@ class RevaHttpClient {
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		if ($this->revaUser && $this->revaSharedSecret) {
-			curl_setopt($ch, CURLOPT_USERPWD, $user.":".$this->revaSharedSecret);
+		if ($this->revaUser && $this->revaLoopbackSecret) {
+			curl_setopt($ch, CURLOPT_USERPWD, $user.":".$this->revaLoopbackSecret);
 			curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		}
 
@@ -88,9 +88,9 @@ class RevaHttpClient {
 		// curl_setopt($ch, CURLOPT_HEADER, true);
 		curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params, JSON_PRETTY_PRINT));
-		if ($this->revaSharedSecret) {
-			error_log("POST to Reva $url $user:$this->revaSharedSecret ".json_encode($params));
-			curl_setopt($ch, CURLOPT_USERPWD, $user.":".$this->revaSharedSecret);
+		if ($this->revaLoopbackSecret) {
+			error_log("POST to Reva $url $user:$this->revaLoopbackSecret ".json_encode($params));
+			curl_setopt($ch, CURLOPT_USERPWD, $user.":".$this->revaLoopbackSecret);
 			curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		}
 		$output = curl_exec($ch);
