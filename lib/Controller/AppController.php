@@ -38,7 +38,8 @@ class AppController extends Controller {
 		$this->urlGenerator = $urlGenerator;
 		$this->notificationManager = $notificationManager;
 		$this->timeFactory = $timeFactory;
-		$this->config = new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
+		$this->config = $config;
+		$this->serverConfig = new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
 		$this->userSession = $userSession;
 		$this->generateToken = $generateToken;
 		$this->acceptToken = $acceptToken;

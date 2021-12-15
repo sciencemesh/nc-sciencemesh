@@ -53,7 +53,7 @@ class ShareAPIHelper {
 	) {
 		$this->config = $config;
 		$this->userManager = $userManager;
-		$this->revaHttpClient = new RevaHttpClient();
+		$this->revaHttpClient = new RevaHttpClient($this->config);
 	}
 
 	public function formatShare($share) {

@@ -42,6 +42,7 @@ class RevaHttpClient {
 	 *
 	 */
 	public function __construct(IConfig $config) {
+		$this->config = $config;
 		$this->serverConfig = new \OCA\ScienceMesh\ServerConfig($config);
 		$this->revaUrl = $this->serverConfig->getIopUrl();
 		$this->revaLoopbackSecret = $this->serverConfig->getRevaLoopbackSecret();
@@ -98,12 +99,12 @@ class RevaHttpClient {
 		return $output;
 	}
 
-	public function revaGet($method, $user, $params = []) {
+	private function revaGet($method, $user, $params = []) {
 		$url = $this->revaUrl . $method;
 		return $this->curlGet($url, $user, $params);
 	}
 		
-	public function revaPost($method, $user, $params = []) {
+	private function revaPost($method, $user, $params = []) {
 		$url = $this->revaUrl . $method;
 		return $this->curlPost($url, $user, $params);
 	}
@@ -123,24 +124,44 @@ class RevaHttpClient {
 	public function ocmProvider() {
 		return $this->revaGet('ocm-provider');
 	}
-	public function findAcceptedUsers($user) {
-		$users = $this->revaPost('find-accepted-users', $user);
-		return $users;
 
-		/*
-			$users = [
-				"accepted_users" => [
-					[
-						"id" => [
-							"idp" => "https://revanc2.docker",
-							"opaque_id" => "marie"
-						],
-						"display_name" => "Marie Curie",
-						"mail" => "marie@revanc2.docker"
-					]
-				]
-			];
-			return $users;
-		*/
+	public function findAcceptedUsers($userId) {
+		$users = $this->revaPost('invites/find-accepted-users', $userId);
+		error_log("accepted users " . $users);
+		return $users;
 	}
+
+	public function getAcceptTokenFromReva($providerDomain, $token, $userId) {
+		$tokenFromReva = $this->revaPost('invites/forward', $userId, [
+			'providerDomain' => $providerDomain,
+			'token' => $token
+		]);
+		return $tokenFromReva;
+	}
+
+	public function generateTokenFromReva($userId) {
+		$tokenFromReva = $this->httpClient->revaPost('invites/generate', $userId); //params will be empty or not fix me
+		return $tokenFromReva;
+	}
+
+	// public function findAcceptedUsers($user) {
+	// 	$users = $this->revaPost('find-accepted-users', $user);
+	// 	return $users;
+
+	// 	/*
+	// 		$users = [
+	// 			"accepted_users" => [
+	// 				[
+	// 					"id" => [
+	// 						"idp" => "https://revanc2.docker",
+	// 						"opaque_id" => "marie"
+	// 					],
+	// 					"display_name" => "Marie Curie",
+	// 					"mail" => "marie@revanc2.docker"
+	// 				]
+	// 			]
+	// 		];
+	// 		return $users;
+	// 	*/
+	// }
 }

@@ -30,20 +30,10 @@ class ScienceMeshAcceptTokenPlugin {
 	}
 
 	public function getAcceptTokenResponse($providerDomain, $token, $userId) {
-		$invitationsData = $this->getAcceptTokenFromReva($providerDomain, $token, $userId);
-		
-		return $invitationsData;
-	}
-	public function findAcceptedUsers($userId) {
-		$users = $this->httpClient->revaPost('invites/find-accepted-users', $userId);
-		return $users;
+		return $this->httpClient->getAcceptTokenFromReva($providerDomain, $token, $userId);
 	}
 
-	public function getAcceptTokenFromReva($providerDomain, $token, $userId) {
-		$tokenFromReva = $this->httpClient->revaPost('invites/forward', $userId, [
-			'providerDomain' => $providerDomain,
-			'token' => $token
-		]);
-		return $tokenFromReva;
+	public function findAcceptedUsers($userId) {
+	  return $this->httpClient->findAcceptedUsers($userId);
 	}
 }
