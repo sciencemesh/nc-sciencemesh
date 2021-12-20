@@ -963,9 +963,9 @@ class RevaController extends Controller {
 			'ctime' => $ctime
 		];
 
-		$grantee && $scienceMeshData['grantee'] = $grantee;
-		$owner && $scienceMeshData['owner'] = $owner;
-		$creator && $scienceMeshData['creator'] = $creator;
+		isset($grantee) && $scienceMeshData['grantee'] = $grantee;
+		isset($owner) && $scienceMeshData['owner'] = $owner;
+		isset($creator) && $scienceMeshData['creator'] = $creator;
 		$shareData = [
 			$providerDomain,
 			$providerId,

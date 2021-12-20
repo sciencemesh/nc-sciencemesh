@@ -1431,9 +1431,9 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$opaqueId = $scienceMeshData['opaque_id'];
 		$resourceId = $scienceMeshData['resource_id'];
 		$permissions = $scienceMeshData['permissions'];
-		$grantee = $scienceMeshData['grantee']?$this->addScienceMeshUser($scienceMeshData['grantee']):null;
-		$creator = $scienceMeshData['creator']?$this->addScienceMeshUser($scienceMeshData['creator']):null;
-		$owner = $scienceMeshData['owner']?$this->addScienceMeshUser($scienceMeshData['owner']):null;
+		$grantee = isset($scienceMeshData['grantee'])?$this->addScienceMeshUser($scienceMeshData['grantee']):null;
+		$creator = isset($scienceMeshData['creator'])?$this->addScienceMeshUser($scienceMeshData['creator']):null;
+		$owner = isset($scienceMeshData['owner'])?$this->addScienceMeshUser($scienceMeshData['owner']):null;
 
 		exit;
 		$qb = $this->dbConnection->getQueryBuilder();
