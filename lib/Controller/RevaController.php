@@ -916,14 +916,18 @@ class RevaController extends Controller {
 		$creator = null;
 		$granteeArray = $this->request->getParam("g")["grantee"]["Id"]["UserId"] ?? '';
 		if ($granteeArray != '') {
+			$granteeArray["type"] = 1;
+			error_log('instantiating user '.json_encode($granteeArray));
 			$grantee = ScienceMeshUserId::fromArray($granteeArray);
 		}
 		$ownerArray = $this->request->getParam("md")["owner"] ?? '';
 		if ($ownerArray != '') {
+			error_log('instantiating owner '.json_encode($ownerArray));
 			$owner = ScienceMeshUserId::fromArray($ownerArray);
 		}
 		$creatorArray = $this->request->getParam("md")["creator"] ?? '';
 		if ($creatorArray != '') {
+			error_log('instantiating creator '.json_encode($creatorArray));
 			$creator = ScienceMeshUserId::fromArray($creatorArray);
 		}
 		$mtime = $this->request->getParam("md")["mtime"] ?? 0;

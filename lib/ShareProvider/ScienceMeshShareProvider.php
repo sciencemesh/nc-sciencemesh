@@ -1422,18 +1422,18 @@ class ScienceMeshShareProvider implements IShareProvider {
 		}
 	}
 
-	public function addScienceMeshShare($share) {
-		if ($share['sciencemesh']['is_external']) {
-			$share['sciencemesh']['foreign_id'] = $this->addReceivedShareToDB(...$share['share']);
+	public function addScienceMeshShare($scienceMeshData, $shareData) {
+		if ($scienceMeshData['is_external']) {
+			$scienceMeshData['foreign_id'] = $this->addReceivedShareToDB(...$shareData);
 		} else {
-			$share['sciencemesh']['foreign_id'] = $this->createScienceMeshShare($share['share']);
+			$scienceMeshData['foreign_id'] = $this->createScienceMeshShare($shareData);
 		}
-		$opaqueId = $share['sciencemesh']['opaque_id'];
-		$resourceId = $share['sciencemesh']['resource_id'];
-		$permissions = $share['sciencemesh']['permissions'];
-		$grantee = $share['sciencemesh']['grantee']?$this->addScienceMeshUser($share['sciencemesh']['grantee']):null;
-		$creator = $share['sciencemesh']['creator']?$this->addScienceMeshUser($share['sciencemesh']['creator']):null;
-		$owner = $share['sciencemesh']['owner']?$this->addScienceMeshUser($share['sciencemesh']['owner']):null;
+		$opaqueId = $scienceMeshData['opaque_id'];
+		$resourceId = $scienceMeshData['resource_id'];
+		$permissions = $scienceMeshData['permissions'];
+		$grantee = $scienceMeshData['grantee']?$this->addScienceMeshUser($scienceMeshData['grantee']):null;
+		$creator = $scienceMeshData['creator']?$this->addScienceMeshUser($scienceMeshData['creator']):null;
+		$owner = $scienceMeshData['owner']?$this->addScienceMeshUser($scienceMeshData['owner']):null;
 
 		exit;
 		$qb = $this->dbConnection->getQueryBuilder();
@@ -1444,8 +1444,8 @@ class ScienceMeshShareProvider implements IShareProvider {
 			->setValue('grantee', $grantee)
 			->setValue('creator', $creator)
 			->setValue('owner', $owner)
-			->setValue('is_external', $share['sciencemesh']['is_external'])
-			->setValue('foreign_id', $share['sciencemesh']['foreign_id'])
+			->setValue('is_external', $scienceMeshData['is_external'])
+			->setValue('foreign_id', $scienceMeshData['foreign_id'])
 			->execute();
 	}
 }
