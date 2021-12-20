@@ -16,6 +16,7 @@ return [
 		['name' => 'reva#CreateDir', 'url' => '/~{userId}/api/storage/CreateDir', 'verb' => 'POST'],
 		['name' => 'reva#CreateHome', 'url' => '/~{userId}/api/storage/CreateHome', 'verb' => 'POST'],
 		['name' => 'reva#CreateReference', 'url' => '/~{userId}/api/storage/CreateReference', 'verb' => 'POST'],
+		['name' => 'reva#CreateStorageSpace', 'url' => '/~{userId}/api/storage/CreateStorageSpace', 'verb' => 'POST'],
 		['name' => 'reva#Delete', 'url' => '/~{userId}/api/storage/Delete', 'verb' => 'POST'],
 		['name' => 'reva#EmptyRecycle', 'url' => '/~{userId}/api/storage/EmptyRecycle', 'verb' => 'POST'],
 		['name' => 'reva#GetMD', 'url' => '/~{userId}/api/storage/GetMD', 'verb' => 'POST'],
@@ -60,8 +61,7 @@ return [
 		['name' => 'storage#handleDelete', 'url' => '/~{userId}/files/{path}', 'verb' => 'DELETE', 'requirements' => ['path' => '.+']],
 		['name' => 'storage#handleHead', 'url' => '/~{userId}/files/{path}', 'verb' => 'HEAD', 'requirements' => ['path' => '.+']],
 
-		// ['name' => 'app#launcher', 'url' => '/', 'verb' => 'GET'],
-		['name' => 'settings#index', 'url' => '/', 'verb' => 'GET'],
+		['name' => 'app#invitations', 'url' => '/', 'verb' => 'GET'],
 
 		['name' => 'app#notifications', 'url' => '/notifications', 'verb' => 'GET'],
 		['name' => 'app#invitations', 'url' => '/invitations', 'verb' => 'GET'],

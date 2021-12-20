@@ -475,6 +475,56 @@ class RevaController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
+	 */
+	public function CreateStorageSpace($userId) {
+		return new JSONResponse([
+			"status" => [
+				"code" => 1,
+				"trace" => "00000000000000000000000000000000"
+			],
+			"storage_space" => [
+				"opaque" => [
+					"map" => [
+						"bar" => [
+							"value" => "c2FtYQ=="
+						],
+						"foo" => [
+							"value" => "c2FtYQ=="
+						]
+					]
+				],
+				"id" => [
+					"opaque_id" => "some-opaque-storage-space-id"
+				],
+				"owner" => [
+					"id" => [
+						"idp" => "some-idp",
+						"opaque_id" => "some-opaque-user-id",
+						"type" => 1
+					]
+				],
+				"root" => [
+					"storage_id" => "some-storage-id",
+					"opaque_id" => "some-opaque-root-id"
+				],
+				"name" => "My Storage Space",
+				"quota" => [
+					"quota_max_bytes" => 456,
+					"quota_max_files" => 123
+				],
+				"space_type" => "home",
+				"mtime" => [
+					"seconds" => 1234567890
+				]
+			]
+		], Http::STATUS_OK);
+	}
+
+	/**
+	 * @PublicPage
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 * @return Http\DataResponse|JSONResponse
 	 * @throws FileNotFoundException
 	 */
 	public function Delete($userId) {

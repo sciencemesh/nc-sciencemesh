@@ -7,7 +7,15 @@
     <description><![CDATA[# ScienceMesh]]></description>
     <version>0.0.1</version>
     <licence>mit</licence>
-    <author mail="yvo@muze.nl" >Yvo Brevoort</author>
+    <author homepage="https://sciencemesh.io" >ScienceMesh Community</author>
+    <author mail="support@pondersource.com" homepage="https://pondersource.com" >Stichting Ponder Source</author>
+    <author mail="info@muze.nl" homepage="https://www.muze.nl" >Muze B.V.</author>
+    <author mail="michiel@pondersource.com" >Michiel de Jong (Ponder Source)</author>
+    <author mail="yvo@muze.nl" >Yvo Brevoort (Muze)</author>
+    <author>Triantafullenia Doumani (Ponder Source)</author>
+    <author>Benz Schenk (Ponder Source)</author>
+    <author>Ismoil Shifoev (Ponder Source)</author>
+    <author>Ben Peachey (Muze)</author>
     <namespace>ScienceMesh</namespace>
     <category>integration</category>
     <bugs>https://github.com/pondersource/sciencemesh-nextcloud/issues</bugs>
@@ -20,7 +28,7 @@
     <navigations>
         <navigation>
             <name>ScienceMesh</name>
-            <route>sciencemesh.app.launcher</route>
+            <route>sciencemesh.app.invitations</route>
             <order>10</order>
         </navigation>
     </navigations>

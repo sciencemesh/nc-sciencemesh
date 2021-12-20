@@ -140,7 +140,7 @@ class RevaHttpClient {
 	}
 
 	public function generateTokenFromReva($userId) {
-		$tokenFromReva = $this->httpClient->revaPost('invites/generate', $userId); //params will be empty or not fix me
+		$tokenFromReva = $this->revaPost('invites/generate', $userId); //params will be empty or not fix me
 		return $tokenFromReva;
 	}
 
