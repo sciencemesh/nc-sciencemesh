@@ -77,6 +77,7 @@ class RevaHttpClient {
 			$output = $verboseLog . $output;
 		}
 		
+		error_log("response ".json_encode($output));
 		return $output;
 	}
 	private function curlPost($url, $user, $params = []) {
@@ -96,6 +97,7 @@ class RevaHttpClient {
 		}
 		$output = curl_exec($ch);
 		curl_close($ch);
+		error_log("response ".json_encode($output));
 		return $output;
 	}
 

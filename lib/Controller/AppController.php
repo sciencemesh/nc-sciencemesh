@@ -147,6 +147,7 @@ class AppController extends Controller {
 	 */
 	public function invitationsGenerate() {
 		$invitationsData = $this->generateToken->getGenerateTokenResponse($this->userId);
+		error_log("got invitations data! ".json_encode($invitationsData));
 		return new TextPlainResponse($invitationsData, Http::STATUS_OK);
 	}
 
