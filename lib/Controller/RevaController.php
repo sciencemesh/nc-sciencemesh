@@ -899,6 +899,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function addReceivedShare($userId) {
+		error_log("line 902");
 		$this->init($userId);
 		$providerDomain = $this->request->getParam("provider_domain");
 		$providerId = $this->request->getParam("provider_id");
@@ -910,6 +911,7 @@ class RevaController extends Controller {
 		} else {
 			$permissions = new ScienceMeshSharePermissions();
 		}
+		error_log("line 914");
 		$permissionCode = $permissions->getCode();
 		$grantee = null;
 		$owner = null;
@@ -930,6 +932,7 @@ class RevaController extends Controller {
 			error_log('instantiating creator '.json_encode($creatorArray));
 			$creator = ScienceMeshUserId::fromArray($creatorArray);
 		}
+		error_log("line 935");
 		$mtime = $this->request->getParam("md")["mtime"] ?? 0;
 		$ctime = $this->request->getParam("md")["ctime"] ?? 0;
 		$sharedSecret = $this->request->getParam("protocol")["options"]["sharedSecret"] || '';
@@ -948,6 +951,7 @@ class RevaController extends Controller {
 				Http::STATUS_BAD_REQUEST
 			);
 		}
+		error_log("line 954". $providerDomain . ' $providerId: ' . $providerId . ' $opaqueId: ' . $opaqueId . ' $name: ' . $name . ' $sharedBy: ' . $sharedBy . ' $userId: ' . $userId);
 		try {
 			if ($this->shareProvider->getReceivedShareByToken($opaqueId)) {
 				return new JSONResponse(["Already received this share"], Http::STATUS_ACCEPTED);
@@ -975,7 +979,10 @@ class RevaController extends Controller {
 			$sharedBy,
 			$userId
 		];
+		error_log("Calling this->shareProvider->addScienceMeshShare");
 		$id = $this->shareProvider->addScienceMeshShare($scienceMeshData,$shareData);
+		error_log("Composing response");
+		error_log("Identifier was assigned: '$id'");
 		$response = [
 			"id" => $id,
 			"resource_id" => $opaqueId,
@@ -994,6 +1001,7 @@ class RevaController extends Controller {
 				"seconds" => 1234567890
 			]
 		];
+		error_log("Responding 201");
 		return new JSONResponse($response, 201);
 	}
 

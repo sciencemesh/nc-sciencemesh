@@ -1435,17 +1435,31 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$creator = isset($scienceMeshData['creator'])?$this->addScienceMeshUser($scienceMeshData['creator']):null;
 		$owner = isset($scienceMeshData['owner'])?$this->addScienceMeshUser($scienceMeshData['owner']):null;
 
-		exit;
+		// exit;
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->insert('sciencemesh_shares')
-			->setValue('opaque_id', $opaqueId)
-			->setValue('resource_id', $resourceId)
-			->setValue('permissions', $permissions)
-			->setValue('grantee', $grantee)
-			->setValue('creator', $creator)
-			->setValue('owner', $owner)
-			->setValue('is_external', $scienceMeshData['is_external'])
-			->setValue('foreign_id', $scienceMeshData['foreign_id'])
+			->values(array(
+				'opaque_id' => '?',
+			  'resource_id' => '?',
+				'permissions' => '?',
+				'grantee' => '?',
+				'creator' => '?',
+				'owner' => '?',
+				'is_external' => '?',
+				'foreign_id' => '?',
+				'ctime' => '?',
+				'mtime' => '?'
+			))
+			->setParameter(0, $opaqueId)
+			->setParameter(1, $resourceId)
+			->setParameter(2,  $permissions)
+			->setParameter(3,  $grantee)
+			->setParameter(4,  $grantee) // FIXME
+			->setParameter(5,  $grantee) // FIXME
+			->setParameter(6,  $scienceMeshData['is_external'])
+			->setParameter(7,  $scienceMeshData['foreign_id'])
+			->setParameter(8,  $scienceMeshData['ctime'])
+			->setParameter(9,  $scienceMeshData['mtime'])
 			->execute();
 	}
 }
