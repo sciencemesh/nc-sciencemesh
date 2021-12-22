@@ -178,6 +178,8 @@ class NextcloudAdapter implements AdapterInterface {
 	 * @return array|bool|null
 	 */
 	final public function has($path) {
+
+		error_log("FlySystem checking existence of node $path");
 		return $this->folder->nodeExists($path);
 	}
 

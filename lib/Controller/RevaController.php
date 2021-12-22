@@ -210,7 +210,7 @@ class RevaController extends Controller {
 	}
 
 	private function nodeInfoToCS3ResourceInfo(array $nodeInfo) : array {
-		$path = nextcloudPathToRevaPath($nodeInfo["path"]);
+		$path = $this->nextcloudPathToRevaPath($nodeInfo["path"]);
 		$isDirectory = ($nodeInfo["mimetype"] == "directory");
 		return [
 			"opaque" => [
@@ -580,9 +580,11 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function GetMD($userId) {
+		error_log('hi there in GetMD');
 		$this->init($userId);
 		$ref = $this->request->getParam("ref");
-		$path = $ref["path"]; // FIXME: normalize incoming path
+		$path = $this->revaPathToNextcloudPath($ref["path"]); // FIXME: normalize incoming path
+		error_log('checking fs has ' . $path);
 		$success = $this->filesystem->has($path);
 		if ($success) {
 			$nodeInfo = $this->filesystem->getMetaData($path);
