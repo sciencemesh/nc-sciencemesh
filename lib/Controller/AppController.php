@@ -29,7 +29,7 @@ class AppController extends Controller {
 	private $acceptToken;
 	private $httpClient;
 
-	public function __construct($AppName, ITimeFactory $timeFactory, INotificationManager $notificationManager, IRequest $request, IConfig $config, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IUserSession $userSession, ScienceMeshGenerateTokenPlugin $generateToken, ScienceMeshAcceptTokenPlugin $acceptToken, RevaHttpClient $httpClient) {
+	public function __construct($AppName, ITimeFactory $timeFactory, INotificationManager $notificationManager, IRequest $request, IConfig $config, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IUserSession $userSession, RevaHttpClient $httpClient) {
 		parent::__construct($AppName, $request);
 			  
 		$this->userId = $userId;
@@ -41,8 +41,7 @@ class AppController extends Controller {
 		$this->config = $config;
 		$this->serverConfig = new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
 		$this->userSession = $userSession;
-		$this->generateToken = $generateToken;
-		$this->acceptToken = $acceptToken;
+		$this->httpClient = $httpClient;
 	}
 
 	/**
@@ -146,9 +145,12 @@ class AppController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function invitationsGenerate() {
-		$invitationsData = $this->generateToken->getGenerateTokenResponse($this->userId);
+		$invitationsData = $this->httpClient->generateTokenFromReva($this->userId);
 		error_log("got invitations data! ".json_encode($invitationsData));
-		return new TextPlainResponse($invitationsData, Http::STATUS_OK);
+		$tokenStr = $invitationsData["invite_token"]["token"];
+		$iopUrl = $invitationsData["invite_token"]["user_id"]["idp"];
+		$iopDomain =  parse_url($iopUrl)["host"];
+		return new TextPlainResponse("$tokenStr@$iopDomain", Http::STATUS_OK);
 	}
 
 	/**
@@ -175,7 +177,7 @@ class AppController extends Controller {
 	public function contactsAccept() {
 		$providerDomain = $this->request->getParam('providerDomain');
 		$token = $this->request->getParam('token');
-		$contacts = $this->acceptToken->getAcceptTokenResponse($providerDomain, $token, $this->userId);
+		$contacts = $this->httpClient->getAcceptTokenFromReva($providerDomain, $token, $this->userId);
 		return new TextPlainResponse($contacts, Http::STATUS_OK);
 	}
 
@@ -184,7 +186,7 @@ class AppController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function contactsFindUsers() {
-		$find_users = $this->acceptToken->findAcceptedUsers($this->userId);
+		$find_users = $this->httpClient->findAcceptedUsers($this->userId);
 		
 		return new TextPlainResponse($find_users, Http::STATUS_OK);
 	}

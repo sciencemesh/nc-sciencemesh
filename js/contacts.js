@@ -45,8 +45,9 @@ $.ajax({
 });
 document.getElementById('elem').onclick = function () { 
     console.log('clicked');
-    var providerDomain = document.getElementById('providerDomain').value;
-    var token = document.getElementById('token').value
+    var parts = document.getElementById('token').value.split('@');
+    var token = parts[0];
+    var providerDomain = parts[1];
 
     var data = 'providerDomain=' + encodeURIComponent(providerDomain) +
   '&token=' + encodeURIComponent(token);

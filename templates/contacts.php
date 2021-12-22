@@ -23,7 +23,6 @@ script("sciencemesh", "vendor/simplyedit/simply.everything");
 						<!-- div class="app-content-list-item-line-one">Accept an invitation</div -->
 						<div class="app-content-list-item-line-one" >
 							<input id="token" type="text" placeholder="Enter your token here">
-							<input id="providerDomain" type="text" placeholder="and its provider domain">
 						</div>
 						<div class="app-content-list-item-menu">
 						 	<div class="icon-add" id="elem"></div>

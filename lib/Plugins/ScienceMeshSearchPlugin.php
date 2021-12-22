@@ -54,14 +54,16 @@ class ScienceMeshSearchPlugin implements ISearchPlugin {
 		foreach ($users as $user) {
 			error_log("producing exact result from:");
 			error_log(var_export($user, true));
+			$serverUrl = parse_url($user['id']['idp']);
+			$domain = $serverUrl["host"];
 			$exactResults[] = [
 				"label" => "Label",
 				"uuid" => $user['id']['opaque_id'],
-				"name" => $user['display_name'],
+				"name" => $user['display_name'] ."@". $domain, // FIXME: should this be just the part before the @ sign?
 				"type" => "ScienceMesh",
 				"value" => [
 					"shareType" => 1000, // FIXME: Replace with SHARE_TYPE_SCIENCEMESH
-					"shareWith" => $user['id']['opaque_id'],
+					"shareWith" => $user['id']['opaque_id'] ."@". $domain, // FIXME: should this be just the part before the @ sign?
 					"server" => $user['id']['idp']
 				]
 			];

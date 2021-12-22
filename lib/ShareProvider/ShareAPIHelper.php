@@ -65,13 +65,23 @@ class ShareAPIHelper {
 	}
 	
 	public function createShare($share, $shareWith, $permissions, $expireDate) {
+		$node = $share->getNode();
 		$share->setSharedWith($shareWith);
 		$share->setPermissions($permissions);
-		error_log('making rest call to grpc client '. $shareWith);
+		$pathParts = explode("/", $node->getPath());
+		$sender = $pathParts[1];
+		if ($pathParts[3] == "sciencemesh") {
+			$offset = 4;
+		} else {
+			$offset = 3;
+		}
+		$filePath = implode("/", array_slice($pathParts, $offset));
+		$shareWithParts = explode("@", $shareWith);
 		$this->revaHttpClient->createShare('einstein', [
-			'path' => '/home',
-			'recipientUsername' => 'marie',
-			'recipientHost' => 'revanc2.docker'
+			'path' => $filePath,
+			'type' => $node->getType(),
+			'recipientUsername' => $shareWithParts[0],
+			'recipientHost' => $shareWithParts[1]
 		]);
 	}
 }

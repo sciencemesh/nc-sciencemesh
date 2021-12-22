@@ -11,24 +11,12 @@ document.getElementById('elem').onclick = function () {
     }).done(function (response) {
         if(response === '' || response === false) {
             var element = document.getElementById("test_1");
-            element.innerHTML= 'Not connection with reva';
+            element.innerHTML= 'No connection with reva';
         } else {
-        let token = JSON.parse(response);
-        for(tokenData in token) {
-            if(token.hasOwnProperty(tokenData)) {
-                if(tokenData === 'invite_token') {
-                    let invite_token = token.invite_token.token
-                    var element = document.getElementById("show_result");
-                    element.innerHTML=invite_token;
-                    $('#test').show();  
-                    let provider = token.invite_token.user_id.idp;
-                    var element_provider = document.getElementById("provider");
-                    element_provider.innerHTML=provider;
-                    $('#provider').show();
-                }
-            }
+            let element = document.getElementById("show_result");
+            element.innerText = response;
+            $('#test').show();
         }
-    }
     }).fail(function (response, code) {
         alert('The token is invalid')
     });
