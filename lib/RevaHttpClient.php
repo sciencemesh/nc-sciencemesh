@@ -112,14 +112,20 @@ class RevaHttpClient {
 	}
 	
 	public function createShare($user, $params) {
-		if (!isset($params['path'])) {
-			throw new Exception("Missing path", 400);
+		if (!isset($params['sourcePath'])) {
+			throw new \Exception("Missing sourcePath", 400);
+		}
+		if (!isset($params['targetPath'])) {
+			throw new \Exception("Missing targetPath", 400);
+		}
+		if (!isset($params['type'])) {
+			throw new \Exception("Missing type", 400);
 		}
 		if (!isset($params['recipientUsername'])) {
-			throw new Exception("Missing recipientUsername", 400);
+			throw new \Exception("Missing recipientUsername", 400);
 		}
 		if (!isset($params['recipientHost'])) {
-			throw new Exception("Missing recipientHost", 400);
+			throw new \Exception("Missing recipientHost", 400);
 		}
 		return $this->revaPost('send', $user, $params);
 	}

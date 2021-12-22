@@ -70,15 +70,18 @@ class ShareAPIHelper {
 		$share->setPermissions($permissions);
 		$pathParts = explode("/", $node->getPath());
 		$sender = $pathParts[1];
+		$sourceOffset = 3;
 		if ($pathParts[3] == "sciencemesh") {
-			$offset = 4;
+			$targetOffset = 4;
 		} else {
-			$offset = 3;
+			$targetOffset = 3;
 		}
-		$filePath = implode("/", array_slice($pathParts, $offset));
+		$sourcePath = implode("/", array_slice($pathParts, $sourceOffset));
+		$targetPath = "sciencemesh/" . implode("/", array_slice($pathParts, $targetOffset));
 		$shareWithParts = explode("@", $shareWith);
-		$this->revaHttpClient->createShare('einstein', [
-			'path' => $filePath,
+		$this->revaHttpClient->createShare($sender, [
+			'sourcePath' => $sourcePath,
+			'targetPath' => $targetPath,
 			'type' => $node->getType(),
 			'recipientUsername' => $shareWithParts[0],
 			'recipientHost' => $shareWithParts[1]
