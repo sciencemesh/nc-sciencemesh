@@ -16,8 +16,6 @@
     "require": {
         "ext-mbstring": "*",
         "laminas/laminas-diactoros": "^2.4",
-        "league/flysystem": "^1.0",
-        "mjrider/flysystem-factory": "^0.5",
         "psr/http-factory": "^1.0",
         "psr/http-message": "^1.0"
     },

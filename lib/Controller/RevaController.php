@@ -19,7 +19,6 @@ use OCP\IConfig;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotPermittedException;
 use \OCP\Files\NotFoundException;
-use League\Flysystem\FileNotFoundException;
 
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -128,13 +127,10 @@ class RevaController extends Controller {
 		$this->shareProvider = $shareProvider;
 	}
 	private function init($userId) {
+		$this->userId = $userId;
 		$this->checkRevadAuth();
 		error_log("in controller init, getting user folder for $userId");
 		$this->userFolder = $this->rootFolder->getUserFolder($userId);
-		// Create the Nextcloud Adapter
-		$adapter = new NextcloudAdapter($this->userFolder);
-		$this->filesystem = new \League\Flysystem\Filesystem($adapter);
-		$this->baseUrl = $this->getStorageUrl($userId); // Where is that used?
 	}
 
 	private function revaPathToNextcloudPath($revaPath) {
@@ -209,61 +205,39 @@ class RevaController extends Controller {
 		return false;
 	}
 
-	private function nodeInfoToCS3ResourceInfo(array $nodeInfo) : array {
-		$path = $this->nextcloudPathToRevaPath($nodeInfo["path"]);
-		$isDirectory = ($nodeInfo["mimetype"] == "directory");
+	private function nodeToCS3ResourceInfo(array $nodeInfo) : array {
+		$isDirectory = ($node->getType() === \OCP\Files\FileInfo::TYPE_FOLDER);
 		return [
 			"opaque" => [
 				"map" => null,
 			],
 			"type" => ($isDirectory ? 2 : 1),
 			"id" => [
-				"opaque_id" => "fileid-/" . $path,
+				"opaque_id" => "fileid-/" . $this->nextcloudPathToRevaPath($node->getPath()),
 			],
 			"checksum" => [
 				"type" => 0,
 				"sum" => "",
 			],
 			"etag" => "deadbeef",
-			"mime_type" => $nodeInfo["mimetype"],
+			"mime_type" => ($isDirectory ? "folder" : $node->getMimetype()),
 			"mtime" => [
-				"seconds" => 1234567890
+				"seconds" => $node->getMTime(),
 			],
-			"path" => "/" . $path,
+			"path" => $this->nextcloudPathToRevaPath($node->getPath()),
 			"permission_set" => [
-				"add_grant" => false,
-				"create_container" => false,
-				"delete" => false,
-				"get_path" => false,
-				"get_quota" => false,
-				"initiate_file_download" => false,
-				"initiate_file_upload" => false,
-				// "listGrants => false,
-				// "listContainer => false,
-				// "listFileVersions => false,
-				// "listRecycle => false,
-				// "move => false,
-				// "removeGrant => false,
-				// "purgeRecycle => false,
-				// "restoreFileVersion => false,
-				// "restoreRecycleItem => false,
-				// "stat => false,
-				// "updateGrant => false,
-				// "denyGrant => false,
 			],
-			"size" => 12345,
+			"size" => $node->getSize(),
 			"canonical_metadata" => [
 				"target" => null,
 			],
 			"arbitrary_metadata" => [
 				"metadata" => [
-					"some" => "arbi",
-					"trary" => "meta",
-					"da" => "ta",
 				],
 			],
 			"owner" => [
-				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
+				"opaque_id" => $this->userId,
+				"idp" => $this->serverConfig->getIopUrl(),
 			],
 		];
 	}
@@ -271,60 +245,7 @@ class RevaController extends Controller {
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
 	private function shareInfoToResourceInfo(IShare $share): array {
 		return [
-			"id" => [
-				"map" => null,
-			],
-			"resource_id" => [
-				"map" => null,
-			],
-			"permissions" => [
-				"permissions" => [
-					"add_grant" => true,
-					"create_container" => true,
-					"delete" => true,
-					"get_path" => true,
-					"get_quota" => true,
-					"initiate_file_download" => true,
-					"initiate_file_upload" => true,
-					"list_grants" => true,
-					"list_container" => true,
-					"list_file_versions" => true,
-					"list_recycle" => true,
-					"move" => true,
-					"remove_grant" => true,
-					"purge_recycle" => true,
-					"restore_file_version" => true,
-					"restore_recycle_item" => true,
-					"stat" => true,
-					"update_grant" => true,
-					"deny_grant" => true
-				]
-			],
-			"grantee" => [
-				"Id" => [
-					"UserId" => [
-						"idp" => $this->config->getIopUrl(),
-						"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-						"type" => 1
-					]
-				]
-			],
-			"owner" => [
-				"idp" => $this->config->getIopUrl(),
-				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-				"type" => 1
-			],
-			"creator" => [
-				"idp" => $this->config->getIopUrl(),
-				"opaque_id" => "f7fbf8c8-139b-4376-b307-cf0a8c2d0d9c",
-				"type" => 1
-			],
-			"ctime" => [
-				"seconds" => 1234567890
-			],
-			"mtime" => [
-				"seconds" => 1234567890
-			]
+			"todo" => "compile this info from various database tables",
 		];
 	}
 
@@ -438,7 +359,7 @@ class RevaController extends Controller {
 		$this->init($userId);
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		try {
-			$this->filesystem->createDir($path);
+			$this->userFolder->newFolder($path);
 		} catch (NotPermittedException $e) {
 			return new JSONResponse(["error" => "Could not create directory."], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
@@ -545,7 +466,8 @@ class RevaController extends Controller {
 		$this->init($userId);
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		try {
-			$this->filesystem->delete($path);
+			$node = $this->userFolder->get($path);
+			$node->delete($path);
 			return new JSONResponse("OK", Http::STATUS_OK);
 		} catch (FileNotFoundException $e) {
 			return new JSONResponse(["error" => "Failed to delete."], Http::STATUS_INTERNAL_SERVER_ERROR);
@@ -585,10 +507,9 @@ class RevaController extends Controller {
 		$ref = $this->request->getParam("ref");
 		$path = $this->revaPathToNextcloudPath($ref["path"]); // FIXME: normalize incoming path
 		error_log('checking fs has ' . $path);
-		$success = $this->filesystem->has($path);
+		$success = $this->userFolder->nodeExists($path);
 		if ($success) {
-			$nodeInfo = $this->filesystem->getMetaData($path);
-			$resourceInfo = $this->nodeInfoToCS3ResourceInfo($nodeInfo);
+			$resourceInfo = $this->nodeToCS3ResourceInfo($node);
 			return new JSONResponse($resourceInfo, Http::STATUS_OK);
 		}
 		return new JSONResponse(["error" => "File not found"], 404);
@@ -634,14 +555,14 @@ class RevaController extends Controller {
 		$this->init($userId);
 		$ref = $this->request->getParam("ref");
 		$path = $this->revaPathToNextcloudPath($ref["path"]);
-		$success = $this->filesystem->has($path);
+		$success = $this->userFolder->nodeExists($path);
 		if (!$success) {
 			return new JSONResponse(["error" => "Folder not found"], 404);
 		}
-		$nodeInfos = $this->filesystem->listContents($path);
-		$resourceInfos = array_map(function ($nodeInfo) {
-			return $this->nodeInfoToCS3ResourceInfo($nodeInfo);
-		}, $nodeInfos);
+		$nodes = $node->getDirectoryListing();
+		$resourceInfos = array_map(function (\OCP\Files\Node $node) {
+			return $this->nodeToCS3ResourceInfo($node);
+		}, $nodes);
 		return new JSONResponse($resourceInfos, Http::STATUS_OK);
 	}
 
@@ -704,22 +625,6 @@ class RevaController extends Controller {
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		return new JSONResponse("Not implemented",Http::STATUS_NOT_IMPLEMENTED);
 	}
-
-	/**
-	 * @PublicPage
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 * @return Http\DataResponse|JSONResponse
-	 */
-	// public function Move($userId) {
-	// 	$from = $this->request->getParam("from");
-	// 	$to = $this->request->getParam("to");
-	// 	$success = $this->filesystem->move($from, $to);
-	// 	if ($success) {
-	// 		return new JSONResponse("OK", Http::STATUS_OK);
-	// 	}
-	// 	return new JSONResponse(["error" => "Failed to move."], Http::STATUS_INTERNAL_SERVER_ERROR);
-	// }
 
 	/**
 	 * @PublicPage
@@ -814,25 +719,56 @@ class RevaController extends Controller {
 	}
 
 	/**
+	 * Write a new file.
+	 *
+	 * @param string $path
+	 * @param string $contents
+	 * @param Config $config Config object
+	 *
+	 * @return bool false on failure, true on success
+	 *
+	 * @throws \OCP\Files\InvalidPathException
+	 */
+	private function write($path, $contents, Config $config) {
+		try {
+			if ($this->userFolder->nodeExists($path)) {
+				$node = $this->userFolder->get($path);
+				$node->putContent($contents);
+			} else {
+			}
+		} catch (\Exception $e) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function Upload($userId, $path) {
-		$this->init($userId);
-		$contents = $this->request->put;
-		if ($this->filesystem->has("/sciencemesh" . $path)) {
-			if ($this->filesystem->update("/sciencemesh" . $path, $contents)) {
+		try {
+			$this->init($userId);
+			$contents = $this->request->put;
+			if ($this->userFolder->nodeExists($this->revaPathToNextcloudPath($path))) {
+				$node = $this->userFolder->get($path);
+				$node->putContent($contents);
 				return new JSONResponse("OK", Http::STATUS_OK);
+			} else {
+				$filename = basename($path);
+				$dirname = dirname($path);
+				if (!$this->userFolder->nodeExists($dirname)) {
+					$this->userFolder->newFolder($dirname);
+				}
+				$node = $this->userFolder->get($dirname);
+				$node->newFile($filename, $contents);
+				return new JSONResponse("CREATED", Http::STATUS_CREATED);	
 			}
-			return new JSONResponse(["error" => "Update failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
+		} catch (\Exception $e) {
+			return new JSONResponse(["error" => "Upload failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
-
-		if ($this->filesystem->write("/sciencemesh" . $path, $contents)) {
-			return new JSONResponse("CREATED", Http::STATUS_CREATED);
-		}
-		return new JSONResponse(["error" => "Create failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
 	/**
 	 * @PublicPage
