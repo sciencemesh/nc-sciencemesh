@@ -71,13 +71,13 @@ class ShareAPIHelper {
 		$pathParts = explode("/", $node->getPath());
 		$sender = $pathParts[1];
 		$sourceOffset = 3;
-		if ($pathParts[3] == "sciencemesh") {
-			$targetOffset = 4;
-		} else {
-			$targetOffset = 3;
-		}
-		$sourcePath = implode("/", array_slice($pathParts, $sourceOffset));
-		$targetPath = "sciencemesh/" . implode("/", array_slice($pathParts, $targetOffset));
+		$targetOffset = 3;
+		$prefix = "/";
+		$suffix = ($node->getType() == "dir" ? "/" : "");
+
+		// "home" is reva's default work space name, prepending that in the source path:
+		$sourcePath = $prefix . "home/" . implode("/", array_slice($pathParts, $sourceOffset)) . $suffix;
+		$targetPath = $prefix . implode("/", array_slice($pathParts, $targetOffset)) . $suffix;
 		$shareWithParts = explode("@", $shareWith);
 		$this->revaHttpClient->createShare($sender, [
 			'sourcePath' => $sourcePath,

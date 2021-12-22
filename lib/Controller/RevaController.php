@@ -43,6 +43,8 @@ use OCP\Lock\ILockingProvider;
 use OCP\Lock\LockedException;
 use OCP\IL10N;
 
+const RESTRICT_TO_SCIENCEMESH_FOLDER = false;
+
 class RevaController extends Controller {
 
 
@@ -135,6 +137,16 @@ class RevaController extends Controller {
 		$this->baseUrl = $this->getStorageUrl($userId); // Where is that used?
 	}
 
+	private function revaPathToNextcloudPath($revaPath) {
+		$prefix = (RESTRICT_TO_SCIENCEMESH_FOLDER ? 'sciencemesh/' : '');
+    return $prefix . substr($revaPath, 1);
+	}
+
+	private function nextcloudPathToRevaPath($nextcloudPath) {
+		$prefix = (RESTRICT_TO_SCIENCEMESH_FOLDER ? 'sciencemesh/' : '');
+    return '/' . substr($nextcloudPath, strlen($prefix));
+	}
+
 	/**
 	 * @param array $nodeInfo
 	 *
@@ -198,7 +210,7 @@ class RevaController extends Controller {
 	}
 
 	private function nodeInfoToCS3ResourceInfo(array $nodeInfo) : array {
-		$path = substr($nodeInfo["path"], strlen("/sciencemesh"));
+		$path = nextcloudPathToRevaPath($nodeInfo["path"]);
 		$isDirectory = ($nodeInfo["mimetype"] == "directory");
 		return [
 			"opaque" => [
@@ -359,7 +371,7 @@ class RevaController extends Controller {
 	public function AddGrant($userId) {
 		$this->init($userId);
 		
-		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
+		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		// FIXME: Expected a param with a grant to add here;
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -424,7 +436,7 @@ class RevaController extends Controller {
 	 */
 	public function CreateDir($userId) {
 		$this->init($userId);
-		$path = "sciencemesh" . $this->request->getParam("path"); // FIXME: sanitize the input
+		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		try {
 			$this->filesystem->createDir($path);
 		} catch (NotPermittedException $e) {
@@ -442,17 +454,19 @@ class RevaController extends Controller {
 	 */
 	public function CreateHome($userId) {
 		error_log("CreateHome $userId");
-		$this->init($userId);
-		error_log('CreateHome inited');
-		$homeExists = $this->userFolder->nodeExists("sciencemesh");
-		if (!$homeExists) {
-			error_log('CreateHome home does not exist');
-			try {
-				$this->userFolder->newFolder("sciencemesh"); // Create the Sciencemesh directory for storage if it doesn't exist.
-			} catch (NotPermittedException $e) {
-				return new JSONResponse(["error" => "Create home failed. Resource Path not foun"], Http::STATUS_INTERNAL_SERVER_ERROR);
+		if (RESTRICT_TO_SCIENCEMESH_FOLDER) {
+			$this->init($userId);
+			error_log('CreateHome inited');
+			$homeExists = $this->userFolder->nodeExists("sciencemesh");
+			if (!$homeExists) {
+				error_log('CreateHome home does not exist');
+				try {
+					$this->userFolder->newFolder("sciencemesh"); // Create the Sciencemesh directory for storage if it doesn't exist.
+				} catch (NotPermittedException $e) {
+					return new JSONResponse(["error" => "Create home failed. Resource Path not foun"], Http::STATUS_INTERNAL_SERVER_ERROR);
+				}
+				return new JSONResponse("CREATED", Http::STATUS_CREATED);
 			}
-			return new JSONResponse("CREATED", Http::STATUS_CREATED);
 		}
 		error_log('CreateHome nothing to do');
 		return new JSONResponse("OK", Http::STATUS_OK);
@@ -466,7 +480,7 @@ class RevaController extends Controller {
 	 */
 	public function CreateReference($userId) {
 		$this->init($userId);
-		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: normalize incoming path
+		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
@@ -529,7 +543,7 @@ class RevaController extends Controller {
 	 */
 	public function Delete($userId) {
 		$this->init($userId);
-		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: normalize incoming path
+		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		try {
 			$this->filesystem->delete($path);
 			return new JSONResponse("OK", Http::STATUS_OK);
@@ -568,7 +582,7 @@ class RevaController extends Controller {
 	public function GetMD($userId) {
 		$this->init($userId);
 		$ref = $this->request->getParam("ref");
-		$path = "sciencemesh" . $ref["path"]; // FIXME: normalize incoming path
+		$path = $ref["path"]; // FIXME: normalize incoming path
 		$success = $this->filesystem->has($path);
 		if ($success) {
 			$nodeInfo = $this->filesystem->getMetaData($path);
@@ -617,7 +631,7 @@ class RevaController extends Controller {
 	public function ListFolder($userId) {
 		$this->init($userId);
 		$ref = $this->request->getParam("ref");
-		$path = "sciencemesh" . $ref["path"]; // FIXME: sanitize!
+		$path = $this->revaPathToNextcloudPath($ref["path"]);
 		$success = $this->filesystem->has($path);
 		if (!$success) {
 			return new JSONResponse(["error" => "Folder not found"], 404);
@@ -637,7 +651,7 @@ class RevaController extends Controller {
 	 */
 	public function ListGrants($userId) {
 		$this->init($userId);
-		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
+		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		return new JSONResponse("Not implemented",Http::STATUS_NOT_IMPLEMENTED);
 	}
 
@@ -654,7 +668,7 @@ class RevaController extends Controller {
 		$result = [];
 		foreach ($trashItems as $node) {
 			if (preg_match("/^sciencemesh/", $node->getOriginalLocation())) {
-				$path = substr($node->getOriginalLocation(), strlen("sciencemesh"));
+				$path = $this->nextcloudPathToRevaPath($node->getOriginalLocation());
 				$result = [
 					[
 						"opaque" => [
@@ -685,7 +699,7 @@ class RevaController extends Controller {
 	 */
 	public function ListRevisions($userId) {
 		$this->init($userId);
-		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
+		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		return new JSONResponse("Not implemented",Http::STATUS_NOT_IMPLEMENTED);
 	}
 
@@ -713,7 +727,7 @@ class RevaController extends Controller {
 	 */
 	public function RemoveGrant($userId) {
 		$this->init($userId);
-		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
+		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		// FIXME: Expected a grant to remove here;
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -736,7 +750,7 @@ class RevaController extends Controller {
 				// unique key string, see:
 				// https://github.com/cs3org/cs3apis/blob/6eab4643f5113a54f4ce4cd8cb462685d0cdd2ef/cs3/storage/provider/v1beta1/resources.proto#L318
 
-				if ("sciencemesh" . $key == $node->getOriginalLocation()) {
+				if ($this->revaPathToNextcloudPath($key) == $node->getOriginalLocation()) {
 					$this->trashManager->restoreItem($node);
 					return new JSONResponse("OK", Http::STATUS_OK);
 				}
@@ -753,7 +767,7 @@ class RevaController extends Controller {
 	 */
 	public function RestoreRevision($userId) {
 		$this->init($userId);
-		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
+		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		// FIXME: Expected a revision param here;
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -766,7 +780,7 @@ class RevaController extends Controller {
 	 */
 	public function SetArbitraryMetadata($userId) {
 		$this->init($userId);
-		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
+		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		$metadata = $this->request->getParam("metadata");
 		// FIXME: What do we do with the existing metadata? Just toss it and overwrite with the new value? Or do we merge?
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
@@ -780,7 +794,7 @@ class RevaController extends Controller {
 	 */
 	public function UnsetArbitraryMetadata($userId) {
 		$this->init($userId);
-		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
+		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
@@ -792,7 +806,7 @@ class RevaController extends Controller {
 	 */
 	public function UpdateGrant($userId) {
 		$this->init($userId);
-		$path = "sciencemesh" . $this->request->getParam("path") ?: "/"; // FIXME: sanitize
+		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		// FIXME: Expected a paramater with the grant(s)
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -868,7 +882,7 @@ class RevaController extends Controller {
 			);
 		}
 		try {
-			$path = $this->userFolder->get("sciencemesh/".$name);
+			$path = $this->userFolder->get($this->revaPathToNextcloudPath($name));
 		} catch (NotFoundException $e) {
 			return new JSONResponse(["error" => "Share failed. Resource Path not found"], Http::STATUS_BAD_REQUEST);
 		}

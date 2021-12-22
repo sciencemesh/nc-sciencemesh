@@ -110,7 +110,7 @@ class RevaHttpClient {
 		$url = $this->revaUrl . $method;
 		return $this->curlPost($url, $user, $params);
 	}
-	
+
 	public function createShare($user, $params) {
 		if (!isset($params['sourcePath'])) {
 			throw new \Exception("Missing sourcePath", 400);
@@ -127,8 +127,12 @@ class RevaHttpClient {
 		if (!isset($params['recipientHost'])) {
 			throw new \Exception("Missing recipientHost", 400);
 		}
+		$params["loginType"] = "basic";
+		$params["loginUsername"] = $user;
+		$params["loginPassword"] = $this->revaLoopbackSecret;
 		return $this->revaPost('send', $user, $params);
 	}
+
 	public function ocmProvider() {
 		return $this->revaGet('ocm-provider');
 	}
