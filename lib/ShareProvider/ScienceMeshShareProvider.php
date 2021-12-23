@@ -152,6 +152,17 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @throws ShareNotFound
 	 * @throws \Exception
 	 */
+	public function createInternal(IShare $share) {
+		error_log("Suppressing call to ScienceMeshShareProvider#create to avoid creating the outgoing share twice");
+	}
+	/**
+	 * Share a path
+	 *
+	 * @param IShare $share
+	 * @return IShare The share object
+	 * @throws ShareNotFound
+	 * @throws \Exception
+	 */
 	public function create(IShare $share) {
 		$shareWith = $share->getSharedWith();
 		$itemSource = $share->getNodeId();
@@ -165,6 +176,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		 */
 		//$alreadyShared = $this->getSharedWith($shareWith, $this::SHARE_TYPE_SCIENCEMESH, $share->getNode(), 1, 0);
 		$alreadyShared = $this->getSharedWith($shareWith, 14, $share->getNode(), 1, 0);
+		error_log("alreadyShared? " . json_encode($alreadyShared));
 		if (!empty($alreadyShared)) {
 			$message = 'Sharing %1$s failed, because this item is already shared with %2$s';
 			$message_t = $this->l->t('Sharing %1$s failed, because this item is already shared with user %2$s', [$share->getNode()->getName(), $shareWith]);
@@ -854,8 +866,8 @@ class ScienceMeshShareProvider implements IShareProvider {
 			$shares[] = $this->createShareObject($data);
 		}
 		$cursor->closeCursor();
-
-
+    $nodeId = $node->getId();
+    error_log("getSharedWith($userId, $shareType, $nodeId, $limit, $offset) returns: " . json_encode($shares));
 		return $shares;
 	}
 

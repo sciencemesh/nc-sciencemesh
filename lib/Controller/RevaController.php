@@ -833,7 +833,7 @@ class RevaController extends Controller {
 		$share->setSharedWith($shareWith);
 		$share->setShareOwner($userId);
 		$share->setPermissions($permissions);
-		$this->shareProvider->create($share);
+		$this->shareProvider->createInternal($share);
 		$response = $this->shareInfoToResourceInfo($share);
 		return new JSONResponse($response, Http::STATUS_CREATED);
 	}
@@ -948,6 +948,7 @@ class RevaController extends Controller {
 			]
 		];
 		error_log("Responding 201");
+		error_log(json_encode($response));
 		return new JSONResponse($response, 201);
 	}
 
