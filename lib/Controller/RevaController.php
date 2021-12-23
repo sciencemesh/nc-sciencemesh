@@ -185,35 +185,21 @@ class RevaController extends Controller {
 		  throw new \OCP\Files\NotPermittedException('Please set an http request header "X-Reva-Secret: <your_shared_secret>"!');
 		}
 	}
-	private function getSharedByOpaqueId($opaqueId) {
-		$opaqueIdDecoded = urldecode($opaqueId);
-		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
-		$sharedBy = substr($opaqueIdExploded[0], strlen("fileid-"));
-		return $sharedBy;
-	}
-	/*
-	* @throws OCSNotFoundException
-	*/
-	private function getNameByOpaqueId($opaqueId) {
-		$opaqueIdDecoded = urldecode($opaqueId);
-		$opaqueIdExploded = explode("/",$opaqueIdDecoded);
-		//$name resource name (e.g. document.odt)
-		$name = end($opaqueIdExploded);
-		if ($name) {
-			return $name;
-		}
-		return false;
+	private function getRevaPathFromOpaqueId($opaqueId) {
+		return substr($opaqueId, strlen("fileid-"));
 	}
 
-	private function nodeToCS3ResourceInfo(array $nodeInfo) : array {
+	private function nodeToCS3ResourceInfo(\OCP\Files\Node $node) : array {
 		$isDirectory = ($node->getType() === \OCP\Files\FileInfo::TYPE_FOLDER);
+		$nextcloudPath = substr($node->getPath(), strlen($this->userFolder->getPath()) + 1);
+		$revaPath = $this->nextcloudPathToRevaPath($nextcloudPath);
 		return [
 			"opaque" => [
 				"map" => null,
 			],
 			"type" => ($isDirectory ? 2 : 1),
 			"id" => [
-				"opaque_id" => "fileid-/" . $this->nextcloudPathToRevaPath($node->getPath()),
+				"opaque_id" => "fileid-" . $revaPath,
 			],
 			"checksum" => [
 				"type" => 0,
@@ -224,8 +210,15 @@ class RevaController extends Controller {
 			"mtime" => [
 				"seconds" => $node->getMTime(),
 			],
-			"path" => $this->nextcloudPathToRevaPath($node->getPath()),
+			"path" => $revaPath,
 			"permission_set" => [
+				"add_grant" => false,
+				"create_container" => false,
+				"delete" => false,
+				"get_path" => false,
+				"get_quota" => false,
+				"initiate_file_download" => false,
+				"initiate_file_upload" => false,
 			],
 			"size" => $node->getSize(),
 			"canonical_metadata" => [
@@ -233,11 +226,12 @@ class RevaController extends Controller {
 			],
 			"arbitrary_metadata" => [
 				"metadata" => [
+					".placeholder" => "ignore",
 				],
 			],
 			"owner" => [
 				"opaque_id" => $this->userId,
-				"idp" => $this->serverConfig->getIopUrl(),
+				"idp" => $this->config->getIopUrl(),
 			],
 		];
 	}
@@ -509,6 +503,7 @@ class RevaController extends Controller {
 		error_log('checking fs has ' . $path);
 		$success = $this->userFolder->nodeExists($path);
 		if ($success) {
+			$node = $this->userFolder->get($path);
 			$resourceInfo = $this->nodeToCS3ResourceInfo($node);
 			return new JSONResponse($resourceInfo, Http::STATUS_OK);
 		}
@@ -803,16 +798,12 @@ class RevaController extends Controller {
 		$this->init($userId);
 		$granteeIdUserId = $this->request->getParam("g")["grantee"]["Id"]["UserId"];
 		$opaqueId = $this->request->getParam("md")["opaque_id"];
-		$granteeIdUserId = $this->request->getParam("g")["grantee"]["Id"]["UserId"];
 		$permissions = $this->getPermissionsCode($this->request->getParam("g")["permissions"]["permissions"]);
-		$name = $this->getNameByOpaqueId($opaqueId);
 		$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
 		if (
 			!isset($granteeIdUserId) ||
 			!isset($opaqueId) ||
-			!isset($granteeIdUserId) ||
 			!isset($permissions) ||
-			!isset($name) ||
 			!isset($shareWith)
 		) {
 			return new JSONResponse(
@@ -820,21 +811,24 @@ class RevaController extends Controller {
 			);
 		}
 		try {
-			$path = $this->userFolder->get($this->revaPathToNextcloudPath($name));
+			$revaPath = $this->getRevaPathFromOpaqueId($opaqueId);
+			$nextcloudPath = $this->revaPathToNextcloudPath($revaPath);
+			error_log("looking for '$revaPath' aka '$nextcloudPath' in folder of $userId");
+			$node = $this->userFolder->get($nextcloudPath);
 		} catch (NotFoundException $e) {
 			return new JSONResponse(["error" => "Share failed. Resource Path not found"], Http::STATUS_BAD_REQUEST);
 		}
-		if ($this->shareProvider->getSentShareByName($userId,$name)) {
+		if ($this->shareProvider->getSentShareByPath($userId,$nextcloudPath)) {
 			return new JSONResponse(["Already sent this share"], Http::STATUS_ACCEPTED);
 		}
 		$share = $this->shareManager->newShare();
-		$share->setNode($path);
+		$share->setNode($node);
 		try {
 			$this->lock($share->getNode());
 		} catch (LockedException $e) {
 			throw new OCSNotFoundException($this->l->t('Could not create share'));
 		}
-		$share->setShareType(14);//IShare::TYPE_SCIENCEMESH);
+		$share->setShareType(1000);//IShare::TYPE_SCIENCEMESH);
 		$share->setSharedBy($userId);
 		$share->setSharedWith($shareWith);
 		$share->setShareOwner($userId);
@@ -888,14 +882,14 @@ class RevaController extends Controller {
 		$mtime = $this->request->getParam("md")["mtime"] ?? 0;
 		$ctime = $this->request->getParam("md")["ctime"] ?? 0;
 		$sharedSecret = $this->request->getParam("protocol")["options"]["sharedSecret"] || '';
-		$name = $this->getNameByOpaqueId($opaqueId);
-		$sharedBy = $this->getSharedByOpaqueId($opaqueId);
+		// $name = $this->getNameByOpaqueId($opaqueId);
+		// $sharedBy = $this->shareProvider->getShareByOpaqueId($opaqueId);
 		if (
 			!isset($providerDomain) ||
 			!isset($providerId) ||
 			!isset($opaqueId) ||
-			!isset($name) ||
-			!isset($sharedBy) ||
+			// !isset($name) ||
+			// !isset($sharedBy) ||
 			!isset($userId)
 		) {
 			return new JSONResponse(
@@ -903,7 +897,7 @@ class RevaController extends Controller {
 				Http::STATUS_BAD_REQUEST
 			);
 		}
-		error_log("line 954". $providerDomain . ' $providerId: ' . $providerId . ' $opaqueId: ' . $opaqueId . ' $name: ' . $name . ' $sharedBy: ' . $sharedBy . ' $userId: ' . $userId);
+		error_log("line 954". $providerDomain . ' $providerId: ' . $providerId . ' $opaqueId: ' . $opaqueId . ' $userId: ' . $userId);
 		try {
 			if ($this->shareProvider->getReceivedShareByToken($opaqueId)) {
 				return new JSONResponse(["Already received this share"], Http::STATUS_ACCEPTED);
@@ -927,8 +921,8 @@ class RevaController extends Controller {
 			$providerId,
 			$opaqueId,
 			$sharedSecret,
-			$name,
-			$sharedBy,
+			"(name)",
+			"(sharedBy)",
 			$userId
 		];
 		error_log("Calling this->shareProvider->addScienceMeshShare");

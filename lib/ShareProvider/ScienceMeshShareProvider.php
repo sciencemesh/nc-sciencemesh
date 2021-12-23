@@ -1334,12 +1334,12 @@ class ScienceMeshShareProvider implements IShareProvider {
 			return true;
 		}
 	}
-	public function getSentShareByName($userId, $name) {
+	public function getSentShareByPath($userId, $path) {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->select('fileid')
 			->from('filecache')
 			->where(
-				$qb->expr()->eq('name', $qb->createNamedParameter($name))
+				$qb->expr()->eq('path', $qb->createNamedParameter($path))
 			);
 		$cursor = $qb->execute();
 		$data = $cursor->fetch();
@@ -1392,7 +1392,9 @@ class ScienceMeshShareProvider implements IShareProvider {
 		if (!$data) {
 			return false;
 		}
+		// FIXME: side effect?
 		$res = $external?$this->createScienceMeshExternalShare($data):$this->createScienceMeshShare($data);
+		return $res;
 	}
 
 	public function addScienceMeshUser($user) {
@@ -1424,6 +1426,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 
 	public function addScienceMeshShare($scienceMeshData, $shareData) {
 		if ($scienceMeshData['is_external']) {
+			// 	public function addReceivedShareToDB($remote, $remote_id, $share_token, $password, $name, $owner, $user) {
 			$scienceMeshData['foreign_id'] = $this->addReceivedShareToDB(...$shareData);
 		} else {
 			$scienceMeshData['foreign_id'] = $this->createScienceMeshShare($shareData);
@@ -1453,9 +1456,9 @@ class ScienceMeshShareProvider implements IShareProvider {
 			->setParameter(0, $opaqueId)
 			->setParameter(1, $resourceId)
 			->setParameter(2,  $permissions)
-			->setParameter(3,  $grantee)
-			->setParameter(4,  $grantee) // FIXME
-			->setParameter(5,  $grantee) // FIXME
+			->setParameter(3,  $grantee || 0)
+			->setParameter(4,  $grantee || 0) // FIXME
+			->setParameter(5,  $grantee || 0) // FIXME
 			->setParameter(6,  $scienceMeshData['is_external'])
 			->setParameter(7,  $scienceMeshData['foreign_id'])
 			->setParameter(8,  $scienceMeshData['ctime'])
