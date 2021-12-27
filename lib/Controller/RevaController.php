@@ -845,111 +845,41 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function addReceivedShare($userId) {
-		error_log("line 902");
-		$this->init($userId);
-		$providerDomain = $this->request->getParam("provider_domain");
-		$providerId = $this->request->getParam("provider_id");
-		$opaqueId = $this->request->getParam("md")["opaque_id"];
-		$resourceId = $this->request->getParam("md")["resource_id"] ?? '';
-		$permissionJson = $this->request->getParam("md")["permissions"] ?? '';
-		if ($permissionJson != '') {
-			$permissions = ScienceMeshSharePermissions::fromJson($permissionJson);
-		} else {
-			$permissions = new ScienceMeshSharePermissions();
-		}
-		error_log("line 914");
-		$permissionCode = $permissions->getCode();
-		$grantee = null;
-		$owner = null;
-		$creator = null;
-		$granteeArray = $this->request->getParam("g")["grantee"]["Id"]["UserId"] ?? '';
-		if ($granteeArray != '') {
-			$granteeArray["type"] = 1;
-			error_log('instantiating user '.json_encode($granteeArray));
-			$grantee = ScienceMeshUserId::fromArray($granteeArray);
-		}
-		$ownerArray = $this->request->getParam("md")["owner"] ?? '';
-		if ($ownerArray != '') {
-			error_log('instantiating owner '.json_encode($ownerArray));
-			$owner = ScienceMeshUserId::fromArray($ownerArray);
-		}
-		$creatorArray = $this->request->getParam("md")["creator"] ?? '';
-		if ($creatorArray != '') {
-			error_log('instantiating creator '.json_encode($creatorArray));
-			$creator = ScienceMeshUserId::fromArray($creatorArray);
-		}
-		error_log("line 935");
-		$mtime = $this->request->getParam("md")["mtime"] ?? 0;
-		$ctime = $this->request->getParam("md")["ctime"] ?? 0;
-		$sharedSecret = $this->request->getParam("protocol")["options"]["sharedSecret"] || '';
-		// $name = $this->getNameByOpaqueId($opaqueId);
-		// $sharedBy = $this->shareProvider->getShareByOpaqueId($opaqueId);
-		if (
-			!isset($providerDomain) ||
-			!isset($providerId) ||
-			!isset($opaqueId) ||
-			// !isset($name) ||
-			// !isset($sharedBy) ||
-			!isset($userId)
-		) {
-			return new JSONResponse(
-				['message' => 'Missing arguments: $providerDomain: ' . $providerDomain . ' $providerId: ' . $providerId . ' $opaqueId: ' . $opaqueId . ' $name: ' . $name . ' $sharedBy: ' . $sharedBy . ' $userId: ' . $userId],
-				Http::STATUS_BAD_REQUEST
-			);
-		}
-		error_log("line 954". $providerDomain . ' $providerId: ' . $providerId . ' $opaqueId: ' . $opaqueId . ' $userId: ' . $userId);
-		try {
-			if ($this->shareProvider->getReceivedShareByToken($opaqueId)) {
-				return new JSONResponse(["Already received this share"], Http::STATUS_ACCEPTED);
-			}
-		} catch (ShareNotFound $e) {
-		}
-		$scienceMeshData = [
-			'opaque_id' => $opaqueId,
-			'resource_id' => $resourceId,
-			'permissions' => $permissionCode,
-			'is_external' => true,
-			'mtime' => $mtime,
-			'ctime' => $ctime
-		];
-
-		isset($grantee) && $scienceMeshData['grantee'] = $grantee;
-		isset($owner) && $scienceMeshData['owner'] = $owner;
-		isset($creator) && $scienceMeshData['creator'] = $creator;
+		error_log("addReceivedShare");
+		$params = $this->request->getParams();
+		error_log(var_export($params, true));
+		error_log("Have what we need?");
 		$shareData = [
-			$providerDomain,
-			$providerId,
-			$opaqueId,
-			$sharedSecret,
-			"(name)",
-			"(sharedBy)",
-			$userId
+			"remote" => $params["share"]["owner"]["idp"], // FIXME: 'nc1.docker' -> 'https://nc1.docker/'
+			"remote_id" =>  $params["share"]["resourceId"]["opaqueId"], // FIXME: '101.000000' -> 101
+			"share_token" => $params["share"]["grantee"]["opaque"]["map"]["token"]["value"], // 'tDPRTrLI4hE3C5T'
+			"password" => "",
+			"name" => $params["share"]["name"], // '/grfe'
+			"owner" => $params["share"]["owner"]["opaqueId"], // FIXME: 'einstein@https://nc1.docker/' -> 'einstein'
+			"user" => $userId // 'marie'
 		];
-		error_log("Calling this->shareProvider->addScienceMeshShare");
+		error_log(var_export($shareData, true));
+		error_log("share data ok?");
+		$this->init($userId);
+
+		// $permissionJson = $this->request->getParam("md")["permissions"] ?? '';
+		// if ($permissionJson != '') {
+		// 	$permissions = ScienceMeshSharePermissions::fromJson($permissionJson);
+		// } else {
+		// 	$permissions = new ScienceMeshSharePermissions();
+		// }
+		// $permissionCode = $permissions->getCode();
+		// error_log("line 914");
+		// $grantee = null;
+		// $owner = null;
+		
+		$scienceMeshData = [
+			"is_external" => true,
+			// $permissionsCode
+		];
+		
 		$id = $this->shareProvider->addScienceMeshShare($scienceMeshData,$shareData);
-		error_log("Composing response");
-		error_log("Identifier was assigned: '$id'");
-		$response = [
-			"id" => $id,
-			"resource_id" => $opaqueId,
-			"permissions" => $permissions->getArray(),
-			"grantee" => [
-				"Id" => [
-					"UserId" => $grantee->asArray()
-				]
-			],
-			"owner" => $owner?$owner->asArray():[],
-			"creator" => $creator?$creator->asArray():[],
-			"ctime" => [
-				"seconds" => 1234567890
-			],
-			"mtime" => [
-				"seconds" => 1234567890
-			]
-		];
-		error_log("Responding 201");
-		error_log(json_encode($response));
-		return new JSONResponse($response, 201);
+		return new JSONResponse($id, 201);
 	}
 
 	/**

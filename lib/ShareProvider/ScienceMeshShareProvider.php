@@ -401,14 +401,14 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @param int $shareType
 	 * @return int
 	 */
-	public function addReceivedShareToDB($remote, $remote_id, $share_token, $password, $name, $owner, $user) {
-		$share_type = 14;//IShare::TYPE_SCIENCEMESH;
-		$mountpoint = "{{TemporaryMountPointName#" . $name . "}}";
+	public function addReceivedShareToDB($shareData) {
+		$share_type = 1000;//IShare::TYPE_SCIENCEMESH;
+		$mountpoint = "{{TemporaryMountPointName#" . $shareData["name"] . "}}";
 		$mountpoint_hash = md5($mountpoint);
 		$qbt = $this->dbConnection->getQueryBuilder();
 		$qbt->select('*')
 			->from('share_external')
-			->where($qbt->expr()->eq('user', $qbt->createNamedParameter($user)))
+			->where($qbt->expr()->eq('user', $qbt->createNamedParameter($shareData["user"])))
 			->andWhere($qbt->expr()->eq('mountpoint_hash', $qbt->createNamedParameter($mountpoint_hash)));
 		$cursor = $qbt->execute();
 		if ($data = $cursor->fetch()) {
@@ -418,13 +418,13 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->insert('share_external')
 			->setValue('share_type', $qb->createNamedParameter($share_type))
-			->setValue('remote', $qb->createNamedParameter($remote))
-			->setValue('remote_id', $qb->createNamedParameter($remote_id))
-			->setValue('share_token', $qb->createNamedParameter($share_token))
-			->setValue('password', $qb->createNamedParameter($password))
-			->setValue('name', $qb->createNamedParameter($name))
-			->setValue('owner', $qb->createNamedParameter($owner))
-			->setValue('user', $qb->createNamedParameter($user))
+			->setValue('remote', $qb->createNamedParameter($shareData["remote"]))
+			->setValue('remote_id', $qb->createNamedParameter($shareData["remote_id"]))
+			->setValue('share_token', $qb->createNamedParameter($shareData["share_token"]))
+			->setValue('password', $qb->createNamedParameter($shareData["password"]))
+			->setValue('name', $qb->createNamedParameter($shareData["name"]))
+			->setValue('owner', $qb->createNamedParameter($shareData["owner"]))
+			->setValue('user', $qb->createNamedParameter($shareData["user"]))
 			->setValue('mountpoint', $qb->createNamedParameter($mountpoint))
 			->setValue('mountpoint_hash', $qb->createNamedParameter($mountpoint_hash))
 			->setValue('accepted', $qb->createNamedParameter($accepted));
@@ -1438,43 +1438,9 @@ class ScienceMeshShareProvider implements IShareProvider {
 
 	public function addScienceMeshShare($scienceMeshData, $shareData) {
 		if ($scienceMeshData['is_external']) {
-			// 	public function addReceivedShareToDB($remote, $remote_id, $share_token, $password, $name, $owner, $user) {
-			$scienceMeshData['foreign_id'] = $this->addReceivedShareToDB(...$shareData);
+			return $this->addReceivedShareToDB($shareData);
 		} else {
-			$scienceMeshData['foreign_id'] = $this->createScienceMeshShare($shareData);
+			return  $this->createScienceMeshShare($shareData);
 		}
-		$opaqueId = $scienceMeshData['opaque_id'];
-		$resourceId = $scienceMeshData['resource_id'];
-		$permissions = $scienceMeshData['permissions'];
-		$grantee = isset($scienceMeshData['grantee'])?$this->addScienceMeshUser($scienceMeshData['grantee']):null;
-		$creator = isset($scienceMeshData['creator'])?$this->addScienceMeshUser($scienceMeshData['creator']):null;
-		$owner = isset($scienceMeshData['owner'])?$this->addScienceMeshUser($scienceMeshData['owner']):null;
-
-		// exit;
-		$qb = $this->dbConnection->getQueryBuilder();
-		$qb->insert('sciencemesh_shares')
-			->values(array(
-				'opaque_id' => '?',
-			  'resource_id' => '?',
-				'permissions' => '?',
-				'grantee' => '?',
-				'creator' => '?',
-				'owner' => '?',
-				'is_external' => '?',
-				'foreign_id' => '?',
-				'ctime' => '?',
-				'mtime' => '?'
-			))
-			->setParameter(0, $opaqueId)
-			->setParameter(1, $resourceId)
-			->setParameter(2,  $permissions)
-			->setParameter(3,  $grantee || 0)
-			->setParameter(4,  $grantee || 0) // FIXME
-			->setParameter(5,  $grantee || 0) // FIXME
-			->setParameter(6,  $scienceMeshData['is_external'])
-			->setParameter(7,  $scienceMeshData['foreign_id'])
-			->setParameter(8,  $scienceMeshData['ctime'])
-			->setParameter(9,  $scienceMeshData['mtime'])
-			->execute();
 	}
 }
