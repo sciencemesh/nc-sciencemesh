@@ -238,6 +238,7 @@ class RevaController extends Controller {
 
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
 	private function shareInfoToResourceInfo(IShare $share): array {
+		error_log("FIXME: shareInfoToResourceInfo not implemented");
 		return [
 			"todo" => "compile this info from various database tables",
 		];
@@ -796,30 +797,43 @@ class RevaController extends Controller {
 	 */
 	public function addSentShare($userId) {
 		$this->init($userId);
-		$granteeIdUserId = $this->request->getParam("g")["grantee"]["Id"]["UserId"];
-		$opaqueId = $this->request->getParam("md")["opaque_id"];
-		$permissions = $this->getPermissionsCode($this->request->getParam("g")["permissions"]["permissions"]);
-		$shareWith = $granteeIdUserId["opaque_id"]."@".$granteeIdUserId["idp"];
-		if (
-			!isset($granteeIdUserId) ||
-			!isset($opaqueId) ||
-			!isset($permissions) ||
-			!isset($shareWith)
-		) {
-			return new JSONResponse(
-				['message' => 'Missing arguments'],Http::STATUS_BAD_REQUEST
-			);
-		}
+		$params = $this->request->getParams();
+		$name = $params["name"]; // "fileid-/other/q/f gr"
+		$resourceOpaqueId = $params["resourceId"]["opaqueId"]; // "fileid-/other/q/f gr"
+		$revaPath = $this->getRevaPathFromOpaqueId($resourceOpaqueId); // "/other/q/f gr"
+		$nextcloudPath = $this->revaPathToNextcloudPath($revaPath);
+
+		$revaPermissions = $params["permissions"]["permissions"]; // {"getPath":true, "initiateFileDownload":true, "listContainer":true, "listFileVersions":true, "stat":true}
+		$granteeType = $params["grantee"]["type"]; // "GRANTEE_TYPE_USER"
+		$granteeHost = $params["grantee"]["userId"]["idp"]; // "revanc2.docker"
+		$granteeUser = $params["grantee"]["userId"]["opaqueId"]; // "marie"
+
+		$nextcloudPermissions = $this->getPermissionsCode($revaPermissions);
+		$shareWith = $granteeUser."@".$granteeHost;
+		$sharedSecretBase64 = $params["grantee"]["opaque"]["map"]["sharedSecret"]["value"];
+    $sharedSecret = base64_decode($sharedSecretBase64);
+
+		error_log("this is what we reckon:");
+		error_log(var_export([
+			"params" => $params,
+			"name" => $name,
+			"revaPath" => $revaPath,
+			"nextcloudPath" => $nextcloudPath,
+			"revaPermissions" => $revaPermissions,
+			"nextcloudPermissions" => $nextcloudPermissions,
+			"granteeType" => $granteeType,
+			"granteeHost" => $granteeHost,
+			"granteeUser" => $granteeUser,
+      "shareWith" => $shareWith,
+			"sharedSecretBase64" => $sharedSecretBase64,
+			"sharedSecret" => $sharedSecret,
+		], true));
+
 		try {
-			$revaPath = $this->getRevaPathFromOpaqueId($opaqueId);
-			$nextcloudPath = $this->revaPathToNextcloudPath($revaPath);
 			error_log("looking for '$revaPath' aka '$nextcloudPath' in folder of $userId");
 			$node = $this->userFolder->get($nextcloudPath);
 		} catch (NotFoundException $e) {
 			return new JSONResponse(["error" => "Share failed. Resource Path not found"], Http::STATUS_BAD_REQUEST);
-		}
-		if ($this->shareProvider->getSentShareByPath($userId,$nextcloudPath)) {
-			return new JSONResponse(["Already sent this share"], Http::STATUS_ACCEPTED);
 		}
 		$share = $this->shareManager->newShare();
 		$share->setNode($node);
@@ -832,11 +846,13 @@ class RevaController extends Controller {
 		$share->setSharedBy($userId);
 		$share->setSharedWith($shareWith);
 		$share->setShareOwner($userId);
-		$share->setPermissions($permissions);
+		$share->setPermissions($nextcloudPermissions);
 		$this->shareProvider->createInternal($share);
 		$response = $this->shareInfoToResourceInfo($share);
+		error_log("responding:".var_export($response, true));
 		return new JSONResponse($response, Http::STATUS_CREATED);
 	}
+
 	/**
 	 * add a received share
 	 *
@@ -851,11 +867,11 @@ class RevaController extends Controller {
 		error_log("Have what we need?");
 		$shareData = [
 			"remote" => $params["share"]["owner"]["idp"], // FIXME: 'nc1.docker' -> 'https://nc1.docker/'
-			"remote_id" =>  $params["share"]["resourceId"]["opaqueId"], // FIXME: '101.000000' -> 101
-			"share_token" => $params["share"]["grantee"]["opaque"]["map"]["token"]["value"], // 'tDPRTrLI4hE3C5T'
+			"remote_id" =>  base64_decode($params["share"]["grantee"]["opaque"]["remoteShareId"]["value"]), // FIXME: $this->shareProvider->createInternal($share) suppresses, so not getting an id there, see https://github.com/pondersource/sciencemesh-nextcloud/issues/57#issuecomment-1002143104
+			"share_token" => base64_decode($params["share"]["grantee"]["opaque"]["map"]["sharedSecret"]["value"]), // 'tDPRTrLI4hE3C5T'
 			"password" => "",
 			"name" => $params["share"]["name"], // '/grfe'
-			"owner" => $params["share"]["owner"]["opaqueId"], // FIXME: 'einstein@https://nc1.docker/' -> 'einstein'
+			"owner" => $params["share"]["owner"]["opaqueId"], // 'einstein'
 			"user" => $userId // 'marie'
 		];
 		error_log(var_export($shareData, true));
