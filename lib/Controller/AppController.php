@@ -146,7 +146,6 @@ class AppController extends Controller {
 	 */
 	public function invitationsGenerate() {
 		$invitationsData = $this->httpClient->generateTokenFromReva($this->userId);
-		error_log("got invitations data! ".json_encode($invitationsData));
 		$tokenStr = $invitationsData["invite_token"]["token"];
 		$iopUrl = $invitationsData["invite_token"]["user_id"]["idp"];
 		$iopDomain =  parse_url($iopUrl)["host"];

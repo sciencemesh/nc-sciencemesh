@@ -129,7 +129,6 @@ class RevaController extends Controller {
 	private function init($userId) {
 		$this->userId = $userId;
 		$this->checkRevadAuth();
-		error_log("in controller init, getting user folder for $userId");
 		$this->userFolder = $this->rootFolder->getUserFolder($userId);
 	}
 
@@ -180,7 +179,6 @@ class RevaController extends Controller {
 	}
 	private function checkRevadAuth() {
 		$authHeader = $this->request->getHeader('X-Reva-Secret');
-		error_log("Auth header $authHeader");
     if ($authHeader != $this->config->getRevaSharedSecret()) {
 		  throw new \OCP\Files\NotPermittedException('Please set an http request header "X-Reva-Secret: <your_shared_secret>"!');
 		}
@@ -320,7 +318,6 @@ class RevaController extends Controller {
 
     // Ref https://github.com/cs3org/reva/issues/2356
 		if ($password == $this->config->getRevaLoopbackSecret()) {
-			error_log("user " . $userId . " and loopback secret!");
 			$user = $this->userManager->get($userId);
 		} else {
 				$user = $this->userManager->checkPassword($userId, $password);
@@ -369,13 +366,10 @@ class RevaController extends Controller {
 	 * @throws \OCP\Files\NotPermittedException
 	 */
 	public function CreateHome($userId) {
-		error_log("CreateHome $userId");
 		if (RESTRICT_TO_SCIENCEMESH_FOLDER) {
 			$this->init($userId);
-			error_log('CreateHome inited');
 			$homeExists = $this->userFolder->nodeExists("sciencemesh");
 			if (!$homeExists) {
-				error_log('CreateHome home does not exist');
 				try {
 					$this->userFolder->newFolder("sciencemesh"); // Create the Sciencemesh directory for storage if it doesn't exist.
 				} catch (NotPermittedException $e) {
@@ -384,7 +378,6 @@ class RevaController extends Controller {
 				return new JSONResponse("CREATED", Http::STATUS_CREATED);
 			}
 		}
-		error_log('CreateHome nothing to do');
 		return new JSONResponse("OK", Http::STATUS_OK);
 	}
 
@@ -497,11 +490,9 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function GetMD($userId) {
-		error_log('hi there in GetMD');
 		$this->init($userId);
 		$ref = $this->request->getParam("ref");
 		$path = $this->revaPathToNextcloudPath($ref["path"]); // FIXME: normalize incoming path
-		error_log('checking fs has ' . $path);
 		$success = $this->userFolder->nodeExists($path);
 		if ($success) {
 			$node = $this->userFolder->get($path);
@@ -813,24 +804,7 @@ class RevaController extends Controller {
 		$sharedSecretBase64 = $params["grantee"]["opaque"]["map"]["sharedSecret"]["value"];
     $sharedSecret = base64_decode($sharedSecretBase64);
 
-		error_log("this is what we reckon:");
-		error_log(var_export([
-			"params" => $params,
-			"name" => $name,
-			"revaPath" => $revaPath,
-			"nextcloudPath" => $nextcloudPath,
-			"revaPermissions" => $revaPermissions,
-			"nextcloudPermissions" => $nextcloudPermissions,
-			"granteeType" => $granteeType,
-			"granteeHost" => $granteeHost,
-			"granteeUser" => $granteeUser,
-      "shareWith" => $shareWith,
-			"sharedSecretBase64" => $sharedSecretBase64,
-			"sharedSecret" => $sharedSecret,
-		], true));
-
 		try {
-			error_log("looking for '$revaPath' aka '$nextcloudPath' in folder of $userId");
 			$node = $this->userFolder->get($nextcloudPath);
 		} catch (NotFoundException $e) {
 			return new JSONResponse(["error" => "Share failed. Resource Path not found"], Http::STATUS_BAD_REQUEST);
@@ -849,7 +823,6 @@ class RevaController extends Controller {
 		$share->setPermissions($nextcloudPermissions);
 		$this->shareProvider->createInternal($share);
 		$response = $this->shareInfoToResourceInfo($share);
-		error_log("responding:".var_export($response, true));
 		return new JSONResponse($response, Http::STATUS_CREATED);
 	}
 
@@ -861,10 +834,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function addReceivedShare($userId) {
-		error_log("addReceivedShare");
 		$params = $this->request->getParams();
-		error_log(var_export($params, true));
-		error_log("Have what we need?");
 		$shareData = [
 			"remote" => $params["share"]["owner"]["idp"], // FIXME: 'nc1.docker' -> 'https://nc1.docker/'
 			"remote_id" =>  base64_decode($params["share"]["grantee"]["opaque"]["map"]["remoteShareId"]["value"]), // FIXME: $this->shareProvider->createInternal($share) suppresses, so not getting an id there, see https://github.com/pondersource/sciencemesh-nextcloud/issues/57#issuecomment-1002143104
@@ -874,24 +844,10 @@ class RevaController extends Controller {
 			"owner" => $params["share"]["owner"]["opaqueId"], // 'einstein'
 			"user" => $userId // 'marie'
 		];
-		error_log(var_export($shareData, true));
-		error_log("share data ok?");
 		$this->init($userId);
-
-		// $permissionJson = $this->request->getParam("md")["permissions"] ?? '';
-		// if ($permissionJson != '') {
-		// 	$permissions = ScienceMeshSharePermissions::fromJson($permissionJson);
-		// } else {
-		// 	$permissions = new ScienceMeshSharePermissions();
-		// }
-		// $permissionCode = $permissions->getCode();
-		// error_log("line 914");
-		// $grantee = null;
-		// $owner = null;
 		
 		$scienceMeshData = [
 			"is_external" => true,
-			// $permissionsCode
 		];
 		
 		$id = $this->shareProvider->addScienceMeshShare($scienceMeshData,$shareData);

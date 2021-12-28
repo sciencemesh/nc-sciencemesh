@@ -77,7 +77,6 @@ class RevaHttpClient {
 			$output = $verboseLog . $output;
 		}
 		
-		error_log("response ".json_encode($output));
 		return $output;
 	}
 	private function curlPost($url, $user, $params = []) {
@@ -91,13 +90,11 @@ class RevaHttpClient {
 		curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params, JSON_PRETTY_PRINT));
 		if ($this->revaLoopbackSecret) {
-			error_log("POST to Reva $url $user:$this->revaLoopbackSecret ".json_encode($params));
 			curl_setopt($ch, CURLOPT_USERPWD, $user.":".$this->revaLoopbackSecret);
 			curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		}
 		$output = curl_exec($ch);
 		curl_close($ch);
-		error_log("response ".json_encode($output));
 		return $output;
 	}
 
@@ -139,7 +136,6 @@ class RevaHttpClient {
 
 	public function findAcceptedUsers($userId) {
 		$users = $this->revaPost('invites/find-accepted-users', $userId);
-		error_log("accepted users " . $users);
 		return $users;
 	}
 
@@ -152,29 +148,7 @@ class RevaHttpClient {
 	}
 
 	public function generateTokenFromReva($userId) {
-		$tokenFromReva = $this->revaPost('invites/generate', $userId); //params will be empty or not fix me
-		error_log('token from revaPost' . $tokenFromReva);
+		$tokenFromReva = $this->revaPost('invites/generate', $userId);
 		return json_decode($tokenFromReva, true);
 	}
-
-	// public function findAcceptedUsers($user) {
-	// 	$users = $this->revaPost('find-accepted-users', $user);
-	// 	return $users;
-
-	// 	/*
-	// 		$users = [
-	// 			"accepted_users" => [
-	// 				[
-	// 					"id" => [
-	// 						"idp" => "https://revanc2.docker",
-	// 						"opaque_id" => "marie"
-	// 					],
-	// 					"display_name" => "Marie Curie",
-	// 					"mail" => "marie@revanc2.docker"
-	// 				]
-	// 			]
-	// 		];
-	// 		return $users;
-	// 	*/
-	// }
 }
