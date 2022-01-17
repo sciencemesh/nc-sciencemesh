@@ -13,19 +13,10 @@ document.getElementById('elem').onclick = function () {
             var element = document.getElementById("test_1");
             element.innerHTML= 'No connection with reva';
         } else {
-        let token = JSON.parse(response);
-        for(tokenData in token) {
-            if(token.hasOwnProperty(tokenData)) {
-                if(tokenData === 'invite_token') {
-                    let invite_token = token.invite_token.token
-                    var element = document.getElementById("show_result");
-                    const url = new URL(token.invite_token.user_id.idp);
-                    element.innerHTML=invite_token + '@' + url.host;
-                    $('#test').show();  
-                }
-            }
+            var element = document.getElementById("show_result");
+            element.innerHTML = response;
+            $('#test').show();  
         }
-    }
     }).fail(function (response, code) {
         alert('The token is invalid')
     });
