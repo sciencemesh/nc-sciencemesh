@@ -28,7 +28,7 @@
     <navigations>
         <navigation>
             <name>ScienceMesh</name>
-            <route>sciencemesh.app.invitations</route>
+            <route>sciencemesh.app.generate</route>
             <order>10</order>
         </navigation>
     </navigations>

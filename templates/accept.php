@@ -23,6 +23,7 @@ script("sciencemesh", "vendor/simplyedit/simply.everything");
 						<div class="app-content-list-item-menu">
 						 	<div class="icon-add" id="elem"></div>
 						</div>
+						Accept!
 					</div>
 				</div>
 				<div class="app-content-detail">

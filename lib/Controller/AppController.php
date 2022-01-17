@@ -128,10 +128,27 @@ class AppController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
-	public function invitations() {
+	public function generate() {
 		//$invitationsData = $this->generateToken->getGenerateTokenResponse();
 		$invitationsData = [];
-		$templateResponse = new TemplateResponse('sciencemesh', 'invitations', $invitationsData);
+		$templateResponse = new TemplateResponse('sciencemesh', 'generate', $invitationsData);
+		$policy = new ContentSecurityPolicy();
+		$policy->addAllowedStyleDomain("data:");
+		$policy->addAllowedScriptDomain("'self'");
+		$policy->addAllowedScriptDomain("'unsafe-inline'");
+		$policy->addAllowedScriptDomain("'unsafe-eval'");
+		$templateResponse->setContentSecurityPolicy($policy);
+		return $templateResponse;
+	}
+
+	/**
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
+	public function accept() {
+		//$invitationsData = $this->generateToken->getGenerateTokenResponse();
+		$invitationsData = [];
+		$templateResponse = new TemplateResponse('sciencemesh', 'accept', $invitationsData);
 		$policy = new ContentSecurityPolicy();
 		$policy->addAllowedStyleDomain("data:");
 		$policy->addAllowedScriptDomain("'self'");
