@@ -129,16 +129,7 @@ class AppController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function generate() {
-		//$invitationsData = $this->generateToken->getGenerateTokenResponse();
-		$invitationsData = [];
-		$templateResponse = new TemplateResponse('sciencemesh', 'generate', $invitationsData);
-		$policy = new ContentSecurityPolicy();
-		$policy->addAllowedStyleDomain("data:");
-		$policy->addAllowedScriptDomain("'self'");
-		$policy->addAllowedScriptDomain("'unsafe-inline'");
-		$policy->addAllowedScriptDomain("'unsafe-eval'");
-		$templateResponse->setContentSecurityPolicy($policy);
-		return $templateResponse;
+		return new TemplateResponse('sciencemesh', 'generate');
 	}
 
 	/**
@@ -146,16 +137,7 @@ class AppController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function accept() {
-		//$invitationsData = $this->generateToken->getGenerateTokenResponse();
-		$invitationsData = [];
-		$templateResponse = new TemplateResponse('sciencemesh', 'accept', $invitationsData);
-		$policy = new ContentSecurityPolicy();
-		$policy->addAllowedStyleDomain("data:");
-		$policy->addAllowedScriptDomain("'self'");
-		$policy->addAllowedScriptDomain("'unsafe-inline'");
-		$policy->addAllowedScriptDomain("'unsafe-eval'");
-		$templateResponse->setContentSecurityPolicy($policy);
-		return $templateResponse;
+		return new TemplateResponse('sciencemesh', 'accept');
 	}
 
 	/**
