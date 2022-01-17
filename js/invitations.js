@@ -11,7 +11,7 @@ document.getElementById('elem').onclick = function () {
     }).done(function (response) {
         if(response === '' || response === false) {
             var element = document.getElementById("test_1");
-            element.innerHTML= 'Not connection with reva';
+            element.innerHTML= 'No connection with reva';
         } else {
         let token = JSON.parse(response);
         for(tokenData in token) {

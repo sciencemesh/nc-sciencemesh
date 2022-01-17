@@ -49,34 +49,6 @@ class AppController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
-	public function launcher() {
-		$revaClient = new RevaHttpClient();
-		/*
-			$revaResult = $revaClient->createShare(array(
-				"path" => "/share",
-				"recipientUsername" => "marie",
-				"recipientHost" => "localhost:17000"
-			));
-		*/
-		// $revaResult = $revaClient->ocmProvider();
-		$launcherData = [
-			// 	"reva" => json_encode($revaResult, JSON_PRETTY_PRINT)
-		];
-
-		$templateResponse = new TemplateResponse('sciencemesh', 'launcher', $launcherData);
-		$policy = new ContentSecurityPolicy();
-		$policy->addAllowedStyleDomain("data:");
-		$policy->addAllowedScriptDomain("'self'");
-		$policy->addAllowedScriptDomain("'unsafe-inline'");
-		$policy->addAllowedScriptDomain("'unsafe-eval'");
-		$templateResponse->setContentSecurityPolicy($policy);
-		return $templateResponse;
-	}
-
-	/**
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 */
 	public function notifications() {
 		$user = $this->userSession->getUser();
 		//$user = $this->userManager->get("alice");
@@ -156,14 +128,7 @@ class AppController extends Controller {
 	public function contacts() {
 		$contactsData = [
 		];
-		$templateResponse = new TemplateResponse('sciencemesh', 'contacts', $contactsData);
-		$policy = new ContentSecurityPolicy();
-		$policy->addAllowedStyleDomain("data:");
-		$policy->addAllowedScriptDomain("'self'");
-		$policy->addAllowedScriptDomain("'unsafe-inline'");
-		$policy->addAllowedScriptDomain("'unsafe-eval'");
-		$templateResponse->setContentSecurityPolicy($policy);
-		return $templateResponse;
+		return new TemplateResponse('sciencemesh', 'contacts', $contactsData);
 	}
 
 	/**
@@ -183,7 +148,6 @@ class AppController extends Controller {
 	 */
 	public function contactsFindUsers() {
 		$find_users = $this->acceptToken->findAcceptedUsers($this->userId);
-		
 		return new TextPlainResponse($find_users, Http::STATUS_OK);
 	}
 }

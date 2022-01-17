@@ -8,7 +8,7 @@ $.ajax({
 }).done(function (response) {
     if(response === '' || response === false) {
         var element = document.getElementById("test_error");
-        element.innerHTML= 'Not connection with reva';
+        element.innerHTML= 'No connection with reva';
         //$('#test').show(); 
     } else {
     let token = JSON.parse(response);
@@ -16,24 +16,17 @@ $.ajax({
         if(token.hasOwnProperty(tokenData)) {
             if(tokenData === 'accepted_users') {
                 let accepted_users = token.accepted_users
+                console.log('Accepted users', accepted_users)
                 for(accept in accepted_users) {
-                    let result = accepted_users[accept].mail;
-
-                    console.log(accepted_users[accept].id.idp)
+                    const displayName = accepted_users[accept].display_name;
+                    const username = accepted_users[accept].id.opaque_id;
+                    const idp = accepted_users[accept].id.idp;
+                    const provider = new URL(idp).host;
+                    const result = `${displayName} (${username}@${provider})`;
                   
                     var element = document.getElementById("show_result");
                     element.innerHTML=result;
                     $('#test').show();
-
-                    var name = accepted_users[accept].display_name
-
-                    var element_name = document.getElementById("display_name");
-                    element_name.innerHTML=name;
-
-                    var provider = accepted_users[accept].id.idp
-
-                    var element_provider = document.getElementById("provider");
-                    element_provider.innerHTML=provider;
                 }
             }
         } 
@@ -61,7 +54,7 @@ document.getElementById('elem').onclick = function () {
       
        if(response === '' || response === false) {
             var element = document.getElementById("test_error");
-            element.innerHTML= 'Not connection with reva';
+            element.innerHTML= 'No connection with reva';
         } else {
             let result = JSON.parse(response);
             if(result.hasOwnProperty('message')) {
