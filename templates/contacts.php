@@ -15,7 +15,6 @@ style('sciencemesh', 'style');
 						<div class="app-content-list-item-line-one" id="show_result"></div>
 						<div class="icon-delete"></div>
 					</div>
-<<<<<<< HEAD
 					<div href="#" class="app-content-list-item">
 						<!-- div class="app-content-list-item-star icon-starred"></div -->
 						<div class="app-content-list-item-icon" style="background-color: rgb(31, 72, 96);">+</div>
@@ -36,8 +35,6 @@ style('sciencemesh', 'style');
 						<p id="display_name"></p>
 						<p id="provider"></p>
 					</div>
-=======
->>>>>>> dev
 				</div>
 		</div>
 	</div>
