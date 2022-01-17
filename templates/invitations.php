@@ -12,25 +12,17 @@ script("sciencemesh", "vendor/simplyedit/simply.everything");
 		
 		<div id="app-content-wrapper" class="viewcontainer">
 				<div class="app-content-list">
-					
-					<div href="#" class="app-content-list-item" id="elem">
-						<div class="app-content-list-item-icon" style="background-color: rgb(31, 72, 96);">+</div>
-						<div class="app-content-list-item-line-one">Generate a new token</div>
-						<div class="app-content-list-item-line-two">Tokens are valid for 24 hours</div>
-						<div class="app-content-list-item-menu">
-							<div class="icon-add"></div>
-						</div>
-					</div>
-					<div id="test" href="#" class="app-content-list-item">
+					<div href="#" class="app-content-list-item">
 						<!-- div class="app-content-list-item-star icon-starred"></div -->
-						<div class="app-content-list-item-icon" style="background-color: rgb(151, 72, 96);"></div>
-						<div class="app-content-list-item-line-one" id="show_result"></div>
-						<div class="app-content-list-item-line-two" id="provider"></div>
-						<div class="app-content-list-item-menu">
-							<div class="icon-clippy"></div>
+						<div class="app-content-list-item-icon" style="background-color: rgb(31, 72, 96);">+</div>
+						<!-- div class="app-content-list-item-line-one">Accept an invitation</div -->
+						<div class="app-content-list-item-line-one" >
+							<input id="token" type="text" placeholder="Enter your token here">
+							<input id="providerDomain" type="text" placeholder="and its provider domain">
 						</div>
-						<span class="app-content-list-item-details"></span>
-						<!--<div class="app-content-list-item-line-two">Copy to clipboard</div>-->
+						<div class="app-content-list-item-menu">
+						 	<div class="icon-add" id="elem"></div>
+						</div>
 					</div>
 				</div>
 				<div class="app-content-detail">
