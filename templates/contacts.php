@@ -1,8 +1,6 @@
 <?php
 script('sciencemesh', 'contacts');
 style('sciencemesh', 'style');
-script("sciencemesh", "vendor/simplyedit/simply-edit");
-script("sciencemesh", "vendor/simplyedit/simply.everything");
 ?>
 <div id="app">
 	<div id="app-navigation">
@@ -17,6 +15,7 @@ script("sciencemesh", "vendor/simplyedit/simply.everything");
 						<div class="app-content-list-item-line-one" id="show_result"></div>
 						<div class="icon-delete"></div>
 					</div>
+<<<<<<< HEAD
 					<div href="#" class="app-content-list-item">
 						<!-- div class="app-content-list-item-star icon-starred"></div -->
 						<div class="app-content-list-item-icon" style="background-color: rgb(31, 72, 96);">+</div>
@@ -37,6 +36,8 @@ script("sciencemesh", "vendor/simplyedit/simply.everything");
 						<p id="display_name"></p>
 						<p id="provider"></p>
 					</div>
+=======
+>>>>>>> dev
 				</div>
 		</div>
 	</div>

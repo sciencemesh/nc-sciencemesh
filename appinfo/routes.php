@@ -61,15 +61,15 @@ return [
 		['name' => 'storage#handleDelete', 'url' => '/~{userId}/files/{path}', 'verb' => 'DELETE', 'requirements' => ['path' => '.+']],
 		['name' => 'storage#handleHead', 'url' => '/~{userId}/files/{path}', 'verb' => 'HEAD', 'requirements' => ['path' => '.+']],
 
-		['name' => 'app#invitations', 'url' => '/', 'verb' => 'GET'],
-
-		['name' => 'app#notifications', 'url' => '/notifications', 'verb' => 'GET'],
-		['name' => 'app#invitations', 'url' => '/invitations', 'verb' => 'GET'],
-		['name' => 'app#invitationsGenerate', 'url' => '/invitations/generate', 'verb' => 'GET'],
+		['name' => 'app#generate', 'url' => '/', 'verb' => 'GET'],
+		['name' => 'app#generate', 'url' => '/generate', 'verb' => 'GET'],
+		['name' => 'app#accept', 'url' => '/accept', 'verb' => 'GET'],
 		['name' => 'app#contacts', 'url' => '/contacts', 'verb' => 'GET'],
+		['name' => 'app#settings', 'url' => '/settings', 'verb' => 'GET'],
+
+		['name' => 'app#invitationsGenerate', 'url' => '/invitations/generate', 'verb' => 'GET'],
 		['name' => 'app#contactsAccept', 'url' => '/contacts/accept', 'verb' => 'POST'],
 		['name' => 'app#contactsFindUsers', 'url' => '/contacts/users', 'verb' => 'GET'],
-
 
 		['name' => 'page#get_internal_metrics', 'url' => '/internal_metrics', 'verb' => 'GET'],
 		['name' => 'page#get_metrics', 'url' => '/metrics', 'verb' => 'GET'],
