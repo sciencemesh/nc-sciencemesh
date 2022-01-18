@@ -11,7 +11,7 @@ style('sciencemesh', 'style');
 			<div class="app-content-list">
 				<div href="#" class="app-content-list-item" id="test">
 					<div class="app-content-list-item-icon" style="background-color: rgb(151, 72, 96);">M</div>
-					<div class="app-content-list-item-line-one" id="show_result"></div>
+					<div class="app-content-list-item-line-one" id="show_result" style="font-size: 40%;"></div>
 				</div>
 			</div>
 		</div>
