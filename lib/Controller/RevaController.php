@@ -129,7 +129,9 @@ class RevaController extends Controller {
 	private function init($userId) {
 		$this->userId = $userId;
 		$this->checkRevadAuth();
-		$this->userFolder = $this->rootFolder->getUserFolder($userId);
+		if ($userId) {
+			$this->userFolder = $this->rootFolder->getUserFolder($userId);
+		}
 	}
 
 	private function revaPathToNextcloudPath($revaPath) {
@@ -764,8 +766,9 @@ class RevaController extends Controller {
 	 *
 	 * Get user list.
 	 */
-	public function GetUser($userId) {
-		$this->init($userId);
+	public function GetUser($dummy) {
+		$this->init(false);
+
 		$userToCheck = $this->request->getParam('opaque_id');
 		if ($this->userManager->userExists($userToCheck)) {
 			$user = $this->userManager->get($userToCheck);
