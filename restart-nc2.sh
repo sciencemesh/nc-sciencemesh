@@ -10,4 +10,5 @@ docker exec -it maria2.docker mysql -u root -peilohtho9oTahsuongeeTh7reedahPo1Oh
 docker exec -it maria2.docker mysql -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek nextcloud -e "insert into oc_appconfig (appid, configkey, configvalue) values ('sciencemesh', 'revaSharedSecret', 'shared-secret-2');"
 docker exec -it maria2.docker mysql -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek nextcloud -e "select * from oc_appconfig where appid='sciencemesh';"
 docker exec -it nc2.docker /bin/bash -c "cd apps/sciencemesh && make build"
+sed -i "267 i\ \t\treturn \$share;" apps/files_sharing/lib/External/Manager.php
 docker ps
