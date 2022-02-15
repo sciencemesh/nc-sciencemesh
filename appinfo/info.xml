@@ -1,18 +1,35 @@
 <?xml version="1.0"?>
-<info>
+<info xmlns:xsi= "http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
     <id>sciencemesh</id>
-    <name>Science Mesh</name>
-    <description>This apps connects the site to the Science Mesh</description>
-    <licence>MIT</licence>
-    <author>Hugo Gonzalez Labrador</author>
-    <version>1.1.0</version>
+    <name>ScienceMesh</name>
+    <summary>Connect your Nextcloud server to the ScienceMesh project</summary>
+    <description><![CDATA[# ScienceMesh]]></description>
+    <version>0.0.1</version>
+    <licence>mit</licence>
+    <author homepage="https://sciencemesh.io" >ScienceMesh Community</author>
+    <author mail="support@pondersource.com" homepage="https://pondersource.com" >Stichting Ponder Source</author>
+    <author mail="info@muze.nl" homepage="https://www.muze.nl" >Muze B.V.</author>
+    <author mail="michiel@pondersource.com" >Michiel de Jong (Ponder Source)</author>
+    <author mail="yvo@muze.nl" >Yvo Brevoort (Muze)</author>
+    <author>Triantafullenia Doumani (Ponder Source)</author>
+    <author>Benz Schenk (Ponder Source)</author>
+    <author>Ismoil Shifoev (Ponder Source)</author>
+    <author>Ben Peachey (Muze)</author>
     <namespace>ScienceMesh</namespace>
-    <category>productivity</category>
+    <category>integration</category>
+    <bugs>https://github.com/pondersource/sciencemesh-nextcloud/issues</bugs>
     <dependencies>
-        <owncloud min-version="9.0"/>
-        <owncloud max-version="11.0"/>
+        <nextcloud min-version="15" max-version="25"/>
     </dependencies>
     <settings>
-        <admin>OCA\Sciencemesh\AdminSettings</admin>
+        <admin>OCA\ScienceMesh\Settings</admin>
     </settings>
+    <navigations>
+        <navigation>
+            <name>ScienceMesh</name>
+            <route>sciencemesh.app.generate</route>
+            <order>10</order>
+        </navigation>
+    </navigations>
 </info>

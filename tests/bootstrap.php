@@ -1,12 +1,19 @@
 <?php
-/**
- * ownCloud - sciencemesh
- *
- * This file is licensed under the MIT License. See the COPYING file.
- *
- * @author Hugo Gonzalez Labrador <github@hugo.labkode.com>
- * @copyright Hugo Gonzalez Labrador 2020
- */
 
-require_once __DIR__ . '/../../../tests/bootstrap.php';
-require_once __DIR__ . '/../appinfo/autoload.php';
+if (!defined('PHPUNIT_RUN')) {
+	define('PHPUNIT_RUN', 1);
+}
+
+require_once __DIR__.'/../../../lib/base.php';
+
+// Fix for "Autoload path not allowed: .../tests/lib/testcase.php"
+\OC::$loader->addValidRoot(OC::$SERVERROOT . '/tests');
+
+// Fix for "Autoload path not allowed: .../sciencemesh/tests/testcase.php"
+\OC_App::loadApp('sciencemesh');
+
+if (!class_exists('PHPUnit_Framework_TestCase')) {
+	require_once('PHPUnit/Autoload.php');
+}
+
+OC_Hook::clear();

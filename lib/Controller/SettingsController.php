@@ -60,7 +60,11 @@ class SettingsController extends Controller
 
 	/**
 	 * Print config section
-	 *
+	 * FIXME: https://github.com/pondersource/nc-sciencemesh/issues/215
+	 * Listing is OK, but changing these settings
+	 * should probably really require Nextcloud server admin permissions!
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
 	 * @return TemplateResponse
 	 */
 	public function index()

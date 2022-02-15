@@ -3,7 +3,7 @@
 # @author Bernhard Posselt <dev@bernhard-posselt.com>
 # @copyright Bernhard Posselt 2016
 
-# Generic Makefile for building and packaging an ownCloud app which uses npm and
+# Generic Makefile for building and packaging a Nextcloud app which uses npm and
 # Composer.
 #
 # Dependencies:
@@ -53,6 +53,15 @@ all: build
 # Fetches the PHP and JS dependencies and compiles the JS. If no composer.json
 # is present, the composer step is skipped, if no package.json or js/package.json
 # is present, the npm step is skipped
+
+.PHONY: lint-check
+lint-check:
+	$(CURDIR)/vendor/bin/php-cs-fixer fix --dry-run --diff
+
+.PHONY: lint-fix
+lint-fix:
+	$(CURDIR)/vendor/bin/php-cs-fixer fix
+
 .PHONY: build
 build:
 ifneq (,$(wildcard $(CURDIR)/composer.json))
@@ -75,12 +84,10 @@ ifeq (, $(composer))
 	curl -sS https://getcomposer.org/installer | php
 	mv composer.phar $(build_tools_directory)
 	php $(build_tools_directory)/composer.phar install --prefer-dist
-	php $(build_tools_directory)/composer.phar update --prefer-dist
 else
 	composer install --prefer-dist
-	composer update --prefer-dist
 endif
-
+	-git apply --directory=vendor/phpunit/php-code-coverage phpunit.patch
 # Installs npm dependencies
 .PHONY: npm
 npm:
@@ -101,7 +108,6 @@ clean:
 distclean: clean
 	rm -rf vendor
 	rm -rf node_modules
-	rm -rf js/vendor
 	rm -rf js/node_modules
 
 # Builds the source and appstore package
@@ -128,8 +134,7 @@ source:
 appstore:
 	rm -rf $(appstore_build_directory)
 	mkdir -p $(appstore_build_directory)
-	tar cvzf $(appstore_package_name).tar.gz ../$(app_name) \
-	--exclude-vcs \
+	tar cvzf $(appstore_package_name).tar.gz ../$(app_name)	
 	--exclude="../$(app_name)/build" \
 	--exclude="../$(app_name)/tests" \
 	--exclude="../$(app_name)/Makefile" \
@@ -150,25 +155,15 @@ appstore:
 	--exclude="../$(app_name)/protractor\.*" \
 	--exclude="../$(app_name)/.*" \
 	--exclude="../$(app_name)/js/.*" \
+	--exclude-vcs \
+	
+.PHONY: coverage
+coverage:
+	XDEBUG_MODE=coverage ./vendor/bin/phpunit --coverage-text
 
-# Command for running JS and PHP tests. Works for package.json files in the js/
-# and root directory. If phpunit is not installed systemwide, a copy is fetched
-# from the internet
 .PHONY: test
-test:
-ifneq (,$(wildcard $(CURDIR)/js/package.json))
-	cd js && $(npm) run test
-endif
-ifneq (,$(wildcard $(CURDIR)/package.json))
-	$(npm) run test
-endif
-ifeq (, $(shell which phpunit 2> /dev/null))
-	@echo "No phpunit command available, downloading a copy from the web"
-	mkdir -p $(build_tools_directory)
-	curl -sSL https://phar.phpunit.de/phpunit.phar -o $(build_tools_directory)/phpunit.phar
-	php $(build_tools_directory)/phpunit.phar -c phpunit.xml
-	php $(build_tools_directory)/phpunit.phar -c phpunit.integration.xml
-else
-	phpunit -c phpunit.xml --coverage-clover build/php-unit.clover
-	phpunit -c phpunit.integration.xml --coverage-clover build/php-unit.clover
-endif
+test: composer
+	$(CURDIR)/vendor/bin/phplint ./ --exclude=vendor
+	$(CURDIR)/vendor/phpunit/phpunit/phpunit -c phpunit.xml
+# see https://github.com/pondersource/sciencemesh-nextcloud/issues/51
+# $(CURDIR)/vendor/phpunit/phpunit/phpunit -c phpunit.integration.xml

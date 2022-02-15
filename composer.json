@@ -1,0 +1,31 @@
+{
+    "name": "pondersource/sciencemesh-nextcloud",
+    "description": "ScienceMesh integration in Nextcloud",
+    "type": "project",
+    "license": "MIT",
+    "config": {
+        "platform": {
+            "php": "7.2"
+        }
+    },
+    "authors": [
+        {
+            "name": "Yvo Brevoort"
+        }
+    ],
+    "require": {
+        "ext-mbstring": "*",
+        "laminas/laminas-diactoros": "^2.4",
+        "psr/http-factory": "^1.0",
+        "psr/http-message": "^1.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^5.4",
+        "overtrue/phplint": "^2.0",
+        "nextcloud/coding-standard": "^0.5.0"
+    },
+    "scripts": {
+        "cs:check": "php-cs-fixer fix --dry-run --diff",
+        "cs:fix": "php-cs-fixer fix"
+    }
+}

@@ -1,3 +1,8 @@
-.idea
-launch.sh
-
+composer.lock
+vendor/*
+*~
+.phplint-cache
+tests/coverage
+cov.html/
+.php_cs.cache
+build/tools/composer.phar

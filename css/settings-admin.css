@@ -1,0 +1,16 @@
+.section-sciencemesh label {
+	vertical-align: top;
+	display: block;
+}
+.section-sciencemesh input {
+	width: 100%;
+}
+.section-sciencemesh textarea {
+	width: 100%;
+	height: 240px;
+	font-size: 12px;
+	font-family: monospace;
+}
+.section-sciencemesh p {
+	margin: 1em 0;
+}

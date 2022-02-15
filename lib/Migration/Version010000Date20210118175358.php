@@ -7,7 +7,7 @@ namespace OCA\ScienceMesh\Migration;
 use Closure;
 use OCP\DB\ISchemaWrapper;
 use OCP\Migration\IOutput;
-use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\Types;
 use OCP\Migration\SimpleMigrationStep;
 
 /**
@@ -54,17 +54,17 @@ class Version010000Date20210118175358 extends SimpleMigrationStep {
 			$table->addColumn('iopurl', 'string', [
 				'notnull' => true,
 			]);
-			$table->addColumn('numusers', Type::BIGINT, [
+			$table->addColumn('numusers', Types::BIGINT, [
 				'notnull' => true,
 				'default' => 0,
 				'unsigned' => true,
 			]);
-			$table->addColumn('numfiles', Type::BIGINT, [
+			$table->addColumn('numfiles', Types::BIGINT, [
 				'notnull' => true,
 				'default' => 0,
 				'unsigned' => true,
 			]);
-			$table->addColumn('numstorage', Type::BIGINT, [
+			$table->addColumn('numstorage', Types::BIGINT, [
 				'notnull' => true,
 				'default' => 0,
 				'unsigned' => true,
