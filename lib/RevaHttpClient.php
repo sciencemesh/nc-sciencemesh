@@ -133,16 +133,16 @@ class RevaHttpClient {
 	}
 
 	public function ocmProvider() {
-		return $this->revaGet('ocm-provider');
+		return $this->revaGet('ocm/ocm-provider');
 	}
 
 	public function findAcceptedUsers($userId) {
-		$users = $this->revaPost('invites/find-accepted-users', $userId);
+		$users = $this->revaPost('ocm/invites/find-accepted-users', $userId);
 		return $users;
 	}
 
 	public function getAcceptTokenFromReva($providerDomain, $token, $userId) {
-		$tokenFromReva = $this->revaPost('invites/forward', $userId, [
+		$tokenFromReva = $this->revaPost('ocm/invites/forward', $userId, [
 			'providerDomain' => $providerDomain,
 			'token' => $token
 		]);
@@ -150,7 +150,7 @@ class RevaHttpClient {
 	}
 
 	public function generateTokenFromReva($userId) {
-		$tokenFromReva = $this->revaPost('invites/generate', $userId);
+		$tokenFromReva = $this->revaPost('ocm/invites/generate', $userId);
 		error_log('Got token from reva!' . $tokenFromReva);
 		return json_decode($tokenFromReva, true);
 	}
