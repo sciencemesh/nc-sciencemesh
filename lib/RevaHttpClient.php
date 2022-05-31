@@ -94,6 +94,8 @@ class RevaHttpClient {
 			curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		}
 		$output = curl_exec($ch);
+		$info = curl_getinfo($ch);
+		error_log('curl output:' . var_export($output, true) . ' info: ' . var_export($info, true));
 		curl_close($ch);
 		return $output;
 	}
@@ -149,6 +151,7 @@ class RevaHttpClient {
 
 	public function generateTokenFromReva($userId) {
 		$tokenFromReva = $this->revaPost('invites/generate', $userId);
+		error_log('Got token from reva!' . $tokenFromReva);
 		return json_decode($tokenFromReva, true);
 	}
 }
