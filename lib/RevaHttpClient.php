@@ -129,7 +129,7 @@ class RevaHttpClient {
 		$params["loginType"] = "basic";
 		$params["loginUsername"] = $user;
 		$params["loginPassword"] = $this->revaLoopbackSecret;
-		return $this->revaPost('send', $user, $params);
+		return $this->revaPost('ocm/send', $user, $params);
 	}
 
 	public function ocmProvider() {
