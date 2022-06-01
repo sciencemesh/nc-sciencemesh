@@ -42,7 +42,9 @@ use OCP\Lock\ILockingProvider;
 use OCP\Lock\LockedException;
 use OCP\IL10N;
 
-const RESTRICT_TO_SCIENCEMESH_FOLDER = false;
+define('RESTRICT_TO_SCIENCEMESH_FOLDER', false);
+define('NEXTCLOUD_PREFIX', (RESTRICT_TO_SCIENCEMESH_FOLDER ? 'sciencemesh/' : ''));
+define('REVA_PREFIX', '/home/'); // note the leading slash and the home workspace name
 
 class RevaController extends Controller {
 
@@ -135,13 +137,11 @@ class RevaController extends Controller {
 	}
 
 	private function revaPathToNextcloudPath($revaPath) {
-		$prefix = (RESTRICT_TO_SCIENCEMESH_FOLDER ? 'sciencemesh/' : '');
-    return $prefix . substr($revaPath, 1);
+    return NEXTCLOUD_PREFIX . substr($revaPath, strlen(REVA_PREFIX));
 	}
 
 	private function nextcloudPathToRevaPath($nextcloudPath) {
-		$prefix = (RESTRICT_TO_SCIENCEMESH_FOLDER ? 'sciencemesh/' : '');
-    return '/' . substr($nextcloudPath, strlen($prefix));
+    return REVA_PREFIX . substr($nextcloudPath, strlen(NEXTCLOUD_PREFIX));
 	}
 
 	/**
