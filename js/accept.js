@@ -40,3 +40,14 @@ document.getElementById('elem').onclick = function () {
         //alert('The token is invalid')
     });
 };
+function checkQueryString() {
+  const params = new Proxy(new URLSearchParams(window.location.search), {
+    get: (searchParams, prop) => searchParams.get(prop),
+  });
+  if ((typeof params.token == 'string') && (params.token.length > 0) &&
+    (typeof params.providerDomain == 'string') && (params.providerDomain.length > 0)) {
+    document.getElementById('token').value = `${params.token}@${params.providerDomain}`;
+  }
+}
+// ...
+checkQueryString();
