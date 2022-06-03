@@ -14,8 +14,7 @@ document.getElementById('elem').onclick = function () {
             element.innerHTML= 'No connection with reva';
         } else {
             let element = document.getElementById("show_result");
-            let parts = response.split('@');
-            element.innerText = `https://sciencemesh.cesnet.cz/iop/meshdir/?token={parts[0]}&providerDomain={parts[1]}`;
+            element.innerText = `<a href="${response}">${response}</a>`;
             $('#test').show();
         }
     }).fail(function (response, code) {
