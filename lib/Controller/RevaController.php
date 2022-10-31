@@ -492,9 +492,16 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function GetMD($userId) {
+		error_log("GetMD!");
 		$this->init($userId);
 		$ref = $this->request->getParam("ref");
 		$path = $this->revaPathToNextcloudPath($ref["path"]); // FIXME: normalize incoming path
+		error_log("Looking for $path in user folder");
+		$dirContents = $this->userFolder->getDirectoryListing();
+		$paths = array_map(function (\OCP\Files\Node $node) {
+			return $node->getPath();
+		}, $dirContents);
+		error_log("User folder has: " . implode(",", $paths));
 		$success = $this->userFolder->nodeExists($path);
 		if ($success) {
 			$node = $this->userFolder->get($path);
@@ -543,11 +550,12 @@ class RevaController extends Controller {
 	public function ListFolder($userId) {
 		$this->init($userId);
 		$ref = $this->request->getParam("ref");
-		$path = $this->revaPathToNextcloudPath($ref["path"]);
+		$path = $this->revaPathToNextcloudPath((isset($ref["path"]) ? $ref["path"] : ""));
 		$success = $this->userFolder->nodeExists($path);
 		if (!$success) {
 			return new JSONResponse(["error" => "Folder not found"], 404);
 		}
+		$node = $this->userFolder->get($path);
 		$nodes = $node->getDirectoryListing();
 		$resourceInfos = array_map(function (\OCP\Files\Node $node) {
 			return $this->nodeToCS3ResourceInfo($node);
