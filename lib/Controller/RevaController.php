@@ -44,7 +44,7 @@ use OCP\IL10N;
 
 define('RESTRICT_TO_SCIENCEMESH_FOLDER', false);
 define('NEXTCLOUD_PREFIX', (RESTRICT_TO_SCIENCEMESH_FOLDER ? 'sciencemesh/' : ''));
-define('REVA_PREFIX', '/home/'); // note the leading slash and the home workspace name
+define('REVA_PREFIX', '');
 
 class RevaController extends Controller {
 
@@ -137,10 +137,12 @@ class RevaController extends Controller {
 	}
 
 	private function revaPathToNextcloudPath($revaPath) {
+    // return $this->userFolder->getPath() . NEXTCLOUD_PREFIX . substr($revaPath, strlen(REVA_PREFIX));
     return NEXTCLOUD_PREFIX . substr($revaPath, strlen(REVA_PREFIX));
 	}
 
 	private function nextcloudPathToRevaPath($nextcloudPath) {
+    // return REVA_PREFIX . substr($nextcloudPath, strlen($this->userFolder->getPath() . NEXTCLOUD_PREFIX));
     return REVA_PREFIX . substr($nextcloudPath, strlen(NEXTCLOUD_PREFIX));
 	}
 
@@ -496,12 +498,12 @@ class RevaController extends Controller {
 		$this->init($userId);
 		$ref = $this->request->getParam("ref");
 		$path = $this->revaPathToNextcloudPath($ref["path"]); // FIXME: normalize incoming path
-		error_log("Looking for $path in user folder");
+		error_log("Looking for nc path '$path' in user folder; reva path '".$ref["path"]."' ");
 		$dirContents = $this->userFolder->getDirectoryListing();
 		$paths = array_map(function (\OCP\Files\Node $node) {
 			return $node->getPath();
 		}, $dirContents);
-		error_log("User folder has: " . implode(",", $paths));
+		error_log("User folder ".$this->userFolder->getPath()." has: " . implode(",", $paths));
 		$success = $this->userFolder->nodeExists($path);
 		if ($success) {
 			$node = $this->userFolder->get($path);
