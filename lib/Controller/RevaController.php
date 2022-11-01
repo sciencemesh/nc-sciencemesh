@@ -241,11 +241,61 @@ class RevaController extends Controller {
 	}
 
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
-	private function shareInfoToResourceInfo(IShare $share): array {
-		error_log("FIXME: shareInfoToResourceInfo not implemented");
+	private function shareInfoToCs3Share(IShare $share): array {
+		$shareeParts = explode("@", $share->getSharedWith());
+		$ownerParts = explode("@", $share->getShareOwner());
+		$creatorParts = explode("@", $share->getSharedBy());
+		$stime = $share->getShareTime()->getTimeStamp();
 
+		// produces JSON that maps to
+		// https://github.com/cs3org/reva/blob/v1.18.0/pkg/ocm/share/manager/nextcloud/nextcloud.go#L77
+		// and
+		// https://github.com/cs3org/go-cs3apis/blob/d297419/cs3/sharing/ocm/v1beta1/resources.pb.go#L100
 		return [
-			"todo" => "compile this info from various database tables",
+			id => [
+				// https://github.com/cs3org/go-cs3apis/blob/d297419/cs3/sharing/ocm/v1beta1/resources.pb.go#L423
+				opaque_id => $share->getId()
+			],
+			resource_id => [
+			  opaque_id  => "fileid-" . $share->getNode()->getPath(),
+			],
+			permissions => [
+				permissions => [
+					add_grant => false,
+					create_container => false,
+					delete => false,
+					get_path => false,
+					get_quota => false,
+					initiate_file_download => false,
+					initiate_file_upload => false,
+				]
+			],
+			// https://github.com/cs3org/go-cs3apis/blob/d29741980082ecd0f70fe10bd2e98cf75764e858/cs3/storage/provider/v1beta1/resources.pb.go#L897
+			grantee => [
+				type => 1, // https://github.com/cs3org/go-cs3apis/blob/d29741980082ecd0f70fe10bd2e98cf75764e858/cs3/storage/provider/v1beta1/resources.pb.go#L135
+			  id => [
+					opaque_id => $shareeParts[0],
+					idp => $shareeParts[1]
+			  ],
+			],
+			owner => [
+			  id => [
+					opaque_id => $ownerParts[0],
+					idp => $ownerParts[1]
+			  ],
+			],
+			creator => [
+				id => [
+					opaque_id => $creatorParts[0],
+					idp => $creatorParts[1]
+			  ],
+			],
+			ctime => [
+				seconds => $stime
+			],
+			mtime => [
+				seconds => $stime
+			]
 		];
 	}
 
@@ -851,7 +901,7 @@ class RevaController extends Controller {
 		$share->setPermissions($nextcloudPermissions);
 		error_log("calling createInternal");
 		$this->shareProvider->createInternal($share);
-		$response = $this->shareInfoToResourceInfo($share);
+		$response = $this->shareInfoToCs3Share($share);
 		return new JSONResponse($response, Http::STATUS_CREATED);
 	}
 
@@ -927,7 +977,7 @@ class RevaController extends Controller {
 		}
 		$share->setPermissions($permissionsCode);
 		$shareUpdated = $this->shareProvider->update($share);
-		$response = $this->shareInfoToResourceInfo($shareUpdated);
+		$response = $this->shareInfoToCs3Share($shareUpdated);
 		return new JSONResponse($response, Http::STATUS_OK);
 	}
 	/**
@@ -948,7 +998,7 @@ class RevaController extends Controller {
 			$share = $this->shareProvider->getReceivedShareByToken($resourceId);
 			$share->setPermissions($permissionsCode);
 			$shareUpdate = $this->shareProvider->UpdateReceivedShare($share);
-			$response = $this->shareInfoToResourceInfo($shareUpdate);
+			$response = $this->shareInfoToCs3Share($shareUpdate);
 			$response["state"] = 2;
 			return new JSONResponse($response, Http::STATUS_OK);
 		} catch (\Exception $e) {
@@ -970,7 +1020,7 @@ class RevaController extends Controller {
 		$shares = $this->shareProvider->getSentShares($userId);
 		if ($shares) {
 			foreach ($shares as $share) {
-				array_push($responses,$this->shareInfoToResourceInfo($share));
+				array_push($responses, $this->shareInfoToCs3Share($share));
 			}
 		}
 		return new JSONResponse($responses, Http::STATUS_OK);
@@ -988,7 +1038,7 @@ class RevaController extends Controller {
 		$shares = $this->shareProvider->getReceivedShares($userId);
 		if ($shares) {
 			foreach ($shares as $share) {
-				$response = $this->shareInfoToResourceInfo($share);
+				$response = $this->shareInfoToCs3Share($share);
 				$response["state"] = 2;
 				array_push($responses, $response);
 			}
@@ -1010,7 +1060,7 @@ class RevaController extends Controller {
 		$name = $this->getNameByOpaqueId($opaqueId);
 		try {
 			$share = $this->shareProvider->getReceivedShareByToken($opaqueId);
-			$response = $this->shareInfoToResourceInfo($share);
+			$response = $this->shareInfoToCs3Share($share);
 			$response["state"] = 2;
 			return new JSONResponse($response, Http::STATUS_OK);
 		} catch (\Exception $e) {
@@ -1033,7 +1083,7 @@ class RevaController extends Controller {
 		$name = $this->getNameByOpaqueId($opaqueId);
 		$share = $this->shareProvider->getSentShareByName($userId,$name);
 		if ($share) {
-			$response = $this->shareInfoToResourceInfo($share);
+			$response = $this->shareInfoToCs3Share($share);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
 		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_BAD_REQUEST);
