@@ -164,6 +164,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @throws \Exception
 	 */
 	public function create(IShare $share) {
+		error_log("SSP create");
 		$shareWith = $share->getSharedWith();
 		$itemSource = $share->getNodeId();
 		$itemType = $share->getNodeType();
@@ -227,8 +228,9 @@ class ScienceMeshShareProvider implements IShareProvider {
 				}
 		*/
 		$shareId = $this->createScienceMeshShare($share);
-
+    error_log("Got shareId $shareId");
 		$data = $this->getRawShare($shareId);
+		error_log("returning share object from raw share");
 		return $this->createShareObject($data);
 	}
 
@@ -241,6 +243,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @throws \Exception
 	 */
 	protected function createScienceMeshShare(IShare $share) {
+		error_log("createScienceMeshShare");
 		$token = "foo"; // $this->tokenHandler->generateToken();
 		$shareId = $this->addSentShareToDB(
 			$share->getNodeId(),
@@ -361,6 +364,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @return int
 	 */
 	private function addSentShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $uidOwner, $permissions, $token, $shareType) {
+    error_log("addSentShareToDB");
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->insert('share')
 			->setValue('share_type', $qb->createNamedParameter($shareType))
@@ -382,7 +386,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 
 		$qb->execute();
 		$id = $qb->getLastInsertId();
-
+    error_log("Created share with id $id");
 		return (int)$id;
 	}
 
@@ -947,7 +951,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		if ($data === false) {
 			throw new ShareNotFound;
 		}
-
+    error_log("getRawShare " . json_encode($data));
 		return $data;
 	}
 
@@ -1378,6 +1382,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		return $share;
 	}
 	public function getShareByOpaqueId($opaqueId) {
+		error_log("getShareByOpaqueId");
 		$qb = $this->dbConnection->getQueryBuilder();
 		$c = $qb->select('is_external')
 			->from('sciencemesh_shares')

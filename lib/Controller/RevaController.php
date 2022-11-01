@@ -44,7 +44,7 @@ use OCP\IL10N;
 
 define('RESTRICT_TO_SCIENCEMESH_FOLDER', false);
 define('NEXTCLOUD_PREFIX', (RESTRICT_TO_SCIENCEMESH_FOLDER ? 'sciencemesh/' : ''));
-define('REVA_PREFIX', '');
+define('REVA_PREFIX', '/home/'); // See https://github.com/pondersource/sciencemesh-php/issues/96#issuecomment-1298656896
 
 class RevaController extends Controller {
 
@@ -129,6 +129,7 @@ class RevaController extends Controller {
 		$this->shareProvider = $shareProvider;
 	}
 	private function init($userId) {
+		error_log("RevaController init");
 		$this->userId = $userId;
 		$this->checkRevadAuth();
 		if ($userId) {
@@ -182,6 +183,7 @@ class RevaController extends Controller {
 		return $date;
 	}
 	private function checkRevadAuth() {
+		error_log("checkRevadAuth");
 		$authHeader = $this->request->getHeader('X-Reva-Secret');
     if ($authHeader != $this->config->getRevaSharedSecret()) {
 		  throw new \OCP\Files\NotPermittedException('Please set an http request header "X-Reva-Secret: <your_shared_secret>"!');
@@ -241,6 +243,21 @@ class RevaController extends Controller {
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
 	private function shareInfoToResourceInfo(IShare $share): array {
 		error_log("FIXME: shareInfoToResourceInfo not implemented");
+		error_log(var_export($share->getId(), true));
+		error_log(var_export($share->getFullId(), true));
+		error_log($share->getNode()->getPath());
+		error_log($share->getNodeType());
+		error_log($share->getShareType());
+		error_log($share->getShareOwner());
+		error_log($share->getSharedWith());
+		error_log($share->getSharedWithDisplayName());
+		error_log($share->getPermissions());
+		error_log($share->getAttributes());
+		error_log($share->getStatus());
+		error_log($share->getNote());
+		error_log($share->getLabel());
+		error_log($share->getExpirationDate());
+
 		return [
 			"todo" => "compile this info from various database tables",
 		];
@@ -287,6 +304,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function AddGrant($userId) {
+		error_log("AddGrant");
 		$this->init($userId);
 		
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
@@ -313,6 +331,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function Authenticate($userId) {
+		error_log("Authenticate");
 		$this->init($userId);
 		$userId = $this->request->getParam("clientID");
 		$password = $this->request->getParam("clientSecret");
@@ -352,6 +371,7 @@ class RevaController extends Controller {
 	 * @throws \OCP\Files\NotPermittedException
 	 */
 	public function CreateDir($userId) {
+		error_log("CreateDir");
 		$this->init($userId);
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		try {
@@ -370,6 +390,7 @@ class RevaController extends Controller {
 	 * @throws \OCP\Files\NotPermittedException
 	 */
 	public function CreateHome($userId) {
+		error_log("CreateHome");
 		if (RESTRICT_TO_SCIENCEMESH_FOLDER) {
 			$this->init($userId);
 			$homeExists = $this->userFolder->nodeExists("sciencemesh");
@@ -392,6 +413,8 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function CreateReference($userId) {
+		error_log("CreateReference");
+
 		$this->init($userId);
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
@@ -404,6 +427,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function CreateStorageSpace($userId) {
+		error_log("CreateStorageSpace");
 		return new JSONResponse([
 			"status" => [
 				"code" => 1,
@@ -455,6 +479,8 @@ class RevaController extends Controller {
 	 * @throws FileNotFoundException
 	 */
 	public function Delete($userId) {
+		error_log("Delete");
+
 		$this->init($userId);
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		try {
@@ -473,6 +499,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function EmptyRecycle($userId) {
+		error_log("EmptyRecycle");
 		$this->init($userId);
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
@@ -494,7 +521,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function GetMD($userId) {
-		error_log("GetMD!");
+		error_log("GetMD");
 		$this->init($userId);
 		$ref = $this->request->getParam("ref");
 		$path = $this->revaPathToNextcloudPath($ref["path"]); // FIXME: normalize incoming path
@@ -800,6 +827,7 @@ class RevaController extends Controller {
 	 * Create a new share in fn with the given access control list.
 	 */
 	public function addSentShare($userId) {
+		error_log("addSentShare");
 		$this->init($userId);
 		$params = $this->request->getParams();
 		$name = $params["name"]; // "fileid-/other/q/f gr"
@@ -822,6 +850,7 @@ class RevaController extends Controller {
 		} catch (NotFoundException $e) {
 			return new JSONResponse(["error" => "Share failed. Resource Path not found"], Http::STATUS_BAD_REQUEST);
 		}
+		error_log("calling newShare");
 		$share = $this->shareManager->newShare();
 		$share->setNode($node);
 		try {
@@ -834,6 +863,7 @@ class RevaController extends Controller {
 		$share->setSharedWith($shareWith);
 		$share->setShareOwner($userId);
 		$share->setPermissions($nextcloudPermissions);
+		error_log("calling createInternal");
 		$this->shareProvider->createInternal($share);
 		$response = $this->shareInfoToResourceInfo($share);
 		return new JSONResponse($response, Http::STATUS_CREATED);
@@ -847,6 +877,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function addReceivedShare($userId) {
+		error_log("addReceivedShare");
 		$params = $this->request->getParams();
 		$shareData = [
 			"remote" => $params["share"]["owner"]["idp"], // FIXME: 'nc1.docker' -> 'https://nc1.docker/'
@@ -876,6 +907,7 @@ class RevaController extends Controller {
 	 * Remove Share from share table
 	 */
 	public function Unshare($userId) {
+		error_log("Unshare");
 		$this->init($userId);
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
@@ -897,6 +929,8 @@ class RevaController extends Controller {
 	 *
 	 */
 	public function UpdateSentShare($userId) {
+		error_log("UpdateSentShare");
+
 		$this->init($userId);
 		$opaqueId = $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
 		$permissions = $this->request->getParam("p")["permissions"];
@@ -918,6 +952,7 @@ class RevaController extends Controller {
 	 * UpdateReceivedShare updates the received share with share state.
 	 */
 	public function UpdateReceivedShare($userId) {
+		error_log("UpdateReceivedShare");
 		$this->init($userId);
 		$response = [];
 		$resourceId = $this->request->getParam("received_share")["share"]["resource_id"];
@@ -943,6 +978,7 @@ class RevaController extends Controller {
 	 * it returns only shares attached to the given resource.
 	 */
 	public function ListSentShares($userId) {
+		error_log("ListSentShares");
 		$this->init($userId);
 		$responses = [];
 		$shares = $this->shareProvider->getSentShares($userId);
@@ -960,6 +996,7 @@ class RevaController extends Controller {
 	 * ListReceivedShares returns the list of shares the user has access.
 	 */
 	public function ListReceivedShares($userId) {
+		error_log("ListReceivedShares");
 		$this->init($userId);
 		$responses = [];
 		$shares = $this->shareProvider->getReceivedShares($userId);
@@ -980,7 +1017,9 @@ class RevaController extends Controller {
 	 * GetReceivedShare returns the information for a received share the user has access.
 	 */
 	public function GetReceivedShare($userId) {
+		error_log("GetReceivedShare");
 		$this->init($userId);
+
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
 		try {
@@ -1001,6 +1040,8 @@ class RevaController extends Controller {
 	 * GetSentShare gets the information for a share by the given ref.
 	 */
 	public function GetSentShare($userId) {
+		error_log("GetSentShare");
+
 		$this->init($userId);
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);

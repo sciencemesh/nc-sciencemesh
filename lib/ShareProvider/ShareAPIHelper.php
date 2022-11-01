@@ -65,6 +65,7 @@ class ShareAPIHelper {
 	}
 	
 	public function createShare($share, $shareWith, $permissions, $expireDate) {
+		error_log("ShareAPIHelper createShare");
 		$node = $share->getNode();
 		$share->setSharedWith($shareWith);
 		$share->setPermissions($permissions);
@@ -79,6 +80,7 @@ class ShareAPIHelper {
 		$sourcePath = $prefix . "home/" . implode("/", array_slice($pathParts, $sourceOffset)) . $suffix;
 		$targetPath = $prefix . implode("/", array_slice($pathParts, $targetOffset)) . $suffix;
 		$shareWithParts = explode("@", $shareWith);
+		error_log("SAH-createShare calling RHC-createShare");
 		$this->revaHttpClient->createShare($sender, [
 			'sourcePath' => $sourcePath,
 			'targetPath' => $targetPath,

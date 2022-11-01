@@ -111,6 +111,7 @@ class RevaHttpClient {
 	}
 
 	public function createShare($user, $params) {
+		error_log("RevaHttpClient createShare");
 		if (!isset($params['sourcePath'])) {
 			throw new \Exception("Missing sourcePath", 400);
 		}
@@ -129,6 +130,7 @@ class RevaHttpClient {
 		$params["loginType"] = "basic";
 		$params["loginUsername"] = $user;
 		$params["loginPassword"] = $this->revaLoopbackSecret;
+		error_log("Calling reva/ocm/send " . json_encode($params));
 		return $this->revaPost('ocm/send', $user, $params);
 	}
 
