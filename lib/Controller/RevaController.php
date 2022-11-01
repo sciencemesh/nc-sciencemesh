@@ -243,20 +243,6 @@ class RevaController extends Controller {
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
 	private function shareInfoToResourceInfo(IShare $share): array {
 		error_log("FIXME: shareInfoToResourceInfo not implemented");
-		error_log(var_export($share->getId(), true));
-		error_log(var_export($share->getFullId(), true));
-		error_log($share->getNode()->getPath());
-		error_log($share->getNodeType());
-		error_log($share->getShareType());
-		error_log($share->getShareOwner());
-		error_log($share->getSharedWith());
-		error_log($share->getSharedWithDisplayName());
-		error_log($share->getPermissions());
-		error_log($share->getAttributes());
-		error_log($share->getStatus());
-		error_log($share->getNote());
-		error_log($share->getLabel());
-		error_log($share->getExpirationDate());
 
 		return [
 			"todo" => "compile this info from various database tables",
