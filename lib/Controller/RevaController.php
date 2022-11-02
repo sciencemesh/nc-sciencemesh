@@ -598,10 +598,11 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function InitiateUpload($userId) {
+		$ref = $this->request->getParam("ref");
+		$path = $this->revaPathToNextcloudPath((isset($ref["path"]) ? $ref["path"] : ""));
 		$this->init($userId);
 		$response = [
-			"simple" => "yes",
-			"tus" => "yes" // FIXME: Not really supporting this;
+			"simple" => $path
 		];
 		return new JSONResponse($response, Http::STATUS_OK);
 	}
@@ -811,6 +812,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function Upload($userId, $path) {
+		error_log("RevaController Upload! $userId $path");
 		try {
 			$this->init($userId);
 			$contents = $this->request->put;
