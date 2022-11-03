@@ -815,7 +815,8 @@ class RevaController extends Controller {
 		error_log("RevaController Upload! $userId $path");
 		try {
 			$this->init($userId);
-			$contents = $this->request->put;
+			$contents = $entityBody = file_get_contents('php://input');
+			// error_log("PUT body = " . var_export($contents, true));
 			if ($this->userFolder->nodeExists($this->revaPathToNextcloudPath($path))) {
 				$node = $this->userFolder->get($path);
 				$node->putContent($contents);
