@@ -138,8 +138,10 @@ class RevaController extends Controller {
 	}
 
 	private function revaPathToNextcloudPath($revaPath) {
+		$ret = NEXTCLOUD_PREFIX . substr($revaPath, strlen(REVA_PREFIX));
+		error_log("Interpreting $revaPath as $ret");
     // return $this->userFolder->getPath() . NEXTCLOUD_PREFIX . substr($revaPath, strlen(REVA_PREFIX));
-    return NEXTCLOUD_PREFIX . substr($revaPath, strlen(REVA_PREFIX));
+    return $ret;
 	}
 
 	private function nextcloudPathToRevaPath($nextcloudPath) {
@@ -812,18 +814,21 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function Upload($userId, $path) {
-		error_log("RevaController Upload! $userId $path");
+		$revaPath = "/$path";
+		error_log("RevaController Upload! $userId $revaPath");
 		try {
 			$this->init($userId);
 			$contents = $entityBody = file_get_contents('php://input');
 			// error_log("PUT body = " . var_export($contents, true));
-			if ($this->userFolder->nodeExists($this->revaPathToNextcloudPath($path))) {
-				$node = $this->userFolder->get($path);
+			error_log("Uploading! $revaPath");
+			$ncPath = $this->revaPathToNextcloudPath($revaPath);
+			if ($this->userFolder->nodeExists($ncPath)) {
+				$node = $this->userFolder->get($ncPath);
 				$node->putContent($contents);
 				return new JSONResponse("OK", Http::STATUS_OK);
 			} else {
-				$filename = basename($path);
-				$dirname = dirname($path);
+				$filename = basename($ncPath);
+				$dirname = dirname($ncPath);
 				if (!$this->userFolder->nodeExists($dirname)) {
 					$this->userFolder->newFolder($dirname);
 				}
