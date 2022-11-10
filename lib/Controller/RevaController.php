@@ -246,57 +246,56 @@ class RevaController extends Controller {
 	private function shareInfoToCs3Share(IShare $share): array {
 		$shareeParts = explode("@", $share->getSharedWith());
 		$ownerParts = explode("@", $share->getShareOwner());
-		$creatorParts = explode("@", $share->getSharedBy());
-		$stime = $share->getShareTime()->getTimeStamp();
+		$stime = 0; // $share->getShareTime()->getTimeStamp();
 
 		// produces JSON that maps to
 		// https://github.com/cs3org/reva/blob/v1.18.0/pkg/ocm/share/manager/nextcloud/nextcloud.go#L77
 		// and
 		// https://github.com/cs3org/go-cs3apis/blob/d297419/cs3/sharing/ocm/v1beta1/resources.pb.go#L100
 		return [
-			id => [
+			"id" => [
 				// https://github.com/cs3org/go-cs3apis/blob/d297419/cs3/sharing/ocm/v1beta1/resources.pb.go#L423
-				opaque_id => $share->getId()
+				"opaque_id" => $share->getId()
 			],
-			resource_id => [
-			  opaque_id  => "fileid-" . $share->getNode()->getPath(),
+			"resource_id" => [
+			  "opaque_id"  => "fileid-" . $share->getNode()->getPath(),
 			],
-			permissions => [
-				permissions => [
-					add_grant => false,
-					create_container => false,
-					delete => false,
-					get_path => false,
-					get_quota => false,
-					initiate_file_download => false,
-					initiate_file_upload => false,
+			"permissions" => [
+				"permissions" => [
+					"add_grant" => false,
+					"create_container" => false,
+					"delete" => false,
+					"get_path" => false,
+					"get_quota" => false,
+					"initiate_file_download" => false,
+					"initiate_file_upload" => false,
 				]
 			],
 			// https://github.com/cs3org/go-cs3apis/blob/d29741980082ecd0f70fe10bd2e98cf75764e858/cs3/storage/provider/v1beta1/resources.pb.go#L897
-			grantee => [
-				type => 1, // https://github.com/cs3org/go-cs3apis/blob/d29741980082ecd0f70fe10bd2e98cf75764e858/cs3/storage/provider/v1beta1/resources.pb.go#L135
-			  id => [
-					opaque_id => $shareeParts[0],
-					idp => $shareeParts[1]
+			"grantee" => [
+				"type" => 1, // https://github.com/cs3org/go-cs3apis/blob/d29741980082ecd0f70fe10bd2e98cf75764e858/cs3/storage/provider/v1beta1/resources.pb.go#L135
+			  "id" => [
+					"opaque_id" => $shareeParts[0],
+					"idp" => $shareeParts[1]
 			  ],
 			],
-			owner => [
-			  id => [
-					opaque_id => $ownerParts[0],
-					idp => $ownerParts[1]
+			"owner" => [
+			  "id" => [
+					"opaque_id" => $ownerParts[0],
+					"idp" => $ownerParts[1]
 			  ],
 			],
-			creator => [
-				id => [
-					opaque_id => $creatorParts[0],
-					idp => $creatorParts[1]
+			"creator" => [
+				"id" => [
+					"opaque_id" => $ownerParts[0],
+					"idp" => $ownerParts[1]
 			  ],
 			],
-			ctime => [
-				seconds => $stime
+			"ctime" => [
+				"seconds" => $stime
 			],
-			mtime => [
-				seconds => $stime
+			"mtime" => [
+				"seconds" => $stime
 			]
 		];
 	}
@@ -874,6 +873,7 @@ class RevaController extends Controller {
 		error_log("addSentShare");
 		$this->init($userId);
 		$params = $this->request->getParams();
+		$owner = $params["owner"]["opaqueId"] . "@" . $params["owner"]["idp"];
 		$name = $params["name"]; // "fileid-/other/q/f gr"
 		$resourceOpaqueId = $params["resourceId"]["opaqueId"]; // "fileid-/other/q/f gr"
 		$revaPath = $this->getRevaPathFromOpaqueId($resourceOpaqueId); // "/other/q/f gr"
@@ -887,7 +887,7 @@ class RevaController extends Controller {
 		$nextcloudPermissions = $this->getPermissionsCode($revaPermissions);
 		$shareWith = $granteeUser."@".$granteeHost;
 		$sharedSecretBase64 = $params["grantee"]["opaque"]["map"]["sharedSecret"]["value"];
-    $sharedSecret = base64_decode($sharedSecretBase64);
+		$sharedSecret = base64_decode($sharedSecretBase64);
 
 		try {
 			$node = $this->userFolder->get($nextcloudPath);
@@ -905,7 +905,7 @@ class RevaController extends Controller {
 		$share->setShareType(1000);//IShare::TYPE_SCIENCEMESH);
 		$share->setSharedBy($userId);
 		$share->setSharedWith($shareWith);
-		$share->setShareOwner($userId);
+		$share->setShareOwner($owner);
 		$share->setPermissions($nextcloudPermissions);
 		error_log("calling createInternal");
 		$this->shareProvider->createInternal($share);
