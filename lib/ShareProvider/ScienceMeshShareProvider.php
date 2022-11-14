@@ -152,8 +152,8 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @throws ShareNotFound
 	 * @throws \Exception
 	 */
-	public function createInternal(IShare $share) {
-		error_log("Suppressing call to ScienceMeshShareProvider#create to avoid creating the outgoing share twice");
+	public function create(IShare $share) {
+		error_log("Suppressing call to ScienceMeshShareProvider#createInternal to avoid creating the outgoing share twice");
 	}
 	/**
 	 * Share a path
@@ -163,7 +163,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @throws ShareNotFound
 	 * @throws \Exception
 	 */
-	public function create(IShare $share) {
+	public function createInternal(IShare $share) {
 		error_log("SSP create");
 		$shareWith = $share->getSharedWith();
 		$itemSource = $share->getNodeId();
