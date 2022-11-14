@@ -245,8 +245,19 @@ class RevaController extends Controller {
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
 	private function shareInfoToCs3Share(IShare $share): array {
 		$shareeParts = explode("@", $share->getSharedWith());
+		if (count($shareeParts) == 1) {
+			$shareeParts = [ "unknown", "unknown" ];
+		}
 		$ownerParts = explode("@", $share->getShareOwner());
+		if (count($ownerParts) == 1) {
+			$ownerParts = [ "unknown", "unknown" ];
+		}
 		$stime = 0; // $share->getShareTime()->getTimeStamp();
+		try {
+		  $opaqueId = "fileid-" . $share->getNode()->getPath();
+		} catch (\OCP\Files\NotFoundException $e) {
+			$opaqueId = "unknown";
+		}
 
 		// produces JSON that maps to
 		// https://github.com/cs3org/reva/blob/v1.18.0/pkg/ocm/share/manager/nextcloud/nextcloud.go#L77
@@ -258,7 +269,8 @@ class RevaController extends Controller {
 				"opaque_id" => $share->getId()
 			],
 			"resource_id" => [
-			  "opaque_id"  => "fileid-" . $share->getNode()->getPath(),
+
+			  "opaque_id"  => $opaqueId,
 			],
 			"permissions" => [
 				"permissions" => [
