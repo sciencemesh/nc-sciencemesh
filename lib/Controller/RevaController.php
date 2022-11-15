@@ -1059,8 +1059,10 @@ class RevaController extends Controller {
 		if ($shares) {
 			foreach ($shares as $share) {
 				$response = $this->shareInfoToCs3Share($share);
-				$response["state"] = 2;
-				array_push($responses, $response);
+				array_push($responses,[
+					"share" => $response,
+					"state" => 2
+				]);
 			}
 		}
 		return new JSONResponse($responses, Http::STATUS_OK);
