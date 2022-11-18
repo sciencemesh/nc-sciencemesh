@@ -153,10 +153,34 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @throws \Exception
 	 */
 	public function create(IShare $share) {
-		error_log("Suppressing call to ScienceMeshShareProvider#create to avoid creating the outgoing share twice (reva will call addSentShare later, which will call createInternal)");
-	  $share->setId('1');
-	  $share->setProviderId('1');
+		error_log("SSP-createShare calling RHC-createShare");
+		$node = $share->getNode();
+		$shareWith = $share->getSharedWith();
+		// $share->setPermissions($permissions);
+		$pathParts = explode("/", $node->getPath());
+		$sender = $pathParts[1];
+		$sourceOffset = 3;
+		$targetOffset = 3;
+		$prefix = "/";
+		$suffix = ($node->getType() == "dir" ? "/" : "");
+
+		// "home" is reva's default work space name, prepending that in the source path:
+		$sourcePath = $prefix . "home/" . implode("/", array_slice($pathParts, $sourceOffset)) . $suffix;
+		$targetPath = $prefix . implode("/", array_slice($pathParts, $targetOffset)) . $suffix;
+		$shareWithParts = explode("@", $shareWith);
+		error_log("SAH-createShare calling RHC-createShare");
+		$this->revaHttpClient->createShare($sender, [
+			'sourcePath' => $sourcePath,
+			'targetPath' => $targetPath,
+			'type' => $node->getType(),
+			'recipientUsername' => $shareWithParts[0],
+			'recipientHost' => $shareWithParts[1]
+		]);
+		error_log("Back in SSP-createShare after RHC-createShare");
+		$share->setId('fixme-get-share-id-from-reva');
+		$share->setProviderId('fixme-fill-in-provider-here');
 		$share->setShareTime(new \DateTime());
+  
 		return $share;
 	}
 	/**
@@ -233,8 +257,10 @@ class ScienceMeshShareProvider implements IShareProvider {
 		*/
 		$shareId = $this->createScienceMeshShare($share);
     error_log("Got shareId $shareId");
+
 		$data = $this->getRawShare($shareId);
 		error_log("returning share object from raw share");
+		
 		return $this->createShareObject($data);
 	}
 
