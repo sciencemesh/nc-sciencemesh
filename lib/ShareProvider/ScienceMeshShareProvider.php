@@ -182,12 +182,12 @@ class ScienceMeshShareProvider implements IShareProvider {
 			'recipientHost' => $shareWithParts[1]
 		]);
 		error_log("Back in SSP-createShare after RHC-createShare");
-		error_log(var_export($response->opaque_id, true));
-		error_log(var_export($response->provider_id, true));
+		error_log(var_export($response->share->id->opaqueId, true));
+		error_log(var_export($response->share->owner->idp, true));
 		// error_log(var_export($response, true));
-		$share->setId($response->opaque_id);
+		$share->setId($response->share->id->opaqueId);
 		error_log("setId done");
-		$share->setProviderId($response->provider_id);
+		$share->setProviderId($response->share->owner->idp);
 		error_log("setProviderId done");
 		$share->setShareTime(new \DateTime());
 		error_log("SSP-createShare done");
