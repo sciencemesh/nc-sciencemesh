@@ -154,6 +154,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 */
 	public function create(IShare $share) {
 		error_log("Suppressing call to ScienceMeshShareProvider#create to avoid creating the outgoing share twice (reva will call addSentShare later, which will call createInternal)");
+	  return $share;
 	}
 	/**
 	 * Share a path

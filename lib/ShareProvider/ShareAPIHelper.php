@@ -88,5 +88,6 @@ class ShareAPIHelper {
 			'recipientUsername' => $shareWithParts[0],
 			'recipientHost' => $shareWithParts[1]
 		]);
+		error_log("Back in SAH-createShare after RHC-createShare");
 	}
 }
