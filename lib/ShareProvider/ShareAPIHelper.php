@@ -66,5 +66,7 @@ class ShareAPIHelper {
 	
 	public function createShare($share, $shareWith, $permissions, $expireDate) {
 		error_log("ShareAPIHelper createShare, doing nothing");
+		$share->setSharedWith($shareWith);
+		$share->setPermissions($permissions);
 	}
 }

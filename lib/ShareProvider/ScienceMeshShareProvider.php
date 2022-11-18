@@ -53,6 +53,7 @@ use OCP\Share\Exceptions\GenericShareException;
 use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IShare;
 use OCP\Share\IShareProvider;
+use OCA\ScienceMesh\RevaHttpClient;
 
 /**
  * Class ScienceMeshShareProvider
@@ -92,6 +93,9 @@ class ScienceMeshShareProvider implements IShareProvider {
 	/** @var array list of supported share types */
 	private $supportedShareType = [1000];
 
+	/** @var RevaHttpClient */
+	private $revaHttpClient;
+
 	/**
 	 * DefaultShareProvider constructor.
 	 *
@@ -122,6 +126,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$this->config = $config;
 		$this->userManager = $userManager;
 		$this->gsConfig = $globalScaleConfig;
+		$this->revaHttpClient = new RevaHttpClient($this->config);
 	}
 
 	/**
@@ -169,7 +174,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$targetPath = $prefix . implode("/", array_slice($pathParts, $targetOffset)) . $suffix;
 		$shareWithParts = explode("@", $shareWith);
 		error_log("SAH-createShare calling RHC-createShare");
-		$this->revaHttpClient->createShare($sender, [
+		$response = $this->revaHttpClient->createShare($sender, [
 			'sourcePath' => $sourcePath,
 			'targetPath' => $targetPath,
 			'type' => $node->getType(),
@@ -177,10 +182,15 @@ class ScienceMeshShareProvider implements IShareProvider {
 			'recipientHost' => $shareWithParts[1]
 		]);
 		error_log("Back in SSP-createShare after RHC-createShare");
-		$share->setId('fixme-get-share-id-from-reva');
-		$share->setProviderId('fixme-fill-in-provider-here');
+		error_log(var_export($response->opaque_id, true));
+		error_log(var_export($response->provider_id, true));
+		// error_log(var_export($response, true));
+		$share->setId($response->opaque_id);
+		error_log("setId done");
+		$share->setProviderId($response->provider_id);
+		error_log("setProviderId done");
 		$share->setShareTime(new \DateTime());
-  
+		error_log("SSP-createShare done");
 		return $share;
 	}
 	/**

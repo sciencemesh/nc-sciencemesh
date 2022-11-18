@@ -131,7 +131,8 @@ class RevaHttpClient {
 		$params["loginUsername"] = $user;
 		$params["loginPassword"] = $this->revaLoopbackSecret;
 		error_log("Calling reva/ocm/send " . json_encode($params));
-		return $this->revaPost('ocm/send', $user, $params);
+		$responseText = $this->revaPost('ocm/send', $user, $params);
+		return json_decode($responseText);
 	}
 
 	public function ocmProvider() {
