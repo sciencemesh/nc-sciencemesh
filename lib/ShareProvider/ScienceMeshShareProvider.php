@@ -445,7 +445,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @return int
 	 */
 	public function addReceivedShareToDB($shareData) {
-		$share_type = 1000;//IShare::TYPE_SCIENCEMESH;
+		$share_type = IShare::TYPE_USER;
 		$mountpoint = "{{TemporaryMountPointName#" . $shareData["name"] . "}}";
 		$mountpoint_hash = md5($mountpoint);
 		$qbt = $this->dbConnection->getQueryBuilder();
