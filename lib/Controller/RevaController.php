@@ -920,9 +920,10 @@ class RevaController extends Controller {
 		$share->setShareOwner($owner);
 		$share->setPermissions($nextcloudPermissions);
 		error_log("calling createInternal");
-		$this->shareProvider->createInternal($share);
-		$response = $this->shareInfoToCs3Share($share);
-		return new JSONResponse($response, Http::STATUS_CREATED);
+		$share = $this->shareProvider->createInternal($share);
+		// $response = $this->shareInfoToCs3Share($share);
+		// error_log("response:" . json_encode($response));
+		return new TextPlainResponse($share->getId(), Http::STATUS_CREATED);
 	}
 
 	/**
