@@ -885,7 +885,7 @@ class RevaController extends Controller {
 		error_log("addSentShare");
 		$this->init($userId);
 		$params = $this->request->getParams();
-		$owner = $params["owner"]["opaqueId"] . "@" . $params["owner"]["idp"];
+		$owner = $params["owner"]["opaqueId"]; // . "@" . $params["owner"]["idp"];
 		$name = $params["name"]; // "fileid-/other/q/f gr"
 		$resourceOpaqueId = $params["resourceId"]["opaqueId"]; // "fileid-/other/q/f gr"
 		$revaPath = $this->getRevaPathFromOpaqueId($resourceOpaqueId); // "/other/q/f gr"

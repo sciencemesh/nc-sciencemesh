@@ -54,6 +54,7 @@ use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IShare;
 use OCP\Share\IShareProvider;
 use OCA\ScienceMesh\RevaHttpClient;
+use OCA\FederatedFileSharing\TokenHandler;
 
 /**
  * Class ScienceMeshShareProvider
@@ -67,7 +68,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	private $dbConnection;
 
 	/** @var TokenHandler */
-//	private $tokenHandler;
+	private $tokenHandler;
 
 	/** @var IL10N */
 	private $l;
@@ -110,7 +111,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 */
 	public function __construct(
 			IDBConnection $connection,
-//			TokenHandler $tokenHandler,
+			TokenHandler $tokenHandler,
 			IL10N $l10n,
 			ILogger $logger,
 			IRootFolder $rootFolder,
@@ -119,7 +120,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 			\OCP\GlobalScale\IConfig $globalScaleConfig
 	) {
 		$this->dbConnection = $connection;
-//		$this->tokenHandler = $tokenHandler;
+		$this->tokenHandler = $tokenHandler;
 		$this->l = $l10n;
 		$this->logger = $logger;
 		$this->rootFolder = $rootFolder;
@@ -284,7 +285,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 */
 	protected function createScienceMeshShare(IShare $share) {
 		error_log("createScienceMeshShare");
-		$token = "foo"; // $this->tokenHandler->generateToken();
+		$token = $this->tokenHandler->generateToken();
 		$shareId = $this->addSentShareToDB(
 			$share->getNodeId(),
 			$share->getNodeType(),
