@@ -62,7 +62,7 @@ use OCA\FederatedFileSharing\TokenHandler;
  * @package OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider
  */
 class ScienceMeshShareProvider implements IShareProvider {
-	public const SHARE_TYPE_REMOTE = 1000;
+	public const SHARE_TYPE_REMOTE = 6;
 
 	/** @var IDBConnection */
 	private $dbConnection;
@@ -298,7 +298,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 			$share->getShareOwner(),
 			$share->getPermissions(),
 			$token,
-			$share->getShareType()
+			$this::SHARE_TYPE_REMOTE
 		);
 		return $shareId;
 		/*
