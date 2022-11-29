@@ -182,11 +182,14 @@ class ScienceMeshShareProvider implements IShareProvider {
 			'recipientUsername' => $shareWithParts[0],
 			'recipientHost' => $shareWithParts[1]
 		]);
+		if (!isset($response) || !isset($response->share) || !isset($response->share->owner) || !isset($response->share->owner->idp)) {
+			throw new Error("Unexpected response from reva");
+		}
 		error_log("Back in SSP-createShare after RHC-createShare");
 		error_log(var_export($response->share->id->opaqueId, true));
 		error_log(var_export($response->share->owner->idp, true));
 		// error_log(var_export($response, true));
-		$share->setId($response->share->id->opaqueId);
+		$share->setId("will-set-this-later");
 		error_log("setId done");
 		$share->setProviderId($response->share->owner->idp);
 		error_log("setProviderId done");
@@ -285,7 +288,8 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 */
 	protected function createScienceMeshShare(IShare $share) {
 		error_log("createScienceMeshShare");
-		$token = $this->tokenHandler->generateToken();
+		$token = $share->getToken(); // $this->tokenHandler->generateToken();
+		error_log("token generated, this is the right one!: " . $token);
 		$shareId = $this->addSentShareToDB(
 			$share->getNodeId(),
 			$share->getNodeType(),

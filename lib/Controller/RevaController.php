@@ -900,7 +900,7 @@ class RevaController extends Controller {
 		$shareWith = $granteeUser."@".$granteeHost;
 		$sharedSecretBase64 = $params["grantee"]["opaque"]["map"]["sharedSecret"]["value"];
 		$sharedSecret = base64_decode($sharedSecretBase64);
-
+    error_log("base64 decoded $sharedSecretBase64 to $sharedSecret");
 		try {
 			$node = $this->userFolder->get($nextcloudPath);
 		} catch (NotFoundException $e) {
@@ -919,6 +919,7 @@ class RevaController extends Controller {
 		$share->setSharedWith($shareWith);
 		$share->setShareOwner($owner);
 		$share->setPermissions($nextcloudPermissions);
+		$share->setToken($sharedSecret);
 		error_log("calling createInternal");
 		$share = $this->shareProvider->createInternal($share);
 		// $response = $this->shareInfoToCs3Share($share);
