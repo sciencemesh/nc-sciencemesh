@@ -942,7 +942,7 @@ class RevaController extends Controller {
 			"remote_id" =>  base64_decode($params["share"]["grantee"]["opaque"]["map"]["remoteShareId"]["value"]), // FIXME: $this->shareProvider->createInternal($share) suppresses, so not getting an id there, see https://github.com/pondersource/sciencemesh-nextcloud/issues/57#issuecomment-1002143104
 			"share_token" => base64_decode($params["share"]["grantee"]["opaque"]["map"]["sharedSecret"]["value"]), // 'tDPRTrLI4hE3C5T'
 			"password" => "",
-			"name" => $params["share"]["name"], // '/grfe'
+			"name" => rtrim($params["share"]["name"], "/"), // '/grfe'
 			"owner" => $params["share"]["owner"]["opaqueId"], // 'einstein'
 			"user" => $userId // 'marie'
 		];
