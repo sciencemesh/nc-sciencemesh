@@ -48,7 +48,6 @@ define('REVA_PREFIX', '/home/'); // See https://github.com/pondersource/sciencem
 
 class RevaController extends Controller {
 
-
 	/* @var ISession */
 	private $session;
 
@@ -900,7 +899,7 @@ class RevaController extends Controller {
 		$shareWith = $granteeUser."@".$granteeHost;
 		$sharedSecretBase64 = $params["grantee"]["opaque"]["map"]["sharedSecret"]["value"];
 		$sharedSecret = base64_decode($sharedSecretBase64);
-    error_log("base64 decoded $sharedSecretBase64 to $sharedSecret");
+		error_log("base64 decoded $sharedSecretBase64 to $sharedSecret");
 		try {
 			$node = $this->userFolder->get($nextcloudPath);
 		} catch (NotFoundException $e) {
@@ -914,7 +913,7 @@ class RevaController extends Controller {
 		} catch (LockedException $e) {
 			throw new OCSNotFoundException($this->l->t('Could not create share'));
 		}
-		$share->setShareType(1000);//IShare::TYPE_SCIENCEMESH);
+		$share->setShareType(IShare::TYPE_REMOTE);//IShare::TYPE_SCIENCEMESH);
 		$share->setSharedBy($userId);
 		$share->setSharedWith($shareWith);
 		$share->setShareOwner($owner);
@@ -988,7 +987,6 @@ class RevaController extends Controller {
 	 */
 	public function UpdateSentShare($userId) {
 		error_log("UpdateSentShare");
-
 		$this->init($userId);
 		$opaqueId = $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
 		$permissions = $this->request->getParam("p")["permissions"];
@@ -1079,7 +1077,6 @@ class RevaController extends Controller {
 	public function GetReceivedShare($userId) {
 		error_log("GetReceivedShare");
 		$this->init($userId);
-
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
 		try {
@@ -1101,7 +1098,6 @@ class RevaController extends Controller {
 	 */
 	public function GetSentShare($userId) {
 		error_log("GetSentShare");
-
 		$this->init($userId);
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
