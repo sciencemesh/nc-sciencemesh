@@ -22,7 +22,7 @@ use \OCP\Files\NotFoundException;
 
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\TextPlainResponse;
+use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\OCS\OCSNotFoundException;
 
@@ -600,7 +600,7 @@ class RevaController extends Controller {
 		$path = "subdir/";
 		$storageId = $this->request->getParam("storage_id");
 		$opaqueId = $this->request->getParam("opaque_id");
-		return new TextPlainResponse($path, Http::STATUS_OK);
+		return new DataResponse($path, Http::STATUS_OK);
 	}
 
 	/**
@@ -923,7 +923,7 @@ class RevaController extends Controller {
 		$share = $this->shareProvider->createInternal($share);
 		// $response = $this->shareInfoToCs3Share($share);
 		// error_log("response:" . json_encode($response));
-		return new TextPlainResponse($share->getId(), Http::STATUS_CREATED);
+		return new DataResponse($share->getId(), Http::STATUS_CREATED);
 	}
 
 	/**
