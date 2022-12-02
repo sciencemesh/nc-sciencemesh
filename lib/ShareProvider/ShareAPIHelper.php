@@ -65,26 +65,8 @@ class ShareAPIHelper {
 	}
 	
 	public function createShare($share, $shareWith, $permissions, $expireDate) {
-		$node = $share->getNode();
+		error_log("ShareAPIHelper createShare, doing nothing");
 		$share->setSharedWith($shareWith);
 		$share->setPermissions($permissions);
-		$pathParts = explode("/", $node->getPath());
-		$sender = $pathParts[1];
-		$sourceOffset = 3;
-		$targetOffset = 3;
-		$prefix = "/";
-		$suffix = ($node->getType() == "dir" ? "/" : "");
-
-		// "home" is reva's default work space name, prepending that in the source path:
-		$sourcePath = $prefix . "home/" . implode("/", array_slice($pathParts, $sourceOffset)) . $suffix;
-		$targetPath = $prefix . implode("/", array_slice($pathParts, $targetOffset)) . $suffix;
-		$shareWithParts = explode("@", $shareWith);
-		$this->revaHttpClient->createShare($sender, [
-			'sourcePath' => $sourcePath,
-			'targetPath' => $targetPath,
-			'type' => $node->getType(),
-			'recipientUsername' => $shareWithParts[0],
-			'recipientHost' => $shareWithParts[1]
-		]);
 	}
 }

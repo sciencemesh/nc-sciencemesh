@@ -53,6 +53,8 @@ use OCP\Share\Exceptions\GenericShareException;
 use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IShare;
 use OCP\Share\IShareProvider;
+use OCA\ScienceMesh\RevaHttpClient;
+use OCA\FederatedFileSharing\TokenHandler;
 
 /**
  * Class ScienceMeshShareProvider
@@ -60,13 +62,13 @@ use OCP\Share\IShareProvider;
  * @package OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider
  */
 class ScienceMeshShareProvider implements IShareProvider {
-	public const SHARE_TYPE_SCIENCEMESH = 1000;
+	public const SHARE_TYPE_REMOTE = 6;
 
 	/** @var IDBConnection */
 	private $dbConnection;
 
 	/** @var TokenHandler */
-//	private $tokenHandler;
+	private $tokenHandler;
 
 	/** @var IL10N */
 	private $l;
@@ -92,6 +94,9 @@ class ScienceMeshShareProvider implements IShareProvider {
 	/** @var array list of supported share types */
 	private $supportedShareType = [1000];
 
+	/** @var RevaHttpClient */
+	private $revaHttpClient;
+
 	/**
 	 * DefaultShareProvider constructor.
 	 *
@@ -106,7 +111,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 */
 	public function __construct(
 			IDBConnection $connection,
-//			TokenHandler $tokenHandler,
+			TokenHandler $tokenHandler,
 			IL10N $l10n,
 			ILogger $logger,
 			IRootFolder $rootFolder,
@@ -115,13 +120,14 @@ class ScienceMeshShareProvider implements IShareProvider {
 			\OCP\GlobalScale\IConfig $globalScaleConfig
 	) {
 		$this->dbConnection = $connection;
-//		$this->tokenHandler = $tokenHandler;
+		$this->tokenHandler = $tokenHandler;
 		$this->l = $l10n;
 		$this->logger = $logger;
 		$this->rootFolder = $rootFolder;
 		$this->config = $config;
 		$this->userManager = $userManager;
 		$this->gsConfig = $globalScaleConfig;
+		$this->revaHttpClient = new RevaHttpClient($this->config);
 	}
 
 	/**
@@ -152,8 +158,44 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @throws ShareNotFound
 	 * @throws \Exception
 	 */
-	public function createInternal(IShare $share) {
-		error_log("Suppressing call to ScienceMeshShareProvider#create to avoid creating the outgoing share twice");
+	public function create(IShare $share) {
+		error_log("SSP-createShare calling RHC-createShare");
+		$node = $share->getNode();
+		$shareWith = $share->getSharedWith();
+		// $share->setPermissions($permissions);
+		$pathParts = explode("/", $node->getPath());
+		$sender = $pathParts[1];
+		$sourceOffset = 3;
+		$targetOffset = 3;
+		$prefix = "/";
+		$suffix = ($node->getType() == "dir" ? "/" : "");
+
+		// "home" is reva's default work space name, prepending that in the source path:
+		$sourcePath = $prefix . "home/" . implode("/", array_slice($pathParts, $sourceOffset)) . $suffix;
+		$targetPath = $prefix . implode("/", array_slice($pathParts, $targetOffset)) . $suffix;
+		$shareWithParts = explode("@", $shareWith);
+		error_log("SAH-createShare calling RHC-createShare");
+		$response = $this->revaHttpClient->createShare($sender, [
+			'sourcePath' => $sourcePath,
+			'targetPath' => $targetPath,
+			'type' => $node->getType(),
+			'recipientUsername' => $shareWithParts[0],
+			'recipientHost' => $shareWithParts[1]
+		]);
+		if (!isset($response) || !isset($response->share) || !isset($response->share->owner) || !isset($response->share->owner->idp)) {
+			throw new \Exception("Unexpected response from reva");
+		}
+		error_log("Back in SSP-createShare after RHC-createShare");
+		error_log(var_export($response->share->id->opaqueId, true));
+		error_log(var_export($response->share->owner->idp, true));
+		// error_log(var_export($response, true));
+		$share->setId("will-set-this-later");
+		error_log("setId done");
+		$share->setProviderId($response->share->owner->idp);
+		error_log("setProviderId done");
+		$share->setShareTime(new \DateTime());
+		error_log("SSP-createShare done");
+		return $share;
 	}
 	/**
 	 * Share a path
@@ -163,7 +205,8 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @throws ShareNotFound
 	 * @throws \Exception
 	 */
-	public function create(IShare $share) {
+	public function createInternal(IShare $share) {
+		error_log("SSP create");
 		$shareWith = $share->getSharedWith();
 		$itemSource = $share->getNodeId();
 		$itemType = $share->getNodeType();
@@ -174,7 +217,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		/*
 		 * Check if file is not already shared with the remote user
 		 */
-		$alreadyShared = $this->getSharedWith($shareWith, $this::SHARE_TYPE_SCIENCEMESH, $share->getNode(), 1, 0);
+		$alreadyShared = $this->getSharedWith($shareWith, $this::SHARE_TYPE_REMOTE, $share->getNode(), 1, 0);
 		if (!empty($alreadyShared)) {
 			$message = 'Sharing %1$s failed, because this item is already shared with %2$s';
 			$message_t = $this->l->t('Sharing %1$s failed, because this item is already shared with user %2$s', [$share->getNode()->getName(), $shareWith]);
@@ -227,8 +270,11 @@ class ScienceMeshShareProvider implements IShareProvider {
 				}
 		*/
 		$shareId = $this->createScienceMeshShare($share);
+    error_log("Got shareId $shareId");
 
 		$data = $this->getRawShare($shareId);
+		error_log("returning share object from raw share");
+		
 		return $this->createShareObject($data);
 	}
 
@@ -241,7 +287,9 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @throws \Exception
 	 */
 	protected function createScienceMeshShare(IShare $share) {
-		$token = "foo"; // $this->tokenHandler->generateToken();
+		error_log("createScienceMeshShare");
+		$token = $share->getToken(); // $this->tokenHandler->generateToken();
+		error_log("token generated, this is the right one!: " . $token);
 		$shareId = $this->addSentShareToDB(
 			$share->getNodeId(),
 			$share->getNodeType(),
@@ -250,7 +298,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 			$share->getShareOwner(),
 			$share->getPermissions(),
 			$token,
-			$share->getShareType()
+			$this::SHARE_TYPE_REMOTE
 		);
 		return $shareId;
 		/*
@@ -361,6 +409,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @return int
 	 */
 	private function addSentShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $uidOwner, $permissions, $token, $shareType) {
+    error_log("addSentShareToDB");
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->insert('share')
 			->setValue('share_type', $qb->createNamedParameter($shareType))
@@ -382,7 +431,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 
 		$qb->execute();
 		$id = $qb->getLastInsertId();
-
+    error_log("Created share with id $id");
 		return (int)$id;
 	}
 
@@ -400,7 +449,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @return int
 	 */
 	public function addReceivedShareToDB($shareData) {
-		$share_type = 1000;//IShare::TYPE_SCIENCEMESH;
+		$share_type = IShare::TYPE_USER;
 		$mountpoint = "{{TemporaryMountPointName#" . $shareData["name"] . "}}";
 		$mountpoint_hash = md5($mountpoint);
 		$qbt = $this->dbConnection->getQueryBuilder();
@@ -656,7 +705,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->delete('share')
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($shareId)))
-			->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_SCIENCEMESH)));
+			->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_REMOTE)));
 		$qb->execute();
 
 		$qb->delete('federated_reshares')
@@ -688,7 +737,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 				$qb->expr()->eq('item_type', $qb->createNamedParameter('folder'))
 			))
 			->andWhere(
-				$qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_SCIENCEMESH))
+				$qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_REMOTE))
 			);
 
 		/**
@@ -947,7 +996,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		if ($data === false) {
 			throw new ShareNotFound;
 		}
-
+    error_log("getRawShare " . json_encode($data));
 		return $data;
 	}
 
@@ -1049,7 +1098,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$qb = $this->dbConnection->getQueryBuilder();
 
 		$qb->delete('share')
-			->where($qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_SCIENCEMESH)))
+			->where($qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_REMOTE)))
 			->andWhere($qb->expr()->eq('uid_owner', $qb->createNamedParameter($uid)))
 			->execute();
 	}
@@ -1176,7 +1225,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->select('share_with', 'token', 'file_source')
 			->from('share')
-			->where($qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_SCIENCEMESH)))
+			->where($qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_REMOTE)))
 			->andWhere($qb->expr()->in('file_source', $qb->createNamedParameter($ids, IQueryBuilder::PARAM_INT_ARRAY)))
 			->andWhere($qb->expr()->orX(
 				$qb->expr()->eq('item_type', $qb->createNamedParameter('file')),
@@ -1209,7 +1258,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$qb->select('*')
 			->from('share')
 			->where(
-				$qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_SCIENCEMESH))
+				$qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_REMOTE))
 			);
 		$cursor = $qb->execute();
 		while ($data = $cursor->fetch()) {
@@ -1232,7 +1281,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$qb->select('*')
 			->from('share')
 			->where(
-				$qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_SCIENCEMESH))
+				$qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_REMOTE))
 			)
 			->andWhere(
 				$qb->expr()->orX(
@@ -1261,7 +1310,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		$qb->select('*')
 			->from('share_external')
 			->where(
-				$qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_SCIENCEMESH))
+				$qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_REMOTE))
 			)
 			->andWhere(
 				$qb->expr()->eq('user', $qb->createNamedParameter($userId))
@@ -1378,6 +1427,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		return $share;
 	}
 	public function getShareByOpaqueId($opaqueId) {
+		error_log("getShareByOpaqueId");
 		$qb = $this->dbConnection->getQueryBuilder();
 		$c = $qb->select('is_external')
 			->from('sciencemesh_shares')
