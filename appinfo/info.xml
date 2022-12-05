@@ -6,7 +6,7 @@
     <summary>Connect your Nextcloud server to the ScienceMesh project</summary>
     <description><![CDATA[# ScienceMesh]]></description>
     <version>0.0.1</version>
-    <licence>mit</licence>
+    <licence>agpl</licence>
     <author homepage="https://sciencemesh.io" >ScienceMesh Community</author>
     <author mail="support@pondersource.com" homepage="https://pondersource.com" >Stichting Ponder Source</author>
     <author mail="info@muze.nl" homepage="https://www.muze.nl" >Muze B.V.</author>
