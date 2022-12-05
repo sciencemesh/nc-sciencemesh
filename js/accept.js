@@ -1,3 +1,4 @@
+// NEW CODE!
 
 document.getElementById('elem').onclick = function () { 
     console.log('clicked');
@@ -15,22 +16,29 @@ document.getElementById('elem').onclick = function () {
         contentType: 'application/x-www-form-urlencoded',
         data: data
     }).done(function (response) {
-      
+       console.log("DONE!");
        if(response === '' || response === false) {
+            console.log("IF!");
             var element = document.getElementById("test_error");
             element.innerHTML= 'No connection with reva';
             console.log("Result:", test);
         } else {
+            console.log("ELSE!");
             let result = JSON.parse(response);
             if(result.hasOwnProperty('message')) {
+              console.log("IF 2!");
                 let test = result.message;
                 console.log("Result:", test);
                 var element = document.getElementById("test_error");
-                element.innerHTML=test || 'Success';
+                const response = test || 'Success';
+                element.innerHTML= response;
+                alert(response);
+
 
                 $('#provider').hide();
                 $('#display_name').hide();
             } else {
+              console.log("ELSE 2!");
                 console.log(result)
             }
         }
