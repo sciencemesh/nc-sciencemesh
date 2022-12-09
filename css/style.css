@@ -4,3 +4,145 @@
 #hello {
 	color: red;
 }
+
+/*
+ * Author: Parham R. <parhamin2010@gmail.com>
+ * Page: templates/generate.php
+*/
+
+
+.app-content-list-item-line-one{
+   font-size:medium;
+}
+
+.app-content-list-item-line-two{
+   font-size:small;
+}
+
+.app-content-list-item-menu{
+   position:absolute;
+   right:0
+}
+
+#token-generator{
+   cursor:pointer;
+}
+
+#token-generator{
+   cursor:pointer;
+}
+
+#show_result{
+   font-size:80%;
+   border:1px solid #eee;
+}
+
+.app-content-list-item-token{
+   margin: 5px
+}
+
+.app-content-list-item-token-div{
+   margin:10px 30px;
+   text-align: center;
+}
+
+.message-token{
+   margin:0px;
+   background: #cecece;
+   padding:5px;
+}
+
+.generated-token-link{
+   color:#0993de;
+   text-overflow: ellipsis;
+   overflow: hidden; 
+   white-space: nowrap;
+   width:85%;
+   display:inline;
+   margin:5px 10px;
+   cursor:pointer;
+}
+
+.token-btn-verification{
+   display:block;
+   background: green;
+   color:white;
+   padding:5px;
+   font-weight: bold;
+}
+
+.clipboard-icon-token{
+   width: 20px;
+   height: 20px;
+   display: inline-block;
+   position: relative;
+   top: 4px;
+}
+
+
+
+/*
+ * Page: templates/invitations.php
+*/
+
+.app-content-list-token-invitation{
+   width:100%;
+   text-align: center;
+}
+
+.title-token-input{
+   width: 100%;
+   margin: 0;
+   padding: 10px 0px;
+   background: lightgrey;
+}
+
+.token-input{
+   width:100%;
+   display:block;
+   padding:0px 30px 0px 5px;
+}
+
+
+/*
+ * Page: templates/contacts.php
+*/
+
+.app-content-list-item-menu{
+   position:relative;
+   top:-28px;
+   width:30px;
+   float:right;
+}
+
+.app-content-list-item-alert{
+   width: 100%;
+   text-align:center;
+   margin:0;
+   padding:0px 10px;
+   display:block;
+   color:#0c98e5;
+   font-size: small;
+   margin:-10px 0px;
+}
+
+#show_result{
+   border: 1px solid #00000011;
+   border-radius: 5px;
+   background-color: #eee;
+}
+
+.icon-add{ 
+   height: 17px;
+   background-color: white;
+   margin-right:2px;
+}
+
+.displayname{
+   font-size:medium;
+}
+
+.username-provider{
+   font-size:smaller;   
+}
+

@@ -14,13 +14,25 @@ document.getElementById('elem').onclick = function () {
             element.innerHTML= 'No connection with reva';
         } else {
             var element = document.getElementById("show_result");
-            element.innerHTML = `<a href="${response}">${response}</a>`;
+            element.innerHTML = `<div class="token-generator"><i class="fa-thin fa-square-check"></i><h4 class="message-token">New Token Generated!</h4><input type="text" value="${response}" onclick="get_token()" readonly name="meshtoken" class="generated-token-link"><span class="icon-clippy clipboard-icon-token" onclick="get_token()"></span><a class="token-btn-verification" href="${response}">Verify Token</a></div>`;
             $('#test').show();  
         }
     }).fail(function (response, code) {
         alert('The token is invalid')
     });
 };
+
+function get_token(){
+    var copyText = document.getElementsByName("meshtoken");
+
+    // Select the text field
+    copyText.select();
+    copyText.setSelectionRange(0, 99999); // For mobile devices
+  
+     // Copy the text inside the text field
+    navigator.clipboard.writeText(copyText.value);
+}
+
 function secondsToDhms(seconds) {
     seconds = Number(seconds);
     var d = Math.floor(seconds / (3600*24));
