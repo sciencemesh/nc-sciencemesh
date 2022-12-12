@@ -142,7 +142,20 @@
    font-size:medium;
 }
 
-.username-provider{
+.username-provider{ 
    font-size:smaller;   
 }
 
+
+ 
+.profile-img{
+   background-image: var(--original-icon-contacts-white);
+   width: 35px;
+   height: 35px;
+   background-position: center;
+   background-repeat: no-repeat;
+   background-size: contain;
+   border-radius: 100%;
+   margin: 2.5px 7px;
+   border: 1px solid #0c99e681;
+}
