@@ -8,6 +8,7 @@ document.getElementById('elem').onclick = function () {
   var data = 'providerDomain=' + encodeURIComponent(providerDomain) +
 '&token=' + encodeURIComponent(token);
 
+
   var baseUrl = OC.generateUrl('/apps/sciencemesh');
   $.ajax({
       url: baseUrl + '/contacts/accept',
@@ -39,6 +40,7 @@ document.getElementById('elem').onclick = function () {
       console.log(response)
       //alert('The token is invalid')
   });
+
 };
 function checkQueryString() {
 const params = new Proxy(new URLSearchParams(window.location.search), {
