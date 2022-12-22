@@ -1,17 +1,18 @@
 //Everything will be for working with contacts
 var baseUrl = OC.generateUrl('/apps/sciencemesh');
-$('#test').hide(); 
+$('#test_error').hide(); 
 $.ajax({
     url: baseUrl + '/contacts/users',
     type: 'GET',
     contentType: 'application/json',
 }).done(function (response) {
-    if(response === '' || response === false) {
+    if(response == '' || response === false) {
         var element = document.getElementById("test_error");
         element.innerHTML= 'No connection with reva';
-        //$('#test').show(); 
+        $('#test_error').show(); 
     } else {
     let token = JSON.parse(response);
+
     for(tokenData in token) {
         if(token.hasOwnProperty(tokenData)) {
             console.log(tokenData);
@@ -31,11 +32,11 @@ $.ajax({
                                         <p class="displayname">${displayName}</p><p class="username-provider">${username}@${provider}</p>
                                     </div>  
                                 </div>`;                  
-                        var element = document.getElementById("test");
+                        var element = document.getElementById("test_error");
                         element.innerHTML = result;
                     }
 
-                $('#test').show();
+                $('#test_error').show();
             }else{
                 const result = `
                         <div href="#" class="app-content-list-item profile-item" >
@@ -45,9 +46,9 @@ $.ajax({
                                 <p class="username-provider">There're no contacts!</p>
                             </div>  
                         </div>`;                  
-                var element = document.getElementById("test");
+                var element = document.getElementById("test_error");
                 element.innerHTML = result;
-                $('#test').show();
+                $('#test_error').show();
 
             }
         } 

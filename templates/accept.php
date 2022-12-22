@@ -11,11 +11,9 @@ style('sciencemesh', 'style');
 		<div id="app-content-wrapper" class="viewcontainer">
 				<div class="app-content-list">
 					<div href="#" class="app-content-list-item">
-						<div class="app-content-list-item-line-one" >
-							<input id="token" type="text" style="font-size:30%;" placeholder="token@sciencemesh.site">
-						</div>
-						<div class="app-content-list-item-menu">
-						 	<div class="icon-add" id="elem"></div>
+						<div class="app-content-list-item-line-one token-holder" >
+							<input id="token-input" type="text" placeholder="token@sciencemesh.site">
+							<input type="button" class="check-token" id="elem" value="Check Token">
 						</div>
 					</div>
 				</div>
@@ -23,7 +21,7 @@ style('sciencemesh', 'style');
 					<div class="section">
 						<!--<p>To invite someone to collaborate on ScienceMesh, generate a new invite token and send it to them.</p>
 						<p>If you have received an invitation, you can enter that in 'Contacts' to confirm the collaboration.</p>-->
-						<p id="test_error"></p>
+						<p id="test_error" style="display:none"></p>
 					</div>
 				</div>
 		</div>
