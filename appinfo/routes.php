@@ -75,6 +75,9 @@ return [
 		['name' => 'page#get_metrics', 'url' => '/metrics', 'verb' => 'GET'],
 
 		["name" => "settings#save_settings", "url" => "/ajax/settings/address", "verb" => "PUT"],
-		["name" => "settings#get_settings", "url" => "/ajax/settings", "verb" => "GET"]
+		["name" => "settings#get_settings", "url" => "/ajax/settings", "verb" => "GET"],
+
+		["name" => "settings#get_sciencemesh_settings", "url" => "/sciencemesh_settings", "verb" => "GET"],
+		["name" => "settings#save_sciencemesh_settings", "url" => "/ajax/sciencemesh_settings/save", "verb" => "GET"]		
 	]
 ];

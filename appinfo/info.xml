@@ -24,6 +24,8 @@
     </dependencies>
     <settings>
         <admin>OCA\ScienceMesh\Settings</admin>
+        <admin>OCA\ScienceMesh\Settings\SciencemeshSettingsAdmin</admin>
+        <admin-section>OCA\ScienceMesh\Sections\SciencemeshSettingsAdmin</admin-section>
     </settings>
     <navigations>
         <navigation>
