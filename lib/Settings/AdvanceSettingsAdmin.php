@@ -5,14 +5,19 @@ use OCP\AppFramework\Http\TemplateResponse;
 use OCP\IConfig;
 use OCP\IL10N;
 use OCP\Settings\ISettings;
+use OCA\Sciencemesh\ServerConfig;
 
-class AdvanceSettingsAdmin implements ISettings {
+class SciencemeshSettingsAdmin implements ISettings {
     private IL10N $l;
     private IConfig $config;
 
-    public function __construct(IConfig $config, IL10N $l) {
+    public function __construct(IConfig $config,
+                                IL10N $l
+                                ) {
         $this->config = $config;
         $this->l = $l;
+        $this->serverConfig = new \OCA\ScienceMesh\ServerConfig($config);
+
     }
 
     /**
@@ -20,14 +25,17 @@ class AdvanceSettingsAdmin implements ISettings {
      */
     public function getForm() {
         $parameters = [
-            'advanceSetting' => $this->config->getSystemValue('sciencemesh_advance_settings', true),
+            'sciencemeshSetting' => $this->config->getSystemValue('sciencemesh_advance_settings', true),
+            'sciencemeshIopUrl' => $this->serverConfig->getIopUrl(),
+            'sciencemeshRevaLoopbackSecret' => $this->serverConfig->getRevaLoopbackSecret(),
+            'sciencemeshRevaSharedSecret' => $this->serverConfig->getRevaSharedSecret()
         ];
-
+        
         return new TemplateResponse('sciencemesh', 'settings/admin', $parameters, '');
     }
 
     public function getSection() {
-        return 'advance_settings'; // Name of the previously created section.
+        return 'sciencemesh_settings'; // Name of the previously created section.
     }
 
     /**

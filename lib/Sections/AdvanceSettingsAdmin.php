@@ -5,7 +5,7 @@ use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\Settings\IIconSection;
 
-class AdvanceSettingsAdmin implements IIconSection {
+class SciencemeshSettingsAdmin implements IIconSection {
     private IL10N $l;
     private IURLGenerator $urlGenerator;
 
@@ -19,11 +19,11 @@ class AdvanceSettingsAdmin implements IIconSection {
     }
 
     public function getID(): string {
-        return 'advance_settings';
+        return 'sciencemesh_settings';
     }
 
     public function getName(): string {
-        return $this->l->t('Advance Settings');
+        return $this->l->t('ScienceMesh Settings');
     }
 
     public function getPriority(): int {

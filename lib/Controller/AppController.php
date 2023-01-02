@@ -155,4 +155,7 @@ class AppController extends Controller {
 		$find_users = $this->httpClient->findAcceptedUsers($this->userId);
 		return new TextPlainResponse($find_users, Http::STATUS_OK);
 	}
+
+
+
 }

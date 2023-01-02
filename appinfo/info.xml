@@ -5,8 +5,8 @@
     <name>ScienceMesh</name>
     <summary>Connect your Nextcloud server to the ScienceMesh project</summary>
     <description><![CDATA[# ScienceMesh]]></description>
-    <version>0.1.0</version>
-    <licence>agpl</licence>
+    <version>0.0.1</version>
+    <licence>mit</licence>
     <author homepage="https://sciencemesh.io" >ScienceMesh Community</author>
     <author mail="support@pondersource.com" homepage="https://pondersource.com" >Stichting Ponder Source</author>
     <author mail="info@muze.nl" homepage="https://www.muze.nl" >Muze B.V.</author>
@@ -24,8 +24,8 @@
     </dependencies>
     <settings>
         <admin>OCA\ScienceMesh\Settings</admin>
-        <admin>OCA\ScienceMesh\Settings\AdvanceSettingsAdmin</admin>
-        <admin-section>OCA\ScienceMesh\Sections\AdvanceSettingsAdmin</admin-section>
+        <admin>OCA\ScienceMesh\Settings\SciencemeshSettingsAdmin</admin>
+        <admin-section>OCA\ScienceMesh\Sections\SciencemeshSettingsAdmin</admin-section>
     </settings>
     <navigations>
         <navigation>
