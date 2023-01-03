@@ -123,3 +123,16 @@
    padding: 12.5px 10px;
    width: 100%;
 }
+.sciencemesh-settings-row label{
+   display: inline-block;
+   font-weight: bolder !important;
+   width: 200px !important;
+}
+
+.sciencemesh-settings-row input[type="text"]{
+   width: 80% !important;
+}
+
+.section-sciencemesh{
+   margin: 10px !important;
+}
