@@ -12,7 +12,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
         }).done(function (response) {
             if (response === '' || response === false) {
                 var element = document.getElementById("test_1");
-                element.innerHTML = 'No connection with reva';
+                jQuery(element).addClass('text-error');
+                element.innerHTML = 'No Sciencemesh Connection';
             } else {
                 var element = document.getElementById("show_result");
                 element.innerHTML = `<div class="token-generator"><i class="fa-thin fa-square-check"></i><h4 class="message-token">New Token Generated!</h4><input type="text" value="${response}" onclick="get_token()" readonly name="meshtoken" class="generated-token-link"><span class="icon-share svg" onclick="get_token()"></span><a class="token-btn-verification" href="${response}">Verify Token</a></div>`;

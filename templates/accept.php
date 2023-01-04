@@ -13,7 +13,7 @@ style('sciencemesh', 'style');
 					<div href="#" class="app-content-list-item">
 						<div class="app-content-list-item-line-one token-holder" >
 							<input id="token-input" type="text" placeholder="token@sciencemesh.site">
-							<input type="button" class="check-token" id="elem" value="Check Token">
+							<input type="button" class="check-token" id="elem" value="Accept Token">
 						</div>
 					</div>
 				</div>

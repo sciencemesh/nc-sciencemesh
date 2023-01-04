@@ -8,7 +8,8 @@ $.ajax({
 }).done(function (response) {
     if(response == '' || response === false) {
         var element = document.getElementById("test_error");
-        element.innerHTML= 'No connection with reva';
+        jQuery(element).addClass('text-error');
+        element.innerHTML = 'No Sciencemesh Connection';
         $('#test_error').show(); 
     } else {
     let token = JSON.parse(response);
@@ -43,7 +44,7 @@ $.ajax({
                             <div class="app-content-list-item-icon" style="">
                             </div> 
                             <div class="app-content-list-item-line-one" id="show_result" >
-                                <p class="username-provider">There're no contacts!</p>
+                                <p class="username-provider">There are no contacts!</p>
                             </div>  
                         </div>`;                  
                 var element = document.getElementById("test_error");

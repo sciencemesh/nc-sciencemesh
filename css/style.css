@@ -136,3 +136,12 @@
 .section-sciencemesh{
    margin: 10px !important;
 }
+
+
+.text-error{
+   color:red !important;
+}
+
+.text-success{
+   color: green !important;
+}
