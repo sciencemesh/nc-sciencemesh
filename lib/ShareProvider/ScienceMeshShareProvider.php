@@ -728,7 +728,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	}
 
 
-	public function getSharesInFolder($userId, Folder $node, $reshares) {
+	public function getSharesInFolder($userId, Folder $node, $reshares,$shallow = true) {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->select('*')
 			->from('share', 's')
