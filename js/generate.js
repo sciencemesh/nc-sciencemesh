@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 element.innerHTML = 'No connection with reva';
             } else {
                 var element = document.getElementById("show_result");
-                element.innerHTML = `<div class="token-generator"><i class="fa-thin fa-square-check"></i><h4 class="message-token">New Token Generated!</h4><input type="text" value="${response}" onclick="get_token()" readonly name="meshtoken" class="generated-token-link"><span class="icon-share svg" onclick="get_token()"></span><a class="token-btn-verification" href="${response}">Verify Token</a></div>`;
+                element.innerHTML = `<div class="token-generator"><i class="fa-thin fa-square-check"></i><h4 class="message-token">New Token Generated!</h4><input type="text" value="${response}" onclick="get_token()" readonly name="meshtoken" class="generated-token-link"><span class="icon-share svg" onclick="get_token()"></span><a class="token-btn-verification" href="${response}">View Token</a></div>`;
                 $('#test').show();
             }
         }).fail(function (response, code) {
