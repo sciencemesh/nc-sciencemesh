@@ -15,21 +15,19 @@ document.addEventListener("DOMContentLoaded", function(event) {
           contentType: 'application/x-www-form-urlencoded',
           data: data
       }).done(function (response) {
-
-
           var element = document.getElementById("test_error");
           $("#test_error").show();
           if (response === '' || response === false) {
-              element.innerHTML = 'Something goes wrong: No connection with reva';
+              $("#test_error").addClass('text-error');
+              element.innerHTML = 'Something goes wrong: No Sciencemesh Connection';
           } else if(response.startsWith('Accepted invite from')){
+              $("#test_error").addClass('text-success');
               document.getElementById('token').value = '';
-              alert(response);
           } else {
               let result = JSON.parse(response);
               if (result.hasOwnProperty('message')) {
                   let test = result.message;
                   element.innerHTML = test || 'Success';
-                  
                   $('#provider').hide();
                   $('#display_name').hide();
               } else {
