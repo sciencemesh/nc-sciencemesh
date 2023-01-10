@@ -11,9 +11,11 @@ document.getElementById('elem').onclick = function () {
     }).done(function (response) {
         if(response === '' || response === false) {
             var element = document.getElementById("test_1");
-            element.innerHTML= 'No connection with reva';
+            jQuery(element).addClass('text-error');
+            element.innerHTML= 'No Sciencemesh Connection';
         } else {
             let element = document.getElementById("show_result");
+            jQuery(element).addClass('text-success');
             element.innerText = `<a href="${response}">${response}</a>`;
             $('#test').show();
         }

@@ -8,7 +8,7 @@ $.ajax({
 }).done(function (response) {
     if(response === '' || response === false) {
         var element = document.getElementById("test_error");
-        element.innerHTML= 'No connection with reva';
+        element.innerHTML= 'No Sciencemesh Connection';
         //$('#test').show(); 
     } else {
     let token = JSON.parse(response);
@@ -55,7 +55,7 @@ document.getElementById('elem').onclick = function () {
       
        if(response === '' || response === false) {
             var element = document.getElementById("test_error");
-            element.innerHTML= 'No connection with reva';
+            element.innerHTML = 'No Sciencemesh Connection';
         } else {
             let result = JSON.parse(response);
             if(result.hasOwnProperty('message')) {
