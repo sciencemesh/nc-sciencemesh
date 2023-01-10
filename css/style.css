@@ -4,3 +4,122 @@
 #hello {
 	color: red;
 }
+
+/*
+ * Author: Parham R. <parhamin2010@gmail.com>
+ * Page: templates/generate.php
+*/
+
+@import "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css";
+
+.token-added{
+   width: 30px;
+   height: 30px;
+   margin: 5px;
+   text-align: center;
+   padding-top: 5px;
+   border-radius: 100%;
+   color: white;
+   font-size: large;
+   background: rgb(31, 72, 96);
+}
+
+.token-added:hover{
+   background: rgb(93, 116, 130);
+}
+
+.app-content-list-item-line-one{
+   font-size:medium;
+}
+
+.app-content-list-item-line-two{
+   font-size:small;
+}
+
+.app-content-list-item-menu{
+   position:absolute;
+   right:0
+}
+
+#token-generator{
+   cursor:pointer;
+}
+
+#token-generator{
+   cursor:pointer;
+}
+
+#token-input{
+   width: 100%;
+   display:block;
+   padding-right: 40px;
+}
+
+.token-holder{
+   display: flex;
+   padding: 0px !important;
+   text-align: center;
+}
+
+#show_result{
+   font-size:80%;
+   border:1px solid #eee;
+}
+
+.app-content-list-item-token{
+   margin: 5px
+}
+
+.app-content-list-item-token-div{
+   margin:10px 30px;
+   text-align: center;
+}
+
+.message-token{
+   margin:0px;
+   background: #cecece;
+   padding:5px;
+}
+
+.generated-token-link{
+   color:#0993de; 
+   text-overflow: ellipsis;
+   overflow: hidden; 
+   white-space: nowrap;
+   width:100% !important;
+   display:inline;
+   cursor:pointer;
+}
+
+.token-btn-verification{
+   display:block;
+   background: green;
+   color:white;
+   padding:5px;
+   font-weight: bold;
+}
+
+.clipboard-icon-token{
+   width: 20px;
+   height: 20px;
+   display: inline-block;
+   position: relative;
+   top: 4px;
+}
+
+.check-token{
+   background-color: rgb(6, 182, 6) !important;
+   position:relative;
+   width:200px !important;
+   color: white !important;
+}
+
+#test_error{
+   padding: 5px;
+   border: 1px dashed #eee;
+}
+
+.section{
+   padding: 12.5px 10px;
+   width: 100%;
+}
