@@ -393,7 +393,11 @@ class RevaController extends Controller {
 		} else {
 				$user = $this->userManager->checkPassword($userId, $password);
 		}
+
+		
 		if ($user) {
+			/// the `value` is a base64 encoded value of:
+			/// {"resource_id":{"storage_id":"storage-id","opaque_id":"opaque-id"},"path":"some/file/path.txt"}
 			$result = [
 				"user" => $this->formatUser($user),
 				"scopes" => [
