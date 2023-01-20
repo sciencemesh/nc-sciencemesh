@@ -20,7 +20,7 @@
  *
  */
 
-namespace OCA\ScienceMesh\ShareProvider;
+namespace OCA\ScienceMesh\Sharing;
 
 use OCP\IConfig;
 use OCP\IUserManager;
@@ -29,7 +29,7 @@ use OCA\ScienceMesh\RevaHttpClient;
 /**
  * Class ScienceMeshShareHelper
  *
- * @package OCA\ScienceMesh\ShareProvider\ShareAPIHelper
+ * @package OCA\ScienceMesh\Sharing\ShareAPIHelper
  */
 class ShareAPIHelper {
 	/** @var IConfig */

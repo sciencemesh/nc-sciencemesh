@@ -913,11 +913,13 @@ class ScienceMeshShareProvider implements IShareProvider {
 			$shares[] = $this->createShareObject($data);
 		}
 		$cursor->closeCursor();
-    $nodeId = $node->getId();
+    // $nodeId = $node->getId();
 		return $shares;
 	}
 
 	/**
+	 * 
+	 * 
 	 * Get a share by token
 	 *
 	 * @param string $token
