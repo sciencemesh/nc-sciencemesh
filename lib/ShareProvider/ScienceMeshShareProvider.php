@@ -92,7 +92,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	private $gsConfig;
 
 	/** @var array list of supported share types */
-	private $supportedShareType = [1000];
+	private $supportedShareType = [IShare::TYPE_SCIENCEMESH];
 
 	/** @var RevaHttpClient */
 	private $revaHttpClient;
