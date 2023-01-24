@@ -50,8 +50,8 @@ $.ajax({
                 $('#show_result').show();
             }else{
                 const result = `
-                        <tr colspan="3" href="#" class="app-content-list-item" >
-                            <td style="width:40% !important">
+                        <tr>
+                            <td>
                                 <p class="username-provider">There are no contacts!</p>
                             </td>
                         </tr>`;                  
