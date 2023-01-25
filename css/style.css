@@ -23,6 +23,14 @@
    max-width: 100% !important;
 }
 
+#app{
+   width: 100% !important;
+}
+
+.app-content-list{
+   max-width: 100% !important;
+}
+
 .token-added{
    width: 30px;
    height: 30px;
