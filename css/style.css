@@ -15,6 +15,13 @@
 .app-sciencemesh #app{
    display: contents;
 }
+#app{
+   width: 100% !important;
+}
+
+.app-content-list{
+   max-width: 100% !important;
+}
 
 #app{
    width: 100% !important;
