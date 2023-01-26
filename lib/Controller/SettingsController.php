@@ -237,4 +237,34 @@ class SettingsController extends Controller
 
 		return new TextPlainResponse(true, Http::STATUS_OK);	
 	}
+
+	public function checkConnectionSettings(){
+		$sciencemesh_loopback_shared_secret = $this->request->getParam('sciencemesh_loopback_shared_secret');
+		
+		$url = self::CATALOG_URL . "/ocm/ocm-provider";
+
+		$curl = curl_init();
+
+		curl_setopt_array($curl, array(
+			CURLOPT_URL => $url,
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_ENCODING => '',
+			CURLOPT_MAXREDIRS => 10,
+			CURLOPT_TIMEOUT => 0,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+			CURLOPT_CUSTOMREQUEST => 'GET',
+		));
+
+		$status = curl_exec($curl);
+
+		curl_close($curl);
+
+		// var_dump($response);
+		if ($status == 200 and !is_null($status)) {
+			return $respData["id"];
+		} else {
+			throw new \Exception($respData["error"]);
+		}
+	}
 }
