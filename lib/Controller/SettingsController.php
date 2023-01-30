@@ -239,9 +239,9 @@ class SettingsController extends Controller
 	}
 
 	public function checkConnectionSettings(){
-		$sciencemesh_loopback_shared_secret = $this->request->getParam('sciencemesh_loopback_shared_secret');
+		$sciencemesh_iop_url = $this->serverConfig->getIopUrl();
 		
-		$url = self::CATALOG_URL . "/ocm/ocm-provider";
+		$url = $sciencemesh_iop_url . "/ocm/ocm-provider";
 
 		$curl = curl_init();
 
@@ -249,10 +249,7 @@ class SettingsController extends Controller
 			CURLOPT_URL => $url,
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_ENCODING => '',
-			CURLOPT_MAXREDIRS => 10,
 			CURLOPT_TIMEOUT => 0,
-			CURLOPT_FOLLOWLOCATION => true,
-			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
 			CURLOPT_CUSTOMREQUEST => 'GET',
 		));
 
@@ -260,11 +257,10 @@ class SettingsController extends Controller
 
 		curl_close($curl);
 
-		// var_dump($response);
 		if ($status == 200 and !is_null($status)) {
-			return $respData["id"];
+			return $status["id"];
 		} else {
-			throw new \Exception($respData["error"]);
+			return false;
 		}
 	}
 }
