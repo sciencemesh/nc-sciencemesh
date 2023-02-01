@@ -2,6 +2,7 @@
 
 namespace OCA\ScienceMesh\Controller;
 
+use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\TemplateResponse;
@@ -11,6 +12,7 @@ use OCP\IURLGenerator;
 use OCA\ScienceMesh\AppConfig;
 use OCA\ScienceMesh\Crypt;
 use OCA\ScienceMesh\DocumentService;
+use OCA\ScienceMesh\RevaHttpClient;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
@@ -28,6 +30,7 @@ class SettingsController extends Controller
 	private $config;
 	private $urlGenerator;
 	private $serverConfig;
+	private $sciencemeshConfig;
 	
 	const CATALOG_URL = "https://iop.sciencemesh.uni-muenster.de/iop/mentix/sitereg";
 
@@ -45,17 +48,18 @@ class SettingsController extends Controller
 	                            IL10N $trans,
 	                            ILogger $logger,
 	                            AppConfig $config,
-								IConfig $IConfig
+								IConfig $sciencemeshConfig
 	)
 	{
 		parent::__construct($AppName, $request);
 
 
-		$this->serverConfig = new \OCA\ScienceMesh\ServerConfig($IConfig);
+		$this->serverConfig = new \OCA\ScienceMesh\ServerConfig($sciencemeshConfig);
 
 		$this->urlGenerator = $urlGenerator;
 		$this->logger = $logger;
 		$this->config = $config;
+		$this->sciencemeshConfig = $sciencemeshConfig;
 
 		$eventDispatcher = \OC::$server->getEventDispatcher();
 		$eventDispatcher->addListener(
@@ -241,26 +245,16 @@ class SettingsController extends Controller
 	public function checkConnectionSettings(){
 		$sciencemesh_iop_url = $this->serverConfig->getIopUrl();
 		
-		$url = $sciencemesh_iop_url . "/ocm/ocm-provider";
+		$revaHttpClient = new RevaHttpClient($this->sciencemeshConfig, false);
+		
+		$response = json_decode(str_replace('\n','',$revaHttpClient->ocmProvider()),true);
+		
+		// if (isset($response['enabled']) && $response['enabled'] === true) {
+		// 	return true;
+		// } else {
+		// 	return false;
+		// }
 
-		$curl = curl_init();
-
-		curl_setopt_array($curl, array(
-			CURLOPT_URL => $url,
-			CURLOPT_RETURNTRANSFER => true,
-			CURLOPT_ENCODING => '',
-			CURLOPT_TIMEOUT => 0,
-			CURLOPT_CUSTOMREQUEST => 'GET',
-		));
-
-		$status = curl_exec($curl);
-
-		curl_close($curl);
-
-		if ($status == 200 and !is_null($status)) {
-			return $status["id"];
-		} else {
-			return false;
-		}
+        return new JSONResponse($response);
 	}
 }
