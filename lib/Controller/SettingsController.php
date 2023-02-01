@@ -31,6 +31,7 @@ class SettingsController extends Controller
 	private $urlGenerator;
 	private $serverConfig;
 	private $sciencemeshConfig;
+	private $userId;
 	
 	const CATALOG_URL = "https://iop.sciencemesh.uni-muenster.de/iop/mentix/sitereg";
 
@@ -48,7 +49,8 @@ class SettingsController extends Controller
 	                            IL10N $trans,
 	                            ILogger $logger,
 	                            AppConfig $config,
-								IConfig $sciencemeshConfig
+								IConfig $sciencemeshConfig,
+								$UserId
 	)
 	{
 		parent::__construct($AppName, $request);
@@ -60,6 +62,7 @@ class SettingsController extends Controller
 		$this->logger = $logger;
 		$this->config = $config;
 		$this->sciencemeshConfig = $sciencemeshConfig;
+		$this->userId = $UserId;
 
 		$eventDispatcher = \OC::$server->getEventDispatcher();
 		$eventDispatcher->addListener(
@@ -244,17 +247,16 @@ class SettingsController extends Controller
 
 	public function checkConnectionSettings(){
 		$sciencemesh_iop_url = $this->serverConfig->getIopUrl();
-		
+		$sciencemesh_shared_secret = $this->serverConfig->getRevaLoopbackSecret();
+		$sciencemesh_loopback_shared_secret = $this->serverConfig->getRevaSharedSecret();
+
 		$revaHttpClient = new RevaHttpClient($this->sciencemeshConfig, false);
 		
-		$response = json_decode(str_replace('\n','',$revaHttpClient->ocmProvider()),true);
+		$response_sciencemesh_iop_url = json_decode(str_replace('\n','',$revaHttpClient->ocmProvider()),true);
+		// var_dump($revaHttpClient->ocmPing());
+		// var_dump($revaHttpClient->ocmApiV1Hello());
+		// $response_sciencemesh_loopback_shared_secret = json_decode(str_replace('\n','',$revaHttpClient->revaGet('api/v1/hello')),true);
 		
-		// if (isset($response['enabled']) && $response['enabled'] === true) {
-		// 	return true;
-		// } else {
-		// 	return false;
-		// }
-
-        return new JSONResponse($response);
+        return new JSONResponse($response_sciencemesh_iop_url);
 	}
 }

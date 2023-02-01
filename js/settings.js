@@ -94,8 +94,10 @@
         });
     })
 
-    $('#check_connection_sciencemesh_loopback_shared_secret').on('click',function(){
+    $('#check_connection_sciencemesh_iop_url,#check_connection_sciencemesh_shared_secret,#check_connection_sciencemesh_loopback_shared_secret').on('click',function(){
         var sciencemesh_loopback_shared_secret = $("#sciencemesh_loopback_shared_secret").val().trim();
+        var sciencemesh_shared_secret = $("#sciencemesh_shared_secret").val().trim();
+        var sciencemesh_iop_url = $("#sciencemesh_iop_url").val().trim();
 
         $(".section-sciencemesh").addClass("icon-loading");
         var baseUrl = OC.generateUrl('/apps/sciencemesh');
@@ -105,7 +107,9 @@
             url: baseUrl + "/ajax/check_connection_settings",
             contentType: 'application/json',
             data: {
-                sciencemesh_loopback_shared_secret: sciencemesh_loopback_shared_secret
+                sciencemesh_loopback_shared_secret: sciencemesh_loopback_shared_secret,
+                sciencemesh_shared_secret: sciencemesh_shared_secret,
+                sciencemesh_iop_url: sciencemesh_iop_url
             },
             success: function onSuccess(response) {
                 $(".section-sciencemesh").removeClass("icon-loading");

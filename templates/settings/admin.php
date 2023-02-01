@@ -18,15 +18,17 @@ style('sciencemesh', 'style');
         <div class="sciencemesh-settings-row">
             <label for="sciencemesh_iop_url" name="sciencemesh_iop_url">IOP URL</label>
             <input type="text" name="sciencemesh_iop_url" id="sciencemesh_iop_url" value="<?php echo $this->vars['sciencemeshIopUrl']; ?>">
+            <button type="button" id="check_connection_sciencemesh_iop_url"  >Connection test</button>
         </div>
         <div class="sciencemesh-settings-row">
             <label for="sciencemesh_shared_secret" name="sciencemesh_shared_secret">Shared Secret</label>
             <input type="text" readonly="true" id="sciencemesh_shared_secret" value="<?php echo $this->vars['sciencemeshRevaSharedSecret']; ?>">
+            <button type="button" id="check_connection_sciencemesh_shared_secret"  >Connection test</button>
         </div>
         <div class="sciencemesh-settings-row">
             <label for="sciencemesh_loopback_shared_secret" name="sciencemesh_iop_url">Loopback Shared Secret</label>
             <input type="text" readonly="true" id="sciencemesh_loopback_shared_secret" value="<?php echo $this->vars['sciencemeshRevaLoopbackSecret']; ?>">
-            <button type="button" id="check_connection_sciencemesh_loopback_shared_secret" onclick="connection_check('sciencemesh_loopback_shared_secret');" >Connection test</button>
+            <button type="button" id="check_connection_sciencemesh_loopback_shared_secret" >Connection test</button>
         <div>
             <input type="button" name="sciencemesh_setting_submit_btn" id="sciencemesh_setting_submit_btn" value="Save settings">
         </div>
