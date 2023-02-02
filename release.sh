@@ -9,8 +9,10 @@ cp -r templates build/sciencemesh/
 cp -r composer.* build/sciencemesh/
 cd build/sciencemesh/
 composer install
-cd ../../release
+cd ..
+tar -cf sciencemesh.tar sciencemesh
+cd ../release
+mv ../build/sciencemesh.tar .
 rm -f -- sciencemesh.tar.gz
-tar -cf sciencemesh.tar ../build/sciencemesh
 gzip sciencemesh.tar
 cd ..
