@@ -14,7 +14,7 @@ style('sciencemesh', 'style');
 					<thead>
 						<tr>
 							<td colspan="2">Name</td>
-							<td>E-mail</td>
+							<td>Open Cloud Mesh Address</td>
 						</tr>
 					</thead>
 					<tbody id="show_result" >
