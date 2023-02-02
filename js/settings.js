@@ -93,4 +93,37 @@
             }
         });
     })
+    $('#check_connection_sciencemesh_iop_url').on('click',function(){
+        var sciencemesh_iop_url = $("#sciencemesh_iop_url").val().trim();
+
+        $(".section-sciencemesh").addClass("icon-loading");
+        var baseUrl = OC.generateUrl('/apps/sciencemesh');
+   
+        $.ajax({
+            method: "GET",
+            url: baseUrl + "/ajax/check_connection_settings",
+            contentType: 'application/json',
+            data: {
+                sciencemesh_loopback_shared_secret: sciencemesh_loopback_shared_secret,
+                sciencemesh_shared_secret: sciencemesh_shared_secret,
+                sciencemesh_iop_url: sciencemesh_iop_url
+            },
+            success: function onSuccess(response) {
+                $(".section-sciencemesh").removeClass("icon-loading");
+                if (response) {
+                    var message =
+                        response.error
+                            ? (t(OCA.ScienceMesh.AppName, "Error when trying to update the settings") + " (" + response.error + ")")
+                            : t(OCA.ScienceMesh.AppName, "Settings have been successfully updated");
+
+                    var versionMessage = response.version ? (" (" + t(OCA.ScienceMesh.AppName, "version") + " " + response.version + ")") : "";
+
+                    OC.Notification.show(message + versionMessage, {
+                        type: response.error ? "error" : "info",
+                        timeout: 10
+                    });
+                }
+            }
+        });
+    })
 })(jQuery, OC);

@@ -58,7 +58,7 @@ $.ajax({
                 var element = document.getElementById("show_result");
                 element.innerHTML = result;
                 $('#show_result').show();
-            
+
             }
         } 
     }
