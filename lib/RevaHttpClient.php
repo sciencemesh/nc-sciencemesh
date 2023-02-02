@@ -140,15 +140,6 @@ class RevaHttpClient {
 		return $this->revaGet('ocm/ocm-provider',$this->revaUser);
 	}
 
-	public function ocmPing() {
-		return $this->revaGet('ocm/ping',$this->revaUser);
-	}
-
-
-	public function ocmApiV1Hello() {
-		return $this->revaGet('api/v1/hello',$this->revaUser);
-	}
-
 	public function findAcceptedUsers($userId) {
 		$users = $this->revaPost('ocm/invites/find-accepted-users', $userId);
 		return $users;
