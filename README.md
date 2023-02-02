@@ -1,4 +1,4 @@
-# This repository is moved to [this](https://github.com/sciencemesh/nc-sciencemesh) link.
+# This repository will eventually be moved to [this](https://github.com/sciencemesh/nc-sciencemesh) link.
 
 # ScienceMesh
 Place this app in **nextcloud/apps/**

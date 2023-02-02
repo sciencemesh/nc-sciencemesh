@@ -6,6 +6,7 @@ use OCP\Collaboration\Collaborators\ISearchPlugin;
 use OCP\Collaboration\Collaborators\ISearchResult;
 use OCP\Collaboration\Collaborators\SearchResultType;
 use OCP\IConfig;
+use OCP\Share\IShare;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use OCA\ScienceMesh\RevaHttpClient;
@@ -52,7 +53,7 @@ class ScienceMeshSearchPlugin implements ISearchPlugin {
 				"name" => $user['display_name'] ."@". $domain, // FIXME: should this be just the part before the @ sign?
 				"type" => "ScienceMesh",
 				"value" => [
-					"shareType" => 1000, // FIXME: Replace with SHARE_TYPE_SCIENCEMESH
+					"shareType" => IShare::TYPE_SCIENCEMESH,
 					"shareWith" => $user['id']['opaque_id'] ."@". $domain, // FIXME: should this be just the part before the @ sign?
 					"server" => $user['id']['idp']
 				]

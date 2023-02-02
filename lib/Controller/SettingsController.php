@@ -49,12 +49,11 @@ class SettingsController extends Controller
 	                            IL10N $trans,
 	                            ILogger $logger,
 	                            AppConfig $config,
-								IConfig $sciencemeshConfig,
-								$UserId
+                              IConfig $sciencemeshConfig,
+                              $UserId
 	)
 	{
 		parent::__construct($AppName, $request);
-
 
 		$this->serverConfig = new \OCA\ScienceMesh\ServerConfig($sciencemeshConfig);
 

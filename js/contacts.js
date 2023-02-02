@@ -7,10 +7,14 @@ $.ajax({
     contentType: 'application/json',
 }).done(function (response) {
     if(response == '' || response === false) {
-        var element = document.getElementById("test_error");
-        jQuery(element).addClass('text-error');
-        element.innerHTML = 'No Sciencemesh Connection';
-        $('#test_error').show(); 
+        var element = document.getElementById("show_result");
+        element.innerHTML= `
+                            <tr class="app-content-list-item">
+                                <th style="border-radius:100%">
+                                    No Sciencemesh Connection
+                                </th>
+                            </tr>`;
+        $('#show_result').show(); 
     } else {
     let token = JSON.parse(response);
 
@@ -19,37 +23,41 @@ $.ajax({
             console.log(tokenData);
             if(tokenData === 'accepted_users') {
                 let accepted_users = token.accepted_users
-                    for(accept in accepted_users) {
-                        const displayName = accepted_users[accept].display_name;
-                        const username = accepted_users[accept].id.opaque_id;
-                        const idp = accepted_users[accept].id.idp;
-                        const provider = new URL(idp).host;
-                        const result = `
-                                <div href="#" class="app-content-list-item profile-item">
-                                    <div class="app-content-list-item-icon" style="">
-                                        <img src="https://cdn-icons-png.flaticon.com/512/16/16363.png">
-                                    </div>
-                                    <div class="app-content-list-item-line-one" id="show_result" >
-                                        <p class="displayname">${displayName}</p><p class="username-provider">${username}@${provider}</p>
-                                    </div>  
-                                </div>`;                  
-                        var element = document.getElementById("test_error");
-                        element.innerHTML = result;
-                    }
-
-                $('#test_error').show();
+                var result = ''; 
+                for(accept in accepted_users) {
+                    const displayName = accepted_users[accept].display_name;
+                    const username = accepted_users[accept].id.opaque_id;
+                    const idp = accepted_users[accept].id.idp;
+                    const provider = new URL(idp).host;
+                    result += `
+                            <tr>
+                                <td style="border-radius:100%">
+                                    <p class="icon-contacts-dark contacts-profile-img"></p>
+                                </td>
+                                <td class="app-content-list-item-line-one contact-item">
+                                    <p class="displayname">${displayName}</p>
+                                </td>  
+                                <td>
+                                    <p class="username-provider">${username}</p>
+                                </td>
+                            </tr>
+                    `;
+                }
+                
+                var element = document.getElementById("show_result");
+                element.innerHTML = result;
+            
+                $('#show_result').show();
             }else{
                 const result = `
-                        <div href="#" class="app-content-list-item profile-item" >
-                            <div class="app-content-list-item-icon" style="">
-                            </div> 
-                            <div class="app-content-list-item-line-one" id="show_result" >
+                        <tr>
+                            <td>
                                 <p class="username-provider">There are no contacts!</p>
-                            </div>  
-                        </div>`;                  
-                var element = document.getElementById("test_error");
+                            </td>
+                        </tr>`;                  
+                var element = document.getElementById("show_result");
                 element.innerHTML = result;
-                $('#test_error').show();
+                $('#show_result').show();
 
             }
         } 
@@ -59,42 +67,3 @@ $.ajax({
     console.log(response)
     //alert('The token is invalid')
 });
-document.getElementById('elem').onclick = function () { 
-    console.log('clicked');
-    var parts = document.getElementById('token').value.split('@');
-    var token = parts[0];
-    var providerDomain = parts[1];
-
-    var data = 'providerDomain=' + encodeURIComponent(providerDomain) +
-  '&token=' + encodeURIComponent(token);
-
-    var baseUrl = OC.generateUrl('/apps/sciencemesh');
-    $.ajax({
-        url: baseUrl + '/contacts/accept',
-        type: 'POST',
-        contentType: 'application/x-www-form-urlencoded',
-        data: data
-    }).done(function (response) {
-      
-       if(response === '' || response === false) {
-            var element = document.getElementById("test_error");
-            element.innerHTML= 'No connection with reva';
-        } else {
-            let result = JSON.parse(response);
-            if(result.hasOwnProperty('message')) {
-                let test = result.message
-                var element = document.getElementById("test_error");
-                element.innerHTML=test;
-
-                $('#provider').hide();
-                $('#display_name').hide();
-            } else {
-                console.log(result)
-            }
-        }
-     
-    }).fail(function (response, code) {
-        console.log(response)
-        //alert('The token is invalid')
-    });
-};
