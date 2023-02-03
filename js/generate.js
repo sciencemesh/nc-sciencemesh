@@ -2,7 +2,9 @@
 //give some error you need for every PHP file seperate JS logic
 document.addEventListener("DOMContentLoaded", function(event) {
     $('#test').hide();
-    document.getElementById('elem').onclick = function () {
+    console.log("Hello there");
+    console.log(document.getElementById('token-generator'));
+    document.getElementById('token-generator').onclick = function () {
         var baseUrl = OC.generateUrl('/apps/sciencemesh');
         $.ajax({
             url: baseUrl + '/invitations/generate',

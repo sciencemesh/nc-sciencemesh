@@ -1,8 +1,7 @@
 <ul class="with-icon">
     <li>
         <a class="icon-public" style="padding-left:34px" href="generate">Create invite link
-            <button class="token-generator icon-add-white app-content-list-item-icon" style="background-color: rgb(31, 72, 96);">
-        <!-- <span class="icon-add-white"></span> -->
+            <button id="token-generator" class="icon-add-white app-content-list-item-icon" style="background-color: rgb(31, 72, 96);">
     </button>
 </a>
     </li>
