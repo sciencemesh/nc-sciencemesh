@@ -11,7 +11,7 @@ style('sciencemesh', 'style');
 		<div id="app-content-wrapper" class="viewcontainer">
 				<div class="app-content-list">
 					<div href="#" class="app-content-list-item">
-						<div class="app-content-list-item-line-one token-holder" id="dialog">
+						<div class="app-content-list-item-line-one token-holder" style="display:none" id="dialog">
 							<input id="token-input" type="hidden">
 							<div>Do you want to accept this invitation from <span id="providerDomain">(unknown)</span>?</div>
 							<input type="button" class="check-token" id="elem" value="Accept">

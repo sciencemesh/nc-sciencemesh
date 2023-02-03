@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
             console.log("checkQueryString success!");
             document.getElementById('token-input').value = `${params.token}@${params.providerDomain}`;
             document.getElementById('providerDomain').innerHTML = params.providerDomain;
-            $("#test_error").show();
+            $("#dialog").show();
         } else {
             console.log("checkQueryString fail!");
             $("#test_error").addClass('text-error');
