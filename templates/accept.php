@@ -15,7 +15,7 @@ style('sciencemesh', 'style');
 							<input id="token-input" type="hidden">
 							<div>Do you want to accept this invitation from <span id="providerDomain">(unknown)</span>?</div>
 							<input type="button" class="check-token" id="elem" value="Accept">
-							<div>The inviter will be able to start sharing files and collaborating with you.</div>
+							<div>The inviter will be able to start sharing files and folders with you.</div>
 							<!-- <div><a href="contacts">Decline</a></div> -->
 						</div>
 						<div id="test_error" style="display:none"></div>
