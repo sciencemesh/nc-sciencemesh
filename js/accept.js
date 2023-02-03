@@ -49,10 +49,15 @@ document.addEventListener("DOMContentLoaded", function(event) {
       });
       if ((typeof params.token == 'string') && (params.token.length > 0) &&
         (typeof params.providerDomain == 'string') && (params.providerDomain.length > 0)) {
+            console.log("checkQueryString success!");
             document.getElementById('token-input').value = `${params.token}@${params.providerDomain}`;
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('dialog').style.display = 'block';
             document.getElementById('providerDomain').innerHTML = params.providerDomain;
+            $("#test_error").show();
+        } else {
+            console.log("checkQueryString fail!");
+            $("#test_error").addClass('text-error');
+            $("#test_error").show();
+            $("#test_error").html('No token in the URL');
         }
     }
   

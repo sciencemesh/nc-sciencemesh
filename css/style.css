@@ -78,6 +78,8 @@
    display: flex;
    padding: 0px !important;
    text-align: center;
+   align-items: center;
+   gap: 10em;
 }
 
 #show_result{
