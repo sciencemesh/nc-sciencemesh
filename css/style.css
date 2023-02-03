@@ -74,12 +74,14 @@
    padding-right: 40px;
 }
 
-.token-holder{
+.token-holder {
    display: flex;
    padding: 0px !important;
    text-align: center;
+   flex-direction: column;
    align-items: center;
-   gap: 10em;
+   gap: 1.2em;
+   margin: 2em 0 2em;
 }
 
 #show_result{
