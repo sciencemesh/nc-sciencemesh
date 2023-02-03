@@ -31,6 +31,10 @@
    max-width: 100% !important;
 }
 
+.button-icon {
+   margin-right: 0.5em;
+}
+
 .token-added{
    width: 30px;
    height: 30px;
@@ -60,15 +64,26 @@
    right:0
 }
 
+#contact-toolbar{
+   padding: 10px 20px;
+   margin: 5px 10px;
+}
+
 #token-generator{
    color: white;
-   /* cursor: pointer; */
+   cursor: pointer;
    float: right;
-   width: 36px;
+   width: auto;
    height: 36px;
    color: white;
-   border-radius: 100%;
-   border: 0
+   border-radius: 0.2em;
+   border: 0;
+   background-color: rgb(31, 72, 96);
+}
+
+
+#token-generator:hover {
+   background-color: rgb(57, 142, 192);
 }
 
 #token-input{
@@ -114,7 +129,7 @@
    white-space: nowrap;
    width:100% !important;
    display:inline;
-   /* cursor:pointer; */
+   cursor:pointer;
 }
 
 .token-btn-verification{
@@ -222,7 +237,7 @@
 }
 .contact-title-desc{
    display: block;
-   margin: 10px 0 -10px 25px;
+   margin: 0 0 -10px 25px;
    width: 100%;
 }
 .input-checkbox-contacts{

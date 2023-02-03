@@ -9,10 +9,13 @@ style('sciencemesh', 'style');
 	<div id="app-content">
 		<div id="app-content-wrapper" class="viewcontainer">
 			<div class="app-content-list">
+				<div id="contact-toolbar" class="files-controls">
+					<button id="token-generator" class=" app-content-list-item-icon">
+						<span class="icon-public-white button-icon"></span>Invite ScienceMesh user
+					</button>
+				</div>
+				<div id="invitation-details"></div>
 				<small class="contact-title-desc">* List of your ScienceMesh contacts.</small>
-				<a class="icon-public" style="padding-left:34px" href="generate">Create invite link
-					<button id="token-generator" class="icon-add-white app-content-list-item-icon" style="background-color: rgb(31, 72, 96);"></button>
-				</a>
 				<table class=" contacts-table" id="contact-table">
 					<thead>
 						<tr>
