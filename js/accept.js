@@ -49,8 +49,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
       });
       if ((typeof params.token == 'string') && (params.token.length > 0) &&
         (typeof params.providerDomain == 'string') && (params.providerDomain.length > 0)) {
-        document.getElementById('token-input').value = `${params.token}@${params.providerDomain}`;
-      }
+            document.getElementById('token-input').value = `${params.token}@${params.providerDomain}`;
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dialog').style.display = 'block';
+            document.getElementById('providerDomain').innerHTML = params.providerDomain;
+        }
     }
   
     checkQueryString();
