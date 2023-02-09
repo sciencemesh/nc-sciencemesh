@@ -10,8 +10,6 @@
  * Page: templates/generate.php
 */
 
-@import "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css";
-
 .token-added{
    width: 30px;
    height: 30px;
@@ -62,7 +60,6 @@
 }
 
 #show_result{
-   font-size:80%;
    border:1px solid #eee;
 }
 
@@ -122,4 +119,134 @@
 .section{
    padding: 12.5px 10px;
    width: 100%;
+}
+
+.app-content-list-item-icon{
+   width: 20px;
+   height: 20px;
+   margin: 10px;
+   color: white;
+   font-size: large;
+   text-align: center;
+   border-radius: 100%;
+}
+
+.profile-item{
+   display: flex;
+}
+
+.displayname{
+   font-size: 9pt;
+   font-weight: bold;
+   line-height: 10px !important;
+}
+
+#elem{
+   padding: 5px;
+}
+
+#elem:hover{
+   background-color: #00000011;
+   padding: 5px;
+}
+
+
+.text-error{
+   color:red !important;
+}
+
+.text-success{
+   color: green !important;
+}
+
+
+.section{
+   padding: 12.5px 10px;
+   width: 100%;
+}
+.sciencemesh-settings-row label{
+   display: inline-block;
+   font-weight: bolder !important;
+   width: 200px !important;
+}
+
+.sciencemesh-settings-row input[type="text"]{
+   width: 80% !important;
+}
+
+.section-sciencemesh{
+   margin: 10px !important;
+}
+
+
+.text-error{
+   color:red !important;
+}
+
+.text-success{
+   color: green !important;
+}
+
+.contacts-table{
+   width: 98%;
+   padding: 10px 20px;
+   margin: 5px 10px;
+   border-spacing: 3px;
+}
+.contacts-table thead th,.contacts-table thead td {
+   border: 1px solid #041e4222;
+   border-radius: 3px;
+ }
+ 
+.contacts-table thead tr td{
+   background-color: #ccd2d9;
+   padding: 2.5px;
+}
+.contacts-table tbody tr td:first-child{
+   width: 5% !important;
+   text-align: center;
+}
+
+.contacts-table tbody tr td:first-child{
+   text-align: center;
+   width: 1% !important;
+}
+.contacts-table tbody tr td:nth-child(2){
+   width: 20% !important;
+   border-bottom: 1px solid #ececec;
+}
+.contacts-table tbody tr td:nth-child(3){
+   width: 45% !important;
+   border-bottom: 1px solid #ececec;
+}
+.contacts-profile-img{
+   height: 35px;
+   margin: 2.5px 0px;
+   width: 35px;
+   border-radius: 3px;
+   box-shadow: 0px 0px 5px #0002;
+   display: inline-block;
+}
+
+.contacts-table tbody tr:hover{
+   background-color: #00000000;
+}
+
+.contacts-table tbody tr{
+   border-bottom: 1px solid #00000011;
+}
+.contact-title-desc{
+   display: block;
+   margin: 10px 0 -10px 25px;
+   width: 100%;
+}
+.input-checkbox-contacts{
+   display: inline-block;
+   position: relative;
+   top: -13px;
+   margin:0 5px 0 -25px;
+}
+.username-provider{
+   width: 45%;
+   text-align: left;
 }

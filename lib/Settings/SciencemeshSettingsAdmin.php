@@ -31,7 +31,6 @@ class SciencemeshSettingsAdmin implements ISettings {
             'sciencemeshRevaSharedSecret' => $this->serverConfig->getRevaSharedSecret()
         ];
 
-        var_dump($parameters);die;
 
         return new TemplateResponse('sciencemesh', 'settings/admin', $parameters, '');
     }
