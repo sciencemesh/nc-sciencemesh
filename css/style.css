@@ -10,6 +10,27 @@
  * Page: templates/generate.php
 */
 
+@import "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css";
+
+.app-sciencemesh #app{
+   display: contents;
+}
+#app{
+   width: 100% !important;
+}
+
+.app-content-list{
+   max-width: 100% !important;
+}
+
+#app{
+   width: 100% !important;
+}
+
+.app-content-list{
+   max-width: 100% !important;
+}
+
 .token-added{
    width: 30px;
    height: 30px;
@@ -164,6 +185,7 @@
    padding: 12.5px 10px;
    width: 100%;
 }
+
 .sciencemesh-settings-row label{
    display: inline-block;
    font-weight: bolder !important;
