@@ -14,6 +14,10 @@ use OCA\ScienceMesh\DocumentService;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
+use OCP\AppFramework\Http\TextPlainResponse;
+use OCP\AppFramework\Http;
+use OCA\Sciencemesh\ServerConfig;
+use OCP\IConfig;
 
 /**
  * Settings controller for the administration page
@@ -23,6 +27,7 @@ class SettingsController extends Controller
 	private $logger;
 	private $config;
 	private $urlGenerator;
+	private $serverConfig;
 
 	const CATALOG_URL = "https://iop.sciencemesh.uni-muenster.de/iop/mentix/sitereg";
 
@@ -39,7 +44,8 @@ class SettingsController extends Controller
 	                            IURLGenerator $urlGenerator,
 	                            IL10N $trans,
 	                            ILogger $logger,
-	                            AppConfig $config
+	                            AppConfig $config,
+								IConfig $IConfig
 	)
 	{
 		parent::__construct($AppName, $request);
@@ -47,6 +53,7 @@ class SettingsController extends Controller
 		$this->urlGenerator = $urlGenerator;
 		$this->logger = $logger;
 		$this->config = $config;
+		$this->serverConfig = new \OCA\ScienceMesh\ServerConfig($IConfig);
 
 		$eventDispatcher = \OC::$server->getEventDispatcher();
 		$eventDispatcher->addListener(
@@ -217,5 +224,24 @@ class SettingsController extends Controller
 			"shareAttributesVersion" => $this->config->ShareAttributesVersion()
 		];
 		return $result;
+	}
+
+
+	/**
+	 * Save sciencemesh settings
+	 *
+	 * @return array
+	 *
+	 * @NoAdminRequired
+	 * @PublicPage
+	 */
+	public function SaveSciencemeshSettings()
+	{
+		$sciencemesh_iop_url = $this->request->getParam('sciencemesh_iop_url');
+		$this->serverConfig->setIopUrl($sciencemesh_iop_url);
+		$this->serverConfig->getRevaLoopbackSecret();
+		$this->serverConfig->getRevaSharedSecret();
+
+		return new TextPlainResponse(true, Http::STATUS_OK);	
 	}
 }
