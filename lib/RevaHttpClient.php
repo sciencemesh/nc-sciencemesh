@@ -41,12 +41,12 @@ class RevaHttpClient {
 	 * RevaHttpClient constructor.
 	 *
 	 */
-	public function __construct(IConfig $config) {
+	public function __construct(IConfig $config, $curlDebug = true) {
 		$this->config = $config;
 		$this->serverConfig = new \OCA\ScienceMesh\ServerConfig($config);
 		$this->revaUrl = $this->serverConfig->getIopUrl();
 		$this->revaLoopbackSecret = $this->serverConfig->getRevaLoopbackSecret();
-		$this->curlDebug = true;
+		$this->curlDebug = $curlDebug;
 	}
 
 	private function curlGet($url, $user, $params = []) {
@@ -63,6 +63,7 @@ class RevaHttpClient {
 			curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		}
 
+		
 		if ($this->curlDebug) {
 			curl_setopt($ch, CURLOPT_VERBOSE, true);
 			$streamVerboseHandle = fopen('php://temp', 'w+');
@@ -136,7 +137,7 @@ class RevaHttpClient {
 	}
 
 	public function ocmProvider() {
-		return $this->revaGet('ocm/ocm-provider');
+		return $this->revaGet('ocm/ocm-provider',$this->revaUser);
 	}
 
 	public function findAcceptedUsers($userId) {
