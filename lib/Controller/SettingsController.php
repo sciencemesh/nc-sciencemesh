@@ -32,7 +32,7 @@ class SettingsController extends Controller
 	private $serverConfig;
 	private $sciencemeshConfig;
 	private $userId;
-
+  
 	const CATALOG_URL = "https://iop.sciencemesh.uni-muenster.de/iop/mentix/sitereg";
 
 	/**
@@ -50,8 +50,9 @@ class SettingsController extends Controller
 	                            IL10N $trans,
 	                            ILogger $logger,
 	                            AppConfig $config,
-								IConfig $sciencemeshConfig,
-								$UserId
+                              IConfig $sciencemeshConfig,
+                              $UserId
+
 	)
 	{
 
@@ -64,7 +65,7 @@ class SettingsController extends Controller
 		$this->config = $config;
 		$this->sciencemeshConfig = $sciencemeshConfig;
 		$this->userId = $UserId;
-		
+    
 		$eventDispatcher = \OC::$server->getEventDispatcher();
 		$eventDispatcher->addListener(
 			'OCA\Files::loadAdditionalScripts',
@@ -256,7 +257,6 @@ class SettingsController extends Controller
 	}
 
 
-
 	/**
 	 * Check IOP URL connection
 	 *
@@ -265,6 +265,7 @@ class SettingsController extends Controller
 	 * @NoAdminRequired
 	 * @PublicPage
 	 */
+   
 	public function checkConnectionSettings(){
 		$revaHttpClient = new RevaHttpClient($this->sciencemeshConfig, false);
 		

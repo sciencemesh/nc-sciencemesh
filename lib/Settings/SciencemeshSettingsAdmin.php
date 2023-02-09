@@ -30,8 +30,7 @@ class SciencemeshSettingsAdmin implements ISettings {
             'sciencemeshRevaLoopbackSecret' => $this->serverConfig->getRevaLoopbackSecret(),
             'sciencemeshRevaSharedSecret' => $this->serverConfig->getRevaSharedSecret()
         ];
-
-
+        
         return new TemplateResponse('sciencemesh', 'settings/admin', $parameters, '');
     }
 

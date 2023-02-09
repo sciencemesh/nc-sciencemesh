@@ -9,10 +9,18 @@ style('sciencemesh', 'style');
 	<div id="app-content">
 		<div id="app-content-wrapper" class="viewcontainer">
 			<div class="app-content-list">
-				<div href="#" class="app-content-list-item" id="test_error" style="display: none;">
-					<div class="app-content-list-item-icon" style="background-color: rgb(151, 72, 96);">M</div>
-					<div class="app-content-list-item-line-one" id="show_result" style="font-size: 40%;"></div>
-				</div>
+				<small class="contact-title-desc">* List of your ScienceMesh contacts.</small>
+				<table class=" contacts-table" id="contact-table">
+					<thead>
+						<tr>
+							<td colspan="2">Name</td>
+							<td>Open Cloud Mesh Address</td>
+						</tr>
+					</thead>
+					<tbody id="show_result" >
+
+					</tbody>
+				</table>
 			</div>
 		</div>
 	</div>

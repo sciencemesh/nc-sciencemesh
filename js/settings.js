@@ -16,7 +16,7 @@
             var numUsers = $("#sciencemeshNumusers").val().trim();
             var numFiles = $("#sciencemeshNumfiles").val().trim();
             var numStorage = $("#sciencemeshNumstorage").val().trim();
-
+            
             $.ajax({
                 method: "PUT",
                 url: OC.generateUrl("apps/" + OCA.ScienceMesh.AppName + "/ajax/settings/address"),
@@ -27,6 +27,7 @@
                     country: countryCode,
                     iopurl: iopurl,
                     numusers: numUsers,
+                    numfiles: numFiles,
                     numfiles: numFiles,
                     numstorage: numStorage
                 },
@@ -92,7 +93,7 @@
             }
         });
     })
-
+    
     $('#check_connection_sciencemesh_iop_url').on('click',function(){
         var sciencemesh_iop_url = $("#sciencemesh_iop_url").val().trim();
 
