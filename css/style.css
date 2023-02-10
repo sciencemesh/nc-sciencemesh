@@ -118,8 +118,14 @@
 
 .message-token{
    margin:0px;
-   background: #cecece;
+   color: green;
    padding:5px;
+   width: 180px;
+   font-size: 12px;
+   padding:5px 6px;
+   height:36px;
+   border-radius: 5px;
+   margin: 2.5px 5px;
 }
 
 .generated-token-link{
@@ -249,4 +255,53 @@
 .username-provider{
    width: 45%;
    text-align: left;
+}
+
+	
+.token-generator{
+   width:98%;
+   display:flex;
+}
+
+#app-content-wrapper {
+   display: flex;
+   flex-direction: row;
+}
+#contact-toolbar {
+   align-items: center;
+}
+
+#invitation-details {
+   display: flex;
+   align-items: center;
+}
+
+.contact-title-desc {
+   margin-top: 1rem;
+   margin-left: 1rem;
+}
+
+.contacts-table {
+   margin-top: 1rem;
+   width: 100%;
+   border-collapse: collapse;
+}
+
+.share-options {
+   display: inline-block;
+   margin: 10px 0;
+}
+.share-select {
+   font-size: 16px;
+   padding: 5px;
+   border: 1px solid #ccc;
+   border-radius: 4px;
+   -webkit-appearance: none;
+   -moz-appearance: none;
+   appearance: none;
+   background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iOCIgdmlld0JveD0iMCAwIDE2IDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCAtMTYpIj4KICAgIDxwYXRoIGZpbGw9IiMyRjVGNUYiIGQ9Ik0gMTQuNSwxNiAwLjUsMTYgMC44LDIyLjIgNS4yLDIyLjIgMTQuNSwyMi4yIDE0LjUsMTYgWiIvPgogIDwvZz4KPC9zdmc+Cg==);
+   background-size: 8px 4px;
+   background-repeat: no-repeat;
+   background-position: right;
+   cursor: pointer;
 }

@@ -80,23 +80,25 @@ document.getElementById('token-generator').onclick = function () {
             element.innerHTML = 'No Sciencemesh Connection';
         } else {
             var element = document.getElementById("invitation-details");
-            element.innerHTML = `<div class="token-generator"><i class="fa-thin fa-square-check"></i><h4 class="message-token">New Token Generated!</h4><input type="text" value="${response}" onclick="get_token()" readonly name="meshtoken" class="generated-token-link"><span class="icon-share svg" onclick="get_token()"></span><a class="token-btn-verification" href="${response}">View Token</a></div>`;
+            element.innerHTML = `<div class="token-generator"><i class="fa-thin fa-square-check"></i><h4 class="message-token">New Token Generated!</h4><input type="text" value="${response}" onclick="get_token()" readonly name="meshtoken" class="generated-token-link"><span class="icon-share svg" id="share-token-btn"></span></div>`;
             $('#test').show();
+            var button = document.querySelector("#share-token-btn");
+            button.addEventListener("click", function() {
+                copyToClipboard();
+            });
         }
     }).fail(function (response, code) {
         alert('The token is invalid')
     });
 }
-function get_token(){
-    var copyText = document.getElementsByName("meshtoken");
 
-    // Select the text field
-    copyText.select();
-    copyText.setSelectionRange(0, 99999); // For mobile devices
-
-    // Copy the text inside the text field
-    navigator.clipboard.writeText(copyText.value);
+function copyToClipboard() {
+    var input = document.querySelector("input[name='meshtoken']");
+    input.select();
+    document.execCommand("copy");
 }
+  
+
 function secondsToDhms(seconds) {
     seconds = Number(seconds);
     var d = Math.floor(seconds / (3600 * 24));
