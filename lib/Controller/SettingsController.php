@@ -52,8 +52,7 @@ class SettingsController extends Controller
 	                            AppConfig $config,
                               IConfig $sciencemeshConfig,
                               $UserId
-
-	)
+  )
 	{
 
 		parent::__construct($AppName, $request);
@@ -237,7 +236,6 @@ class SettingsController extends Controller
 		return $result;
 	}
 
-
 	/**
 	 * Save sciencemesh settings
 	 *
@@ -255,7 +253,6 @@ class SettingsController extends Controller
 
 		return new TextPlainResponse(true, Http::STATUS_OK);	
 	}
-
 
 	/**
 	 * Check IOP URL connection
