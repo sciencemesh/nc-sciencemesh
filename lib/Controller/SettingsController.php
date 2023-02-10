@@ -30,9 +30,7 @@ class SettingsController extends Controller
 	private $config;
 	private $urlGenerator;
 	private $serverConfig;
-	private $sciencemeshConfig;
-	private $userId;
-	
+  
 	const CATALOG_URL = "https://iop.sciencemesh.uni-muenster.de/iop/mentix/sitereg";
 
 	/**
@@ -49,8 +47,7 @@ class SettingsController extends Controller
 	                            IL10N $trans,
 	                            ILogger $logger,
 	                            AppConfig $config,
-                              IConfig $sciencemeshConfig,
-                              $UserId
+								              IConfig $IConfig
 	)
 	{
 		parent::__construct($AppName, $request);
@@ -60,8 +57,7 @@ class SettingsController extends Controller
 		$this->urlGenerator = $urlGenerator;
 		$this->logger = $logger;
 		$this->config = $config;
-		$this->sciencemeshConfig = $sciencemeshConfig;
-		$this->userId = $UserId;
+    $this->serverConfig = new \OCA\ScienceMesh\ServerConfig($IConfig);
 
 		$eventDispatcher = \OC::$server->getEventDispatcher();
 		$eventDispatcher->addListener(
@@ -234,6 +230,17 @@ class SettingsController extends Controller
 		return $result;
 	}
 
+
+
+	/**
+	 * Save sciencemesh settings
+	 *
+	 * @return array
+	 *
+	 * @NoAdminRequired
+	 * @PublicPage
+	 */
+   
 	public function SaveSciencemeshSettings()
 	{
 		$sciencemesh_iop_url = $this->request->getParam('sciencemesh_iop_url');
@@ -243,12 +250,5 @@ class SettingsController extends Controller
 
 		return new TextPlainResponse(true, Http::STATUS_OK);	
 	}
-
-	public function checkConnectionSettings(){
-		$revaHttpClient = new RevaHttpClient($this->sciencemeshConfig, false);
-		
-		$response_sciencemesh_iop_url = json_decode(str_replace('\n','',$revaHttpClient->ocmProvider()),true);
-		
-        return new JSONResponse($response_sciencemesh_iop_url);
-	}
+  
 }
