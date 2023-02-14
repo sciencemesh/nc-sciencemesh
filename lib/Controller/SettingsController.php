@@ -247,9 +247,11 @@ class SettingsController extends Controller
 	public function SaveSciencemeshSettings()
 	{
 		$sciencemesh_iop_url = $this->request->getParam('sciencemesh_iop_url');
+		$sciencemesh_shared_secret = $this->request->getParam('sciencemesh_shared_secret');
+
 		$this->serverConfig->setIopUrl($sciencemesh_iop_url);
 		$this->serverConfig->getRevaLoopbackSecret();
-		$this->serverConfig->getRevaSharedSecret();
+		$this->serverConfig->getRevaSharedSecret($sciencemesh_shared_secret);
 
 		return new TextPlainResponse(true, Http::STATUS_OK);	
 	}
