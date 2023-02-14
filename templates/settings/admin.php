@@ -20,6 +20,7 @@ style('sciencemesh', 'style');
         <div class="sciencemesh-settings-row">
             <label for="sciencemesh_iop_url" name="sciencemesh_iop_url">IOP URL</label>
             <input type="text" name="sciencemesh_iop_url" id="sciencemesh_iop_url" value="<?php echo $this->vars['sciencemeshIopUrl']; ?>">
+            <button type="button" id="check_connection_sciencemesh_iop_url">Connection test</button>
         </div>
         <div class="sciencemesh-settings-row">
             <label for="sciencemesh_shared_secret" name="sciencemesh_shared_secret">Shared Secret</label>
