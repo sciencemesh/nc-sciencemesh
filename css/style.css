@@ -65,8 +65,7 @@
 }
 
 #contact-toolbar{
-   padding: 10px 20px;
-   margin: 5px 10px;
+   margin: 10px 10px;
    display: flex;
 }
 
@@ -84,6 +83,10 @@
 
 #token-generator:hover {
    background-color: rgb(57, 142, 192);
+}
+
+.generated-token-link{
+   height: 36px !important;
 }
 
 #token-input{
@@ -259,7 +262,7 @@
 
 	
 .token-generator{
-   width:98%;
+   width:108%;
    display:flex;
 }
 
