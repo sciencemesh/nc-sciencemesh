@@ -205,6 +205,7 @@
 .contacts-table thead th,.contacts-table thead td {
    border: 1px solid #041e4222;
    border-radius: 3px;
+   padding:5px 15px !important;
  }
  
 .contacts-table thead tr td{
@@ -219,6 +220,10 @@
 .contacts-table tbody tr td:first-child{
    text-align: center;
    width: 1% !important;
+}
+.contacts-table tbody .app-content-list-item{
+   height: auto !important;
+   padding: 5px 10px;
 }
 .contacts-table tbody tr td:nth-child(2){
    width: 20% !important;
@@ -307,3 +312,4 @@
    background-position: right;
    cursor: pointer;
 }
+
