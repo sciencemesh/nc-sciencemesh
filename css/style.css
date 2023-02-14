@@ -67,12 +67,12 @@
 #contact-toolbar{
    padding: 10px 20px;
    margin: 5px 10px;
+   display: flex;
 }
 
 #token-generator{
    color: white;
    cursor: pointer;
-   float: right;
    width: auto;
    height: 36px;
    color: white;
@@ -272,7 +272,7 @@
 }
 
 #invitation-details {
-   display: flex;
+   width: 80%;
    align-items: center;
 }
 
@@ -283,7 +283,6 @@
 
 .contacts-table {
    margin-top: 1rem;
-   width: 100%;
    border-collapse: collapse;
 }
 
