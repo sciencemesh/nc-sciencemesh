@@ -65,7 +65,7 @@
 }
 
 #contact-toolbar{
-   margin: 10px 10px;
+   margin: 20px 10px 0px;
    display: flex;
 }
 
@@ -280,7 +280,7 @@
 }
 
 .contact-title-desc {
-   margin-top: 1rem;
+   margin-top: 0.3rem;
    margin-left: 1rem;
 }
 
