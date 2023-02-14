@@ -27,7 +27,6 @@ class SciencemeshSettingsAdmin implements ISettings {
         $parameters = [
             'sciencemeshSetting' => $this->config->getSystemValue('sciencemesh_advance_settings', true),
             'sciencemeshIopUrl' => $this->serverConfig->getIopUrl(),
-            'sciencemeshRevaLoopbackSecret' => $this->serverConfig->getRevaLoopbackSecret(),
             'sciencemeshRevaSharedSecret' => $this->serverConfig->getRevaSharedSecret()
         ];
         
