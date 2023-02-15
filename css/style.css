@@ -186,15 +186,6 @@
    width: 100%;
 }
 
-.sciencemesh-settings-row label{
-   display: inline-block;
-   font-weight: bolder !important;
-   width: 200px !important;
-}
-
-.sciencemesh-settings-row input[type="text"]{
-   width: 80% !important;
-}
 
 .section-sciencemesh{
    margin: 10px !important;
@@ -271,4 +262,18 @@
 .username-provider{
    width: 45%;
    text-align: left;
+}
+
+.sciencemesh-settings-row label{
+   width: 15%;
+   display: inline-block;
+}
+.sciencemesh-settings-row input[type="text"]{
+   margin: 5px;
+}
+
+#sciencemesh_setting_submit_btn{
+   float: right;
+   margin: 5px 25px;
+   width: 143.4px;
 }

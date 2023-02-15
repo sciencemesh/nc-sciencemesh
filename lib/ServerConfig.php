@@ -68,6 +68,10 @@ class ServerConfig {
 		}
 		return $ret;
 	}
+	public function setRevaSharedSecret($sharedSecret)
+	{
+		$this->config->setAppValue('sciencemesh','revaSharedSecret', $sharedSecret);
+	}
 	public function getNumUsers() {
 		return $this->config->getAppValue('sciencemesh','numUsers');
 	}
