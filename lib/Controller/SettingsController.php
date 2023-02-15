@@ -250,8 +250,7 @@ class SettingsController extends Controller
 		$sciencemesh_shared_secret = $this->request->getParam('sciencemesh_shared_secret');
 
 		$this->serverConfig->setIopUrl($sciencemesh_iop_url);
-		$this->serverConfig->getRevaLoopbackSecret();
-		$this->serverConfig->getRevaSharedSecret($sciencemesh_shared_secret);
+		$this->serverConfig->setRevaSharedSecret($sciencemesh_shared_secret);
 
 		return new TextPlainResponse(true, Http::STATUS_OK);	
 	}

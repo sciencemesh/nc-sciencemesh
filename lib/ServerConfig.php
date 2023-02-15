@@ -60,20 +60,17 @@ class ServerConfig {
 		}
 		return $ret;
 	}
-	public function getRevaSharedSecret($sharedSecret = '') {
+	public function getRevaSharedSecret() {
 		$ret = $this->config->getAppValue('sciencemesh','revaSharedSecret');
 		if (!$ret) {
 			$ret = random_str(32);
 			$this->config->setAppValue('sciencemesh','revaSharedSecret', $ret);
-			if($sharedSecret == '')
-				$ret = random_str(32);
-			else	
-				$ret = $sharedSecret;
-		}elseif($ret and $sharedSecret != ''){
-			$ret = $sharedSecret;
 		}
-		$this->config->setAppValue('sciencemesh','revaSharedSecret', $ret);
 		return $ret;
+	}
+	public function setRevaSharedSecret($sharedSecret)
+	{
+		$this->config->setAppValue('sciencemesh','revaSharedSecret', $sharedSecret);
 	}
 	public function getNumUsers() {
 		return $this->config->getAppValue('sciencemesh','numUsers');
