@@ -32,7 +32,7 @@ class SettingsController extends Controller
 	private $serverConfig;
 	private $sciencemeshConfig;
 	private $userId;
-	
+  
 	const CATALOG_URL = "https://iop.sciencemesh.uni-muenster.de/iop/mentix/sitereg";
 
 	/**
@@ -43,6 +43,7 @@ class SettingsController extends Controller
 	 * @param ILogger $logger - logger
 	 * @param AppConfig $config - application configuration
 	 */
+
 	public function __construct($AppName,
 	                            IRequest $request,
 	                            IURLGenerator $urlGenerator,
@@ -51,8 +52,9 @@ class SettingsController extends Controller
 	                            AppConfig $config,
                               IConfig $sciencemeshConfig,
                               $UserId
-	)
+  )
 	{
+
 		parent::__construct($AppName, $request);
 
 		$this->serverConfig = new \OCA\ScienceMesh\ServerConfig($sciencemeshConfig);
@@ -62,7 +64,7 @@ class SettingsController extends Controller
 		$this->config = $config;
 		$this->sciencemeshConfig = $sciencemeshConfig;
 		$this->userId = $UserId;
-
+    
 		$eventDispatcher = \OC::$server->getEventDispatcher();
 		$eventDispatcher->addListener(
 			'OCA\Files::loadAdditionalScripts',
@@ -234,16 +236,34 @@ class SettingsController extends Controller
 		return $result;
 	}
 
+	/**
+	 * Save sciencemesh settings
+	 *
+	 * @return array
+	 *
+	 * @NoAdminRequired
+	 * @PublicPage
+	 */
 	public function SaveSciencemeshSettings()
 	{
 		$sciencemesh_iop_url = $this->request->getParam('sciencemesh_iop_url');
+		$sciencemesh_shared_secret = $this->request->getParam('sciencemesh_shared_secret');
+
 		$this->serverConfig->setIopUrl($sciencemesh_iop_url);
-		$this->serverConfig->getRevaLoopbackSecret();
-		$this->serverConfig->getRevaSharedSecret();
+		$this->serverConfig->setRevaSharedSecret($sciencemesh_shared_secret);
 
 		return new TextPlainResponse(true, Http::STATUS_OK);	
 	}
 
+	/**
+	 * Check IOP URL connection
+	 *
+	 * @return array
+	 *
+	 * @NoAdminRequired
+	 * @PublicPage
+	 */
+   
 	public function checkConnectionSettings(){
 		$revaHttpClient = new RevaHttpClient($this->sciencemeshConfig, false);
 		

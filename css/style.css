@@ -106,7 +106,6 @@
 }
 
 #show_result{
-   font-size:80%;
    border:1px solid #eee;
 }
 
@@ -173,15 +172,51 @@
    padding: 12.5px 10px;
    width: 100%;
 }
-.sciencemesh-settings-row label{
-   display: inline-block;
-   font-weight: bolder !important;
-   width: 200px !important;
+
+.app-content-list-item-icon{
+   width: 20px;
+   height: 20px;
+   margin: 10px;
+   color: white;
+   font-size: large;
+   text-align: center;
+   border-radius: 100%;
 }
 
-.sciencemesh-settings-row input[type="text"]{
-   width: 80% !important;
+.profile-item{
+   display: flex;
 }
+
+.displayname{
+   font-size: 9pt;
+   font-weight: bold;
+   line-height: 10px !important;
+}
+
+#elem{
+   padding: 5px;
+}
+
+#elem:hover{
+   background-color: #00000011;
+   padding: 5px;
+}
+
+
+.text-error{
+   color:red !important;
+}
+
+.text-success{
+   color: green !important;
+}
+
+
+.section{
+   padding: 12.5px 10px;
+   width: 100%;
+}
+
 
 .section-sciencemesh{
    margin: 10px !important;
@@ -313,3 +348,16 @@
    cursor: pointer;
 }
 
+.sciencemesh-settings-row label{
+   width: 15%;
+   display: inline-block;
+}
+.sciencemesh-settings-row input[type="text"]{
+   margin: 5px;
+}
+
+#sciencemesh_setting_submit_btn{
+   float: right;
+   margin: 5px 25px;
+   width: 143.4px;
+}
