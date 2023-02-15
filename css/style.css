@@ -361,3 +361,7 @@
    margin: 5px 25px;
    width: 143.4px;
 }
+#share-token-btn{
+   background-size: 20px !important;
+   width: 30px;
+}
