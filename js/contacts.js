@@ -67,3 +67,48 @@ $.ajax({
     console.log(response)
     //alert('The token is invalid')
 });
+document.getElementById('token-generator').onclick = function () {
+    var baseUrl = OC.generateUrl('/apps/sciencemesh');
+    $.ajax({
+        url: baseUrl + '/invitations/generate',
+        type: 'GET',
+        contentType: 'application/json',
+        //data: JSON.stringify(note)
+    }).done(function (response) {
+        if (response === '' || response === false) {
+            var element = document.getElementById("test_1");
+            element.innerHTML = 'No Sciencemesh Connection';
+        } else {
+            var element = document.getElementById("invitation-details");
+            element.innerHTML = `<div class="token-generator"><i class="fa-thin fa-square-check"></i><input type="text" value="${response}" onclick="get_token()" readonly name="meshtoken" class="generated-token-link"><span class="icon-clippy svg" id="share-token-btn"></span><h4 class="message-token" style="padding:8px 0;">New Token Generated!</h4></div>`;
+            $('#test').show();
+            var button = document.querySelector("#share-token-btn");
+            button.addEventListener("click", function() {
+                copyToClipboard();
+            });
+        }
+    }).fail(function (response, code) {
+        alert('The token is invalid')
+    });
+}
+
+function copyToClipboard() {
+    var input = document.querySelector("input[name='meshtoken']");
+    input.select();
+    document.execCommand("copy");
+}
+  
+
+function secondsToDhms(seconds) {
+    seconds = Number(seconds);
+    var d = Math.floor(seconds / (3600 * 24));
+    var h = Math.floor(seconds % (3600 * 24) / 3600);
+    var m = Math.floor(seconds % 3600 / 60);
+    var s = Math.floor(seconds % 60);
+
+    var dDisplay = d > 0 ? d + (d == 1 ? " day, " : " days, ") : "";
+    var hDisplay = h > 0 ? h + (h == 1 ? " hour, " : " hours, ") : "";
+    var mDisplay = m > 0 ? m + (m == 1 ? " minute, " : " minutes, ") : "";
+    var sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
+    return dDisplay + hDisplay + mDisplay + sDisplay;
+}

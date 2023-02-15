@@ -61,7 +61,7 @@ return [
 		['name' => 'storage#handleDelete', 'url' => '/~{userId}/files/{path}', 'verb' => 'DELETE', 'requirements' => ['path' => '.+']],
 		['name' => 'storage#handleHead', 'url' => '/~{userId}/files/{path}', 'verb' => 'HEAD', 'requirements' => ['path' => '.+']],
 
-		['name' => 'app#generate', 'url' => '/', 'verb' => 'GET'],
+		['name' => 'app#contacts', 'url' => '/', 'verb' => 'GET'],
 		['name' => 'app#generate', 'url' => '/generate', 'verb' => 'GET'],
 		['name' => 'app#accept', 'url' => '/accept', 'verb' => 'GET'],
 		['name' => 'app#contacts', 'url' => '/contacts', 'verb' => 'GET'],

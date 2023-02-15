@@ -30,7 +30,7 @@
     <navigations>
         <navigation>
             <name>ScienceMesh</name>
-            <route>sciencemesh.app.generate</route>
+            <route>sciencemesh.app.contacts</route>
             <order>10</order>
         </navigation>
     </navigations>
