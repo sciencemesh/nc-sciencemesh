@@ -62,21 +62,11 @@ class RevaHttpClient {
 			curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		}
 
-		
-		if ($this->curlDebug) {
-			curl_setopt($ch, CURLOPT_VERBOSE, true);
-			$streamVerboseHandle = fopen('php://temp', 'w+');
-			curl_setopt($ch, CURLOPT_STDERR, $streamVerboseHandle);
-		}
-		
 		$output = curl_exec($ch);
+		$info = curl_getinfo($ch);
+		error_log('curl output:' . var_export($output, true) . ' info: ' . var_export($info, true));
+		curl_close($ch);
 
-		if ($this->curlDebug) {
-			rewind($streamVerboseHandle);
-			$verboseLog = stream_get_contents($streamVerboseHandle);
-			$output = $verboseLog . $output;
-		}
-		
 		return $output;
 	}
 	private function curlPost($url, $user, $params = []) {
@@ -153,7 +143,7 @@ class RevaHttpClient {
 	}
 
 	public function generateTokenFromReva($userId) {
-		$tokenFromReva = $this->revaPost('sciencemesh/generate-invite', $userId);
+		$tokenFromReva = $this->revaGet('sciencemesh/generate-invite', $userId);
 		error_log('Got token from reva!' . $tokenFromReva);
 		return json_decode($tokenFromReva, true);
 	}

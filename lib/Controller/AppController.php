@@ -117,8 +117,8 @@ class AppController extends Controller {
 	 */
 	public function invitationsGenerate() {
 		$invitationsData = $this->httpClient->generateTokenFromReva($this->userId);
-		$tokenStr = $invitationsData["invite_token"]["token"];
-		$iopUrl = $invitationsData["invite_token"]["user_id"]["idp"];
+		$tokenStr = $invitationsData["token"];
+		$iopUrl = $invitationsData["user_id"]["idp"];
 		$iopDomain =  parse_url($iopUrl)["host"];
 		// $meshDirectoryUrl = "https://sciencemesh.cesnet.cz/iop/meshdir/";
 		$meshDirectoryUrl = $this->config->getAppValue('sciencemesh', 'meshDirectoryUrl', 'https://sciencemesh.cesnet.cz/iop/meshdir/');
