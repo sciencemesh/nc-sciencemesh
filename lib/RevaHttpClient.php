@@ -34,7 +34,6 @@ use OCP\IConfig;
 class RevaHttpClient {
 	private $client;
 	private $revaUrl;
-	private $revaUser;
 	private $revaLoopbackSecret;
 		
 	/**
@@ -58,7 +57,7 @@ class RevaHttpClient {
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		if ($this->revaUser && $this->revaLoopbackSecret) {
+		if ($this->revaLoopbackSecret) {
 			curl_setopt($ch, CURLOPT_USERPWD, $user.":".$this->revaLoopbackSecret);
 			curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		}
@@ -101,13 +100,13 @@ class RevaHttpClient {
 		return $output;
 	}
 
-	private function revaGet($method, $user, $params = []) {
-		$url = $this->revaUrl . $method;
+	private function revaGet($route, $user, $params = []) {
+		$url = $this->revaUrl . $route;
 		return $this->curlGet($url, $user, $params);
 	}
 		
-	private function revaPost($method, $user, $params = []) {
-		$url = $this->revaUrl . $method;
+	private function revaPost($route, $user, $params = []) {
+		$url = $this->revaUrl . $route;
 		return $this->curlPost($url, $user, $params);
 	}
 
@@ -137,7 +136,7 @@ class RevaHttpClient {
 	}
 
 	public function ocmProvider() {
-		return $this->revaGet('ocm/ocm-provider',$this->revaUser);
+		return $this->revaGet('ocm/ocm-provider');
 	}
 
 	public function findAcceptedUsers($userId) {
@@ -154,7 +153,7 @@ class RevaHttpClient {
 	}
 
 	public function generateTokenFromReva($userId) {
-		$tokenFromReva = $this->revaPost('ocm/invites/generate', $userId);
+		$tokenFromReva = $this->revaPost('sciencemesh/generate-invite', $userId);
 		error_log('Got token from reva!' . $tokenFromReva);
 		return json_decode($tokenFromReva, true);
 	}
