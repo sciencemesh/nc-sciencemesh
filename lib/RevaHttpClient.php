@@ -130,12 +130,12 @@ class RevaHttpClient {
 	}
 
 	public function findAcceptedUsers($userId) {
-		$users = $this->revaPost('ocm/invites/find-accepted-users', $userId);
+		$users = $this->revaGet('sciencemesh/find-accepted-users', $userId);
 		return $users;
 	}
 
 	public function getAcceptTokenFromReva($providerDomain, $token, $userId) {
-		$tokenFromReva = $this->revaPost('ocm/invites/forward', $userId, [
+		$tokenFromReva = $this->revaPost('sciencemesh/accept-invite', $userId, [
 			'providerDomain' => $providerDomain,
 			'token' => $token
 		]);
