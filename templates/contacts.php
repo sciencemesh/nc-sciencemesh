@@ -8,7 +8,7 @@ style('sciencemesh', 'style');
 				<div class="app-content-list">
 					<div id="contact-toolbar" class="files-controls">
 						<button id="token-generator" class=" app-content-list-item-icon">
-							<span class="icon-public-white button-icon"></span>Invite ScienceMesh user
+							<span class="icon-public button-icon"></span>Invite ScienceMesh user
 						</button>
 						<div id="invitation-details"></div>
 					</div>
