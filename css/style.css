@@ -31,6 +31,10 @@
    max-width: 100% !important;
 }
 
+.app-content-list .app-content-list-item{
+   height: auto !important;
+}
+
 .button-icon {
    margin-right: 0.5em;
 }
@@ -161,7 +165,8 @@
 
 #test_error{
    padding: 5px;
-   border: 1px dashed #eee;
+   border: 1px dashed darkgreen;
+   margin: 10px auto;
 }
 
 .section{
