@@ -18,9 +18,9 @@ style('sciencemesh', 'style');
 							<div>The inviter will be able to start sharing files and folders with you.</div>
 							<!-- <div><a href="contacts">Decline</a></div> -->
 						</div>
-						<div id="test_error" style="display:none"></div>
-
 					</div>
+					<div id="test_error" style="display:none"></div>
+
 				</div>
 				<div class="app-content-detail">
 				</div>
