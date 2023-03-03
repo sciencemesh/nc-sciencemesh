@@ -5,6 +5,7 @@ namespace OCA\ScienceMesh\Tests\Unit\Controller;
 use PHPUnit_Framework_TestCase;
 
 use OCA\ScienceMesh\Controller\RevaController;
+use OCA\ScienceMesh\Controller\OcmController;
 use OCA\ScienceMesh\Service\UserService;
 
 /**
@@ -1209,7 +1210,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getStatus(),500);
 	}
 	public function testAddSentShare() {
-		$controller = new RevaController(
+		$controller = new OcmController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
@@ -1395,7 +1396,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$controller->addSentShare($this->userId);
 	}
 	public function testAddReceivedShareMissingArgs() {
-		$controller = new RevaController(
+		$controller = new OcmController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager , $this->shareManager,
@@ -1417,7 +1418,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getStatus(),400);
 	}
 	public function testAddReceivedShareAlreadyShared() {
-		$controller = new RevaController(
+		$controller = new OcmController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager , $this->shareManager,
@@ -1485,7 +1486,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getStatus(),201);
 	}
 	public function testAddReceivedShare() {
-		$controller = new RevaController(
+		$controller = new OcmController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager , $this->shareManager,
