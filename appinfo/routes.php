@@ -8,9 +8,8 @@
  * it's instantiated in there
  */
 
-return [
+ $routes_array = [
 	'routes' => [
-
 		// reva routes
 		['name' => 'reva#Authenticate', 'url' => '/~{userId}/api/auth/Authenticate', 'verb' => 'POST'],
 		['name' => 'reva#AddGrant', 'url' => '/~{userId}/api/storage/AddGrant', 'verb' => 'POST'],
@@ -49,6 +48,7 @@ return [
 		['name' => 'ocm#UpdateSentShare', 'url' => '/~{userId}/api/ocm/UpdateSentShare', 'verb' => 'POST'],
 		['name' => 'ocm#UpdateReceivedShare', 'url' => '/~{userId}/api/ocm/UpdateReceivedShare', 'verb' => 'POST'],
 		['name' => 'ocm#GetUser', 'url' => '/~{dummy}/api/user/GetUser', 'verb' => 'POST'],
+		
 		/*
 		['name' => 'storage#createHome', 'url' => '/~{userId}/CreateHome', 'verb' => 'POST'],
 		['name' => 'storage#listFolder', 'url' => '/~{userId}/ListFolder', 'verb' => 'POST'],
@@ -89,3 +89,5 @@ return [
 
 	]
 ];
+
+return $routes_array;
