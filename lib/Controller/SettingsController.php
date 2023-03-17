@@ -43,7 +43,6 @@ class SettingsController extends Controller
      * @param ILogger $logger - logger
      * @param AppConfig $config - application configuration
      */
-
     public function __construct($AppName,
                                 IRequest $request,
                                 IURLGenerator $urlGenerator,
@@ -52,11 +51,9 @@ class SettingsController extends Controller
                                 AppConfig $config,
                                 IConfig $sciencemeshConfig,
                                 $userId
-)
+    )
     {
-
         parent::__construct($AppName, $request);
-
         $this->serverConfig = new \OCA\ScienceMesh\ServerConfig($sciencemeshConfig);
 
         $this->urlGenerator = $urlGenerator;
