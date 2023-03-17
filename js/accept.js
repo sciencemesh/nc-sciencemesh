@@ -1,44 +1,44 @@
 document.addEventListener("DOMContentLoaded", function(event) {
-  document.getElementById('elem').onclick = function () {
-	console.log('clicked');
-	var full = document.getElementById('token-input').value
-	var parts = full.split('@')
-	var token = parts[0]
-	var providerDomain = parts[1]
-	var data = 'providerDomain=' + encodeURIComponent(providerDomain) + '&token=' + encodeURIComponent(token);
-	var baseUrl = OC.generateUrl('/apps/sciencemesh');
+	document.getElementById('elem').onclick = function () {
+		console.log('clicked');
+		var full = document.getElementById('token-input').value
+		var parts = full.split('@')
+		var token = parts[0]
+		var providerDomain = parts[1]
+		var data = 'providerDomain=' + encodeURIComponent(providerDomain) + '&token=' + encodeURIComponent(token);
+		var baseUrl = OC.generateUrl('/apps/sciencemesh');
 
-	$.ajax({
-		url: baseUrl + '/contacts/accept',
-		type: 'POST',
-		contentType: 'application/x-www-form-urlencoded',
-		data: data
-	}).done(function (response) {
-		var element = document.getElementById("test_error");
-		$("#test_error").show();
-		if (response === '' || response === false) {
-			$("#test_error").addClass('text-error');
-			element.innerHTML = 'Something goes wrong: No Sciencemesh Connection';
-		} else if(response.startsWith('Accepted invite from')){
-			$("#test_error").addClass('text-success');
-			document.getElementById('token').value = '';
-		} else {
-			let result = JSON.parse(response);
-			if (result.hasOwnProperty('message')) {
-				let test = result.message;
-				element.innerHTML = test || 'Success';
-				$('#provider').hide();
-				$('#display_name').hide();
+		$.ajax({
+			url: baseUrl + '/contacts/accept',
+			type: 'POST',
+			contentType: 'application/x-www-form-urlencoded',
+			data: data
+		}).done(function (response) {
+			var element = document.getElementById("test_error");
+			$("#test_error").show();
+			if (response === '' || response === false) {
+				$("#test_error").addClass('text-error');
+				element.innerHTML = 'Something goes wrong: No Sciencemesh Connection';
+			} else if(response.startsWith('Accepted invite from')){
+				$("#test_error").addClass('text-success');
+				document.getElementById('token').value = '';
 			} else {
-				console.log(result)
+				let result = JSON.parse(response);
+				if (result.hasOwnProperty('message')) {
+					let test = result.message;
+					element.innerHTML = test || 'Success';
+					$('#provider').hide();
+					$('#display_name').hide();
+				} else {
+					console.log(result)
+				}
 			}
-		}
 
-		setTimeout(() => {$("#test_error").hide()},5000);
+			setTimeout(() => {$("#test_error").hide()},5000);
 
-	}).fail(function (response, code) {
-		console.log(response)
-		//alert('The token is invalid')
+		}).fail(function (response, code) {
+			console.log(response)
+			//alert('The token is invalid')
 		});
 	};
 
