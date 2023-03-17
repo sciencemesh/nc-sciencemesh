@@ -26,249 +26,249 @@ use OCP\IConfig;
  */
 class SettingsController extends Controller
 {
-	private $logger;
-	private $config;
-	private $urlGenerator;
-	private $serverConfig;
-	private $sciencemeshConfig;
-	private $userId;
+    private $logger;
+    private $config;
+    private $urlGenerator;
+    private $serverConfig;
+    private $sciencemeshConfig;
+    private $userId;
   
-	const CATALOG_URL = "https://iop.sciencemesh.uni-muenster.de/iop/mentix/sitereg";
+    const CATALOG_URL = "https://iop.sciencemesh.uni-muenster.de/iop/mentix/sitereg";
 
-	/**
-	 * @param string $AppName - application name
-	 * @param IRequest $request - request object
-	 * @param IURLGenerator $urlGenerator - url generator service
-	 * @param IL10N $trans - l10n service
-	 * @param ILogger $logger - logger
-	 * @param AppConfig $config - application configuration
-	 */
+    /**
+     * @param string $AppName - application name
+     * @param IRequest $request - request object
+     * @param IURLGenerator $urlGenerator - url generator service
+     * @param IL10N $trans - l10n service
+     * @param ILogger $logger - logger
+     * @param AppConfig $config - application configuration
+     */
 
-	public function __construct($AppName,
-	                            IRequest $request,
-	                            IURLGenerator $urlGenerator,
-	                            IL10N $trans,
-	                            ILogger $logger,
-	                            AppConfig $config,
-                              IConfig $sciencemeshConfig,
-                              $UserId
-  )
-	{
+    public function __construct($AppName,
+                                IRequest $request,
+                                IURLGenerator $urlGenerator,
+                                IL10N $trans,
+                                ILogger $logger,
+                                AppConfig $config,
+                                IConfig $sciencemeshConfig,
+                                $userId
+)
+    {
 
-		parent::__construct($AppName, $request);
+        parent::__construct($AppName, $request);
 
-		$this->serverConfig = new \OCA\ScienceMesh\ServerConfig($sciencemeshConfig);
+        $this->serverConfig = new \OCA\ScienceMesh\ServerConfig($sciencemeshConfig);
 
-		$this->urlGenerator = $urlGenerator;
-		$this->logger = $logger;
-		$this->config = $config;
-		$this->sciencemeshConfig = $sciencemeshConfig;
-		$this->userId = $UserId;
+        $this->urlGenerator = $urlGenerator;
+        $this->logger = $logger;
+        $this->config = $config;
+        $this->sciencemeshConfig = $sciencemeshConfig;
+        $this->userId = $userId;
     
-		$eventDispatcher = \OC::$server->getEventDispatcher();
-		$eventDispatcher->addListener(
-			'OCA\Files::loadAdditionalScripts',
-			function () {
-				\OCP\Util::addScript('sciencemesh', 'settings');
-				\OCP\Util::addStyle('sciencemesh', 'style');
-			}
-		);
-	}
+        $eventDispatcher = \OC::$server->getEventDispatcher();
+        $eventDispatcher->addListener(
+            'OCA\Files::loadAdditionalScripts',
+            function () {
+                \OCP\Util::addScript('sciencemesh', 'settings');
+                \OCP\Util::addStyle('sciencemesh', 'style');
+            }
+        );
+    }
 
-	/**
-	 * Print config section
-	 * FIXME: https://github.com/pondersource/nc-sciencemesh/issues/215
-	 * Listing is OK, but changing these settings
-	 * should probably really require Nextcloud server admin permissions!
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 * @return TemplateResponse
-	 */
-	public function index()
-	{
-		$data = $this->loadSettings();
-		if (!$data) {
-			// settings has not been set
-			$data = [
-				"apikey" => "",
-				"sitename" => "",
-				"siteurl" => "",
-				"siteid" => "",
-				"country" => "",
-				"iopurl" => "",
-				"numusers" => 0,
-				"numfiles" => 0,
-				"numstorage" => 0
-			];
-		}
-		return new TemplateResponse($this->appName, "settings", $data, "blank");
-	}
+    /**
+     * Print config section
+     * FIXME: https://github.com/pondersource/nc-sciencemesh/issues/215
+     * Listing is OK, but changing these settings
+     * should probably really require Nextcloud server admin permissions!
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @return TemplateResponse
+     */
+    public function index()
+    {
+        $data = $this->loadSettings();
+        if (!$data) {
+            // settings has not been set
+            $data = [
+                "apikey" => "",
+                "sitename" => "",
+                "siteurl" => "",
+                "siteid" => "",
+                "country" => "",
+                "iopurl" => "",
+                "numusers" => 0,
+                "numfiles" => 0,
+                "numstorage" => 0
+            ];
+        }
+        return new TemplateResponse($this->appName, "settings", $data, "blank");
+    }
 
-	/**
-	 * Simply method that posts back the payload of the request
-	 * @NoAdminRequired
-	 */
-	public function saveSettings($apikey, $sitename, $siteurl, $country, $iopurl, $numusers, $numfiles, $numstorage)
-	{
-		$siteid = null;
+    /**
+     * Simply method that posts back the payload of the request
+     * @NoAdminRequired
+     */
+    public function saveSettings($apikey, $sitename, $siteurl, $country, $iopurl, $numusers, $numfiles, $numstorage)
+    {
+        $siteid = null;
 
-		if ($numusers == null) {
-			$numusers = 0;
-		}
-		if ($numfiles == null) {
-			$numfiles = 0;
-		}
-		if ($numstorage == null) {
-			$numstorage = 0;
-		}
+        if ($numusers == null) {
+            $numusers = 0;
+        }
+        if ($numfiles == null) {
+            $numfiles = 0;
+        }
+        if ($numstorage == null) {
+            $numstorage = 0;
+        }
 
-		// submit settings to Mentix (if they are valid)
-		if ($apikey !== "" && $sitename !== "" && $siteurl !== "" && $iopurl !== "") {
-			try {
-				$siteid = $this->submitSettings($apikey, $sitename, $siteurl, $country, $iopurl);
-			} catch (\Exception $e) {
-				return new DataResponse([
-					'error' => $e->getMessage()
-				]);
-			}
-		}
+        // submit settings to Mentix (if they are valid)
+        if ($apikey !== "" && $sitename !== "" && $siteurl !== "" && $iopurl !== "") {
+            try {
+                $siteid = $this->submitSettings($apikey, $sitename, $siteurl, $country, $iopurl);
+            } catch (\Exception $e) {
+                return new DataResponse([
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
 
-		// store settings in DB
-		$this->deleteSettings();
-		try {
-			$this->storeSettings($apikey, $sitename, $siteurl, $siteid, $country, $iopurl, $numusers, $numfiles, $numstorage);
-		} catch (\Exception $e) {
-			return new DataResponse([
-				'error' => 'error storing settings: ' . $e->getMessage()
-			]);
-		}
+        // store settings in DB
+        $this->deleteSettings();
+        try {
+            $this->storeSettings($apikey, $sitename, $siteurl, $siteid, $country, $iopurl, $numusers, $numfiles, $numstorage);
+        } catch (\Exception $e) {
+            return new DataResponse([
+                'error' => 'error storing settings: ' . $e->getMessage()
+            ]);
+        }
 
-		return new DataResponse(["siteid" => $siteid]);
-	}
+        return new DataResponse(["siteid" => $siteid]);
+    }
 
-	private function storeSettings($apikey, $sitename, $siteurl, $siteid, $country, $iopurl, $numusers, $numfiles, $numstorage)
-	{
-		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
-		$query->insert('sciencemesh')
-			->setValue('apikey', $query->createNamedParameter($apikey))
-			->setValue('sitename', $query->createNamedParameter($sitename))
-			->setValue('siteurl', $query->createNamedParameter($siteurl))
-			->setValue('siteid', $query->createNamedParameter($siteid))
-			->setValue('country', $query->createNamedParameter($country))
-			->setValue('iopurl', $query->createNamedParameter($iopurl))
-			->setValue('numusers', $query->createNamedParameter($numusers))
-			->setValue('numfiles', $query->createNamedParameter($numfiles))
-			->setValue('numstorage', $query->createNamedParameter($numstorage));
-		$result = $query->execute();
+    private function storeSettings($apikey, $sitename, $siteurl, $siteid, $country, $iopurl, $numusers, $numfiles, $numstorage)
+    {
+        $query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+        $query->insert('sciencemesh')
+            ->setValue('apikey', $query->createNamedParameter($apikey))
+            ->setValue('sitename', $query->createNamedParameter($sitename))
+            ->setValue('siteurl', $query->createNamedParameter($siteurl))
+            ->setValue('siteid', $query->createNamedParameter($siteid))
+            ->setValue('country', $query->createNamedParameter($country))
+            ->setValue('iopurl', $query->createNamedParameter($iopurl))
+            ->setValue('numusers', $query->createNamedParameter($numusers))
+            ->setValue('numfiles', $query->createNamedParameter($numfiles))
+            ->setValue('numstorage', $query->createNamedParameter($numstorage));
+        $result = $query->execute();
 
-		if (!$result) {
-			\OC::$server->getLogger()->error('sciencemesh database cound not be updated', ['app' => 'sciencemesh']);
-			throw new \Exception('sciencemesh database cound not be updated');
-		}
-	}
+        if (!$result) {
+            \OC::$server->getLogger()->error('sciencemesh database cound not be updated', ['app' => 'sciencemesh']);
+            throw new \Exception('sciencemesh database cound not be updated');
+        }
+    }
 
-	private function deleteSettings()
-	{
-		$deleteQuery = \OC::$server->getDatabaseConnection()->getQueryBuilder();
-		$deleteQuery->delete('sciencemesh');
-		$deleteQuery->execute();
-	}
+    private function deleteSettings()
+    {
+        $deleteQuery = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+        $deleteQuery->delete('sciencemesh');
+        $deleteQuery->execute();
+    }
 
-	private function loadSettings()
-	{
-		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
-		$query->select('*')->from('sciencemesh');
-		$result = $query->execute();
-		$row = $result->fetch();
-		$result->closeCursor();
-		return $row;
-	}
+    private function loadSettings()
+    {
+        $query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+        $query->select('*')->from('sciencemesh');
+        $result = $query->execute();
+        $row = $result->fetch();
+        $result->closeCursor();
+        return $row;
+    }
 
-	private function submitSettings($apikey, $sitename, $siteurl, $country, $iopurl)
-	{
-		// fill out a data object as needed by Mentix
-		$iopPath = parse_url($iopurl, PHP_URL_PATH);
-		$data = json_encode([
-			"name" => $sitename,
-			"url" => $siteurl,
-			"countryCode" => $country,
-			"reva" => [
-				"url" => $iopurl,
-				"metricsPath" => rtrim($iopPath, "/") . "/metrics"
-			]
-		]);
-		$url = self::CATALOG_URL . "?action=register&apiKey=" . urlencode($apikey);
+    private function submitSettings($apikey, $sitename, $siteurl, $country, $iopurl)
+    {
+        // fill out a data object as needed by Mentix
+        $iopPath = parse_url($iopurl, PHP_URL_PATH);
+        $data = json_encode([
+            "name" => $sitename,
+            "url" => $siteurl,
+            "countryCode" => $country,
+            "reva" => [
+                "url" => $iopurl,
+                "metricsPath" => rtrim($iopPath, "/") . "/metrics"
+            ]
+        ]);
+        $url = self::CATALOG_URL . "?action=register&apiKey=" . urlencode($apikey);
 
-		// use CURL to send the request to Mentix
-		$curl = curl_init($url);
-		curl_setopt($curl, CURLOPT_HEADER, false);
-		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($curl, CURLOPT_HTTPHEADER, array("Content-type: application/json"));
-		curl_setopt($curl, CURLOPT_POST, true);
-		curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
-		$response = curl_exec($curl);
-		$respData = json_decode($response, true);
-		$status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-		curl_close($curl);
+        // use CURL to send the request to Mentix
+        $curl = curl_init($url);
+        curl_setopt($curl, CURLOPT_HEADER, false);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, array("Content-type: application/json"));
+        curl_setopt($curl, CURLOPT_POST, true);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+        $response = curl_exec($curl);
+        $respData = json_decode($response, true);
+        $status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        curl_close($curl);
 
-		if ($status == 200) {
-			return $respData["id"];
-		} else {
-			throw new \Exception($respData["error"]);
-		}
-	}
+        if ($status == 200) {
+            return $respData["id"];
+        } else {
+            throw new \Exception($respData["error"]);
+        }
+    }
 
-	/**
-	 * Get app settings
-	 *
-	 * @return array
-	 *
-	 * @NoAdminRequired
-	 * @PublicPage
-	 */
-	public function GetSettings()
-	{
-		$result = [
-			"formats" => $this->config->FormatsSetting(),
-			"sameTab" => $this->config->GetSameTab(),
-			"shareAttributesVersion" => $this->config->ShareAttributesVersion()
-		];
-		return $result;
-	}
+    /**
+     * Get app settings
+     *
+     * @return array
+     *
+     * @NoAdminRequired
+     * @PublicPage
+     */
+    public function GetSettings()
+    {
+        $result = [
+            "formats" => $this->config->FormatsSetting(),
+            "sameTab" => $this->config->GetSameTab(),
+            "shareAttributesVersion" => $this->config->ShareAttributesVersion()
+        ];
+        return $result;
+    }
 
-	/**
-	 * Save sciencemesh settings
-	 *
-	 * @return array
-	 *
-	 * @NoAdminRequired
-	 * @PublicPage
-	 */
-	public function SaveSciencemeshSettings()
-	{
-		$sciencemesh_iop_url = $this->request->getParam('sciencemesh_iop_url');
-		$sciencemesh_shared_secret = $this->request->getParam('sciencemesh_shared_secret');
+    /**
+     * Save sciencemesh settings
+     *
+     * @return array
+     *
+     * @NoAdminRequired
+     * @PublicPage
+     */
+    public function SaveSciencemeshSettings()
+    {
+        $sciencemesh_iop_url = $this->request->getParam('sciencemesh_iop_url');
+        $sciencemesh_shared_secret = $this->request->getParam('sciencemesh_shared_secret');
 
-		$this->serverConfig->setIopUrl($sciencemesh_iop_url);
-		$this->serverConfig->setRevaSharedSecret($sciencemesh_shared_secret);
+        $this->serverConfig->setIopUrl($sciencemesh_iop_url);
+        $this->serverConfig->setRevaSharedSecret($sciencemesh_shared_secret);
 
-		return new TextPlainResponse(true, Http::STATUS_OK);	
-	}
+        return new TextPlainResponse(true, Http::STATUS_OK);	
+    }
 
-	/**
-	 * Check IOP URL connection
-	 *
-	 * @return array
-	 *
-	 * @NoAdminRequired
-	 * @PublicPage
-	 */
-   
-	public function checkConnectionSettings(){
-		$revaHttpClient = new RevaHttpClient($this->sciencemeshConfig, false);
-		
-		$response_sciencemesh_iop_url = json_decode(str_replace('\n','',$revaHttpClient->ocmProvider()),true);
-		
+    /**
+     * Check IOP URL connection
+     *
+     * @return array
+     *
+     * @NoAdminRequired
+     * @PublicPage
+     */
+
+    public function checkConnectionSettings(){
+        $revaHttpClient = new RevaHttpClient($this->sciencemeshConfig, false);
+        
+        $response_sciencemesh_iop_url = json_decode(str_replace('\n','',$revaHttpClient->ocmProvider()),true);
+        
         return new JSONResponse($response_sciencemesh_iop_url);
-	}
+    }
 }
