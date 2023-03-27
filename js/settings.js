@@ -16,7 +16,7 @@
             var numUsers = $("#sciencemeshNumusers").val().trim();
             var numFiles = $("#sciencemeshNumfiles").val().trim();
             var numStorage = $("#sciencemeshNumstorage").val().trim();
-            
+
             $.ajax({
                 method: "PUT",
                 url: OC.generateUrl("apps/" + OCA.ScienceMesh.AppName + "/ajax/settings/address"),
@@ -27,7 +27,6 @@
                     country: countryCode,
                     iopurl: iopurl,
                     numusers: numUsers,
-                    numfiles: numFiles,
                     numfiles: numFiles,
                     numstorage: numStorage
                 },
@@ -97,7 +96,7 @@
 
         $(".section-sciencemesh").addClass("icon-loading");
         var baseUrl = OC.generateUrl('/apps/sciencemesh');
-   
+
         $.ajax({
             method: "GET",
             url: baseUrl + "/ajax/check_connection_settings",
@@ -116,18 +115,18 @@
 
                     OC.Notification.show(message, {
                         type: "error",
-                        timeout: 1000
+                        timeout: 10
                     });
 
                 }else{
                     var message = t(OCA.ScienceMesh.AppName, "Connection is not available");
                     OC.Notification.show(message, {
                         type: "error",
-                        timeout: 1000
+                        timeout: 10
                     });
                 }
             }
         });
-    })
-    
+    });
+
 })(jQuery, OC);
