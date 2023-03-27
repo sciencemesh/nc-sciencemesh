@@ -1,5 +1,4 @@
 <?php
+declare(strict_types=1);
 
-	declare(strict_types=1);
-
-	$app = \OC::$server->query(\OCA\ScienceMesh\AppInfo\ScienceMeshApp::class);
+$app = \OC::$server->query(\OCA\ScienceMesh\AppInfo\ScienceMeshApp::class);
