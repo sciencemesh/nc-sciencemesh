@@ -87,7 +87,7 @@ ifeq (, $(composer))
 else
 	composer install --prefer-dist
 endif
-	-git apply --directory=vendor/phpunit/php-code-coverage phpunit.patch
+#	-git apply --directory=vendor/phpunit/php-code-coverage phpunit.patch
 # Installs npm dependencies
 .PHONY: npm
 npm:

@@ -2,7 +2,7 @@
    padding: 10px 40px;
 }
 #hello {
-	color: red;
+	color: var(--color-error);
 }
 
 /*
@@ -31,6 +31,10 @@
    max-width: 100% !important;
 }
 
+.app-content-list .app-content-list-item{
+   height: auto !important;
+}
+
 .button-icon {
    margin-right: 0.5em;
 }
@@ -42,13 +46,13 @@
    text-align: center;
    padding-top: 5px;
    border-radius: 100%;
-   color: white;
+   color: var(--color-primary-element-text);
    font-size: large;
-   background: rgb(31, 72, 96);
+   background: var(--color-placeholder-light);
 }
 
 .token-added:hover{
-   background: rgb(93, 116, 130);
+   background: var(--color-background-hover);
 }
 
 .app-content-list-item-line-one{
@@ -70,19 +74,18 @@
 }
 
 #token-generator{
-   color: white;
+   color: var(--color-primary-element-text);
    cursor: pointer;
    width: auto;
    height: 36px;
-   color: white;
    border-radius: 0.2em;
    border: 0;
-   background-color: rgb(31, 72, 96);
+   background-color: var(--color-primary-default);
 }
 
 
 #token-generator:hover {
-   background-color: rgb(57, 142, 192);
+   background-color: var(--color-primary-element-default-hover);
 }
 
 .generated-token-link{
@@ -105,10 +108,6 @@
    margin: 2em 0 2em;
 }
 
-#show_result{
-   border:1px solid #eee;
-}
-
 .app-content-list-item-token{
    margin: 5px
 }
@@ -120,7 +119,7 @@
 
 .message-token{
    margin:0px;
-   color: green;
+   color: var(--color-success);
    padding:5px;
    width: 180px;
    font-size: 12px;
@@ -138,12 +137,13 @@
    width:100% !important;
    display:inline;
    cursor:pointer;
+   border-radius: 0.2em !important;
 }
 
 .token-btn-verification{
    display:block;
-   background: green;
-   color:white;
+   background: var(--color-success);
+   color:var(--color-primary-element-text);
    padding:5px;
    font-weight: bold;
 }
@@ -160,12 +160,13 @@
    background-color: rgb(6, 182, 6) !important;
    position:relative;
    width:200px !important;
-   color: white !important;
+   color: var(--color-primary-element-text) !important;
 }
 
 #test_error{
    padding: 5px;
-   border: 1px dashed #eee;
+   border: 1px dashed darkgreen;
+   margin: 10px auto;
 }
 
 .section{
@@ -177,7 +178,7 @@
    width: 20px;
    height: 20px;
    margin: 10px;
-   color: white;
+   color: var(--color-primary-element-text);
    font-size: large;
    text-align: center;
    border-radius: 100%;
@@ -204,11 +205,11 @@
 
 
 .text-error{
-   color:red !important;
+   color:var(--color-error) !important;
 }
 
 .text-success{
-   color: green !important;
+   color: var(--color-success) !important;
 }
 
 
@@ -224,11 +225,11 @@
 
 
 .text-error{
-   color:red !important;
+   color:var(--color-error) !important;
 }
 
 .text-success{
-   color: green !important;
+   color: var(--color-success) !important;
 }
 
 .contacts-table{
@@ -244,7 +245,7 @@
  }
  
 .contacts-table thead tr td{
-   background-color: #ccd2d9;
+   background-color: var(--color-placeholder-light);
    padding: 2.5px;
 }
 .contacts-table tbody tr td:first-child{
@@ -262,11 +263,11 @@
 }
 .contacts-table tbody tr td:nth-child(2){
    width: 20% !important;
-   border-bottom: 1px solid #ececec;
+   border-bottom: 1px solid var(--color-placeholder-light);
 }
 .contacts-table tbody tr td:nth-child(3){
    width: 45% !important;
-   border-bottom: 1px solid #ececec;
+   border-bottom: 1px solid var(--color-placeholder-light);
 }
 .contacts-profile-img{
    height: 35px;
@@ -278,12 +279,9 @@
 }
 
 .contacts-table tbody tr:hover{
-   background-color: #00000000;
+   background-color: var(--color-background-hover);
 }
 
-.contacts-table tbody tr{
-   border-bottom: 1px solid #00000011;
-}
 .contact-title-desc{
    display: block;
    margin: 0 0 -10px 25px;
@@ -336,7 +334,7 @@
 .share-select {
    font-size: 16px;
    padding: 5px;
-   border: 1px solid #ccc;
+   border: 1px solid var(--color-placeholder-light);
    border-radius: 4px;
    -webkit-appearance: none;
    -moz-appearance: none;

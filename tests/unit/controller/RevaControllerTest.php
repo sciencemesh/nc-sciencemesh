@@ -5,6 +5,7 @@ namespace OCA\ScienceMesh\Tests\Unit\Controller;
 use PHPUnit_Framework_TestCase;
 
 use OCA\ScienceMesh\Controller\RevaController;
+use OCA\ScienceMesh\Controller\OcmController;
 use OCA\ScienceMesh\Service\UserService;
 
 /**
@@ -170,7 +171,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			->with($this->equalTo("einstein"))
 			->willReturn(true);
 		$this->request->method("getParam")->willReturn("einstein");
-		$controller = new RevaController(
+		$controller = new OcmController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
@@ -194,7 +195,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 			->with($this->equalTo("archimedes"))
 			->willReturn(false);
 		$this->request->method("getParam")->willReturn("archimedes");
-		$controller = new RevaController(
+		$controller = new OcmController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
@@ -1209,7 +1210,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getStatus(),500);
 	}
 	public function testAddSentShare() {
-		$controller = new RevaController(
+		$controller = new OcmController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
@@ -1395,7 +1396,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$controller->addSentShare($this->userId);
 	}
 	public function testAddReceivedShareMissingArgs() {
-		$controller = new RevaController(
+		$controller = new OcmController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager , $this->shareManager,
@@ -1417,7 +1418,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getStatus(),400);
 	}
 	public function testAddReceivedShareAlreadyShared() {
-		$controller = new RevaController(
+		$controller = new OcmController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager , $this->shareManager,
@@ -1485,7 +1486,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getStatus(),201);
 	}
 	public function testAddReceivedShare() {
-		$controller = new RevaController(
+		$controller = new OcmController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager , $this->shareManager,
@@ -1525,7 +1526,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getStatus(),201);
 	}
 	public function testGetSentShare() {
-		$controller = new RevaController(
+		$controller = new OcmController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
@@ -1626,7 +1627,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testUnshareSentShare() {
-		$controller = new RevaController(
+		$controller = new OcmController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
@@ -1668,7 +1669,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getStatus(),200);
 	}
 	public function testUnshareFails() {
-		$controller = new RevaController(
+		$controller = new OcmController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager , $this->shareManager,
@@ -1769,7 +1770,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getStatus(),200);
 	}
 	public function testUpdateSentShareFails() {
-		$controller = new RevaController(
+		$controller = new OcmController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
@@ -1789,7 +1790,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getStatus(),500);
 	}
 	public function testListSentShares() {
-		$controller = new RevaController(
+		$controller = new OcmController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
@@ -1877,7 +1878,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getStatus(),200);
 	}
 	public function testListSentSharesEmpty() {
-		$controller = new RevaController(
+		$controller = new OcmController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
@@ -1980,7 +1981,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getStatus(),200);
 	}
 	public function testListReceivedSharesEmpty() {
-		$controller = new RevaController(
+		$controller = new OcmController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 		  $this->userService, $this->trashManager , $this->shareManager,
@@ -2075,7 +2076,7 @@ class RevaControllerTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($result->getStatus(),200);
 	}
 	public function testGetReceivedShareFails() {
-		$controller = new RevaController(
+		$controller = new OcmController(
 			$this->appName, $this->rootFolder, $this->request, $this->session,
 			$this->userManager, $this->urlGenerator, $this->userId, $this->config,
 			$this->userService, $this->trashManager , $this->shareManager,

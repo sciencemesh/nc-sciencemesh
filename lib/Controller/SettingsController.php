@@ -32,7 +32,7 @@ class SettingsController extends Controller
 	private $serverConfig;
 	private $sciencemeshConfig;
 	private $userId;
-  
+
 	const CATALOG_URL = "https://iop.sciencemesh.uni-muenster.de/iop/mentix/sitereg";
 
 	/**
@@ -43,28 +43,25 @@ class SettingsController extends Controller
 	 * @param ILogger $logger - logger
 	 * @param AppConfig $config - application configuration
 	 */
-
 	public function __construct($AppName,
-	                            IRequest $request,
-	                            IURLGenerator $urlGenerator,
-	                            IL10N $trans,
-	                            ILogger $logger,
-	                            AppConfig $config,
-                              IConfig $sciencemeshConfig,
-                              $UserId
-  )
+								IRequest $request,
+								IURLGenerator $urlGenerator,
+								IL10N $trans,
+								ILogger $logger,
+								AppConfig $config,
+								IConfig $sciencemeshConfig,
+		$userId
+	)
 	{
-
 		parent::__construct($AppName, $request);
-
 		$this->serverConfig = new \OCA\ScienceMesh\ServerConfig($sciencemeshConfig);
 
 		$this->urlGenerator = $urlGenerator;
 		$this->logger = $logger;
 		$this->config = $config;
 		$this->sciencemeshConfig = $sciencemeshConfig;
-		$this->userId = $UserId;
-    
+		$this->userId = $userId;
+
 		$eventDispatcher = \OC::$server->getEventDispatcher();
 		$eventDispatcher->addListener(
 			'OCA\Files::loadAdditionalScripts',
@@ -252,7 +249,7 @@ class SettingsController extends Controller
 		$this->serverConfig->setIopUrl($sciencemesh_iop_url);
 		$this->serverConfig->setRevaSharedSecret($sciencemesh_shared_secret);
 
-		return new TextPlainResponse(true, Http::STATUS_OK);	
+		return new TextPlainResponse(true, Http::STATUS_OK);
 	}
 
 	/**
@@ -263,12 +260,12 @@ class SettingsController extends Controller
 	 * @NoAdminRequired
 	 * @PublicPage
 	 */
-   
-	public function checkConnectionSettings(){
+
+	public function checkConnectionSettings()
+	{
 		$revaHttpClient = new RevaHttpClient($this->sciencemeshConfig, false);
-		
-		$response_sciencemesh_iop_url = json_decode(str_replace('\n','',$revaHttpClient->ocmProvider()),true);
-		
-        return new JSONResponse($response_sciencemesh_iop_url);
+		$response_sciencemesh_iop_url = json_decode(str_replace('\n', '', $revaHttpClient->ocmProvider()), true);
+
+		return new JSONResponse($response_sciencemesh_iop_url);
 	}
 }
