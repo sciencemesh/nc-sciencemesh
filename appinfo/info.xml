@@ -3,9 +3,9 @@
       xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
     <id>sciencemesh</id>
     <name>ScienceMesh</name>
-    <summary>Connect your Nextcloud server to the ScienceMesh project</summary>
-    <description><![CDATA[# ScienceMesh]]></description>
-    <version>0.0.1</version>
+    <summary>Connect your Nextcloud instance to your Reva instance and the Science Mesh</summary>
+    <description>Connect your Nextcloud instance to your Reva instance and the Science Mesh</description>
+    <version>0.1.0</version>
     <licence>mit</licence>
     <author homepage="https://sciencemesh.io" >ScienceMesh Community</author>
     <author mail="support@pondersource.com" homepage="https://pondersource.com" >Stichting Ponder Source</author>
@@ -18,9 +18,10 @@
     <author>Ben Peachey (Muze)</author>
     <namespace>ScienceMesh</namespace>
     <category>integration</category>
-    <bugs>https://github.com/pondersource/sciencemesh-nextcloud/issues</bugs>
+    <bugs>https://github.com/pondersource/nc-sciencemesh/issues</bugs>
     <dependencies>
         <nextcloud min-version="15" max-version="26"/>
+        <owncloud min-version="10" max-version="10"/>
     </dependencies>
     <settings>
         <admin>OCA\ScienceMesh\Settings</admin>
