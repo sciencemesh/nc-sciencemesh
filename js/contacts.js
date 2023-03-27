@@ -44,10 +44,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
                                 </tr>
                         `;
                     }
-                    
+
                     var element = document.getElementById("show_result");
                     element.innerHTML = result;
-                
+
                     $('#show_result').show();
                 }else{
                     const result = `
