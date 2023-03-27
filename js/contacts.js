@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
             //data: JSON.stringify(note)
         }).done(function (response) {
             if (response === '' || response === false) {
-                var element = document.getElementById("test_1");
+                var element = document.getElementById("invitation-details");
                 element.innerHTML = 'No Sciencemesh Connection';
             } else {
                 var element = document.getElementById("invitation-details");
