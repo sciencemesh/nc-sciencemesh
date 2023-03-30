@@ -24,7 +24,7 @@ style('sciencemesh', 'style');
         </div>
         <div class="sciencemesh-settings-row">
             <label for="sciencemesh_shared_secret" name="sciencemesh_shared_secret">Shared Secret</label>
-            <input type="text" style="width: 81.5%;"id="sciencemesh_shared_secret" value="<?php echo $this->vars['sciencemeshRevaSharedSecret']; ?>">
+            <input type="text" style="width: 77%;"id="sciencemesh_shared_secret" value="<?php echo $this->vars['sciencemeshRevaSharedSecret']; ?>">
         </div>
         <hr style="opacity: 0.1;">
         <input type="button" name="sciencemesh_setting_submit_btn" id="sciencemesh_setting_submit_btn" value="Save settings">

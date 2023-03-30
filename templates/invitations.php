@@ -5,6 +5,9 @@ script("sciencemesh", "vendor/simplyedit/simply-edit");
 script("sciencemesh", "vendor/simplyedit/simply.everything");
 ?>
 <div id="app">
+	<div id="app-navigation">
+		<?php print_unescaped($this->inc('navigation/index')); ?>
+	</div>
 	<div id="app-content">
 		
 		<div href="#" class="app-content-list-item" id="elem">

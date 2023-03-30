@@ -3,9 +3,9 @@ namespace OCA\ScienceMesh\Sections;
 
 use OCP\IL10N;
 use OCP\IURLGenerator;
-use OCP\Settings\IIconSection;
+use OCP\Settings\ISection;
 
-class SciencemeshSettingsAdmin implements IIconSection {
+class SciencemeshSettingsAdmin implements ISection {
     private IL10N $l;
     private IURLGenerator $urlGenerator;
 
@@ -14,7 +14,7 @@ class SciencemeshSettingsAdmin implements IIconSection {
         $this->urlGenerator = $urlGenerator;
     }
 
-    public function getIcon(): string {
+    public function getIconName(): string {
         return $this->urlGenerator->imagePath('core', 'actions/settings-dark.svg');
     }
 

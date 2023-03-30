@@ -5,10 +5,10 @@ style('sciencemesh', 'style');
 <div id="app">
 		<div id="app-content">
 			<div id="app-content-wrapper" class="viewcontainer">
-				<div class="app-content-list">
+				<div class="app-content-list"  style="width: 100%;overflow-x:hidden">
 					<div id="contact-toolbar" class="files-controls">
 						<button id="token-generator" class=" app-content-list-item-icon">
-							<span class="icon-public button-icon"></span>Invite ScienceMesh user
+							<span class="svg icon-public button-icon"></span>Invite ScienceMesh user
 						</button>
 						<div id="invitation-details"></div>
 					</div>

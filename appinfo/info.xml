@@ -1,33 +1,24 @@
 <?xml version="1.0"?>
-<info xmlns:xsi= "http://www.w3.org/2001/XMLSchema-instance"
-      xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+<info>
     <id>sciencemesh</id>
-    <name>ScienceMesh</name>
-    <summary>Connect your Nextcloud instance to your Reva instance and the Science Mesh</summary>
-    <description>Connect your Nextcloud instance to your Reva instance and the Science Mesh</description>
+    <name>Science Mesh (preview)</name>
+    <summary>Connect your ownCloud-10 instance to your Reva instance and the Science Mesh</summary>
+    <description>Connect your ownCloud-10 instance to your Reva instance and the Science Mesh</description>
+    <licence>AGPL</licence>
+    <author>Ponder Source</author>
     <version>0.1.0</version>
-    <licence>mit</licence>
-    <author homepage="https://sciencemesh.io" >ScienceMesh Community</author>
-    <author mail="support@pondersource.com" homepage="https://pondersource.com" >Stichting Ponder Source</author>
-    <author mail="info@muze.nl" homepage="https://www.muze.nl" >Muze B.V.</author>
-    <author mail="michiel@pondersource.com" >Michiel de Jong (Ponder Source)</author>
-    <author mail="yvo@muze.nl" >Yvo Brevoort (Muze)</author>
-    <author>Triantafullenia Doumani (Ponder Source)</author>
-    <author>Benz Schenk (Ponder Source)</author>
-    <author>Ismoil Shifoev (Ponder Source)</author>
-    <author>Ben Peachey (Muze)</author>
     <namespace>ScienceMesh</namespace>
     <category>integration</category>
-    <bugs>https://github.com/pondersource/nc-sciencemesh/issues</bugs>
+    <screenshot>https://avatars.githubusercontent.com/u/46584276</screenshot>
     <dependencies>
-        <nextcloud min-version="15" max-version="26"/>
         <owncloud min-version="10" max-version="10"/>
     </dependencies>
     <settings>
-        <admin>OCA\ScienceMesh\Settings</admin>
         <admin>OCA\ScienceMesh\Settings\SciencemeshSettingsAdmin</admin>
-        <admin-section>OCA\ScienceMesh\Sections\SciencemeshSettingsAdmin</admin-section>
     </settings>
+    <settings-sections>
+        <admin>OCA\ScienceMesh\Sections\SciencemeshSettingsAdmin</admin>
+    </settings-sections>
     <navigations>
         <navigation>
             <name>ScienceMesh</name>

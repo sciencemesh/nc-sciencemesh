@@ -2,7 +2,7 @@
    padding: 10px 40px;
 }
 #hello {
-	color: var(--color-error);
+	color: red;
 }
 
 /*
@@ -31,13 +31,6 @@
    max-width: 100% !important;
 }
 
-.app-content-list .app-content-list-item{
-   height: auto !important;
-}
-
-.button-icon {
-   margin-right: 0.5em;
-}
 
 .token-added{
    width: 30px;
@@ -46,13 +39,13 @@
    text-align: center;
    padding-top: 5px;
    border-radius: 100%;
-   color: var(--color-primary-element-text);
+   color: white;
    font-size: large;
-   background: var(--color-placeholder-light);
+   background: rgb(31, 72, 96);
 }
 
 .token-added:hover{
-   background: var(--color-background-hover);
+   background: rgb(93, 116, 130);
 }
 
 .app-content-list-item-line-one{
@@ -74,18 +67,30 @@
 }
 
 #token-generator{
-   color: var(--color-primary-element-text);
+   color: white;
    cursor: pointer;
    width: auto;
    height: 36px;
    border-radius: 0.2em;
    border: 0;
-   background-color: var(--color-primary-default);
+   background-color: rgb(31, 72, 96);
+   font-size: medium;
+   padding: 5px 15px 0px 5px;
+   display: flex;
 }
 
 
 #token-generator:hover {
-   background-color: var(--color-primary-element-default-hover);
+   background-color: rgb(57, 142, 192);
+}
+
+
+#token-generator .button-icon {
+   display: block;
+   width: 20px;
+   height: 25px;
+   margin: 0 2.5px;
+   filter: invert(1);
 }
 
 .generated-token-link{
@@ -108,6 +113,10 @@
    margin: 2em 0 2em;
 }
 
+#show_result{
+   border:1px solid #eee;
+}
+
 .app-content-list-item-token{
    margin: 5px
 }
@@ -119,7 +128,7 @@
 
 .message-token{
    margin:0px;
-   color: var(--color-success);
+   color: green;
    padding:5px;
    width: 180px;
    font-size: 12px;
@@ -137,13 +146,12 @@
    width:100% !important;
    display:inline;
    cursor:pointer;
-   border-radius: 0.2em !important;
 }
 
 .token-btn-verification{
    display:block;
-   background: var(--color-success);
-   color:var(--color-primary-element-text);
+   background: green;
+   color:white;
    padding:5px;
    font-weight: bold;
 }
@@ -160,13 +168,15 @@
    background-color: rgb(6, 182, 6) !important;
    position:relative;
    width:200px !important;
-   color: var(--color-primary-element-text) !important;
+   color: white !important;
 }
 
 #test_error{
    padding: 5px;
-   border: 1px dashed darkgreen;
-   margin: 10px auto;
+   border: 1px dashed;
+   border-radius: 4px;
+   margin: 10px 10px;
+   text-align: center;
 }
 
 .section{
@@ -178,7 +188,7 @@
    width: 20px;
    height: 20px;
    margin: 10px;
-   color: var(--color-primary-element-text);
+   color: white;
    font-size: large;
    text-align: center;
    border-radius: 100%;
@@ -204,12 +214,9 @@
 }
 
 
-.text-error{
-   color:var(--color-error) !important;
-}
 
 .text-success{
-   color: var(--color-success) !important;
+   color: green !important;
 }
 
 
@@ -224,14 +231,6 @@
 }
 
 
-.text-error{
-   color:var(--color-error) !important;
-}
-
-.text-success{
-   color: var(--color-success) !important;
-}
-
 .contacts-table{
    width: 98%;
    padding: 10px 20px;
@@ -245,7 +244,7 @@
  }
  
 .contacts-table thead tr td{
-   background-color: var(--color-placeholder-light);
+   background-color: #ccd2d9;
    padding: 2.5px;
 }
 .contacts-table tbody tr td:first-child{
@@ -261,13 +260,18 @@
    height: auto !important;
    padding: 5px 10px;
 }
+
+.contacts-table tbody tr th{
+   height: auto !important;
+   padding: 5px 10px;
+}
 .contacts-table tbody tr td:nth-child(2){
    width: 20% !important;
-   border-bottom: 1px solid var(--color-placeholder-light);
+   border-bottom: 1px solid #ececec;
 }
 .contacts-table tbody tr td:nth-child(3){
    width: 45% !important;
-   border-bottom: 1px solid var(--color-placeholder-light);
+   border-bottom: 1px solid #ececec;
 }
 .contacts-profile-img{
    height: 35px;
@@ -279,9 +283,12 @@
 }
 
 .contacts-table tbody tr:hover{
-   background-color: var(--color-background-hover);
+   background-color: #00000000;
 }
 
+.contacts-table tbody tr{
+   border-bottom: 1px solid #00000011;
+}
 .contact-title-desc{
    display: block;
    margin: 0 0 -10px 25px;
@@ -305,8 +312,8 @@
 }
 
 #app-content-wrapper {
-   display: flex;
-   flex-direction: row;
+   /* display: flex;
+   flex-direction: row; */
 }
 #contact-toolbar {
    align-items: center;
@@ -334,7 +341,7 @@
 .share-select {
    font-size: 16px;
    padding: 5px;
-   border: 1px solid var(--color-placeholder-light);
+   border: 1px solid #ccc;
    border-radius: 4px;
    -webkit-appearance: none;
    -moz-appearance: none;
@@ -356,7 +363,7 @@
 
 #sciencemesh_setting_submit_btn{
    float: right;
-   margin: 5px 25px;
+   margin: 5px 60px;
    width: 143.4px;
 }
 #share-token-btn{

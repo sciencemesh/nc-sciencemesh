@@ -20,7 +20,6 @@ class PlainResponse extends Response {
 	 * @param int $statusCode the Http status code, defaults to 200
 	 */
 	public function __construct($data = '', $statusCode = Http::STATUS_OK) {
-		parent::__construct();
 		$this->data = $data;
 		$this->setStatus($statusCode);
 		$this->addHeader('Content-Type', 'text/html; charset=utf-8');

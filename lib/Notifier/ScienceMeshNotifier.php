@@ -24,7 +24,7 @@
 namespace OCA\ScienceMesh\Notifier;
 
 use OCP\IURLGenerator;
-use OCP\Notification\AlreadyProcessedException;
+use OCP\L10N\IFactory;
 use OCP\Notification\INotification;
 use OCP\Notification\INotifier;
 
@@ -69,7 +69,7 @@ class ScienceMeshNotifier implements INotifier {
 	 * @throws AlreadyProcessedException When the notification is not needed anymore and should be deleted
 	 */
 
-	public function prepare(INotification $notification, string $languageCode): INotification {
+	public function prepare(INotification $notification, $languageCode): INotification {
 		if ($notification->getApp() !== 'sciencemesh') {
 			throw new \InvalidArgumentException('Unknown app');
 		}

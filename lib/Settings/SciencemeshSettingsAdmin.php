@@ -23,7 +23,7 @@ class SciencemeshSettingsAdmin implements ISettings {
     /**
      * @return TemplateResponse
      */
-    public function getForm() {
+    public function getPanel() {
         $parameters = [
             'sciencemeshSetting' => $this->config->getSystemValue('sciencemesh_advance_settings', true),
             'sciencemeshIopUrl' => $this->serverConfig->getIopUrl(),
@@ -33,7 +33,7 @@ class SciencemeshSettingsAdmin implements ISettings {
         return new TemplateResponse('sciencemesh', 'settings/admin', $parameters, '');
     }
 
-    public function getSection() {
+    public function getSectionID() {
         return 'sciencemesh_settings'; // Name of the previously created section.
     }
 

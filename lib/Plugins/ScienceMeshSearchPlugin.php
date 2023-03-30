@@ -2,27 +2,23 @@
 
 namespace OCA\ScienceMesh\Plugins;
 
-use OCP\Collaboration\Collaborators\ISearchPlugin;
-use OCP\Collaboration\Collaborators\ISearchResult;
-use OCP\Collaboration\Collaborators\SearchResultType;
+use OC\User\User;
 use OCP\IConfig;
-use OCP\Share\IShare;
+use OCP\Share;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use OCA\ScienceMesh\RevaHttpClient;
 
-class ScienceMeshSearchPlugin implements ISearchPlugin {
+class ScienceMeshSearchPlugin {
 	protected $shareeEnumeration;
 	/** @var IConfig */
 	private $config;
-	/** @var IUserManager */
-	private $userManager;
+
 	/** @var string */
 	private $userId = '';
 
 	public function __construct(IConfig $config, IUserManager $userManager, IUserSession $userSession) {
 		$this->config = $config;
-		$this->userManager = $userManager;
 		$user = $userSession->getUser();
 		if ($user !== null) {
 			$this->userId = $user->getUID();
@@ -31,42 +27,28 @@ class ScienceMeshSearchPlugin implements ISearchPlugin {
 		$this->revaHttpClient = new RevaHttpClient($this->config);
 	}
 
-	public function search($search, $limit, $offset, ISearchResult $searchResult) {
+	public function search($search) {
 		$result = json_decode($this->revaHttpClient->findAcceptedUsers($this->userId), true);
 		if (!isset($result['accepted_users'])) {
-			return;
+			return [];
 		}
 		$users = $result['accepted_users'];
+        error_log("Found " . count($users) . " users");
 
-		$users = array_filter($users, function ($user) use ($search) {
-			return (stripos($user['display_name'], $search) !== false);
-		});
-		$users = array_slice($users, $offset, $limit);
-
-		$exactResults = [];
+		$result = [];
 		foreach ($users as $user) {
 			$serverUrl = parse_url($user['id']['idp']);
 			$domain = $serverUrl["host"];
-			$exactResults[] = [
-				"label" => "Label",
-				"uuid" => $user['id']['opaque_id'],
-				"name" => $user['display_name'] ."@". $domain, // FIXME: should this be just the part before the @ sign?
-				"type" => "ScienceMesh",
-				"value" => [
-					"shareType" => IShare::TYPE_SCIENCEMESH,
-					"shareWith" => $user['id']['opaque_id'] ."@". $domain, // FIXME: should this be just the part before the @ sign?
-					"server" => $user['id']['idp']
-				]
+			$result[] = [
+				'label' => $user['display_name'] ." (". $domain . ")",
+				'value' => [
+					'shareType' => Share::SHARE_TYPE_REMOTE,
+					'shareWith' => $user['id']['opaque_id'] ."@". $user['id']['idp'],
+				],
 			];
 		}
-
-		$result = [
-			'wide' => [],
-			'exact' => $exactResults
-		];
-
-		$resultType = new SearchResultType('remotes');
-		$searchResult->addResultSet($resultType, $result['wide'], $result['exact']);
-		return true;
+		error_log("returning result:");
+		error_log(var_export($result, true));
+		return $result;
 	}
 }

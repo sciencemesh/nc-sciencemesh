@@ -2,12 +2,8 @@
 
 namespace OCA\ScienceMesh\Controller;
 
-use OCA\ScienceMesh\NextcloudAdapter;
+use OCA\DAV\TrashBin\TrashBinManager;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
-use OCA\ScienceMesh\Share\ScienceMeshSharePermissions;
-use OCA\ScienceMesh\User\ScienceMeshUserId;
-
-use OCA\Files_Trashbin\Trash\ITrashManager;
 
 use OCP\IRequest;
 use OCP\IUserManager;
@@ -24,18 +20,9 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Controller;
-use OCP\AppFramework\OCS\OCSNotFoundException;
-
-use OCA\CloudFederationAPI\Config;
-use OCP\Federation\ICloudFederationFactory;
-use OCP\Federation\ICloudFederationProviderManager;
-use OCP\Federation\ICloudIdManager;
 
 use OCP\Share\IManager;
 use OCP\Share\IShare;
-use OCP\Share\Exceptions\ShareNotFound;
-
-use Psr\Log\LoggerInterface;
 
 use OCP\App\IAppManager;
 use OCP\Lock\ILockingProvider;
@@ -51,8 +38,8 @@ class RevaController extends Controller {
 	/* @var ISession */
 	private $session;
 
-	/** @var LoggerInterface */
-	private $logger;
+	///** @var LoggerInterface */
+	//private $logger;
 
 	/** @var IUserManager */
 	private $userManager;
@@ -69,11 +56,11 @@ class RevaController extends Controller {
 	/** @var Config */
 	private $config;
 
-	/** @var ICloudFederationFactory */
-	private $factory;
+	///** @var ICloudFederationFactory */
+	//private $factory;
 
-	/** @var ICloudIdManager */
-	private $cloudIdManager;
+	///** @var ICloudIdManager*/
+	//private $cloudIdManager;
 
 	/** @var \OCP\Files\Node */
 	private $lockedNode;
@@ -93,14 +80,13 @@ class RevaController extends Controller {
 		IURLGenerator $urlGenerator,
 		$userId,
 		IConfig $config,
-		\OCA\ScienceMesh\Service\UserService $UserService,
-		ITrashManager $trashManager,
+		TrashBinManager $trashManager,
 		IManager $shareManager,
 		IGroupManager $groupManager,
-		ICloudFederationProviderManager $cloudFederationProviderManager,
+		/*ICloudFederationProviderManager $cloudFederationProviderManager,
 		ICloudFederationFactory $factory,
-		ICloudIdManager $cloudIdManager,
-		LoggerInterface $logger,
+		ICloudIdManager $cloudIdManager,*/
+		//LoggerInterface $logger,
 		IAppManager $appManager,
 		IL10N $l10n,
 		ScienceMeshShareProvider $shareProvider
@@ -119,10 +105,10 @@ class RevaController extends Controller {
 		$this->trashManager = $trashManager;
 		$this->shareManager = $shareManager;
 		$this->groupManager = $groupManager;
-		$this->cloudFederationProviderManager = $cloudFederationProviderManager;
+		/*$this->cloudFederationProviderManager = $cloudFederationProviderManager;
 		$this->factory = $factory;
-		$this->cloudIdManager = $cloudIdManager;
-		$this->logger = $logger;
+		$this->cloudIdManager = $cloudIdManager;*/
+		//$this->logger = $logger;
 		$this->appManager = $appManager;
 		$this->l = $l10n;
 		$this->shareProvider = $shareProvider;
@@ -186,6 +172,7 @@ class RevaController extends Controller {
 	private function checkRevadAuth() {
 		error_log("checkRevadAuth");
 		$authHeader = $this->request->getHeader('X-Reva-Secret');
+
     if ($authHeader != $this->config->getRevaSharedSecret()) {
 		  throw new \OCP\Files\NotPermittedException('Please set an http request header "X-Reva-Secret: <your_shared_secret>"!');
 		}
@@ -393,11 +380,7 @@ class RevaController extends Controller {
 		} else {
 				$user = $this->userManager->checkPassword($userId, $password);
 		}
-
-		
 		if ($user) {
-			/// the `value` is a base64 encoded value of:
-			/// {"resource_id":{"storage_id":"storage-id","opaque_id":"opaque-id"},"path":"some/file/path.txt"}
 			$result = [
 				"user" => $this->formatUser($user),
 				"scopes" => [
@@ -466,7 +449,6 @@ class RevaController extends Controller {
 	 */
 	public function CreateReference($userId) {
 		error_log("CreateReference");
-
 		$this->init($userId);
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
@@ -532,7 +514,6 @@ class RevaController extends Controller {
 	 */
 	public function Delete($userId) {
 		error_log("Delete");
-
 		$this->init($userId);
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		try {
@@ -553,16 +534,8 @@ class RevaController extends Controller {
 	public function EmptyRecycle($userId) {
 		error_log("EmptyRecycle");
 		$this->init($userId);
-		$user = $this->userManager->get($userId);
-		$trashItems = $this->trashManager->listTrashRoot($user);
-
-		$result = []; // Where is this used?
-		foreach ($trashItems as $node) {
-			#getOriginalLocation : returns string
-			if (preg_match("/^sciencemesh/", $node->getOriginalLocation())) {
-				$this->trashManager->removeItem($node);
-			}
-		}
+		// See https://github.com/sciencemesh/oc-sciencemesh/issues/4#issuecomment-1283542906
+		$this->trashManager->deleteAll();
 		return new JSONResponse("OK", Http::STATUS_OK);
 	}
 
@@ -854,5 +827,262 @@ class RevaController extends Controller {
 			return new JSONResponse(["error" => "Upload failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 	}
-	
+	/**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @NoSameSiteCookieRequired
+	 *
+	 * Get user list.
+	 */
+	public function GetUser($dummy) {
+		$this->init(false);
+
+		$userToCheck = $this->request->getParam('opaque_id');
+		if ($this->userManager->userExists($userToCheck)) {
+			$user = $this->userManager->get($userToCheck);
+			$response = $this->formatUser($user);
+			return new JSONResponse($response, Http::STATUS_OK);
+		}
+		return new JSONResponse(
+			['message' => 'User does not exist'],
+			Http::STATUS_NOT_FOUND
+		);
+	}
+	/**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @return Http\DataResponse|JSONResponse
+	 *
+	 * @throws NotFoundException
+	 * @throws OCSNotFoundException
+	 * Create a new share in fn with the given access control list.
+	 */
+	public function addSentShare($userId) {
+		error_log("addSentShare");
+		$this->init($userId);
+		$params = $this->request->getParams();
+		$owner = $params["owner"]["opaqueId"]; // . "@" . $params["owner"]["idp"];
+		$name = $params["name"]; // "fileid-/other/q/f gr"
+		$resourceOpaqueId = $params["resourceId"]["opaqueId"]; // "fileid-/other/q/f gr"
+		$revaPath = $this->getRevaPathFromOpaqueId($resourceOpaqueId); // "/other/q/f gr"
+		$nextcloudPath = $this->revaPathToNextcloudPath($revaPath);
+
+		$revaPermissions = $params["permissions"]["permissions"]; // {"getPath":true, "initiateFileDownload":true, "listContainer":true, "listFileVersions":true, "stat":true}
+		$granteeType = $params["grantee"]["type"]; // "GRANTEE_TYPE_USER"
+		$granteeHost = $params["grantee"]["userId"]["idp"]; // "revanc2.docker"
+		$granteeUser = $params["grantee"]["userId"]["opaqueId"]; // "marie"
+
+		$nextcloudPermissions = $this->getPermissionsCode($revaPermissions);
+		$shareWith = $granteeUser."@".$granteeHost;
+		$sharedSecretBase64 = $params["grantee"]["opaque"]["map"]["sharedSecret"]["value"];
+		$sharedSecret = base64_decode($sharedSecretBase64);
+		error_log("base64 decoded $sharedSecretBase64 to $sharedSecret");
+		try {
+			$node = $this->userFolder->get($nextcloudPath);
+		} catch (NotFoundException $e) {
+			return new JSONResponse(["error" => "Share failed. Resource Path not found"], Http::STATUS_BAD_REQUEST);
+		}
+		error_log("calling newShare");
+		$share = $this->shareManager->newShare();
+		$share->setNode($node);
+		try {
+			$this->lock($share->getNode());
+		} catch (LockedException $e) {
+			throw new OCSNotFoundException($this->l->t('Could not create share'));
+		}
+		$share->setShareType(\OCP\Share::SHARE_TYPE_REMOTE);//IShare::TYPE_SCIENCEMESH);
+		$share->setSharedBy($userId);
+		$share->setSharedWith($shareWith);
+		$share->setShareOwner($owner);
+		$share->setPermissions($nextcloudPermissions);
+		$share->setToken($sharedSecret);
+		error_log("calling createInternal");
+		$share = $this->shareProvider->createInternal($share);
+		// $response = $this->shareInfoToCs3Share($share);
+		// error_log("response:" . json_encode($response));
+		return new DataResponse($share->getId(), Http::STATUS_CREATED);
+	}
+
+	/**
+	 * add a received share
+	 *
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 * @return Http\DataResponse|JSONResponse
+	 */
+	public function addReceivedShare($userId) {
+		error_log("addReceivedShare");
+		$params = $this->request->getParams();
+		$shareData = [
+			"remote" => $params["share"]["owner"]["idp"], // FIXME: 'nc1.docker' -> 'https://nc1.docker/'
+			"remote_id" =>  base64_decode($params["share"]["grantee"]["opaque"]["map"]["remoteShareId"]["value"]), // FIXME: $this->shareProvider->createInternal($share) suppresses, so not getting an id there, see https://github.com/pondersource/sciencemesh-nextcloud/issues/57#issuecomment-1002143104
+			"share_token" => base64_decode($params["share"]["grantee"]["opaque"]["map"]["sharedSecret"]["value"]), // 'tDPRTrLI4hE3C5T'
+			"password" => "",
+			"name" => rtrim($params["share"]["name"], "/"), // '/grfe'
+			"owner" => $params["share"]["owner"]["opaqueId"], // 'einstein'
+			"user" => $userId // 'marie'
+		];
+		$this->init($userId);
+		
+		$scienceMeshData = [
+			"is_external" => true,
+		];
+		
+		$id = $this->shareProvider->addScienceMeshShare($scienceMeshData,$shareData);
+		return new JSONResponse($id, 201);
+	}
+
+	/**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @return Http\DataResponse|JSONResponse
+	 *
+	 *
+	 * Remove Share from share table
+	 */
+	public function Unshare($userId) {
+		error_log("Unshare");
+		$this->init($userId);
+		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
+		$name = $this->getNameByOpaqueId($opaqueId);
+		if ($this->shareProvider->deleteSentShareByName($userId, $name)) {
+			return new JSONResponse("Deleted Sent Share",Http::STATUS_OK);
+		} else {
+			if ($this->shareProvider->deleteReceivedShareByOpaqueId($userId, $opaqueId)) {
+				return new JSONResponse("Deleted Received Share",Http::STATUS_OK);
+			} else {
+				return new JSONResponse("Could not find share", Http::STATUS_BAD_REQUEST);
+			}
+		}
+	}
+
+	/**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @return Http\DataResponse|JSONResponse
+	 *
+	 */
+	public function UpdateSentShare($userId) {
+		error_log("UpdateSentShare");
+		$this->init($userId);
+		$opaqueId = $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
+		$permissions = $this->request->getParam("p")["permissions"];
+		$permissionsCode = $this->getPermissionsCode($permissions);
+		$name = $this->getNameByOpaqueId($opaqueId);
+		if (!($share = $this->shareProvider->getSentShareByName($userId,$name))) {
+			return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+		$share->setPermissions($permissionsCode);
+		$shareUpdated = $this->shareProvider->update($share);
+		$response = $this->shareInfoToCs3Share($shareUpdated);
+		return new JSONResponse($response, Http::STATUS_OK);
+	}
+	/**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @return Http\DataResponse|JSONResponse
+	 *
+	 * UpdateReceivedShare updates the received share with share state.
+	 */
+	public function UpdateReceivedShare($userId) {
+		error_log("UpdateReceivedShare");
+		$this->init($userId);
+		$response = [];
+		$resourceId = $this->request->getParam("received_share")["share"]["resource_id"];
+		$permissions = $this->request->getParam("received_share")["share"]["permissions"];
+		$permissionsCode = $this->getPermissionsCode($permissions);
+		try {
+			$share = $this->shareProvider->getReceivedShareByToken($resourceId);
+			$share->setPermissions($permissionsCode);
+			$shareUpdate = $this->shareProvider->UpdateReceivedShare($share);
+			$response = $this->shareInfoToCs3Share($shareUpdate);
+			$response["state"] = 2;
+			return new JSONResponse($response, Http::STATUS_OK);
+		} catch (\Exception $e) {
+			return new JSONResponse(["error" => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+	}
+	/**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @return Http\DataResponse|JSONResponse
+	 *
+	 * ListSentShares returns the shares created by the user. If md is provided is not nil,
+	 * it returns only shares attached to the given resource.
+	 */
+	public function ListSentShares($userId) {
+		error_log("ListSentShares");
+		$this->init($userId);
+		$responses = [];
+		$shares = $this->shareProvider->getSentShares($userId);
+		if ($shares) {
+			foreach ($shares as $share) {
+				array_push($responses, $this->shareInfoToCs3Share($share));
+			}
+		}
+		return new JSONResponse($responses, Http::STATUS_OK);
+	}
+	/**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @return Http\DataResponse|JSONResponse
+	 * ListReceivedShares returns the list of shares the user has access.
+	 */
+	public function ListReceivedShares($userId) {
+		error_log("ListReceivedShares");
+		$this->init($userId);
+		$responses = [];
+		$shares = $this->shareProvider->getReceivedShares($userId);
+		if ($shares) {
+			foreach ($shares as $share) {
+				$response = $this->shareInfoToCs3Share($share);
+				array_push($responses,[
+					"share" => $response,
+					"state" => 2
+				]);
+			}
+		}
+		return new JSONResponse($responses, Http::STATUS_OK);
+	}
+	/**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @return Http\DataResponse|JSONResponse
+	 *
+	 * GetReceivedShare returns the information for a received share the user has access.
+	 */
+	public function GetReceivedShare($userId) {
+		error_log("GetReceivedShare");
+		$this->init($userId);
+		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
+		$name = $this->getNameByOpaqueId($opaqueId);
+		try {
+			$share = $this->shareProvider->getReceivedShareByToken($opaqueId);
+			$response = $this->shareInfoToCs3Share($share);
+			$response["state"] = 2;
+			return new JSONResponse($response, Http::STATUS_OK);
+		} catch (\Exception $e) {
+			return new JSONResponse(["error" => $e->getMessage()],Http::STATUS_BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @return Http\DataResponse|JSONResponse
+	 *
+	 * GetSentShare gets the information for a share by the given ref.
+	 */
+	public function GetSentShare($userId) {
+		error_log("GetSentShare");
+		$this->init($userId);
+		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
+		$name = $this->getNameByOpaqueId($opaqueId);
+		$share = $this->shareProvider->getSentShareByName($userId,$name);
+		if ($share) {
+			$response = $this->shareInfoToCs3Share($share);
+			return new JSONResponse($response, Http::STATUS_OK);
+		}
+		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_BAD_REQUEST);
+	}
 }
