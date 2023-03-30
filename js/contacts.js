@@ -18,13 +18,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
             $('#show_result').show(); 
         } else {
         let token = JSON.parse(response);
-
+    
         for(tokenData in token) {
             if(token.hasOwnProperty(tokenData)) {
-
+                console.log(tokenData);
                 if(tokenData === 'accepted_users') {
                     let accepted_users = token.accepted_users
-                    var result = '';
+                    var result = ''; 
                     for(accept in accepted_users) {
                         const displayName = accepted_users[accept].display_name;
                         const username = accepted_users[accept].id.opaque_id;
@@ -92,14 +92,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
             alert('The token is invalid')
         });
     }
-
+    
     function copyToClipboard() {
         var input = document.querySelector("input[name='meshtoken']");
         input.select();
         document.execCommand("copy");
     }
-
-
+     
+    
     function secondsToDhms(seconds) {
         seconds = Number(seconds);
         var d = Math.floor(seconds / (3600 * 24));
