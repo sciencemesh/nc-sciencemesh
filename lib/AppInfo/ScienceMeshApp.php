@@ -5,7 +5,6 @@ namespace OCA\ScienceMesh\AppInfo;
 use OCP\AppFramework\App;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
 
-
 class ScienceMeshApp extends App {
 	public const APP_ID = 'sciencemesh';
 	public const SHARE_TYPE_REMOTE = 6;
