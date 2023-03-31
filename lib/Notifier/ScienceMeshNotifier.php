@@ -69,7 +69,7 @@ class ScienceMeshNotifier implements INotifier {
 	 * @throws AlreadyProcessedException When the notification is not needed anymore and should be deleted
 	 */
 
-	public function prepare(INotification $notification, $languageCode): INotification {
+	public function prepare(INotification $notification, string $languageCode): INotification {
 		if ($notification->getApp() !== 'sciencemesh') {
 			throw new \InvalidArgumentException('Unknown app');
 		}
