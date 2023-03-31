@@ -5,10 +5,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		var parts = full.split('@')
 		var token = parts[0]
 		var providerDomain = parts[1]
-		var data = 'providerDomain=' + encodeURIComponent(providerDomain) +
-			'&token=' + encodeURIComponent(token);
-  
+		var data = 'providerDomain=' + encodeURIComponent(providerDomain) + '&token=' + encodeURIComponent(token);
 		var baseUrl = OC.generateUrl('/apps/sciencemesh');
+
 		$.ajax({
 			url: baseUrl + '/contacts/accept',
 			type: 'POST',
@@ -18,12 +17,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			var element = document.getElementById("test_error");
 			$("#test_error").show();
 			if (response === '' || response === false) {
-				element.innerHTML = 'Something goes wrong: No Sciencemesh Connection';
 				jQuery(element).addClass('text-error');
+				element.innerHTML = 'Something goes wrong: No Sciencemesh Connection';
 			} else if(response.startsWith('Accepted invite from')){
-				document.getElementById('token').value = '';
 				element.innerHTML = 'Invitation has successfully accepted!';
 				jQuery(element).addClass('text-error');
+				document.getElementById('token').value = '';
 			} else {
 				let result = JSON.parse(response);
 				if (result.hasOwnProperty('message')) {
@@ -36,21 +35,20 @@ document.addEventListener("DOMContentLoaded", function(event) {
 					console.log(result)
 				}
 			}
-			
-			
+
 			setTimeout(() => {$("#test_error").hide()},5000);
-			
+
 		}).fail(function (response, code) {
 			console.log(response)
 			//alert('The token is invalid')
 		});
 	};
+
 	function checkQueryString() {
 		const params = new Proxy(new URLSearchParams(window.location.search), {
-		  get: (searchParams, prop) => searchParams.get(prop),
+			get: (searchParams, prop) => searchParams.get(prop),
 		});
-		if ((typeof params.token == 'string') && (params.token.length > 0) &&
-		  (typeof params.providerDomain == 'string') && (params.providerDomain.length > 0)) {
+		if ((typeof params.token == 'string') && (params.token.length > 0) && (typeof params.providerDomain == 'string') && (params.providerDomain.length > 0)) {
 			document.getElementById('token-input').value = `${params.token}@${params.providerDomain}`;
 			document.getElementById('providerDomain').innerHTML = params.providerDomain;
 			$("#dialog").show();
@@ -61,5 +59,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			$("#test_error").html('No token in the URL');
 		}
 	}
+
 	checkQueryString();
-  });
+});

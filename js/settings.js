@@ -5,7 +5,6 @@
             AppName: "sciencemesh"
         }, OCA.ScienceMesh)
 
-
         $("#sciencemeshSave").click(function () {
             $(".section-sciencemesh").addClass("icon-loading");
             var apiKey = $("#sciencemeshAPIKey").val().trim();
@@ -62,7 +61,6 @@
 
             $(".section-sciencemesh").addClass("icon-loading");
             var baseUrl = OC.generateUrl('/apps/sciencemesh');
-    
 
             $.ajax({
                 method: "GET",

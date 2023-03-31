@@ -44,17 +44,16 @@ class SettingsController extends Controller
 	 * @param AppConfig $config - application configuration
 	 */
 	public function __construct($AppName,
-	                            IRequest $request,
-	                            IURLGenerator $urlGenerator,
-	                            IL10N $trans,
-	                            ILogger $logger,
-	                            AppConfig $config,
+								IRequest $request,
+								IURLGenerator $urlGenerator,
+								IL10N $trans,
+								ILogger $logger,
+								AppConfig $config,
 								IConfig $sciencemeshConfig,
-								$userId
+		$userId
 	)
 	{
 		parent::__construct($AppName, $request);
-
 		$this->serverConfig = new \OCA\ScienceMesh\ServerConfig($sciencemeshConfig);
 
 		$this->urlGenerator = $urlGenerator;
@@ -63,7 +62,7 @@ class SettingsController extends Controller
 		$this->sciencemeshConfig = $sciencemeshConfig;
 		$this->userId = $userId;
 
-    $eventDispatcher = \OC::$server->getEventDispatcher();
+		$eventDispatcher = \OC::$server->getEventDispatcher();
 		$eventDispatcher->addListener(
 			'OCA\Files::loadAdditionalScripts',
 			function () {
@@ -234,7 +233,6 @@ class SettingsController extends Controller
 		return $result;
 	}
 
-
 	/**
 	 * Save sciencemesh settings
 	 *
@@ -266,7 +264,7 @@ class SettingsController extends Controller
 	public function checkConnectionSettings(){
 		$revaHttpClient = new RevaHttpClient($this->sciencemeshConfig, false);
 		$response_sciencemesh_iop_url = json_decode(str_replace('\n','',$revaHttpClient->ocmProvider($this->userId)),true);
-		
-        return new JSONResponse($response_sciencemesh_iop_url);
+
+		return new JSONResponse($response_sciencemesh_iop_url);
 	}
 }
