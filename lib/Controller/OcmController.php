@@ -427,6 +427,11 @@ class OcmController extends Controller {
 		$granteeHost = $params["grantee"]["userId"]["idp"]; // "revanc2.docker"
 		$granteeUser = $params["grantee"]["userId"]["opaqueId"]; // "marie"
 
+		if ($revaPermissions === null) {
+			$revaPermissions = [
+				"initiate_file_download" => true
+			];
+		}
 		$nextcloudPermissions = $this->getPermissionsCode($revaPermissions);
 		$shareWith = $granteeUser."@".$granteeHost;
 		$sharedSecretBase64 = $params["grantee"]["opaque"]["map"]["sharedSecret"]["value"];
