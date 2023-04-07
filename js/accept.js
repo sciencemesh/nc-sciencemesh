@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function(event) {
-	document.getElementById('elem').onclick = function () {
+	document.getElementById('accept-button').onclick = function () {
 		console.log('clicked');
 		var full = document.getElementById('token-input').value
 		var parts = full.split('@')
@@ -46,8 +46,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		const params = new Proxy(new URLSearchParams(window.location.search), {
 			get: (searchParams, prop) => searchParams.get(prop),
 		});
-		if ((typeof params.token == 'string') && (params.token.length > 0) &&  (typeof params.providerDomain == 'string') && (params.providerDomain.length > 0)) {
-			console.log("checkQueryString success!");
+		if ((typeof params.token == 'string') && (params.token.length > 0) && (typeof params.providerDomain == 'string') && (params.providerDomain.length > 0)) {
 			document.getElementById('token-input').value = `${params.token}@${params.providerDomain}`;
 			document.getElementById('providerDomain').innerHTML = params.providerDomain;
 			$("#dialog").show();

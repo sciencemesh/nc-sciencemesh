@@ -328,7 +328,6 @@
 }
 
 .contacts-table {
-   margin-top: 1rem;
    border-collapse: collapse;
 }
 
@@ -367,4 +366,8 @@
 #share-token-btn{
    background-size: 20px !important;
    width: 30px;
+}
+#contact-search-input{
+   margin-top: 20px;
+   margin-left: 10px;
 }
