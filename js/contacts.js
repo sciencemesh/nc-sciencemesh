@@ -41,7 +41,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
                                     </td>  
                                     <td>
                                         <p class="username-provider">${username}</p>
-                                        <button type="button" class="deleteContact" data-username="${username}" data-idp="${idp}">×</button>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="deleteContact" data-username="${username}" data-idp="${idp}">Unfriend</button>
                                     </td>
                                 </tr>
                         `;
@@ -52,7 +54,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
                     
                     var button = document.querySelector(".deleteContact");
                     button.addEventListener("click", function() {
-                        deleteContact();
+                        deleteContact($(this).data('idp'),$(this).data('username'));
                     });
 
                     $('#show_result').show();
@@ -123,25 +125,19 @@ document.addEventListener("DOMContentLoaded", function(event) {
         return dDisplay + hDisplay + mDisplay + sDisplay;
     }
 
-    function deleteContact(){
-        alert('test');
+    function deleteContact(idp,username){
         var baseUrl = OC.generateUrl('/apps/sciencemesh');
+        var data = 'idp=' + encodeURIComponent(idp) + '&username=' + encodeURIComponent(username);
         $.ajax({
-            url: baseUrl + '/deleteContact/',
-            type: 'GET',
-            contentType: 'application/json'
+            url: baseUrl + '/contact/deleteContact',
+            type: 'POST',
+			contentType: 'application/x-www-form-urlencoded',
+            data:data
         }).done(function (response) {
             if (response === '' || response === false) {
-                var element = document.getElementById("test_1");
-                element.innerHTML = 'No Sciencemesh Connection';
-            } else {
-                var element = document.getElementById("invitation-details");
-                element.innerHTML = `<div class="token-generator"><i class="fa-thin fa-square-check"></i><input type="text" value="${response}" onclick="get_token()" readonly name="meshtoken" class="generated-token-link"><span class="icon-clippy svg" id="share-token-btn"></span><h4 class="message-token" style="padding:8px 0;">New Token Generated!</h4></div>`;
-                $('#test').show();
-                var button = document.querySelector("#share-token-btn");
-                button.addEventListener("click", function() {
-                    copyToClipboard();
-                });
+                console.log('failed');
+            }else{
+                console.log(response);
             }
         }).fail(function (response, code) {
             alert('The token is invalid')

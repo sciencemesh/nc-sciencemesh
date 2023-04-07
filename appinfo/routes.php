@@ -81,7 +81,7 @@ $routes_array = [
 		['name' => 'app#contactsFindUsers', 'url' => '/contacts/users', 'verb' => 'GET'],
 		
 		// contacts routes
-		['name' => 'contacts#deleteContact', 'url' => '/deleteContact/~{userId}', 'verb' => 'GET'],
+		['name' => 'contacts#deleteContact', 'url' => '/contact/deleteContact', 'verb' => 'POST'],
 		
 		// page routes
 		['name' => 'page#get_internal_metrics', 'url' => '/internal_metrics', 'verb' => 'GET'],
