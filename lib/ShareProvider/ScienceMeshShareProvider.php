@@ -126,6 +126,24 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
         // parent class uses constructor to initialize private properties,
         // which are not inherited, so we don't get anything if we call parent::__construct(),
         // and we should do the initialization manually aka copy pasta.
+        // edit 2: actually if we don't call parent::__construct(), nextcloud would break due to:
+        // "Call to a member function getQueryBuilder() on null in file
+        // '/var/www/html/apps/federatedfilesharing/lib/FederatedShareProvider.php' line 805"
+        parent::__construct(
+            $connection,
+            null,
+            null,
+            $tokenHandler,
+            $l10n,
+            $logger,
+            $rootFolder,
+            $config,
+            $userManager,
+            null,
+            $globalScaleConfig,
+            null
+        );
+
 		$this->dbConnection = $connection;
 		$this->tokenHandler = $tokenHandler;
 		$this->l = $l10n;
