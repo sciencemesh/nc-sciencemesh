@@ -40,6 +40,8 @@ use OC\Share20\Exception\InvalidShare;
 use OC\Share20\Share;
 use OCP\Constants;
 use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\Federation\ICloudFederationProviderManager;
+use OCP\Federation\ICloudIdManager;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\Node;
@@ -54,7 +56,6 @@ use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IShare;
 use OCP\Share\IShareProvider;
 use OCA\ScienceMesh\RevaHttpClient;
-// TODO: does it even exist? Couldn't find it on nextcloud.
 use OCA\FederatedFileSharing\TokenHandler;
 use OCA\FederatedFileSharing\FederatedShareProvider;
 
@@ -86,9 +87,6 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 	/** @var IConfig */
 	private $config;
 
-	/** @var string */
-	private $externalShareTable = 'share_external';
-
 	/** @var IUserManager */
 	private $userManager;
 
@@ -105,43 +103,45 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 	 * DefaultShareProvider constructor.
 	 *
 	 * @param IDBConnection $connection
+     * @param AddressHandler $addressHandler
+     * @param Notifications $notifications
 	 * @param TokenHandler $tokenHandler
 	 * @param IL10N $l10n
 	 * @param ILogger $logger
 	 * @param IRootFolder $rootFolder
 	 * @param IConfig $config
 	 * @param IUserManager $userManager
+     * @param ICloudIdManager $cloudIdManager
 	 * @param \OCP\GlobalScale\IConfig $globalScaleConfig
+     * @param ICloudFederationProviderManager $cloudFederationProviderManager
 	 */
 	public function __construct(
 			IDBConnection $connection,
-			TokenHandler $tokenHandler,
+            AddressHandler $addressHandler,
+            Notifications $notifications,
+            TokenHandler $tokenHandler,
 			IL10N $l10n,
 			ILogger $logger,
 			IRootFolder $rootFolder,
 			IConfig $config,
 			IUserManager $userManager,
-			\OCP\GlobalScale\IConfig $globalScaleConfig
+            ICloudIdManager $cloudIdManager,
+			\OCP\GlobalScale\IConfig $globalScaleConfig,
+            ICloudFederationProviderManager $cloudFederationProviderManager
 	) {
-        // parent class uses constructor to initialize private properties,
-        // which are not inherited, so we don't get anything if we call parent::__construct(),
-        // and we should do the initialization manually aka copy pasta.
-        // edit 2: actually if we don't call parent::__construct(), nextcloud would break due to:
-        // "Call to a member function getQueryBuilder() on null in file
-        // '/var/www/html/apps/federatedfilesharing/lib/FederatedShareProvider.php' line 805"
         parent::__construct(
             $connection,
-            null,
-            null,
+            $addressHandler,
+            $notifications,
             $tokenHandler,
             $l10n,
             $logger,
             $rootFolder,
             $config,
             $userManager,
-            null,
+            $userManager,
             $globalScaleConfig,
-            null
+            $cloudFederationProviderManager
         );
 
 		$this->dbConnection = $connection;
@@ -171,7 +171,7 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 	 *
 	 * @return boolean
 	 */
-    // TODO: is it even being used? can't find usage.
+    // TODO: can't find usage.
 	public function isShareTypeSupported($shareType) {
 		return in_array($shareType, $this->supportedShareType);
 	}
@@ -185,10 +185,8 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 	 * @throws \Exception
 	 */
 	public function create(IShare $share) {
-		error_log("SSP-createShare calling RHC-createShare");
 		$node = $share->getNode();
 		$shareWith = $share->getSharedWith();
-		// $share->setPermissions($permissions);
 		$pathParts = explode("/", $node->getPath());
 		$sender = $pathParts[1];
 		$sourceOffset = 3;
@@ -200,7 +198,7 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 		$sourcePath = $prefix . "home/" . implode("/", array_slice($pathParts, $sourceOffset)) . $suffix;
 		$targetPath = $prefix . implode("/", array_slice($pathParts, $targetOffset)) . $suffix;
 		$shareWithParts = explode("@", $shareWith);
-		error_log("SAH-createShare calling RHC-createShare");
+
 		$response = $this->revaHttpClient->createShare($sender, [
 			'sourcePath' => $sourcePath,
 			'targetPath' => $targetPath,
@@ -208,21 +206,18 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 			'recipientUsername' => $shareWithParts[0],
 			'recipientHost' => $shareWithParts[1]
 		]);
+
 		if (!isset($response) || !isset($response->share) || !isset($response->share->owner) || !isset($response->share->owner->idp)) {
 			throw new \Exception("Unexpected response from reva");
 		}
-		error_log("Back in SSP-createShare after RHC-createShare");
-		error_log(var_export($response->share->id->opaqueId, true));
-		error_log(var_export($response->share->owner->idp, true));
-		// error_log(var_export($response, true));
+
 		$share->setId("will-set-this-later");
-		error_log("setId done");
 		$share->setProviderId($response->share->owner->idp);
-		error_log("setProviderId done");
 		$share->setShareTime(new \DateTime());
-		error_log("SSP-createShare done");
+
 		return $share;
 	}
+
 	/**
 	 * Share a path
 	 *
@@ -234,12 +229,6 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 	public function createInternal(IShare $share) {
 		error_log("SSP create");
 		$shareWith = $share->getSharedWith();
-        // TODO: below variables are not used.
-		$itemSource = $share->getNodeId();
-		$itemType = $share->getNodeType();
-		$permissions = $share->getPermissions();
-		$sharedBy = $share->getSharedBy();
-		$shareType = $share->getShareType();
 
 		/*
 		 * Check if file is not already shared with the remote user
@@ -252,7 +241,6 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 			throw new \Exception($message_t);
 		}
 
-
 		// FIXME: don't allow ScienceMesh shares if source and target server are the same
 		// ScienceMesh shares always have read permissions
 		if (($share->getPermissions() & Constants::PERMISSION_READ) === 0) {
@@ -263,44 +251,8 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 		}
 
 		$share->setSharedWith($shareWith);
-		/*
-				try {
-					$remoteShare = $this->getShareFromExternalShareTable($share);
-				} catch (ShareNotFound $e) {
-					$remoteShare = null;
-				}
-
-				if ($remoteShare) {
-					try {
-						$ownerCloudId = $this->cloudIdManager->getCloudId($remoteShare['owner'], $remoteShare['remote']);
-						$shareId = $this->addShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $ownerCloudId->getId(), $permissions, 'tmp_token_' . time(), $shareType);
-						$share->setId($shareId);
-						list($token, $remoteId) = $this->askOwnerToReShare($shareWith, $share, $shareId);
-						// remote share was create successfully if we get a valid token as return
-						$send = is_string($token) && $token !== '';
-					} catch (\Exception $e) {
-						// fall back to old re-share behavior if the remote server
-						// doesn't support flat re-shares (was introduced with Nextcloud 9.1)
-						$this->removeShareFromTable($share);
-						$shareId = $this->createFederatedShare($share);
-					}
-					if ($send) {
-						$this->updateSuccessfulReshare($shareId, $token);
-						$this->storeRemoteId($shareId, $remoteId);
-					} else {
-						$this->removeShareFromTable($share);
-						$message_t = $this->l->t('File is already shared with %s', [$shareWith]);
-						throw new \Exception($message_t);
-					}
-				} else {
-					$shareId = $this->createFederatedShare($share);
-				}
-		*/
 		$shareId = $this->createScienceMeshShare($share);
-        error_log("Got shareId $shareId");
-
 		$data = $this->getRawShare($shareId);
-		error_log("returning share object from raw share");
 
 		return $this->createShareObject($data);
 	}
@@ -314,9 +266,7 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 	 * @throws \Exception
 	 */
 	protected function createScienceMeshShare(IShare $share) {
-		error_log("createScienceMeshShare");
-		$token = $share->getToken(); // $this->tokenHandler->generateToken();
-		error_log("token generated, this is the right one!: " . $token);
+		$token = $share->getToken();
 		$shareId = $this->addSentShareToDB(
 			$share->getNodeId(),
 			$share->getNodeType(),
@@ -329,9 +279,6 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 		);
 		return $shareId;
 	}
-
-    // TODO: `protected function askOwnerToReShare` in parent needs notifications which is private
-    // and not defined in this class.
 
 	/**
 	 * add share to the database and return the ID
@@ -346,7 +293,6 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 	 * @param int $shareType
 	 * @return int
 	 */
-    // TODO: similar to parent `private function addShareToDB` line 388.
 	private function addSentShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $uidOwner, $permissions, $token, $shareType) {
     error_log("addSentShareToDB");
 		$qb = $this->dbConnection->getQueryBuilder();
@@ -387,8 +333,6 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 	 * @param int $shareType
 	 * @return int
 	 */
-    // TODO: similar to parent `private function addShareToDB` line 388, well it seems someone has changed parent method
-    // into 2 methods for each sent and received.
 	public function addReceivedShareToDB($shareData) {
 		$share_type = IShare::TYPE_USER;
 		$mountpoint = "{{TemporaryMountPointName#" . $shareData["name"] . "}}";
@@ -422,44 +366,6 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 		return (int)$id;
 	}
 
-
-	/**
-	 * Update a sent share
-	 *
-	 * @param IShare $share
-	 * @return IShare The share object
-	 */
-    // TODO: check before merge: small diff with parent.
-	public function update(IShare $share) {
-		/*
-		 * We allow updating the permissions of sciencemesh shares
-		 */
-		$qb = $this->dbConnection->getQueryBuilder();
-		$qb->update('share')
-				->where($qb->expr()->eq('id', $qb->createNamedParameter($share->getId())))
-				->set('permissions', $qb->createNamedParameter($share->getPermissions()))
-				->set('uid_owner', $qb->createNamedParameter($share->getShareOwner()))
-				->set('uid_initiator', $qb->createNamedParameter($share->getSharedBy()))
-				->execute();
-        // parent
-        /*
-        $qb->update('share')
-            ->where($qb->expr()->eq('id', $qb->createNamedParameter($share->getId())))
-            ->set('permissions', $qb->createNamedParameter($share->getPermissions()))
-            ->set('uid_owner', $qb->createNamedParameter($share->getShareOwner()))
-            ->set('uid_initiator', $qb->createNamedParameter($share->getSharedBy()))
-            ->set('expiration', $qb->createNamedParameter($share->getExpirationDate(), IQueryBuilder::PARAM_DATE))
-            ->execute();
-        */
-
-		// send the updated permission to the owner/initiator, if they are not the same
-		if ($share->getShareOwner() !== $share->getSharedBy()) {
-			$this->sendPermissionUpdate($share);
-		}
-
-		return $share;
-	}
-
 	/**
 	 * Update a received share
 	 *
@@ -478,26 +384,6 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 				->execute();
 		return $share;
 	}
-	/**
-	 * send the updated permission to the owner/initiator, if they are not the same
-	 *
-	 * @param IShare $share
-	 * @throws ShareNotFound
-	 * @throws \OC\HintException
-	 */
-    // TODO: check before merge: both addressHandler and notifications are private in parent,
-    // and are not initialized by sciencemesh. this function has usage in update method of the parent class, line 419.
-    // 1. change constructor signature and add missing properties to class.
-	protected function sendPermissionUpdate(IShare $share) {
-		$remoteId = $this->getRemoteId($share);
-		// if the local user is the owner we send the permission change to the initiator
-		if ($this->userManager->userExists($share->getShareOwner())) {
-			[, $remote] = $this->addressHandler->splitUserRemote($share->getSharedBy());
-		} else { // ... if not we send the permission change to the owner
-			[, $remote] = $this->addressHandler->splitUserRemote($share->getShareOwner());
-		}
-		$this->notifications->sendPermissionChange($remote, $remoteId, $share->getToken(), $share->getPermissions());
-	}
 
 	/**
 	 * Delete a share (owner unShares the file)
@@ -506,58 +392,9 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 	 * @throws ShareNotFound
 	 * @throws \OC\HintException
 	 */
-    // TODO: check before merge: for some reason Yvo has commented the lines, they are identical to parent, should
-    // I delete this function or not (only leave the return to be there and clean the commented code)?
-    // Yvo commit 98b59a8b76ba7501cae0df1999a681e713bb28f2
+    // NOTE: this method overrides parent method.
 	public function delete(IShare $share) {
-		// throw new Exception("Whoah");
-		/*
-				list(, $remote) = $this->addressHandler->splitUserRemote($share->getSharedWith());
-
-				// if the local user is the owner we can send the unShare request directly...
-				if ($this->userManager->userExists($share->getShareOwner())) {
-					$this->notifications->sendRemoteUnShare($remote, $share->getId(), $share->getToken());
-					$this->revokeShare($share, true);
-				} else { // ... if not we need to correct ID for the unShare request
-					$remoteId = $this->getRemoteId($share);
-					$this->notifications->sendRemoteUnShare($remote, $remoteId, $share->getToken());
-					$this->revokeShare($share, false);
-				}
-		*/
-		// only remove the share when all messages are send to not lose information
-		// about the share to early
 		$this->removeShareFromTable($share);
-	}
-
-	/**
-	 * in case of a re-share we need to send the other use (initiator or owner)
-	 * a message that the file was unshared
-	 *
-	 * @param IShare $share
-	 * @param bool $isOwner the user can either be the owner or the user who re-sahred it
-	 * @throws ShareNotFound
-	 * @throws \OC\HintException
-	 */
-    // TODO: check before merge: both addressHandler and notifications are private in parent,
-    // and are not initialized by sciencemesh,
-    // 1. change constructor signature and add missing properties to class.
-    // 2. this method has no usage (really couldn't find anything that calls this), remove it.
-	protected function revokeShare($share, $isOwner) {
-		if ($this->userManager->userExists($share->getShareOwner()) && $this->userManager->userExists($share->getSharedBy())) {
-			// If both the owner and the initiator of the share are local users we don't have to notify anybody else
-			return;
-		}
-
-		// also send a unShare request to the initiator, if this is a different user than the owner
-		if ($share->getShareOwner() !== $share->getSharedBy()) {
-			if ($isOwner) {
-				[, $remote] = $this->addressHandler->splitUserRemote($share->getSharedBy());
-			} else {
-				[, $remote] = $this->addressHandler->splitUserRemote($share->getShareOwner());
-			}
-			$remoteId = $this->getRemoteId($share);
-			$this->notifications->sendRevokeShare($remote, $remoteId, $share->getToken());
-		}
 	}
 
 	/**
@@ -565,8 +402,7 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 	 *
 	 * @param string $shareId
 	 */
-    // TODO: check before merge: diff with parent class, last changed in ddba2ae4327cf1271f590563511255b27e2aeb81
-    // $this::SHARE_TYPE_REMOTE -> IShare::TYPE_CIRCLE
+    // NOTES: diff with parent class: $this::SHARE_TYPE_REMOTE -> IShare::TYPE_CIRCLE
     private function removeShareFromTableById($shareId) {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->delete('share')
@@ -578,49 +414,6 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 			->where($qb->expr()->eq('share_id', $qb->createNamedParameter($shareId)));
 		$qb->execute();
 	}
-
-    // TODO: check before merge: diff with parent class, last changed in ddba2ae4327cf1271f590563511255b27e2aeb81
-    /*
-	public function getSharesInFolder($userId, Folder $node, $reshares,$shallow = true) {
-		$qb = $this->dbConnection->getQueryBuilder();
-		$qb->select('*')
-			->from('share', 's')
-			->andWhere($qb->expr()->orX(
-				$qb->expr()->eq('item_type', $qb->createNamedParameter('file')),
-				$qb->expr()->eq('item_type', $qb->createNamedParameter('folder'))
-			))
-			->andWhere(
-				$qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_REMOTE))
-			);
-
-        // Reshares for this user are shares where they are the owner.
-
-		if ($reshares === false) {
-			$qb->andWhere($qb->expr()->eq('uid_initiator', $qb->createNamedParameter($userId)));
-		} else {
-			$qb->andWhere(
-				$qb->expr()->orX(
-					$qb->expr()->eq('uid_owner', $qb->createNamedParameter($userId)),
-					$qb->expr()->eq('uid_initiator', $qb->createNamedParameter($userId))
-				)
-			);
-		}
-
-		$qb->innerJoin('s', 'filecache' ,'f', $qb->expr()->eq('s.file_source', 'f.fileid'));
-		$qb->andWhere($qb->expr()->eq('f.parent', $qb->createNamedParameter($node->getId())));
-
-		$qb->orderBy('id');
-
-		$cursor = $qb->execute();
-		$shares = [];
-		while ($data = $cursor->fetch()) {
-			$shares[$data['fileid']][] = $this->createShareObject($data);
-		}
-		$cursor->closeCursor();
-
-		return $shares;
-	}
-    */
 
 	/**
 	 * Get a share by token
@@ -671,7 +464,6 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 		if ($data === false) {
 			throw new ShareNotFound;
 		}
-    error_log("getRawShare " . json_encode($data));
 		return $data;
 	}
 
@@ -716,6 +508,7 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 
 		return $share;
 	}
+
 	/**
 	 * Create a share object from a database row from external shares
 	 *
@@ -736,6 +529,7 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 
 		return $share;
 	}
+
 	/**
 	 * Get the node with file $id for $user
 	 *
@@ -759,94 +553,6 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 
 		return $nodes[0];
 	}
-
-    /* TODO: check before merge: diff with parent class, last changed in ddba2ae4327cf1271f590563511255b27e2aeb81
-	/**
-	 * A user is deleted from the system
-	 * So clean up the relevant shares.
-	 *
-	 * @param string $uid
-	 * @param int $shareType
-	 */
-    /*
-	public function userDeleted($uid, $shareType) {
-		//TODO: probabaly a good idea to send unshare info to remote servers
-
-		$qb = $this->dbConnection->getQueryBuilder();
-
-		$qb->delete('share')
-			->where($qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_REMOTE)))
-			->andWhere($qb->expr()->eq('uid_owner', $qb->createNamedParameter($uid)))
-			->execute();
-	}
-    */
-
-    /* TODO: check before merge: diff with parent class, last changed in ddba2ae4327cf1271f590563511255b27e2aeb81
-	/**
-	 * @inheritdoc
-	 */
-    /*
-	public function getAccessList($nodes, $currentAccess) {
-		$ids = [];
-		foreach ($nodes as $node) {
-			$ids[] = $node->getId();
-		}
-
-		$qb = $this->dbConnection->getQueryBuilder();
-		$qb->select('share_with', 'token', 'file_source')
-			->from('share')
-			->where($qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_REMOTE)))
-			->andWhere($qb->expr()->in('file_source', $qb->createNamedParameter($ids, IQueryBuilder::PARAM_INT_ARRAY)))
-			->andWhere($qb->expr()->orX(
-				$qb->expr()->eq('item_type', $qb->createNamedParameter('file')),
-				$qb->expr()->eq('item_type', $qb->createNamedParameter('folder'))
-			));
-		$cursor = $qb->execute();
-
-		if ($currentAccess === false) {
-			$remote = $cursor->fetch() !== false;
-			$cursor->closeCursor();
-
-			return ['remote' => $remote];
-		}
-
-		$remote = [];
-		while ($row = $cursor->fetch()) {
-			$remote[$row['share_with']] = [
-				'node_id' => $row['file_source'],
-				'token' => $row['token'],
-			];
-		}
-		$cursor->closeCursor();
-
-		return ['remote' => $remote];
-	}
-    */
-
-    /* TODO: check before merge: diff with parent class, last changed in ddba2ae4327cf1271f590563511255b27e2aeb81
-	public function getAllShares(): iterable {
-		$qb = $this->dbConnection->getQueryBuilder();
-
-		$qb->select('*')
-			->from('share')
-			->where(
-				$qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_REMOTE))
-			);
-		$cursor = $qb->execute();
-		while ($data = $cursor->fetch()) {
-			try {
-				$share = $this->createShareObject($data);
-			} catch (InvalidShare $e) {
-				continue;
-			} catch (ShareNotFound $e) {
-				continue;
-			}
-
-			yield $share;
-		}
-		$cursor->closeCursor();
-	}
-    */
 
 	public function getSentShares($userId): iterable {
 		$qb = $this->dbConnection->getQueryBuilder();
@@ -961,7 +667,7 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 				->andWhere(
 					$qb->expr()->eq('share_token', $qb->createNamedParameter($opaqueId))
 				);
-			$cursor = $qb->execute();
+			$qb->execute();
 			return true;
 		}
 	}
@@ -1004,7 +710,6 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 
     // TODO: can't find usage.
 	public function getShareByOpaqueId($opaqueId) {
-		error_log("getShareByOpaqueId");
 		$qb = $this->dbConnection->getQueryBuilder();
 		$c = $qb->select('is_external')
 			->from('sciencemesh_shares')
