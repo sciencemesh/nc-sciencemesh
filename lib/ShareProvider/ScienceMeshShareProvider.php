@@ -19,7 +19,6 @@ use OCP\Constants;
 use OCP\Federation\ICloudFederationProviderManager;
 use OCP\Federation\ICloudIdManager;
 use OCP\Files\IRootFolder;
-use OCP\Files\NotFoundException;
 use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\IL10N;
