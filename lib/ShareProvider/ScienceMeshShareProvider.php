@@ -1,39 +1,16 @@
 <?php
 /**
- * @copyright Copyright (c) 2016, ownCloud, Inc.
+ * @copyright Copyright (c) 2020 - 2023, PonderSource.
  *
- * @author Arthur Schiwon <blizzz@arthur-schiwon.de>
- * @author Bjoern Schiessle <bjoern@schiessle.org>
- * @author Björn Schießle <bjoern@schiessle.org>
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Georg Ehrke <oc.list@georgehrke.com>
- * @author Joas Schilling <coding@schilljs.com>
- * @author Julius Härtl <jus@bitgrid.net>
- * @author Lukas Reschke <lukas@statuscode.ch>
- * @author Maxence Lange <maxence@artificial-owl.com>
- * @author Morris Jobke <hey@morrisjobke.de>
- * @author Robin Appelman <robin@icewind.nl>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
- * @author Sergej Pupykin <pupykin.s@gmail.com>
- * @author Stefan Weil <sw@weilnetz.de>
- * @author Thomas Müller <thomas.mueller@tmit.eu>
+ * @author Michiel de Jong <michiel@pondersource.com>
+ * @author Triantafullenia-Doumani <triantafyllenia@tuta.io>
+ * @author Mohammad Mahdi Baghbani Pourvahid <mahdi.baghbani1@gmail.com>
+ * @author Benz Schenk <benz.schenk@brokkoli.be>
+ * @author Yvo Brevoort <yvo@muze.nl>
  *
- * @license AGPL-3.0
- *
- * This code is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License, version 3,
- * as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License, version 3,
- * along with this program. If not, see <http://www.gnu.org/licenses/>
+ * @license MIT
  *
  */
-
 namespace OCA\ScienceMesh\ShareProvider;
 
 use OC\Share20\Exception\InvalidShare;
@@ -54,47 +31,19 @@ use OCA\ScienceMesh\RevaHttpClient;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\TokenHandler;
-use OCA\FederatedFileSharing\FederatedShareProvider;
 
 /**
  * Class ScienceMeshShareProvider
  *
  * @package OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider
  */
-class ScienceMeshShareProvider extends FederatedShareProvider {
-	public const SHARE_TYPE_REMOTE = 6;
-
-    // private properties are not inherited from parent class. so I have to declare them again
-    // weird since I learned OOP with Python.
-	/** @var IDBConnection */
-	private $dbConnection;
-
-	/** @var TokenHandler */
-	private $tokenHandler;
-
-	/** @var IL10N */
-	private $l;
-
-	/** @var ILogger */
-	private $logger;
-
-	/** @var IRootFolder */
-	private $rootFolder;
-
-	/** @var IConfig */
-	private $config;
-
-	/** @var IUserManager */
-	private $userManager;
-
-	/** @var \OCP\GlobalScale\IConfig */
-	private $gsConfig;
+class ScienceMeshShareProvider extends FederatedShareProviderStub {
 
 	/** @var array list of supported share types */
-	private $supportedShareType = [IShare::TYPE_SCIENCEMESH];
+	protected $supportedShareType = [IShare::TYPE_SCIENCEMESH];
 
 	/** @var RevaHttpClient */
-	private $revaHttpClient;
+	protected $revaHttpClient;
 
 	/**
 	 * DefaultShareProvider constructor.
@@ -141,14 +90,6 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
             $cloudFederationProviderManager
         );
 
-		$this->dbConnection = $connection;
-		$this->tokenHandler = $tokenHandler;
-		$this->l = $l10n;
-		$this->logger = $logger;
-		$this->rootFolder = $rootFolder;
-		$this->config = $config;
-		$this->userManager = $userManager;
-		$this->gsConfig = $globalScaleConfig;
 		$this->revaHttpClient = new RevaHttpClient($this->config);
 	}
 
@@ -291,7 +232,6 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 	 * @return int
 	 */
 	private function addSentShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $uidOwner, $permissions, $token, $shareType) {
-    error_log("addSentShareToDB");
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->insert('share')
 			->setValue('share_type', $qb->createNamedParameter($shareType))
@@ -400,7 +340,7 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 	 * @param string $shareId
 	 */
     // NOTES: diff with parent class: $this::SHARE_TYPE_REMOTE -> IShare::TYPE_CIRCLE
-    private function removeShareFromTableById($shareId) {
+    protected function removeShareFromTableById($shareId) {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->delete('share')
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($shareId)))
@@ -440,73 +380,6 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 	}
 
 	/**
-	 * get database row of a give share
-	 *
-	 * @param $id
-	 * @return array
-	 * @throws ShareNotFound
-	 */
-	private function getRawShare($id) {
-
-		// Now fetch the inserted share and create a complete share object
-		$qb = $this->dbConnection->getQueryBuilder();
-		$qb->select('*')
-			->from('share')
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-
-		$cursor = $qb->execute();
-		$data = $cursor->fetch();
-		$cursor->closeCursor();
-
-		if ($data === false) {
-			throw new ShareNotFound;
-		}
-		return $data;
-	}
-
-	/**
-	 * Create a share object from an database row
-	 *
-	 * @param array $data
-	 * @return IShare
-	 * @throws InvalidShare
-	 * @throws ShareNotFound
-	 */
-	private function createShareObject($data) {
-		$share = new Share($this->rootFolder, $this->userManager);
-		$share->setId((int)$data['id'])
-			->setShareType((int)$data['share_type'])
-			->setPermissions((int)$data['permissions'])
-			->setTarget($data['file_target'])
-			->setMailSend((bool)$data['mail_send'])
-			->setToken($data['token']);
-
-		$shareTime = new \DateTime();
-		$shareTime->setTimestamp((int)$data['stime']);
-		$share->setShareTime($shareTime);
-		$share->setSharedWith($data['share_with']);
-
-		if ($data['uid_initiator'] !== null) {
-			$share->setShareOwner($data['uid_owner']);
-			$share->setSharedBy($data['uid_initiator']);
-		} else {
-			//OLD SHARE
-			$share->setSharedBy($data['uid_owner']);
-			$path = $this->getNode($share->getSharedBy(), (int)$data['file_source']);
-
-			$owner = $path->getOwner();
-			$share->setShareOwner($owner->getUID());
-		}
-
-		$share->setNodeId((int)$data['file_source']);
-		$share->setNodeType($data['item_type']);
-
-		$share->setProviderId($this->identifier());
-
-		return $share;
-	}
-
-	/**
 	 * Create a share object from a database row from external shares
 	 *
 	 * @param array $data
@@ -514,7 +387,7 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 	 * @throws InvalidShare
 	 * @throws ShareNotFound
 	 */
-	private function createExternalShareObject($data) {
+	protected function createExternalShareObject($data) {
 		$share = new Share($this->rootFolder, $this->userManager);
 		$share->setId((int)$data['id'])
 			->setShareType((int)$data['share_type'])
@@ -525,30 +398,6 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 		$share->setProviderId($this->identifier());
 
 		return $share;
-	}
-
-	/**
-	 * Get the node with file $id for $user
-	 *
-	 * @param string $userId
-	 * @param int $id
-	 * @return \OCP\Files\File|\OCP\Files\Folder
-	 * @throws InvalidShare
-	 */
-	private function getNode($userId, $id) {
-		try {
-			$userFolder = $this->rootFolder->getUserFolder($userId);
-		} catch (NotFoundException $e) {
-			throw new InvalidShare();
-		}
-
-		$nodes = $userFolder->getById($id);
-
-		if (empty($nodes)) {
-			throw new InvalidShare();
-		}
-
-		return $nodes[0];
 	}
 
 	public function getSentShares($userId): iterable {
@@ -642,6 +491,7 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
 		}
 		return false;
 	}
+
 	public function deleteReceivedShareByOpaqueId($userId, $opaqueId) {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->select('*')
