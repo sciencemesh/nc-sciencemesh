@@ -39,23 +39,20 @@ namespace OCA\ScienceMesh\ShareProvider;
 use OC\Share20\Exception\InvalidShare;
 use OC\Share20\Share;
 use OCP\Constants;
-use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\Federation\ICloudFederationProviderManager;
 use OCP\Federation\ICloudIdManager;
-use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
-use OCP\Files\Node;
 use OCP\Files\NotFoundException;
 use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\IL10N;
 use OCP\ILogger;
 use OCP\IUserManager;
-use OCP\Share\Exceptions\GenericShareException;
 use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IShare;
-use OCP\Share\IShareProvider;
 use OCA\ScienceMesh\RevaHttpClient;
+use OCA\FederatedFileSharing\AddressHandler;
+use OCA\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\TokenHandler;
 use OCA\FederatedFileSharing\FederatedShareProvider;
 
@@ -139,7 +136,7 @@ class ScienceMeshShareProvider extends FederatedShareProvider {
             $rootFolder,
             $config,
             $userManager,
-            $userManager,
+            $cloudIdManager,
             $globalScaleConfig,
             $cloudFederationProviderManager
         );
