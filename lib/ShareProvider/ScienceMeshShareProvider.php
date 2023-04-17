@@ -27,6 +27,9 @@ use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IShare;
 use OCA\ScienceMesh\RevaHttpClient;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use OCA\FederatedFileSharing\AddressHandler;
+use OCA\FederatedFileSharing\Notifications;
+use OCA\FederatedFileSharing\TokenHandler;
 
 /**
  * Class ScienceMeshShareProvider
