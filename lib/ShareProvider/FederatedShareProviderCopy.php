@@ -65,7 +65,7 @@ use OCA\FederatedFileSharing\TokenHandler;
  *
  * @package OCA\FederatedFileSharing
  */
-class FederatedShareProviderStub implements IShareProvider {
+class FederatedShareProviderCopy implements IShareProvider {
     public const SHARE_TYPE_REMOTE = 6;
 
     /** @var IDBConnection */

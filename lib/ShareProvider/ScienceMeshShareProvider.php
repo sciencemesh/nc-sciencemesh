@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2020 - 2023, PonderSource.
+ * @copyright Copyright (c) 2020 - 2023, Ponder Source.
  *
  * @author Michiel de Jong <michiel@pondersource.com>
  * @author Triantafullenia-Doumani <triantafyllenia@tuta.io>
@@ -36,10 +36,7 @@ use OCA\FederatedFileSharing\TokenHandler;
  *
  * @package OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider
  */
-class ScienceMeshShareProvider extends FederatedShareProviderStub {
-
-	/** @var array list of supported share types */
-	protected $supportedShareType = [IShare::TYPE_SCIENCEMESH];
+class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 
 	/** @var RevaHttpClient */
 	protected $revaHttpClient;
@@ -89,6 +86,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderStub {
             $cloudFederationProviderManager
         );
 
+        $this->supportedShareType[] = IShare::TYPE_SCIENCEMESH;
 		$this->revaHttpClient = new RevaHttpClient($this->config);
 	}
 
@@ -328,27 +326,9 @@ class ScienceMeshShareProvider extends FederatedShareProviderStub {
 	 * @throws ShareNotFound
 	 * @throws \OC\HintException
 	 */
-    // NOTE: this method overrides parent method.
+    // TODO: create issue how to handle delete method.
 	public function delete(IShare $share) {
 		$this->removeShareFromTable($share);
-	}
-
-	/**
-	 * remove share from table
-	 *
-	 * @param string $shareId
-	 */
-    // NOTES: diff with parent class: $this::SHARE_TYPE_REMOTE -> IShare::TYPE_CIRCLE
-    protected function removeShareFromTableById($shareId) {
-		$qb = $this->dbConnection->getQueryBuilder();
-		$qb->delete('share')
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($shareId)))
-			->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_REMOTE)));
-		$qb->execute();
-
-		$qb->delete('federated_reshares')
-			->where($qb->expr()->eq('share_id', $qb->createNamedParameter($shareId)));
-		$qb->execute();
 	}
 
 	/**
@@ -518,7 +498,6 @@ class ScienceMeshShareProvider extends FederatedShareProviderStub {
 		}
 	}
 
-    // TODO: can't find usage.
 	public function getSentShareByPath($userId, $path) {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->select('fileid')
@@ -554,7 +533,6 @@ class ScienceMeshShareProvider extends FederatedShareProviderStub {
 		return $share;
 	}
 
-    // TODO: can't find usage.
 	public function getShareByOpaqueId($opaqueId) {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$c = $qb->select('is_external')
@@ -584,7 +562,6 @@ class ScienceMeshShareProvider extends FederatedShareProviderStub {
 		return $res;
 	}
 
-    // TODO: can't find usage.
 	public function addScienceMeshUser($user) {
 		$idp = $user->getIdp();
 		$opaqueId = $user->getOpaqueId();
