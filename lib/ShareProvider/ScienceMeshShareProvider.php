@@ -1,42 +1,19 @@
 <?php
 /**
- * @copyright Copyright (c) 2016, ownCloud, Inc.
+ * @copyright Copyright (c) 2020 - 2023, Ponder Source.
  *
- * @author Arthur Schiwon <blizzz@arthur-schiwon.de>
- * @author Bjoern Schiessle <bjoern@schiessle.org>
- * @author Björn Schießle <bjoern@schiessle.org>
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Georg Ehrke <oc.list@georgehrke.com>
- * @author Joas Schilling <coding@schilljs.com>
- * @author Julius Härtl <jus@bitgrid.net>
- * @author Lukas Reschke <lukas@statuscode.ch>
- * @author Maxence Lange <maxence@artificial-owl.com>
- * @author Morris Jobke <hey@morrisjobke.de>
- * @author Robin Appelman <robin@icewind.nl>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
- * @author Sergej Pupykin <pupykin.s@gmail.com>
- * @author Stefan Weil <sw@weilnetz.de>
- * @author Thomas Müller <thomas.mueller@tmit.eu>
+ * @author Michiel de Jong <michiel@pondersource.com>
+ * @author Triantafullenia-Doumani <triantafyllenia@tuta.io>
+ * @author Mohammad Mahdi Baghbani Pourvahid <mahdi.baghbani1@gmail.com>
+ * @author Benz Schenk <benz.schenk@brokkoli.be>
+ * @author Yvo Brevoort <yvo@muze.nl>
  *
- * @license AGPL-3.0
- *
- * This code is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License, version 3,
- * as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License, version 3,
- * along with this program. If not, see <http://www.gnu.org/licenses/>
+ * @license MIT
  *
  */
 
 namespace OCA\ScienceMesh\ShareProvider;
 
-use OC\GlobalScale\GlobalScaleConfig;
 use OC\Share20\Exception\InvalidShare;
 use OC\Share20\Share;
 use OCP\Constants;
@@ -45,7 +22,6 @@ use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\Node;
 use OCP\Files\NotFoundException;
-use OCA\ScienceMesh\GlobalConfig;
 use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\IL10N;
@@ -54,49 +30,27 @@ use OCP\IUserManager;
 use OCP\Share\Exceptions\GenericShareException;
 use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IShare;
-use OCP\Share\IShareProvider;
 use OCA\ScienceMesh\RevaHttpClient;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Class ScienceMeshShareProvider
  *
  * @package OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider
  */
-class ScienceMeshShareProvider implements IShareProvider {
-	/** @var IDBConnection */
-	private $dbConnection;
+class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 
-	/** @var TokenHandler */
-//	private $tokenHandler;
-
-	/** @var IL10N */
-	private $l;
-
-	/** @var ILogger */
-	private $logger;
-
-	/** @var IRootFolder */
-	private $rootFolder;
-
-	/** @var IConfig */
-	private $config;
-
-	/** @var string */
-	private $externalShareTable = 'share_external';
-
-	/** @var IUserManager */
-	private $userManager;
-
-	/** @var GlobalConfig\IGlobalScaleConfig*/
-	private $gsConfig;
-
-	/** @var array list of supported share types */
-	private $supportedShareType = [\OCP\Share::SHARE_TYPE_REMOTE];
+	/** @var RevaHttpClient */
+	protected $revaHttpClient;
 
 	/**
 	 * DefaultShareProvider constructor.
 	 *
 	 * @param IDBConnection $connection
+	 * @param EventDispatcherInterface $eventDispatcher
+	 * @param AddressHandler $addressHandler
+	 * @param Notifications $notifications
+	 * @param TokenHandler $tokenHandler
 	 * @param IL10N $l10n
 	 * @param ILogger $logger
 	 * @param IRootFolder $rootFolder
@@ -104,20 +58,29 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @param IUserManager $userManager
 	 */
 	public function __construct(
-			IDBConnection $connection,
-			IL10N $l10n,
-			ILogger $logger,
-			IRootFolder $rootFolder,
-			IConfig $config,
-			IUserManager $userManager
+		IDBConnection $connection,
+		EventDispatcherInterface $eventDispatcher,
+		AddressHandler $addressHandler,
+		Notifications $notifications,
+		TokenHandler $tokenHandler,
+		IL10N $l10n,
+		ILogger $logger,
+		IRootFolder $rootFolder,
+		IConfig $config,
+		IUserManager $userManager
 	) {
-		$this->dbConnection = $connection;
-		$this->l = $l10n;
-		$this->logger = $logger;
-		$this->rootFolder = $rootFolder;
-		$this->config = $config;
-		$this->userManager = $userManager;
-		$this->gsConfig = new GlobalConfig\GlobalScaleConfig($config);
+		parent::__construct(
+			$connection,
+			$eventDispatcher,
+			$addressHandler,
+			$notifications,
+			$tokenHandler,
+			$l10n,
+			$logger,
+			$rootFolder,
+			$config,
+			$userManager
+		);
 		$this->revaHttpClient = new RevaHttpClient($config);
 	}
 
@@ -456,7 +419,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 */
 	public function addReceivedShareToDB($shareData) {
 		error_log("SMSP: addReceivedShareToDB");
-		$share_type =  \OCP\Share::SHARE_TYPE_REMOTE;
+		$share_type = \OCP\Share::SHARE_TYPE_REMOTE;
 		$mountpoint = "{{TemporaryMountPointName#" . $shareData["name"] . "}}";
 		$mountpoint_hash = md5($mountpoint);
 		$qbt = $this->dbConnection->getQueryBuilder();
@@ -469,7 +432,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 			return $data['id'];
 		};
 		// 0 => pending, 1 => accepted, 2 => rejected
-        $accepted = 0; //pending
+		$accepted = 0; //pending
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->insert('share_external')
 			// ->setValue('share_type', $qb->createNamedParameter($share_type))
@@ -662,7 +625,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @throws \OC\HintException
 	 */
 	public function delete(IShare $share) {
-				error_log("SMSP: delete!");
+		error_log("SMSP: delete!");
 
 		// throw new Exception("Whoah");
 		/*
@@ -701,7 +664,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 		}
 
 
-        //****
+		//****
 		// also send a unShare request to the initiator, if this is a different user than the owner
 		if ($share->getShareOwner() !== $share->getSharedBy()) {
 			if ($isOwner) {
@@ -775,7 +738,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 				$qb->expr()->eq('item_type', $qb->createNamedParameter('folder'))
 			))
 			->andWhere(
-				$qb->expr()->eq('share_type', $qb->createNamedParameter( \OCP\Share::SHARE_TYPE_REMOTE))
+				$qb->expr()->eq('share_type', $qb->createNamedParameter(\OCP\Share::SHARE_TYPE_REMOTE))
 			);
 
 		/**
@@ -959,7 +922,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 			$shares[] = $this->createShareObject($data);
 		}
 		$cursor->closeCursor();
-    $nodeId = $node->getId();
+		$nodeId = $node->getId();
 		return $shares;
 	}
 
@@ -1123,7 +1086,7 @@ class ScienceMeshShareProvider implements IShareProvider {
 	 * @param string $userId
 	 * @param int $id
 	 * @return Node
-     * @throws InvalidShare
+	 * @throws InvalidShare
 	 */
 	private function getNode($userId, $id) {
 		error_log("SMSP: getNode!");
@@ -1252,8 +1215,8 @@ class ScienceMeshShareProvider implements IShareProvider {
 	public function isFederatedGroupSharingSupported() {
 		error_log("isFederatedGroupSharingSupported");
 
-	    //***
-        return $this->cloudFederationProviderManager->isReady();
+		//***
+		return $this->cloudFederationProviderManager->isReady();
 	}
 
 	/**
@@ -1583,118 +1546,113 @@ class ScienceMeshShareProvider implements IShareProvider {
 		}
 	}
 
-    public function getAllSharesBy($userId, $shareTypes, $nodeIDs, $reshares)
-    {
-			error_log("SMSP: getAllSharesBy");
+	public function getAllSharesBy($userId, $shareTypes, $nodeIDs, $reshares) {
+		error_log("SMSP: getAllSharesBy");
 
-        $shares = [];
+		$shares = [];
 
-        $qb = $this->dbConnection->getQueryBuilder();
-        $qb->select('*')
-            ->from("share");
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->select('*')
+			->from("share");
 
-        // In federated sharing currently we have only one share_type_remote
-        $qb->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(\OCP\Share::SHARE_TYPE_REMOTE)));
+		// In federated sharing currently we have only one share_type_remote
+		$qb->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(\OCP\Share::SHARE_TYPE_REMOTE)));
 
-        $qb->andWhere($qb->expr()->in('file_source', $qb->createParameter('file_source_ids')));
+		$qb->andWhere($qb->expr()->in('file_source', $qb->createParameter('file_source_ids')));
 
-        /**
-         * Reshares for this user are shares where they are the owner.
-         */
-        if ($reshares === false) {
-            //Special case for old shares created via the web UI
-            $or1 = $qb->expr()->andX(
-                $qb->expr()->eq('uid_owner', $qb->createNamedParameter($userId)),
-                $qb->expr()->isNull('uid_initiator')
-            );
+		/**
+		 * Reshares for this user are shares where they are the owner.
+		 */
+		if ($reshares === false) {
+			//Special case for old shares created via the web UI
+			$or1 = $qb->expr()->andX(
+				$qb->expr()->eq('uid_owner', $qb->createNamedParameter($userId)),
+				$qb->expr()->isNull('uid_initiator')
+			);
 
-            $qb->andWhere(
-                $qb->expr()->orX(
-                    $qb->expr()->eq('uid_initiator', $qb->createNamedParameter($userId)),
-                    $or1
-                )
-            );
-        } else {
-            $qb->andWhere(
-                $qb->expr()->orX(
-                    $qb->expr()->eq('uid_owner', $qb->createNamedParameter($userId)),
-                    $qb->expr()->eq('uid_initiator', $qb->createNamedParameter($userId))
-                )
-            );
-        }
+			$qb->andWhere(
+				$qb->expr()->orX(
+					$qb->expr()->eq('uid_initiator', $qb->createNamedParameter($userId)),
+					$or1
+				)
+			);
+		} else {
+			$qb->andWhere(
+				$qb->expr()->orX(
+					$qb->expr()->eq('uid_owner', $qb->createNamedParameter($userId)),
+					$qb->expr()->eq('uid_initiator', $qb->createNamedParameter($userId))
+				)
+			);
+		}
 
-        $qb->orderBy('id');
+		$qb->orderBy('id');
 
-        $nodeIdsChunks = \array_chunk($nodeIDs, 900);
-        foreach ($nodeIdsChunks as $nodeIdsChunk) {
-            $qb->setParameter('file_source_ids', $nodeIdsChunk, IQueryBuilder::PARAM_INT_ARRAY);
+		$nodeIdsChunks = \array_chunk($nodeIDs, 900);
+		foreach ($nodeIdsChunks as $nodeIdsChunk) {
+			$qb->setParameter('file_source_ids', $nodeIdsChunk, IQueryBuilder::PARAM_INT_ARRAY);
 
-            $cursor = $qb->execute();
-            while ($data = $cursor->fetch()) {
-                $shares[] = $this->createShareObject($data);
-            }
-            $cursor->closeCursor();
-        }
+			$cursor = $qb->execute();
+			while ($data = $cursor->fetch()) {
+				$shares[] = $this->createShareObject($data);
+			}
+			$cursor->closeCursor();
+		}
 
-        return $shares;
-    }
+		return $shares;
+	}
 
-    public function getAllSharedWith($userId, $node)
-    {
-			error_log("getAllSharedWith");
-        return $this->getSharedWith($userId, \OCP\Share::SHARE_TYPE_REMOTE, $node, -1, 0);
-    }
+	public function getAllSharedWith($userId, $node) {
+		error_log("getAllSharedWith");
+		return $this->getSharedWith($userId, \OCP\Share::SHARE_TYPE_REMOTE, $node, -1, 0);
+	}
 
-    public function getSharesWithInvalidFileid(int $limit)
-    {
-			error_log("SMSP: getSharesWithInvalidFileid");
-        $validShareTypes = [
-            \OCP\Share::SHARE_TYPE_REMOTE,
-        ];
-        // other share types aren't handled by this provider
+	public function getSharesWithInvalidFileid(int $limit) {
+		error_log("SMSP: getSharesWithInvalidFileid");
+		$validShareTypes = [
+			\OCP\Share::SHARE_TYPE_REMOTE,
+		];
+		// other share types aren't handled by this provider
 
-        $qb = $this->dbConnection->getQueryBuilder();
+		$qb = $this->dbConnection->getQueryBuilder();
 
-        $qb = $qb->select('s.*')
-            ->from('share', 's')
-            ->leftJoin('s', 'filecache', 'f', $qb->expr()->eq('s.file_source', 'f.fileid'))
-            ->where($qb->expr()->isNull('f.fileid'))
-            ->andWhere(
-                $qb->expr()->in(
-                    'share_type',
-                    $qb->createNamedParameter($validShareTypes, IQueryBuilder::PARAM_INT_ARRAY)
-                )
-            )
-            ->orderBy('s.id');
+		$qb = $qb->select('s.*')
+			->from('share', 's')
+			->leftJoin('s', 'filecache', 'f', $qb->expr()->eq('s.file_source', 'f.fileid'))
+			->where($qb->expr()->isNull('f.fileid'))
+			->andWhere(
+				$qb->expr()->in(
+					'share_type',
+					$qb->createNamedParameter($validShareTypes, IQueryBuilder::PARAM_INT_ARRAY)
+				)
+			)
+			->orderBy('s.id');
 
-        if ($limit >= 0) {
-            $qb->setMaxResults($limit);
-        }
-        $cursor = $qb->execute();
+		if ($limit >= 0) {
+			$qb->setMaxResults($limit);
+		}
+		$cursor = $qb->execute();
 
-        $shares = [];
-        while ($data = $cursor->fetch()) {
-            $shares[] = $this->createShareObject($data);
-        }
-        $cursor->closeCursor();
+		$shares = [];
+		while ($data = $cursor->fetch()) {
+			$shares[] = $this->createShareObject($data);
+		}
+		$cursor->closeCursor();
 
-        return $shares;
-    }
+		return $shares;
+	}
 
-    public function updateForRecipient(IShare $share, $recipient)
-    {
-			error_log("SMSP: updateForRecipient");
-       return $share;
-    }
+	public function updateForRecipient(IShare $share, $recipient) {
+		error_log("SMSP: updateForRecipient");
+		return $share;
+	}
 
-    public function getProviderCapabilities()
-    {
-			error_log("SMSP: getProviderCapabilities");
-       return[
-           "sciencemesh" => [
-               self::CAPABILITY_STORE_EXPIRATION,
-               self::CAPABILITY_STORE_PASSWORD
-           ]
-       ];
-    }
+	public function getProviderCapabilities() {
+		error_log("SMSP: getProviderCapabilities");
+		return[
+			"sciencemesh" => [
+				self::CAPABILITY_STORE_EXPIRATION,
+				self::CAPABILITY_STORE_PASSWORD
+			]
+		];
+	}
 }
