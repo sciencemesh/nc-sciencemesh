@@ -45,48 +45,48 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 	 * DefaultShareProvider constructor.
 	 *
 	 * @param IDBConnection $connection
-     * @param AddressHandler $addressHandler
-     * @param Notifications $notifications
+	 * @param AddressHandler $addressHandler
+	 * @param Notifications $notifications
 	 * @param TokenHandler $tokenHandler
 	 * @param IL10N $l10n
 	 * @param ILogger $logger
 	 * @param IRootFolder $rootFolder
 	 * @param IConfig $config
 	 * @param IUserManager $userManager
-     * @param ICloudIdManager $cloudIdManager
+	 * @param ICloudIdManager $cloudIdManager
 	 * @param \OCP\GlobalScale\IConfig $globalScaleConfig
-     * @param ICloudFederationProviderManager $cloudFederationProviderManager
+	 * @param ICloudFederationProviderManager $cloudFederationProviderManager
 	 */
 	public function __construct(
 			IDBConnection $connection,
-            AddressHandler $addressHandler,
-            Notifications $notifications,
-            TokenHandler $tokenHandler,
+			AddressHandler $addressHandler,
+			Notifications $notifications,
+			TokenHandler $tokenHandler,
 			IL10N $l10n,
 			ILogger $logger,
 			IRootFolder $rootFolder,
 			IConfig $config,
 			IUserManager $userManager,
-            ICloudIdManager $cloudIdManager,
+			ICloudIdManager $cloudIdManager,
 			\OCP\GlobalScale\IConfig $globalScaleConfig,
-            ICloudFederationProviderManager $cloudFederationProviderManager
+			ICloudFederationProviderManager $cloudFederationProviderManager
 	) {
-        parent::__construct(
-            $connection,
-            $addressHandler,
-            $notifications,
-            $tokenHandler,
-            $l10n,
-            $logger,
-            $rootFolder,
-            $config,
-            $userManager,
-            $cloudIdManager,
-            $globalScaleConfig,
-            $cloudFederationProviderManager
-        );
+		parent::__construct(
+			$connection,
+			$addressHandler,
+			$notifications,
+			$tokenHandler,
+			$l10n,
+			$logger,
+			$rootFolder,
+			$config,
+			$userManager,
+			$cloudIdManager,
+			$globalScaleConfig,
+			$cloudFederationProviderManager
+		);
 
-        $this->supportedShareType[] = IShare::TYPE_SCIENCEMESH;
+		$this->supportedShareType[] = IShare::TYPE_SCIENCEMESH;
 		$this->revaHttpClient = new RevaHttpClient($this->config);
 	}
 
@@ -106,7 +106,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 	 *
 	 * @return boolean
 	 */
-    // TODO: can't find usage.
+	// TODO: can't find usage.
 	public function isShareTypeSupported($shareType) {
 		return in_array($shareType, $this->supportedShareType);
 	}
@@ -250,7 +250,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 
 		$qb->execute();
 		$id = $qb->getLastInsertId();
-    error_log("Created share with id $id");
+		error_log("Created share with id $id");
 		return (int)$id;
 	}
 
@@ -306,7 +306,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 	 * @param IShare $share
 	 * @return IShare The share object
 	 */
-    // TODO: check before merge: cannot find usage for it.
+	// TODO: check before merge: cannot find usage for it.
 	public function updateReceivedShare(IShare $share) {
 		/*
 		 * We allow updating the permissions of sciencemesh shares
@@ -326,7 +326,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 	 * @throws ShareNotFound
 	 * @throws \OC\HintException
 	 */
-    // TODO: create issue how to handle delete method.
+	// TODO: create issue how to handle delete method.
 	public function delete(IShare $share) {
 		$this->removeShareFromTable($share);
 	}
