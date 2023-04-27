@@ -124,7 +124,8 @@ class AppController extends Controller {
 		$meshDirectoryUrl = $this->config->getAppValue('sciencemesh', 'meshDirectoryUrl', 'https://sciencemesh.cesnet.cz/iop/meshdir/');
 		 
 		return new TextPlainResponse("$meshDirectoryUrl?$iopDomain", Http::STATUS_OK);
-
+	}
+	
 	/**
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
