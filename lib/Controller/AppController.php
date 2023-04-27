@@ -117,13 +117,19 @@ class AppController extends Controller {
 	 */
 	public function invitationsGenerate() {
 		$invitationsData = $this->httpClient->generateTokenFromReva($this->userId);
-		$tokenStr = $invitationsData["token"];
+		$inviteLinkStr = $invitationsData["invite_link"];
 		$iopUrl = $invitationsData["user_id"]["idp"];
 		$iopDomain =  parse_url($iopUrl)["host"];
 		// $meshDirectoryUrl = "https://sciencemesh.cesnet.cz/iop/meshdir/";
 		$meshDirectoryUrl = $this->config->getAppValue('sciencemesh', 'meshDirectoryUrl', 'https://sciencemesh.cesnet.cz/iop/meshdir/');
+    if (!$inviteLinkStr) {
+			return new TextPlainResponse("Unexpected response from Reva", Http::STATUS_INTERNAL_ERROR);
+		}
+    if (!$meshDirectoryUrl) {
+			return new TextPlainResponse("Unexpected mesh directory URL configuration", Http::STATUS_INTERNAL_ERROR);
+		}
 
-		return new TextPlainResponse("$meshDirectoryUrl?token=$tokenStr&providerDomain=$iopDomain", Http::STATUS_OK);
+		return new TextPlainResponse("$meshDirectoryUrl$inviteLinkStr", Http::STATUS_OK);
 	}
 
 	/**
