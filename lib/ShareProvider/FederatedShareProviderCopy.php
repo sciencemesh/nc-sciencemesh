@@ -50,8 +50,6 @@ use OCA\FederatedFileSharing\TokenHandler;
  * @package OCA\FederatedFileSharing
  */
 class FederatedShareProviderCopy implements IShareProvider {
-	public const SHARE_TYPE_REMOTE = 6;
-
 	/** @var IDBConnection */
 	protected $dbConnection;
 
@@ -154,7 +152,7 @@ class FederatedShareProviderCopy implements IShareProvider {
 		/*
 		 * Check if file is not already shared with the remote user
 		 */
-		$alreadyShared = $this->getSharedWith($shareWith, self::SHARE_TYPE_REMOTE, $share->getNode(), 1, 0);
+		$alreadyShared = $this->getSharedWith($shareWith, $share->getShareType(), $share->getNode(), 1, 0);
 		if (!empty($alreadyShared)) {
 			$message = 'Sharing %s failed, because this item is already shared with %s';
 			$message_t = $this->l->t('Sharing %s failed, because this item is already shared with %s', [$share->getNode()->getName(), $shareWith]);
@@ -347,7 +345,7 @@ class FederatedShareProviderCopy implements IShareProvider {
 	protected function addShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $uidOwner, $permissions, $expiration, $token) {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->insert($this->shareTable)
-			->setValue('share_type', $qb->createNamedParameter(self::SHARE_TYPE_REMOTE))
+			->setValue('share_type', $qb->createNamedParameter(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH))
 			->setValue('item_type', $qb->createNamedParameter($itemType))
 			->setValue('item_source', $qb->createNamedParameter($itemSource))
 			->setValue('file_source', $qb->createNamedParameter($itemSource))
@@ -506,7 +504,7 @@ class FederatedShareProviderCopy implements IShareProvider {
 		$qb->select('*')
 			->from($this->shareTable)
 			->where($qb->expr()->eq('parent', $qb->createNamedParameter($parent->getId())))
-			->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(self::SHARE_TYPE_REMOTE)))
+			->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH)))
 			->orderBy('id');
 
 		$cursor = $qb->execute();
@@ -621,7 +619,7 @@ class FederatedShareProviderCopy implements IShareProvider {
 			->from($this->shareTable);
 
 		// In federated sharing currently we have only one share_type_remote
-		$qb->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(self::SHARE_TYPE_REMOTE)));
+		$qb->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH)));
 
 		$qb->andWhere($qb->expr()->in('file_source', $qb->createParameter('file_source_ids')));
 
@@ -674,7 +672,7 @@ class FederatedShareProviderCopy implements IShareProvider {
 		$qb->select('*')
 			->from($this->shareTable);
 
-		$qb->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(self::SHARE_TYPE_REMOTE)));
+		$qb->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH)));
 
 		/**
 		 * Reshares for this user are shares where they are the owner.
@@ -740,7 +738,7 @@ class FederatedShareProviderCopy implements IShareProvider {
 		$qb->select('*')
 			->from($this->shareTable)
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)))
-			->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(self::SHARE_TYPE_REMOTE)));
+			->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH)));
 
 		$cursor = $qb->execute();
 		$data = $cursor->fetch();
@@ -771,7 +769,7 @@ class FederatedShareProviderCopy implements IShareProvider {
 		$cursor = $qb->select('*')
 			->from($this->shareTable)
 			->andWhere($qb->expr()->eq('file_source', $qb->createNamedParameter($path->getId())))
-			->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(self::SHARE_TYPE_REMOTE)))
+			->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH)))
 			->execute();
 
 		$shares = [];
@@ -787,7 +785,7 @@ class FederatedShareProviderCopy implements IShareProvider {
 	 * @inheritdoc
 	 */
 	public function getAllSharedWith($userId, $node) {
-		return $this->getSharedWith($userId, self::SHARE_TYPE_REMOTE, $node, -1, 0);
+		return $this->getSharedWith($userId, ScienceMeshApp::SHARE_TYPE_SCIENCEMESH, $node, -1, 0);
 	}
 
 	/**
@@ -811,7 +809,7 @@ class FederatedShareProviderCopy implements IShareProvider {
 		}
 		$qb->setFirstResult($offset);
 
-		$qb->where($qb->expr()->eq('share_type', $qb->createNamedParameter(self::SHARE_TYPE_REMOTE)));
+		$qb->where($qb->expr()->eq('share_type', $qb->createNamedParameter(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH)));
 		$qb->andWhere($qb->expr()->eq('share_with', $qb->createNamedParameter($userId)));
 
 		// Filter by node if provided
@@ -841,7 +839,7 @@ class FederatedShareProviderCopy implements IShareProvider {
 
 		$cursor = $qb->select('*')
 			->from($this->shareTable)
-			->where($qb->expr()->eq('share_type', $qb->createNamedParameter(self::SHARE_TYPE_REMOTE)))
+			->where($qb->expr()->eq('share_type', $qb->createNamedParameter(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH)))
 			->andWhere($qb->expr()->eq('token', $qb->createNamedParameter($token)))
 			->execute();
 
@@ -866,7 +864,7 @@ class FederatedShareProviderCopy implements IShareProvider {
 	public function getSharesWithInvalidFileid(int $limit) {
 		// mimic the implementation for the default share provider in core
 		$validShareTypes = [
-			\OCP\Share::SHARE_TYPE_REMOTE,
+			ScienceMeshApp::SHARE_TYPE_SCIENCEMESH,
 		];
 		// other share types aren't handled by this provider
 
@@ -1007,7 +1005,7 @@ class FederatedShareProviderCopy implements IShareProvider {
 		$qb = $this->dbConnection->getQueryBuilder();
 
 		$qb->delete($this->shareTable)
-			->where($qb->expr()->eq('share_type', $qb->createNamedParameter(\OCP\Share::SHARE_TYPE_REMOTE)))
+			->where($qb->expr()->eq('share_type', $qb->createNamedParameter(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH)))
 			->andWhere($qb->expr()->eq('uid_owner', $qb->createNamedParameter($uid)))
 			->execute();
 	}
@@ -1189,7 +1187,7 @@ class FederatedShareProviderCopy implements IShareProvider {
 	 */
 	public function getProviderCapabilities() {
 		return [
-			\OCP\Share::CONVERT_SHARE_TYPE_TO_STRING[\OCP\Share::SHARE_TYPE_REMOTE] => [
+			'sciencemesh' => [
 				IShareProvider::CAPABILITY_STORE_EXPIRATION,
 			],
 		];

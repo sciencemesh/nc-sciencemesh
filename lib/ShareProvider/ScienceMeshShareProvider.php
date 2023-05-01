@@ -30,6 +30,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\TokenHandler;
+use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 
 /**
  * Class ScienceMeshShareProvider
@@ -80,7 +81,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 			$userManager
 		);
 
-		$this->supportedShareType[] = \OCP\Share::SHARE_TYPE_REMOTE;
+		$this->supportedShareType[] = ScienceMeshApp::SHARE_TYPE_SCIENCEMESH;
 		$this->revaHttpClient = new RevaHttpClient($config);
 	}
 
@@ -122,7 +123,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 		/*
 		 * Check if file is not already shared with the remote user
 		 */
-		$alreadyShared = $this->getSharedWith($shareWith,  \OCP\Share::SHARE_TYPE_REMOTE, $share->getNode(), 1, 0);
+		$alreadyShared = $this->getSharedWith($shareWith,  $share->getShareType(), $share->getNode(), 1, 0);
 		if (!empty($alreadyShared)) {
 			$message = 'Sharing %1$s failed, because this item is already shared with %2$s';
 			$message_t = $this->l->t('Sharing %1$s failed, because this item is already shared with user %2$s', [$share->getNode()->getName(), $shareWith]);
@@ -407,7 +408,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 		$qb->select('*')
 			->from('share')
 			->where(
-				$qb->expr()->eq('share_type', $qb->createNamedParameter(\OCP\Share::SHARE_TYPE_REMOTE))
+				$qb->expr()->eq('share_type', $qb->createNamedParameter(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH))
 			)
 			->andWhere(
 				$qb->expr()->orX(
@@ -436,7 +437,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 		$qb->select('*')
 			->from('share_external')
 			->where(
-				$qb->expr()->eq('share_type', $qb->createNamedParameter(\OCP\Share::SHARE_TYPE_REMOTE))
+				$qb->expr()->eq('share_type', $qb->createNamedParameter(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH))
 			)
 			->andWhere(
 				$qb->expr()->eq('user', $qb->createNamedParameter($userId))
