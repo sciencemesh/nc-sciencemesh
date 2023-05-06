@@ -41,8 +41,7 @@ class ScienceMeshSearchPlugin implements ISearchPlugin {
 
 		$exactResults = [];
 		foreach ($users as $user) {
-			$serverUrl = parse_url($user['id']['idp']);
-			$domain = $serverUrl["host"];
+			$domain = (str_starts_with($user['id']['idp'], "http") ? parse_url($user['id']['idp'])["host"] : $user['id']['idp']);
 			$exactResults[] = [
 				"label" => "Label",
 				"uuid" => $user['id']['opaque_id'],
