@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
                                         <p class="displayname">${displayName}</p>
                                     </td>  
                                     <td>
-                                        <p class="username-provider">${username}</p>
+                                        <p class="username-provider">${username}@${provider}</p>
                                     </td>
                                 </tr>
                         `;

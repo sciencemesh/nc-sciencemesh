@@ -102,6 +102,7 @@ class RevaHttpClient {
 
 	public function createShare($user, $params) {
 		error_log("RevaHttpClient createShare");
+		// see https://github.com/cs3org/reva/pull/3695/files#diff-6df5ade636cf2b09c52181e29ca2257dc3426f7ea7e0a5dcbaad527c0b648ff5R55-R60
 		if (!isset($params['sourcePath'])) {
 			throw new \Exception("Missing sourcePath", 400);
 		}
@@ -117,11 +118,11 @@ class RevaHttpClient {
 		if (!isset($params['recipientHost'])) {
 			throw new \Exception("Missing recipientHost", 400);
 		}
-		$params["loginType"] = "basic";
-		$params["loginUsername"] = $user;
-		$params["loginPassword"] = $this->revaLoopbackSecret;
-		error_log("Calling reva/ocm/send " . json_encode($params));
-		$responseText = $this->revaPost('ocm/send', $user, $params);
+		// $params["loginType"] = "basic";
+		// $params["loginUsername"] = $user;
+		// $params["loginPassword"] = "ha"; //$this->revaLoopbackSecret;
+		error_log("Calling reva/sciencemesh/create-share " . json_encode($params));
+		$responseText = $this->revaPost('sciencemesh/create-share', $user, $params);
 		return json_decode($responseText);
 	}
 
