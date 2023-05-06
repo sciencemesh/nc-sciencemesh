@@ -112,6 +112,9 @@ class RevaHttpClient {
 		if (!isset($params['type'])) {
 			throw new \Exception("Missing type", 400);
 		}
+		if (!isset($params['role'])) {
+			$params['role'] = 'viewer';
+		}
 		if (!isset($params['recipientUsername'])) {
 			throw new \Exception("Missing recipientUsername", 400);
 		}
