@@ -56,7 +56,7 @@ class ScienceMeshSearchPlugin {
 		$result = [];
 		foreach ($users as $user) {
 			$serverUrl = parse_url($user['id']['idp']);
-			$domain = $serverUrl["host"];
+			$domain = (str_starts_with($user['id']['idp'], "http") ? parse_url($user['id']['idp'])["host"] : $user['id']['idp']);
 			$result[] = [
 				'label' => $user['display_name'] ." (". $domain . ")",
 				'value' => [
