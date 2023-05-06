@@ -146,8 +146,8 @@ class AppController extends Controller {
 	public function contactsAccept() {
 		$providerDomain = $this->request->getParam('providerDomain');
 		$token = $this->request->getParam('token');
-		$contacts = $this->httpClient->getAcceptTokenFromReva($providerDomain, $token, $this->userId);
-		return new TextPlainResponse($contacts, Http::STATUS_OK);
+		$result = $this->httpClient->acceptInvite($providerDomain, $token, $this->userId);
+		return new TextPlainResponse($result, Http::STATUS_OK);
 	}
 
 	/**
