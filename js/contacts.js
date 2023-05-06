@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
                         const displayName = accepted_users[accept].display_name;
                         const username = accepted_users[accept].id.opaque_id;
                         const idp = accepted_users[accept].id.idp;
-                        const provider = new URL(idp).host;
+                        const provider =  (idp.startsWith("http") ? new URL(idp).host : idp);
                         result += `
                                 <tr class="app-content-list-item">
                                     <td style="border-radius:100%">
