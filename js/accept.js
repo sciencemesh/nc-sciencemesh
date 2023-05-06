@@ -16,13 +16,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		}).done(function (response) {
 			var element = document.getElementById("test_error");
 			$("#test_error").show();
-			if (response === '' || response === false) {
-				jQuery(element).addClass('text-error');
+			if (response === false) {
+				$("#test_error").addClass('text-error');
 				element.innerHTML = 'Something goes wrong: No Sciencemesh Connection';
-			} else if(response.startsWith('Accepted invite from')){
-				element.innerHTML = 'Invitation has successfully accepted!';
-				jQuery(element).addClass('text-error');
-				document.getElementById('token').value = '';
+			} else if(response.startsWith('Accepted invite')){
+				$("#test_error").addClass('text-success');
+				element.innerHTML = 'Success';
 			} else {
 				let result = JSON.parse(response);
 				if (result.hasOwnProperty('message')) {

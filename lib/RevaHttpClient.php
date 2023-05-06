@@ -134,12 +134,12 @@ class RevaHttpClient {
 		return $users;
 	}
 
-	public function getAcceptTokenFromReva($providerDomain, $token, $userId) {
-		$tokenFromReva = $this->revaPost('sciencemesh/accept-invite', $userId, [
+	public function acceptInvite($providerDomain, $token, $userId) {
+		$empty = $this->revaPost('sciencemesh/accept-invite', $userId, [
 			'providerDomain' => $providerDomain,
 			'token' => $token
 		]);
-		return $tokenFromReva;
+		return "Accepted invite";
 	}
 
 	public function generateTokenFromReva($userId) {
