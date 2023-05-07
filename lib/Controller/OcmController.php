@@ -471,15 +471,15 @@ class OcmController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function addReceivedShare($userId) {
-		error_log("addReceivedShare");
 		$params = $this->request->getParams();
+		error_log("addReceivedShare " . var_export($params, true));
 		$shareData = [
-			"remote" => $params["share"]["owner"]["idp"], // FIXME: 'nc1.docker' -> 'https://nc1.docker/'
-			"remote_id" =>  base64_decode($params["share"]["grantee"]["opaque"]["map"]["remoteShareId"]["value"]), // FIXME: $this->shareProvider->createInternal($share) suppresses, so not getting an id there, see https://github.com/pondersource/sciencemesh-nextcloud/issues/57#issuecomment-1002143104
-			"share_token" => base64_decode($params["share"]["grantee"]["opaque"]["map"]["sharedSecret"]["value"]), // 'tDPRTrLI4hE3C5T'
+			"remote" => $params["owner"]["idp"], // FIXME: 'nc1.docker' -> 'https://nc1.docker/'
+			"remote_id" =>  base64_decode($params["grantee"]["opaque"]["map"]["remoteShareId"]["value"]), // FIXME: $this->shareProvider->createInternal($share) suppresses, so not getting an id there, see https://github.com/pondersource/sciencemesh-nextcloud/issues/57#issuecomment-1002143104
+			"share_token" => base64_decode($params["grantee"]["opaque"]["map"]["sharedSecret"]["value"]), // 'tDPRTrLI4hE3C5T'
 			"password" => "",
-			"name" => rtrim($params["share"]["name"], "/"), // '/grfe'
-			"owner" => $params["share"]["owner"]["opaqueId"], // 'einstein'
+			"name" => rtrim($params["name"], "/"), // '/grfe'
+			"owner" => $params["owner"]["opaqueId"], // 'einstein'
 			"user" => $userId // 'marie'
 		];
 		$this->init($userId);
