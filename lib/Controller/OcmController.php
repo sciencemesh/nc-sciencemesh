@@ -413,9 +413,9 @@ class OcmController extends Controller {
 	 * Create a new share in fn with the given access control list.
 	 */
 	public function addSentShare($userId) {
-		error_log("addSentShare");
 		$this->init($userId);
 		$params = $this->request->getParams();
+		error_log("addSentShare " . var_export($params, true));
 		$owner = $params["owner"]["opaqueId"]; // . "@" . $params["owner"]["idp"];
 		$name = $params["name"]; // "fileid-/other/q/f gr"
 		$resourceOpaqueId = $params["resourceId"]["opaqueId"]; // "fileid-/other/q/f gr"
@@ -434,9 +434,10 @@ class OcmController extends Controller {
 		}
 		$nextcloudPermissions = $this->getPermissionsCode($revaPermissions);
 		$shareWith = $granteeUser."@".$granteeHost;
-		$sharedSecretBase64 = $params["grantee"]["opaque"]["map"]["sharedSecret"]["value"];
-		$sharedSecret = base64_decode($sharedSecretBase64);
-		error_log("base64 decoded $sharedSecretBase64 to $sharedSecret");
+		// $sharedSecretBase64 = $params["grantee"]["opaque"]["map"]["sharedSecret"]["value"];
+		// $sharedSecret = base64_decode($sharedSecretBase64);
+		// error_log("base64 decoded $sharedSecretBase64 to $sharedSecret");
+		$sharedSecret = $params["token"];
 		try {
 			$node = $this->userFolder->get($nextcloudPath);
 		} catch (NotFoundException $e) {
