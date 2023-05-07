@@ -476,8 +476,8 @@ class OcmController extends Controller {
 		error_log("addReceivedShare " . var_export($params, true));
 		$shareData = [
 			"remote" => $params["owner"]["idp"], // FIXME: 'nc1.docker' -> 'https://nc1.docker/'
-			"remote_id" =>  base64_decode($params["grantee"]["opaque"]["map"]["remoteShareId"]["value"]), // FIXME: $this->shareProvider->createInternal($share) suppresses, so not getting an id there, see https://github.com/pondersource/sciencemesh-nextcloud/issues/57#issuecomment-1002143104
-			"share_token" => base64_decode($params["grantee"]["opaque"]["map"]["sharedSecret"]["value"]), // 'tDPRTrLI4hE3C5T'
+			"remote_id" =>  $params["resourceId"]["opaqueId"], // FIXME: $this->shareProvider->createInternal($share) suppresses, so not getting an id there, see https://github.com/pondersource/sciencemesh-nextcloud/issues/57#issuecomment-1002143104
+			"share_token" => $params["protocols"][1]["webdavOptions"]["sharedSecret"], // 'tDPRTrLI4hE3C5T'
 			"password" => "",
 			"name" => rtrim($params["name"], "/"), // '/grfe'
 			"owner" => $params["owner"]["opaqueId"], // 'einstein'
