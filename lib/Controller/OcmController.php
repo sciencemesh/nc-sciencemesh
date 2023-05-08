@@ -486,10 +486,20 @@ class OcmController extends Controller {
 	public function addReceivedShare($userId) {
 		$params = $this->request->getParams();
 		error_log("addReceivedShare " . var_export($params, true));
+		foreach($params['protocols'] as $protocol) {
+			if (isset($protocol['webdavOptions'])) {
+				$sharedSecret = $protocol['webdavOptions']['sharedSecret'];
+				break;
+			}
+		}
+		if (!isset($sharedSecret)) {
+			throw new \Exception('sharedSecret not found');
+		}
+
 		$shareData = [
 			"remote" => $params["owner"]["idp"], // FIXME: 'nc1.docker' -> 'https://nc1.docker/'
 			"remote_id" =>  $params["resourceId"]["opaqueId"], // FIXME: $this->shareProvider->createInternal($share) suppresses, so not getting an id there, see https://github.com/pondersource/sciencemesh-nextcloud/issues/57#issuecomment-1002143104
-			"share_token" => $params["protocols"][1]["webdavOptions"]["sharedSecret"], // 'tDPRTrLI4hE3C5T'
+			"share_token" => $sharedSecret, // 'tDPRTrLI4hE3C5T'
 			"password" => "",
 			"name" => rtrim($params["name"], "/"), // '/grfe'
 			"owner" => $params["owner"]["opaqueId"], // 'einstein'
