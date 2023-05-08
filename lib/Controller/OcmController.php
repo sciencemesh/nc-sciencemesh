@@ -422,7 +422,19 @@ class OcmController extends Controller {
 		$revaPath = $this->getRevaPathFromOpaqueId($resourceOpaqueId); // "/other/q/f gr"
 		$nextcloudPath = $this->revaPathToNextcloudPath($revaPath);
 
-		$revaPermissions = $params["permissions"]["permissions"]; // {"getPath":true, "initiateFileDownload":true, "listContainer":true, "listFileVersions":true, "stat":true}
+		$revaPermissions = null;
+
+		foreach($params['accessMethods'] as $accessMethod) {
+			if (isset($accessMethod['webdavOptions'])) {
+				$revaPermissions = $accessMethod['webdavOptions']['permissions'];
+				break;
+			}
+		}
+
+		if (!isset($revaPermissions)) {
+			throw new \Exception('reva permissions not found');
+		}
+
 		$granteeType = $params["grantee"]["type"]; // "GRANTEE_TYPE_USER"
 		$granteeHost = $params["grantee"]["userId"]["idp"]; // "revanc2.docker"
 		$granteeUser = $params["grantee"]["userId"]["opaqueId"]; // "marie"
