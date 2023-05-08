@@ -135,6 +135,11 @@ class RevaHttpClient {
 
 	public function findAcceptedUsers($userId) {
 		$users = $this->revaGet('sciencemesh/find-accepted-users', $userId);
+		error_log("users " . var_export($users, true));
+		if ($users === "null\n") {
+			error_log("users corrected!");
+			$users = "[]";
+		}
 		return $users;
 	}
 
