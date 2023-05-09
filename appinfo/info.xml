@@ -6,7 +6,7 @@
     <summary>Connect your Nextcloud instance to your Reva instance and the Science Mesh</summary>
     <description>Connect your Nextcloud instance to your Reva instance and the Science Mesh</description>
     <version>0.3.0</version>
-    <licence>mit</licence>
+    <licence>agpl</licence>
     <author homepage="https://sciencemesh.io" >ScienceMesh Community</author>
     <author mail="support@pondersource.com" homepage="https://pondersource.com" >Stichting Ponder Source</author>
     <author mail="info@muze.nl" homepage="https://www.muze.nl" >Muze B.V.</author>
