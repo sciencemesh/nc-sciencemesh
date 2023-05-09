@@ -128,7 +128,7 @@ class AppController extends Controller {
 
 		return new TextPlainResponse("$meshDirectoryUrl$inviteLinkStr", Http::STATUS_OK);
 	}
-	
+
 	/**
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
