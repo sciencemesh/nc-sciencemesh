@@ -1,6 +1,7 @@
 echo run this file as www-data user inside a Docker container
 echo first, docker exec as root and chown /var/www/html/apps/sciencemesh to www-user
-echo then, docker exec as www-user, and store sciencemesh.key into /var/www/sciencemesh.key (make sure to remove it or delete the container after you're done)
+echo then, docker exec as www-user, and store sciencemesh.key into /var/www/sciencemesh.key
+echo make sure to remove it or delete the container after you're done!
 echo then cd into apps/sciencemesh, and run this script.
 
 mkdir -p build/sciencemesh
