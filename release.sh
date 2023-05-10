@@ -16,5 +16,10 @@ mv ../build/sciencemesh.tar .
 rm -f -- sciencemesh.tar.gz
 gzip sciencemesh.tar
 cd ..
-
-echo now please run ./occ integrity:sign-app --privateKey=sciencemesh.key --certificate=... --path=...
+echo copy sciencemesh.key into an oc1 container and run:
+echo docker exec -it oc1.docker bash
+echo -> chown -R www-data apps/sciencemesh
+echo -> exit
+echo docker exec -it -u www-data oc1.docker bash
+echo -> ./occ integrity:sign-app --privateKey=/var/www/sciencemesh.key --certificate=apps/sciencemesh/sciencemesh.crt --path=apps/sciencemesh
+echo now commit the appinfo/signature.json file inside apps/sciencemesh
