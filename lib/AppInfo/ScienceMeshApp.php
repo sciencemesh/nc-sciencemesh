@@ -8,7 +8,7 @@ use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
 class ScienceMeshApp extends App {
 	public const APP_ID = 'sciencemesh';
 	public const SHARE_TYPE_REMOTE = 6;
-	public const SHARE_TYPE_SCIENCEMESH = 15;
+	public const SHARE_TYPE_SCIENCEMESH = 6;
 	
 	public function __construct() {
 		parent::__construct(self::APP_ID);
