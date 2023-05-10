@@ -59,6 +59,7 @@ use OCP\Share\IShareProvider;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\TokenHandler;
+use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 
 /**
  * Class FederatedShareProvider
