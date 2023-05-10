@@ -476,6 +476,9 @@ class OcmController extends Controller {
 		foreach($params['protocols'] as $protocol) {
 			if (isset($protocol['webdavOptions'])) {
 				$sharedSecret = $protocol['webdavOptions']['sharedSecret'];
+				// make sure you have webdav_endpoint = "https://nc1.docker/" under [grpc.services.ocmshareprovider] in the sending Reva's config
+				$uri = $protocol['webdavOptions']['uri']; // e.g. https://nc1.docker/remote.php/dav/ocm/vaKE36Wf1lJWCvpDcRQUScraVP5quhzA
+				$remote = implode('/', array_slice(explode('/', $uri), 0, 3)); // e.g. https://nc1.docker
 				break;
 			}
 		}
@@ -484,7 +487,7 @@ class OcmController extends Controller {
 		}
 
 		$shareData = [
-			"remote" => $params["owner"]["idp"], // FIXME: 'nc1.docker' -> 'https://nc1.docker/'
+			"remote" => $remote,
 			"remote_id" =>  $params["resourceId"]["opaqueId"], // FIXME: $this->shareProvider->createInternal($share) suppresses, so not getting an id there, see https://github.com/pondersource/sciencemesh-nextcloud/issues/57#issuecomment-1002143104
 			"share_token" => $sharedSecret, // 'tDPRTrLI4hE3C5T'
 			"password" => "",
