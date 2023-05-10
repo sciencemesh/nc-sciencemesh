@@ -16,3 +16,5 @@ mv ../build/sciencemesh.tar .
 rm -f -- sciencemesh.tar.gz
 gzip sciencemesh.tar
 cd ..
+
+echo now please run ./occ integrity:sign-app --privateKey=sciencemesh.key --certificate=... --path=...
