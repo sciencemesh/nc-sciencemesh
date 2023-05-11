@@ -549,15 +549,15 @@ class RevaController extends Controller {
 	public function GetMD($userId) {
 		$this->init($userId);
 		$ref = $this->request->getParam("ref");
-                error_log("GetMD " . var_export($ref, true));
-                if (isset($ref["path"])) {
-                        $revaPath = $ref["path"]; // e.g. GetMD {"ref":{"path":"/home/asdf"},"mdKeys":null}
-                } else if (isset($ref["resource_id"]) && isset($ref["resource_id"]["opaque_id"]) && str_starts_with($ref["resource_id"]["opaque_id"], "fileid-/home/")) {
-                        $revaPath = substr($ref["resource_id"]["opaque_id"], strlen("fileid-")); // e.g. GetMD {"ref":{"resource_id":{"storage_id":"00000000-0000-0000-0000-000000000000","opaque_id":"fileid-/home/asdf"}},"mdKeys":null}
-                } else {
-                        throw new \Exception("ref not understood!");
-                }
-                $path = $this->revaPathToNextcloudPath($revaPath);
+		error_log("GetMD " . var_export($ref, true));
+		if (isset($ref["path"])) {
+						$revaPath = $ref["path"]; // e.g. GetMD {"ref":{"path":"/home/asdf"},"mdKeys":null}
+		} else if (isset($ref["resource_id"]) && isset($ref["resource_id"]["opaque_id"]) && str_starts_with($ref["resource_id"]["opaque_id"], "fileid-/home/")) {
+						$revaPath = substr($ref["resource_id"]["opaque_id"], strlen("fileid-")); // e.g. GetMD {"ref":{"resource_id":{"storage_id":"00000000-0000-0000-0000-000000000000","opaque_id":"fileid-/home/asdf"}},"mdKeys":null}
+		} else {
+						throw new \Exception("ref not understood!");
+		}
+		$path = $this->revaPathToNextcloudPath($revaPath);
 		error_log("Looking for nc path '$path' in user folder; reva path '".$ref["path"]."' ");
 		$dirContents = $this->userFolder->getDirectoryListing();
 		$paths = array_map(function (\OCP\Files\Node $node) {
