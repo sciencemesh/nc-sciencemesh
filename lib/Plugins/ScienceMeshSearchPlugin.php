@@ -47,10 +47,10 @@ class ScienceMeshSearchPlugin {
 
 	public function search($search) {
 		$result = json_decode($this->revaHttpClient->findAcceptedUsers($this->userId), true);
-		if (!isset($result['accepted_users'])) {
+		if (!isset($result)) {
 			return [];
 		}
-		$users = $result['accepted_users'];
+		$users = $result;
         error_log("Found " . count($users) . " users");
 
 		$result = [];

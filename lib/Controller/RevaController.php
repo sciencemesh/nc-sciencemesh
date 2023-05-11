@@ -28,6 +28,7 @@ use OCP\App\IAppManager;
 use OCP\Lock\ILockingProvider;
 use OCP\Lock\LockedException;
 use OCP\IL10N;
+use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 
 define('RESTRICT_TO_SCIENCEMESH_FOLDER', false);
 define('NEXTCLOUD_PREFIX', (RESTRICT_TO_SCIENCEMESH_FOLDER ? 'sciencemesh/' : ''));
@@ -865,25 +866,43 @@ class RevaController extends Controller {
 	 * Create a new share in fn with the given access control list.
 	 */
 	public function addSentShare($userId) {
-		error_log("addSentShare");
 		$this->init($userId);
 		$params = $this->request->getParams();
+		error_log("addSentShare " . var_export($params, true));
 		$owner = $params["owner"]["opaqueId"]; // . "@" . $params["owner"]["idp"];
 		$name = $params["name"]; // "fileid-/other/q/f gr"
 		$resourceOpaqueId = $params["resourceId"]["opaqueId"]; // "fileid-/other/q/f gr"
 		$revaPath = $this->getRevaPathFromOpaqueId($resourceOpaqueId); // "/other/q/f gr"
 		$nextcloudPath = $this->revaPathToNextcloudPath($revaPath);
 
-		$revaPermissions = $params["permissions"]["permissions"]; // {"getPath":true, "initiateFileDownload":true, "listContainer":true, "listFileVersions":true, "stat":true}
+		$revaPermissions = null;
+
+		foreach($params['accessMethods'] as $accessMethod) {
+			if (isset($accessMethod['webdavOptions'])) {
+				$revaPermissions = $accessMethod['webdavOptions']['permissions'];
+				break;
+			}
+		}
+
+		if (!isset($revaPermissions)) {
+			throw new \Exception('reva permissions not found');
+		}
+
 		$granteeType = $params["grantee"]["type"]; // "GRANTEE_TYPE_USER"
 		$granteeHost = $params["grantee"]["userId"]["idp"]; // "revanc2.docker"
 		$granteeUser = $params["grantee"]["userId"]["opaqueId"]; // "marie"
 
+		if ($revaPermissions === null) {
+			$revaPermissions = [
+				"initiate_file_download" => true
+			];
+		}
 		$nextcloudPermissions = $this->getPermissionsCode($revaPermissions);
 		$shareWith = $granteeUser."@".$granteeHost;
-		$sharedSecretBase64 = $params["grantee"]["opaque"]["map"]["sharedSecret"]["value"];
-		$sharedSecret = base64_decode($sharedSecretBase64);
-		error_log("base64 decoded $sharedSecretBase64 to $sharedSecret");
+		// $sharedSecretBase64 = $params["grantee"]["opaque"]["map"]["sharedSecret"]["value"];
+		// $sharedSecret = base64_decode($sharedSecretBase64);
+		// error_log("base64 decoded $sharedSecretBase64 to $sharedSecret");
+		$sharedSecret = $params["token"];
 		try {
 			$node = $this->userFolder->get($nextcloudPath);
 		} catch (NotFoundException $e) {
@@ -897,13 +916,12 @@ class RevaController extends Controller {
 		} catch (LockedException $e) {
 			throw new OCSNotFoundException($this->l->t('Could not create share'));
 		}
-		$share->setShareType(\OCP\Share::SHARE_TYPE_REMOTE);//IShare::TYPE_SCIENCEMESH);
+		$share->setShareType(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH);//IShare::TYPE_SCIENCEMESH);
 		$share->setSharedBy($userId);
 		$share->setSharedWith($shareWith);
 		$share->setShareOwner($owner);
 		$share->setPermissions($nextcloudPermissions);
 		$share->setToken($sharedSecret);
-		error_log("calling createInternal");
 		$share = $this->shareProvider->createInternal($share);
 		// $response = $this->shareInfoToCs3Share($share);
 		// error_log("response:" . json_encode($response));
@@ -918,15 +936,29 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function addReceivedShare($userId) {
-		error_log("addReceivedShare");
 		$params = $this->request->getParams();
+		error_log("addReceivedShare " . var_export($params, true));
+		foreach($params['protocols'] as $protocol) {
+			if (isset($protocol['webdavOptions'])) {
+				$sharedSecret = $protocol['webdavOptions']['sharedSecret'];
+				// make sure you have webdav_endpoint = "https://nc1.docker/" under [grpc.services.ocmshareprovider] in the sending Reva's config
+				$uri = $protocol['webdavOptions']['uri']; // e.g. https://nc1.docker/remote.php/dav/ocm/vaKE36Wf1lJWCvpDcRQUScraVP5quhzA
+				$remote = implode('/', array_slice(explode('/', $uri), 0, 3)); // e.g. https://nc1.docker
+				break;
+			}
+		}
+		if (!isset($sharedSecret)) {
+			throw new \Exception('sharedSecret not found');
+		}
+
+		// "remote" => $params["owner"]["idp"], // FIXME: 'nc1.docker' -> 'https://nc1.docker/'
 		$shareData = [
-			"remote" => $params["share"]["owner"]["idp"], // FIXME: 'nc1.docker' -> 'https://nc1.docker/'
-			"remote_id" =>  base64_decode($params["share"]["grantee"]["opaque"]["map"]["remoteShareId"]["value"]), // FIXME: $this->shareProvider->createInternal($share) suppresses, so not getting an id there, see https://github.com/pondersource/sciencemesh-nextcloud/issues/57#issuecomment-1002143104
-			"share_token" => base64_decode($params["share"]["grantee"]["opaque"]["map"]["sharedSecret"]["value"]), // 'tDPRTrLI4hE3C5T'
+			"remote" => $remote,
+			"remote_id" =>  $params["resourceId"]["opaqueId"], // FIXME: $this->shareProvider->createInternal($share) suppresses, so not getting an id there, see https://github.com/pondersource/sciencemesh-nextcloud/issues/57#issuecomment-1002143104
+			"share_token" => $sharedSecret, // 'tDPRTrLI4hE3C5T'
 			"password" => "",
-			"name" => rtrim($params["share"]["name"], "/"), // '/grfe'
-			"owner" => $params["share"]["owner"]["opaqueId"], // 'einstein'
+			"name" => rtrim($params["name"], "/"), // '/grfe'
+			"owner" => $params["owner"]["opaqueId"], // 'einstein'
 			"user" => $userId // 'marie'
 		];
 		$this->init($userId);
