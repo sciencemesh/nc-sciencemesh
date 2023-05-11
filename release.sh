@@ -24,3 +24,5 @@ mv ../build/sciencemesh.tar .
 rm -f -- sciencemesh.tar.gz
 gzip sciencemesh.tar
 cd ..
+
+echo now upload the .tar.gz to https://marketplace.owncloud.com/account/products ("Add New" / "+")
