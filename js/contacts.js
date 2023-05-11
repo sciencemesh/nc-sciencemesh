@@ -17,51 +17,42 @@ document.addEventListener("DOMContentLoaded", function(event) {
                                 </tr>`;
             $('#show_result').show(); 
         } else {
-        let token = JSON.parse(response);
-    
-        for(tokenData in token) {
-            if(token.hasOwnProperty(tokenData)) {
-                console.log(tokenData);
-                if(tokenData === 'accepted_users') {
-                    let accepted_users = token.accepted_users
-                    var result = ''; 
-                    for(accept in accepted_users) {
-                        const displayName = accepted_users[accept].display_name;
-                        const username = accepted_users[accept].id.opaque_id;
-                        const idp = accepted_users[accept].id.idp;
-                        const provider =  (idp.startsWith("http") ? new URL(idp).host : idp);
-                        result += `
-                                <tr class="app-content-list-item">
-                                    <td style="border-radius:100%">
-                                        <p class="icon-contacts-dark contacts-profile-img"></p>
-                                    </td>
-                                    <td class="app-content-list-item-line-one contact-item">
-                                        <p class="displayname">${displayName}</p>
-                                    </td>  
-                                    <td>
-                                        <p class="username-provider">${username}@${provider}</p>
-                                    </td>
-                                </tr>
-                        `;
-                    }
-
-                    var element = document.getElementById("show_result");
-                    element.innerHTML = result;
-
-                    $('#show_result').show();
-                }else{
-                    const result = `
-                            <tr colspan="3" href="#" class="app-content-list-item" >
-                                <td style="width:40% !important">
-                                    <p class="username-provider">There are no contacts!</p>
-                                </td>
-                            </tr>`;                  
-                    var element = document.getElementById("show_result");
-                    element.innerHTML = result;
-                    $('#show_result').show();
-    
-                }
-            } 
+        let acceptedUsers = JSON.parse(response);
+        if (acceptedUsers.length == 0) {
+            const result = `
+            <tr colspan="3" href="#" class="app-content-list-item" >
+                <td style="width:40% !important">
+                    <p class="username-provider">There are no contacts!</p>
+                </td>
+            </tr>`;               
+            var element = document.getElementById("show_result");
+            element.innerHTML = result;
+            $('#show_result').show();
+        } else {
+            let result = '';
+            for(i in acceptedUsers) {
+                const displayName = acceptedUsers[i].display_name;
+                const username = acceptedUsers[i].id.opaque_id;
+                const idp = acceptedUsers[i].id.idp;
+                const provider =  (idp.startsWith("http") ? new URL(idp).host : idp);
+                result += `
+                <tr class="app-content-list-item">
+                    <td style="border-radius:100%">
+                        <p class="icon-contacts-dark contacts-profile-img"></p>
+                    </td>
+                    <td class="app-content-list-item-line-one contact-item">
+                        <p class="displayname">${displayName}</p>
+                    </td>  
+                    <td>
+                        <p class="username-provider">${username}@${provider}</p>
+                    </td>
+                </tr>
+                `;
+            }
+            var element = document.getElementById("show_result");
+            element.innerHTML = result;
+            
+            $('#show_result').show();
         }
     }
     }).fail(function (response, code) {
