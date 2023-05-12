@@ -250,7 +250,6 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 
 		$qb->execute();
 		$id = $qb->getLastInsertId();
-		error_log("Created share with id $id");
 		return (int)$id;
 	}
 
