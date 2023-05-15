@@ -4,7 +4,7 @@
     <name>ScienceMesh</name>
     <summary>Connect your ownCloud-10 instance to your Reva instance and the Science Mesh</summary>
     <description>Connect your ownCloud-10 instance to your Reva instance and the Science Mesh</description>
-    <version>0.4.2</version>
+    <version>0.4.3</version>
     <licence>agpl</licence>
     <author homepage="https://sciencemesh.io" >ScienceMesh Community</author>
     <author mail="support@pondersource.com" homepage="https://pondersource.com" >Stichting Ponder Source</author>
