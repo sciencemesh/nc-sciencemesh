@@ -13,6 +13,7 @@ style('sciencemesh', 'style');
 						<div id="invitation-details"></div>
 					</div>
 					<small class="contact-title-desc">* List of your ScienceMesh contacts.</small>
+					<input type="search" id="contact-search-input" placeholder="Search...">
 					<table class=" contacts-table" id="contact-table">
 						<thead>
 							<tr>
