@@ -117,11 +117,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
                         var element = document.getElementById("show_result");
                         element.innerHTML = result;
-                        
-                        var button = document.querySelector(".deleteContact");
-                        button.addEventListener("click", function() {
-                            deleteContact($(this).data('idp'),$(this).data('username'));
-                        });
+
+			var button = $(".deleteContact");
+			button.each(function( index , ele) {
+			    ele.addEventListener("click", function() {
+				deleteContact($(this).data('idp'),$(this).data('username'));
+			    });
+			});
 
                         $('#show_result').show();
                     }else{
