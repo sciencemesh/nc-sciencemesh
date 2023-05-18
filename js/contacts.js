@@ -57,9 +57,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
             
             $('#show_result').show();
 
-            var button = document.querySelector(".deleteContact");
-            button.addEventListener("click", function() {
-                deleteContact($(this).data('idp'),$(this).data('username'));
+            var button = $(".deleteContact");
+            button.each(function( index , ele) {
+                ele.addEventListener("click", function() {
+                    deleteContact($(this).data('idp'),$(this).data('username'));
+                });
             });
         }
     }
