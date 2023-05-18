@@ -15,6 +15,6 @@ class ContactsController extends Controller {
 
     public function deleteContact() {
       error_log('contact '.$_POST['username'].' is deleted');
-      return new TextPlainResponse(true, Http::STATUS_OK);
+      return new PlainResponse(true, Http::STATUS_OK);
     }
 }
