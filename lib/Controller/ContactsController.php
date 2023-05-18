@@ -4,7 +4,7 @@ namespace OCA\ScienceMesh\Controller;
 
 use OCP\IRequest;
 use OCP\AppFramework\Http;
-use OCP\AppFramework\Http\TextPlainResponse;
+use OCA\ScienceMesh\PlainResponse;
 use OCP\AppFramework\Controller;
 use OCA\ScienceMesh\RevaHttpClient;
 use OCA\ScienceMesh\Plugins\ScienceMeshGenerateTokenPlugin;
