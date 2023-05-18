@@ -74,9 +74,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 var element = document.getElementById("invitation-details");
                 element.innerHTML = `<div class="token-generator"><i class="fa-thin fa-square-check"></i><input type="text" value="${response}" onclick="get_token()" readonly name="meshtoken" class="generated-token-link"><span class="icon-clippy svg" id="share-token-btn"></span><h4 class="message-token" style="padding:8px 0;">New Token Generated!</h4></div>`;
                 $('#test').show();
-                var button = document.querySelector("#share-token-btn");
-                button.addEventListener("click", function() {
-                    copyToClipboard();
+                
+                
+                var button = $(".deleteContact");
+                button.each(function( index , ele) {
+                    ele.addEventListener("click", function() {
+                        deleteContact($(this).data('idp'),$(this).data('username'));
+                    });
                 });
             }
         }).fail(function (response, code) {
