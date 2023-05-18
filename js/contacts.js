@@ -46,6 +46,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
                     <td>
                         <p class="username-provider">${username}@${provider}</p>
                     </td>
+                    <td>
+                        <button type="button" class="deleteContact" data-username="${username}" data-idp="${idp}">Unfriend</button>
+                    </td>
                 </tr>
                 `;
             }
@@ -53,6 +56,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
             element.innerHTML = result;
             
             $('#show_result').show();
+
+            var button = document.querySelector(".deleteContact");
+            button.addEventListener("click", function() {
+                deleteContact($(this).data('idp'),$(this).data('username'));
+            });
         }
     }
     }).fail(function (response, code) {
@@ -91,6 +99,25 @@ document.addEventListener("DOMContentLoaded", function(event) {
     }
      
     
+
+    function deleteContact(idp,username){
+        var baseUrl = OC.generateUrl('/apps/sciencemesh');
+        var data = 'idp=' + encodeURIComponent(idp) + '&username=' + encodeURIComponent(username);
+        $.ajax({
+            url: baseUrl + '/contact/deleteContact',
+            type: 'POST',
+			contentType: 'application/x-www-form-urlencoded',
+            data:data
+        }).done(function (response) {
+            if (response === '' || response === false) {
+                console.log('failed');
+            }else{
+                console.log(response);
+            }
+        }).fail(function (response, code) {
+            alert('The token is invalid')
+        });
+    }
     function secondsToDhms(seconds) {
         seconds = Number(seconds);
         var d = Math.floor(seconds / (3600 * 24));
