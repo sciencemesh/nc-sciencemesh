@@ -122,7 +122,8 @@ class AppController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function invitationsGenerate() {
-		$invitationsData = $this->httpClient->generateTokenFromReva($this->userId);
+		$recipient = $this->request->getParam('email');
+		$invitationsData = $this->httpClient->generateTokenFromReva($this->userId, $recipient);
 		$inviteLinkStr = $invitationsData["invite_link"];
 		$meshDirectoryUrl = $this->config->getAppValue('sciencemesh', 'meshDirectoryUrl', 'https://sciencemesh.cesnet.cz/iop/meshdir/');
     if (!$inviteLinkStr) {

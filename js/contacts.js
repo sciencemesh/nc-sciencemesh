@@ -61,11 +61,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
     });
     document.getElementById('token-generator').onclick = function () {
         var baseUrl = OC.generateUrl('/apps/sciencemesh');
+        var recipient = document.getElementById("recipient");
         $.ajax({
             url: baseUrl + '/invitations/generate',
             type: 'GET',
             contentType: 'application/json',
-            //data: JSON.stringify(note)
+            data: { 
+                email: recipient.value,
+            },
         }).done(function (response) {
             if (response === '' || response === false) {
                 var element = document.getElementById("invitation-details");
