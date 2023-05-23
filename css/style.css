@@ -366,3 +366,8 @@
    margin-top: 20px;
    margin-left: 10px;
 }
+
+
+#oc-dialog-0-content #oc-dialog-0-content-input{
+   width: 100% !important;
+}
