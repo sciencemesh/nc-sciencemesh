@@ -69,7 +69,7 @@
 #token-generator{
    color: white;
    cursor: pointer;
-   width: auto;
+   width: 22%;
    height: 36px;
    border-radius: 0.2em;
    border: 0;
@@ -369,4 +369,18 @@
 #share-token-btn{
    background-size: 20px !important;
    width: 30px;
+}
+
+#contact-search-input{
+   margin-top: 20px;
+   margin-left: 10px;
+}
+
+#recipient{
+   width: 25% !important;
+   border-radius: 4px !important;
+}
+
+#oc-dialog-0-content #oc-dialog-0-content-input{
+   width: 100% !important;
 }
