@@ -69,7 +69,7 @@
 #token-generator{
    color: white;
    cursor: pointer;
-   width: 22%;
+   width: auto;
    height: 36px;
    border-radius: 0.2em;
    border: 0;
@@ -378,9 +378,16 @@
 
 #recipient{
    width: 25% !important;
-   border-radius: 4px !important;
+   border-radius: 3px !important;
+   height: 36px;
 }
 
 #oc-dialog-0-content #oc-dialog-0-content-input{
-   width: 100% !important;
+   width: 95% !important;
+}
+
+#share-token-btn-email{
+   width: 30px;
+   background-size: 24px;
+   opacity: 0.5;
 }

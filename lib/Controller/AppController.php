@@ -148,7 +148,7 @@ class AppController extends Controller {
 		$message = 'You can open this URL to accept the invitation<br>'.$token;
 
 		$mailer = $this->sendNotification($recipientEmail, $subject, $message);
-		return new TextPlainResponse($mailer, Http::STATUS_OK);
+		return new PlainResponse($mailer, Http::STATUS_OK);
 	}
 
 	/**
@@ -186,21 +186,23 @@ class AppController extends Controller {
         try {
             // Create a new email message
             $mail = $this->mailer->createMessage();
+
             $mail->setTo([$recipient]);
             $mail->setSubject($subject);
             $mail->setPlainBody($message);
 
             // Set the "from" email address
-            $fromEmail = $this->config->getSystemValue('fromemail', 'no-reply@cs3mesh4eosc.eu');
+            $fromEmail = $this->config->getSystemValue('fromemail', 'no-reply@cs3mesh4eosc.eu');	
             $mail->setFrom([$fromEmail]);
 
             // Send the email
             $this->mailer->send($mail);
 
-            return true;
+			return true;
         } catch (IMailerException $e) {
-            // Handle the exception or log the error
-            return false;
+			error_log(json_encode($e));
+
+			return false;
         }
     }
 }
