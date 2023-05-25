@@ -154,20 +154,25 @@ class AppController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
+
 	public function contactsFindUsers($searchToken = "") {
 		$find_users_json = $this->httpClient->findAcceptedUsers($this->userId);
 
 		$find_users = json_decode($find_users_json, false);
-		
+		$return_users = array();
 		if(strlen($searchToken) > 0){
-			for($i = count($find_users->accepted_users); $i >= 0 ; $i--){
-				if(!str_contains($find_users->accepted_users[$i]->display_name, $searchToken)){
-					array_splice($find_users->accepted_users, $i, 1);
+			if(!empty($find_users)){
+				for($i = count($find_users); $i >= 0 ; $i--){
+					if(str_contains($find_users[$i]->display_name, $searchToken) and !is_null($find_users[$i])){
+						$return_users[] = $find_users[$i];
+					}
 				}
 			}
+		}else{
+			$return_users = json_decode($find_users_json, false);
 		}
-		
-		return new TextPlainResponse(json_encode($find_users), Http::STATUS_OK);
+
+		return new TextPlainResponse(json_encode($return_users), Http::STATUS_OK);
 	}
 
 
