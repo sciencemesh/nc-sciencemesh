@@ -139,29 +139,45 @@ document.addEventListener("DOMContentLoaded", function(event) {
                                     </tr>`;
                 $('#show_result').show(); 
             } else {
-                let acceptedUsers = JSON.parse(response);
-                let result = '';
-                for(i in acceptedUsers) {
-                    var displayName = acceptedUsers[i].display_name;
-                    var username = acceptedUsers[i].id.opaque_id;
-                    var idp = acceptedUsers[i].id.idp;
-                    var provider =  (idp.startsWith("http") ? new URL(idp).host : idp);
-                    result += `
+                let token = JSON.parse(response);
+                
+                if(token.length) {
+                    for(tokenData in token) {
+                            let acceptedUsers = JSON.parse(response);
+                            let result = '';
+                            for(i in acceptedUsers) {
+                                var displayName = acceptedUsers[i].display_name;
+                                var username = acceptedUsers[i].id.opaque_id;
+                                var idp = acceptedUsers[i].id.idp;
+                                var provider =  (idp.startsWith("http") ? new URL(idp).host : idp);
+                                result += `
+                                        <tr>
+                                            <td style="border-radius:100%">
+                                                <p class="icon-contacts-dark contacts-profile-img"></p>
+                                            </td>
+                                            <td class="app-content-list-item-line-one contact-item">
+                                                <p class="displayname">${displayName}</p>
+                                            </td>  
+                                            <td>
+                                                <p class="username-provider">${username}@${provider}</p>
+                                            </td>
+                                        </tr>
+                                `;
+                            }
+                            var element = document.getElementById("show_result");
+                            element.innerHTML = result;
+                    }
+                }else{
+                    const result = `
                             <tr>
-                                <td style="border-radius:100%">
-                                    <p class="icon-contacts-dark contacts-profile-img"></p>
-                                </td>
-                                <td class="app-content-list-item-line-one contact-item">
-                                    <p class="displayname">${displayName}</p>
-                                </td>  
                                 <td>
-                                    <p class="username-provider">${username}@${provider}</p>
+                                    <p class="username-provider">There are no contacts!</p>
                                 </td>
-                            </tr>
-                    `;
+                            </tr>`;                  
+                    var element = document.getElementById("show_result");
+                    element.innerHTML = result;
+
                 }
-                var element = document.getElementById("show_result");
-                element.innerHTML = result;
 
                 $('#show_result').show();
         }
