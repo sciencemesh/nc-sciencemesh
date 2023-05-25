@@ -117,13 +117,16 @@ class AppController extends Controller {
 	 */
 	public function invitationsGenerate() {
 		$invitationsData = $this->httpClient->generateTokenFromReva($this->userId);
-		$tokenStr = $invitationsData["invite_token"]["token"];
-		$iopUrl = $invitationsData["invite_token"]["user_id"]["idp"];
-		$iopDomain =  parse_url($iopUrl)["host"];
-		// $meshDirectoryUrl = "https://sciencemesh.cesnet.cz/iop/meshdir/";
+		$inviteLinkStr = $invitationsData["invite_link"];
 		$meshDirectoryUrl = $this->config->getAppValue('sciencemesh', 'meshDirectoryUrl', 'https://sciencemesh.cesnet.cz/iop/meshdir/');
+    if (!$inviteLinkStr) {
+			return new TextPlainResponse("Unexpected response from Reva", Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+    if (!$meshDirectoryUrl) {
+			return new TextPlainResponse("Unexpected mesh directory URL configuration", Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
-		return new TextPlainResponse("$meshDirectoryUrl?token=$tokenStr&providerDomain=$iopDomain", Http::STATUS_OK);
+		return new TextPlainResponse("$meshDirectoryUrl$inviteLinkStr", Http::STATUS_OK);
 	}
 
 	/**
@@ -143,28 +146,33 @@ class AppController extends Controller {
 	public function contactsAccept() {
 		$providerDomain = $this->request->getParam('providerDomain');
 		$token = $this->request->getParam('token');
-		$contacts = $this->httpClient->getAcceptTokenFromReva($providerDomain, $token, $this->userId);
-		return new TextPlainResponse($contacts, Http::STATUS_OK);
+		$result = $this->httpClient->acceptInvite($providerDomain, $token, $this->userId);
+		return new TextPlainResponse($result, Http::STATUS_OK);
 	}
 
 	/**
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
+
 	public function contactsFindUsers($searchToken = "") {
 		$find_users_json = $this->httpClient->findAcceptedUsers($this->userId);
 
 		$find_users = json_decode($find_users_json, false);
-		
+		$return_users = array();
 		if(strlen($searchToken) > 0){
-			for($i = count($find_users->accepted_users); $i >= 0 ; $i--){
-				if(!str_contains($find_users->accepted_users[$i]->display_name, $searchToken)){
-					array_splice($find_users->accepted_users, $i, 1);
+			if(!empty($find_users)){
+				for($i = count($find_users); $i >= 0 ; $i--){
+					if(str_contains($find_users[$i]->display_name, $searchToken) and !is_null($find_users[$i])){
+						$return_users[] = $find_users[$i];
+					}
 				}
 			}
+		}else{
+			$return_users = json_decode($find_users_json, false);
 		}
-		
-		return new TextPlainResponse(json_encode($find_users), Http::STATUS_OK);
+
+		return new TextPlainResponse(json_encode($return_users), Http::STATUS_OK);
 	}
 
 

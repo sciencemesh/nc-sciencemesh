@@ -128,7 +128,6 @@ class OcmController extends Controller {
 		$this->shareProvider = $shareProvider;
 	}
 	private function init($userId) {
-		error_log("OcmController init");
 		$this->userId = $userId;
 		$this->checkRevadAuth();
 		if ($userId) {
@@ -138,8 +137,6 @@ class OcmController extends Controller {
 
 	private function revaPathToNextcloudPath($revaPath) {
 		$ret = NEXTCLOUD_PREFIX . substr($revaPath, strlen(REVA_PREFIX));
-		error_log("Interpreting $revaPath as $ret");
-    // return $this->userFolder->getPath() . NEXTCLOUD_PREFIX . substr($revaPath, strlen(REVA_PREFIX));
     return $ret;
 	}
 
@@ -184,7 +181,6 @@ class OcmController extends Controller {
 		return $date;
 	}
 	private function checkRevadAuth() {
-		error_log("checkRevadAuth");
 		$authHeader = $this->request->getHeader('X-Reva-Secret');
     if ($authHeader != $this->config->getRevaSharedSecret()) {
 		  throw new \OCP\Files\NotPermittedException('Please set an http request header "X-Reva-Secret: <your_shared_secret>"!');
@@ -413,7 +409,6 @@ class OcmController extends Controller {
 	 * Create a new share in fn with the given access control list.
 	 */
 	public function addSentShare($userId) {
-		error_log("addSentShare");
 		$this->init($userId);
 		$params = $this->request->getParams();
 		$owner = $params["owner"]["opaqueId"]; // . "@" . $params["owner"]["idp"];
@@ -422,22 +417,36 @@ class OcmController extends Controller {
 		$revaPath = $this->getRevaPathFromOpaqueId($resourceOpaqueId); // "/other/q/f gr"
 		$nextcloudPath = $this->revaPathToNextcloudPath($revaPath);
 
-		$revaPermissions = $params["permissions"]["permissions"]; // {"getPath":true, "initiateFileDownload":true, "listContainer":true, "listFileVersions":true, "stat":true}
+		$revaPermissions = null;
+
+		foreach($params['accessMethods'] as $accessMethod) {
+			if (isset($accessMethod['webdavOptions'])) {
+				$revaPermissions = $accessMethod['webdavOptions']['permissions'];
+				break;
+			}
+		}
+
+		if (!isset($revaPermissions)) {
+			throw new \Exception('reva permissions not found');
+		}
+
 		$granteeType = $params["grantee"]["type"]; // "GRANTEE_TYPE_USER"
 		$granteeHost = $params["grantee"]["userId"]["idp"]; // "revanc2.docker"
 		$granteeUser = $params["grantee"]["userId"]["opaqueId"]; // "marie"
 
+		if ($revaPermissions === null) {
+			$revaPermissions = [
+				"initiate_file_download" => true
+			];
+		}
 		$nextcloudPermissions = $this->getPermissionsCode($revaPermissions);
 		$shareWith = $granteeUser."@".$granteeHost;
-		$sharedSecretBase64 = $params["grantee"]["opaque"]["map"]["sharedSecret"]["value"];
-		$sharedSecret = base64_decode($sharedSecretBase64);
-		error_log("base64 decoded $sharedSecretBase64 to $sharedSecret");
+		$sharedSecret = $params["token"];
 		try {
 			$node = $this->userFolder->get($nextcloudPath);
 		} catch (NotFoundException $e) {
 			return new JSONResponse(["error" => "Share failed. Resource Path not found"], Http::STATUS_BAD_REQUEST);
 		}
-		error_log("calling newShare");
 		$share = $this->shareManager->newShare();
 		$share->setNode($node);
 		try {
@@ -451,10 +460,7 @@ class OcmController extends Controller {
 		$share->setShareOwner($owner);
 		$share->setPermissions($nextcloudPermissions);
 		$share->setToken($sharedSecret);
-		error_log("calling createInternal");
 		$share = $this->shareProvider->createInternal($share);
-		// $response = $this->shareInfoToCs3Share($share);
-		// error_log("response:" . json_encode($response));
 		return new DataResponse($share->getId(), Http::STATUS_CREATED);
 	}
 
@@ -466,15 +472,27 @@ class OcmController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function addReceivedShare($userId) {
-		error_log("addReceivedShare");
 		$params = $this->request->getParams();
+		foreach($params['protocols'] as $protocol) {
+			if (isset($protocol['webdavOptions'])) {
+				$sharedSecret = $protocol['webdavOptions']['sharedSecret'];
+				// make sure you have webdav_endpoint = "https://nc1.docker/" under [grpc.services.ocmshareprovider] in the sending Reva's config
+				$uri = $protocol['webdavOptions']['uri']; // e.g. https://nc1.docker/remote.php/dav/ocm/vaKE36Wf1lJWCvpDcRQUScraVP5quhzA
+				$remote = implode('/', array_slice(explode('/', $uri), 0, 3)); // e.g. https://nc1.docker
+				break;
+			}
+		}
+		if (!isset($sharedSecret)) {
+			throw new \Exception('sharedSecret not found');
+		}
+
 		$shareData = [
-			"remote" => $params["share"]["owner"]["idp"], // FIXME: 'nc1.docker' -> 'https://nc1.docker/'
-			"remote_id" =>  base64_decode($params["share"]["grantee"]["opaque"]["map"]["remoteShareId"]["value"]), // FIXME: $this->shareProvider->createInternal($share) suppresses, so not getting an id there, see https://github.com/pondersource/sciencemesh-nextcloud/issues/57#issuecomment-1002143104
-			"share_token" => base64_decode($params["share"]["grantee"]["opaque"]["map"]["sharedSecret"]["value"]), // 'tDPRTrLI4hE3C5T'
+			"remote" => $remote,
+			"remote_id" =>  $params["resourceId"]["opaqueId"], // FIXME: $this->shareProvider->createInternal($share) suppresses, so not getting an id there, see https://github.com/pondersource/sciencemesh-nextcloud/issues/57#issuecomment-1002143104
+			"share_token" => $sharedSecret, // 'tDPRTrLI4hE3C5T'
 			"password" => "",
-			"name" => rtrim($params["share"]["name"], "/"), // '/grfe'
-			"owner" => $params["share"]["owner"]["opaqueId"], // 'einstein'
+			"name" => rtrim($params["name"], "/"), // '/grfe'
+			"owner" => $params["owner"]["opaqueId"], // 'einstein'
 			"user" => $userId // 'marie'
 		];
 		$this->init($userId);
@@ -496,7 +514,6 @@ class OcmController extends Controller {
 	 * Remove Share from share table
 	 */
 	public function Unshare($userId) {
-		error_log("Unshare");
 		$this->init($userId);
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
@@ -518,7 +535,6 @@ class OcmController extends Controller {
 	 *
 	 */
 	public function UpdateSentShare($userId) {
-		error_log("UpdateSentShare");
 		$this->init($userId);
 		$opaqueId = $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
 		$permissions = $this->request->getParam("p")["permissions"];
@@ -540,7 +556,6 @@ class OcmController extends Controller {
 	 * UpdateReceivedShare updates the received share with share state.
 	 */
 	public function UpdateReceivedShare($userId) {
-		error_log("UpdateReceivedShare");
 		$this->init($userId);
 		$response = [];
 		$resourceId = $this->request->getParam("received_share")["share"]["resource_id"];
@@ -566,7 +581,6 @@ class OcmController extends Controller {
 	 * it returns only shares attached to the given resource.
 	 */
 	public function ListSentShares($userId) {
-		error_log("ListSentShares");
 		$this->init($userId);
 		$responses = [];
 		$shares = $this->shareProvider->getSentShares($userId);
@@ -584,7 +598,6 @@ class OcmController extends Controller {
 	 * ListReceivedShares returns the list of shares the user has access.
 	 */
 	public function ListReceivedShares($userId) {
-		error_log("ListReceivedShares");
 		$this->init($userId);
 		$responses = [];
 		$shares = $this->shareProvider->getReceivedShares($userId);
@@ -607,7 +620,6 @@ class OcmController extends Controller {
 	 * GetReceivedShare returns the information for a received share the user has access.
 	 */
 	public function GetReceivedShare($userId) {
-		error_log("GetReceivedShare");
 		$this->init($userId);
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
@@ -629,7 +641,6 @@ class OcmController extends Controller {
 	 * GetSentShare gets the information for a share by the given ref.
 	 */
 	public function GetSentShare($userId) {
-		error_log("GetSentShare");
 		$this->init($userId);
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);

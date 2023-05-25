@@ -34,7 +34,6 @@ use OCP\IConfig;
 class RevaHttpClient {
 	private $client;
 	private $revaUrl;
-	private $revaUser;
 	private $revaLoopbackSecret;
 		
 	/**
@@ -58,26 +57,16 @@ class RevaHttpClient {
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		if ($this->revaUser && $this->revaLoopbackSecret) {
+		if ($this->revaLoopbackSecret) {
 			curl_setopt($ch, CURLOPT_USERPWD, $user.":".$this->revaLoopbackSecret);
 			curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		}
 
-		
-		if ($this->curlDebug) {
-			curl_setopt($ch, CURLOPT_VERBOSE, true);
-			$streamVerboseHandle = fopen('php://temp', 'w+');
-			curl_setopt($ch, CURLOPT_STDERR, $streamVerboseHandle);
-		}
-		
 		$output = curl_exec($ch);
+		$info = curl_getinfo($ch);
+		error_log('curl output:' . var_export($output, true) . ' info: ' . var_export($info, true));
+		curl_close($ch);
 
-		if ($this->curlDebug) {
-			rewind($streamVerboseHandle);
-			$verboseLog = stream_get_contents($streamVerboseHandle);
-			$output = $verboseLog . $output;
-		}
-		
 		return $output;
 	}
 	private function curlPost($url, $user, $params = []) {
@@ -101,18 +90,19 @@ class RevaHttpClient {
 		return $output;
 	}
 
-	private function revaGet($method, $user, $params = []) {
-		$url = $this->revaUrl . $method;
+	private function revaGet($route, $user, $params = []) {
+		$url = $this->revaUrl . $route;
 		return $this->curlGet($url, $user, $params);
 	}
 		
-	private function revaPost($method, $user, $params = []) {
-		$url = $this->revaUrl . $method;
+	private function revaPost($route, $user, $params = []) {
+		$url = $this->revaUrl . $route;
 		return $this->curlPost($url, $user, $params);
 	}
 
 	public function createShare($user, $params) {
 		error_log("RevaHttpClient createShare");
+		// see https://github.com/cs3org/reva/pull/3695/files#diff-6df5ade636cf2b09c52181e29ca2257dc3426f7ea7e0a5dcbaad527c0b648ff5R55-R60
 		if (!isset($params['sourcePath'])) {
 			throw new \Exception("Missing sourcePath", 400);
 		}
@@ -122,39 +112,47 @@ class RevaHttpClient {
 		if (!isset($params['type'])) {
 			throw new \Exception("Missing type", 400);
 		}
+		if (!isset($params['role'])) {
+			$params['role'] = 'viewer';
+		}
 		if (!isset($params['recipientUsername'])) {
 			throw new \Exception("Missing recipientUsername", 400);
 		}
 		if (!isset($params['recipientHost'])) {
 			throw new \Exception("Missing recipientHost", 400);
 		}
-		$params["loginType"] = "basic";
-		$params["loginUsername"] = $user;
-		$params["loginPassword"] = $this->revaLoopbackSecret;
-		error_log("Calling reva/ocm/send " . json_encode($params));
-		$responseText = $this->revaPost('ocm/send', $user, $params);
+		// $params["loginType"] = "basic";
+		// $params["loginUsername"] = $user;
+		// $params["loginPassword"] = "ha"; //$this->revaLoopbackSecret;
+		error_log("Calling reva/sciencemesh/create-share " . json_encode($params));
+		$responseText = $this->revaPost('sciencemesh/create-share', $user, $params);
 		return json_decode($responseText);
 	}
 
 	public function ocmProvider() {
-		return $this->revaGet('ocm/ocm-provider',$this->revaUser);
+		return $this->revaGet('ocm/ocm-provider');
 	}
 
 	public function findAcceptedUsers($userId) {
-		$users = $this->revaPost('ocm/invites/find-accepted-users', $userId);
+		$users = $this->revaGet('sciencemesh/find-accepted-users', $userId);
+		error_log("users " . var_export($users, true));
+		if ($users === "null\n") {
+			error_log("users corrected!");
+			$users = "[]";
+		}
 		return $users;
 	}
 
-	public function getAcceptTokenFromReva($providerDomain, $token, $userId) {
-		$tokenFromReva = $this->revaPost('ocm/invites/forward', $userId, [
+	public function acceptInvite($providerDomain, $token, $userId) {
+		$empty = $this->revaPost('sciencemesh/accept-invite', $userId, [
 			'providerDomain' => $providerDomain,
 			'token' => $token
 		]);
-		return $tokenFromReva;
+		return "Accepted invite";
 	}
 
 	public function generateTokenFromReva($userId) {
-		$tokenFromReva = $this->revaPost('ocm/invites/generate', $userId);
+		$tokenFromReva = $this->revaGet('sciencemesh/generate-invite', $userId);
 		error_log('Got token from reva!' . $tokenFromReva);
 		return json_decode($tokenFromReva, true);
 	}
