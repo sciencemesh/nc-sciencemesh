@@ -129,7 +129,7 @@ class RevaHttpClient {
 		return json_decode($responseText);
 	}
 
-	public function ocmProvider($userId) {
+	public function ocmProvider($userId) { 
 		return $this->revaGet('ocm-provider', $userId);
 	}
 
