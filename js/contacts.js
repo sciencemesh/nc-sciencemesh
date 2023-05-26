@@ -87,7 +87,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     const searchInput = document.getElementById('contact-search-input');
     const inputHandler = function(e) {
         const value = e.target.value;
-            loadData(value);
+        loadData(value);
       }
       
       function debounce(callback, wait) {
