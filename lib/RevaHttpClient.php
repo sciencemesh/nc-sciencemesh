@@ -129,8 +129,8 @@ class RevaHttpClient {
 		return json_decode($responseText);
 	}
 
-	public function ocmProvider() {
-		return $this->revaGet('ocm/ocm-provider');
+	public function ocmProvider($userId) {
+		return $this->revaGet('ocm-provider', $userId);
 	}
 
 	public function findAcceptedUsers($userId) {
