@@ -76,7 +76,6 @@ class RevaHttpClient {
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-		// curl_setopt($ch, CURLOPT_HEADER, true);
 		curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params, JSON_PRETTY_PRINT));
 		if ($this->revaLoopbackSecret) {
@@ -85,7 +84,6 @@ class RevaHttpClient {
 		}
 		$output = curl_exec($ch);
 		$info = curl_getinfo($ch);
-		// error_log('curl output:' . var_export($output, true) . ' info: ' . var_export($info, true));
 		curl_close($ch);
 		return $output;
 	}
@@ -121,9 +119,6 @@ class RevaHttpClient {
 		if (!isset($params['recipientHost'])) {
 			throw new \Exception("Missing recipientHost", 400);
 		}
-		// $params["loginType"] = "basic";
-		// $params["loginUsername"] = $user;
-		// $params["loginPassword"] = "ha"; //$this->revaLoopbackSecret;
 		error_log("Calling reva/sciencemesh/create-share " . json_encode($params));
 		$responseText = $this->revaPost('sciencemesh/create-share', $user, $params);
 		return json_decode($responseText);
