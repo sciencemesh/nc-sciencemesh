@@ -79,7 +79,10 @@ $routes_array = [
 		['name' => 'app#invitationsGenerate', 'url' => '/invitations/generate', 'verb' => 'GET'],
 		['name' => 'app#contactsAccept', 'url' => '/contacts/accept', 'verb' => 'POST'],
 		['name' => 'app#contactsFindUsers', 'url' => '/contacts/users', 'verb' => 'GET'],
-
+		
+		// contacts routes
+		['name' => 'contacts#deleteContact', 'url' => '/contact/deleteContact', 'verb' => 'POST'],
+		
 		// page routes
 		['name' => 'page#get_internal_metrics', 'url' => '/internal_metrics', 'verb' => 'GET'],
 		['name' => 'page#get_metrics', 'url' => '/metrics', 'verb' => 'GET'],

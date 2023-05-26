@@ -269,6 +269,11 @@
    width: 45% !important;
    border-bottom: 1px solid var(--color-placeholder-light);
 }
+.contacts-table tbody tr td:nth-child(4){
+   width: 5% !important;
+   border-bottom: 1px solid var(--color-placeholder-light);
+   text-align: center;
+}
 .contacts-profile-img{
    height: 35px;
    margin: 2.5px 0px;

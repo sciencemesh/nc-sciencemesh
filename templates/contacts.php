@@ -19,6 +19,7 @@ style('sciencemesh', 'style');
 							<tr>
 								<td colspan="2">Name</td>
 								<td>Open Cloud Mesh Address</td>
+								<td></td>
 							</tr>
 						</thead>
 						<tbody id="show_result">

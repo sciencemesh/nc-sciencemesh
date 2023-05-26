@@ -139,35 +139,80 @@ document.addEventListener("DOMContentLoaded", function(event) {
                                     </tr>`;
                 $('#show_result').show(); 
             } else {
-                let acceptedUsers = JSON.parse(response);
-                let result = '';
-                for(i in acceptedUsers) {
-                    var displayName = acceptedUsers[i].display_name;
-                    var username = acceptedUsers[i].id.opaque_id;
-                    var idp = acceptedUsers[i].id.idp;
-                    var provider =  (idp.startsWith("http") ? new URL(idp).host : idp);
-                    result += `
-                            <tr>
-                                <td style="border-radius:100%">
-                                    <p class="icon-contacts-dark contacts-profile-img"></p>
-                                </td>
-                                <td class="app-content-list-item-line-one contact-item">
-                                    <p class="displayname">${displayName}</p>
-                                </td>  
-                                <td>
-                                    <p class="username-provider">${username}@${provider}</p>
-                                </td>
-                            </tr>
-                    `;
-                }
-                var element = document.getElementById("show_result");
-                element.innerHTML = result;
+            let token = JSON.parse(response);
+        
+            for(tokenData in token) {
+                if(token.hasOwnProperty(tokenData)) {
+                    console.log(tokenData);
+                    if(tokenData === 'accepted_users') {
+                        let acceptedUsers = JSON.parse(response);
+                        let result = '';
+                        for(i in acceptedUsers) {
+                            var displayName = acceptedUsers[i].display_name;
+                            var username = acceptedUsers[i].id.opaque_id;
+                            var idp = acceptedUsers[i].id.idp;
+                            var provider =  (idp.startsWith("http") ? new URL(idp).host : idp);
+                            result += `
+                                    <tr>
+                                        <td style="border-radius:100%">
+                                            <p class="icon-contacts-dark contacts-profile-img"></p>
+                                        </td>
+                                        <td class="app-content-list-item-line-one contact-item">
+                                            <p class="displayname">${displayName}</p>
+                                        </td>  
+                                        <td>
+                                            <p class="username-provider">${username}@${provider}</p>
+                                        </td>
+                                    </tr>
+                            `;
+                        }
+                        var element = document.getElementById("show_result");
+                        element.innerHTML = result;
 
-                $('#show_result').show();
+                        var button = $(".deleteContact");
+                        button.each(function( index , ele) {
+                            ele.addEventListener("click", function() {
+                            deleteContact($(this).data('idp'),$(this).data('username'));
+                            });
+                        });
+
+                        $('#show_result').show();
+                    }else{
+                        const result = `
+                                <tr>
+                                    <td>
+                                        <p class="username-provider">There are no contacts!</p>
+                                    </td>
+                                </tr>`;                  
+                        var element = document.getElementById("show_result");
+                        element.innerHTML = result;
+                        $('#show_result').show();
+        
+                    }
+                } 
+            }
         }
         }).fail(function (response, code) {
             console.log(response)
             //alert('The token is invalid')
+        });
+    }
+    function deleteContact(idp,username){
+        var baseUrl = OC.generateUrl('/apps/sciencemesh');
+        var data = 'idp=' + encodeURIComponent(idp) + '&username=' + encodeURIComponent(username);
+        $.ajax({
+            url: baseUrl + '/contact/deleteContact',
+            type: 'POST',
+			contentType: 'application/x-www-form-urlencoded',
+            data:data
+        }).done(function (response) {
+            if (response === '' || response === false) {
+                console.log('failed');
+            }else{
+                console.log(response);
+            }
+        }).fail(function (response, code) {
+            alert('The token is invalid')
         });
     }
 });
