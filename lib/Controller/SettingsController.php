@@ -264,7 +264,6 @@ class SettingsController extends Controller
 	public function checkConnectionSettings()
 	{
 		$revaHttpClient = new RevaHttpClient($this->sciencemeshConfig, false);
-		error_log('checkConnectionSettings:'.json_encode($revaHttpClient->ocmProvider($this->userId)));
 		$response_sciencemesh_iop_url = $revaHttpClient->ocmProvider($this->userId);
 		return new DataResponse($response_sciencemesh_iop_url);
 	}
