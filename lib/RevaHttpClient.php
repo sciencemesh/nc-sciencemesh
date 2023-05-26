@@ -85,7 +85,7 @@ class RevaHttpClient {
 		}
 		$output = curl_exec($ch);
 		$info = curl_getinfo($ch);
-		error_log('curl output:' . var_export($output, true) . ' info: ' . var_export($info, true));
+		// error_log('curl output:' . var_export($output, true) . ' info: ' . var_export($info, true));
 		curl_close($ch);
 		return $output;
 	}
