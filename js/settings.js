@@ -87,44 +87,48 @@
                     }
                 }
             });
+
         });
 
-        $('#check_connection_sciencemesh_iop_url').on('click',function(){
-            var sciencemesh_iop_url = $("#sciencemesh_iop_url").val().trim();
+    $('#check_connection_sciencemesh_iop_url').on('click',function(){
+        var sciencemesh_iop_url = $("#sciencemesh_iop_url").val().trim();
 
-            $(".section-sciencemesh").addClass("icon-loading");
-            var baseUrl = OC.generateUrl('/apps/sciencemesh');
+        $(".section-sciencemesh").addClass("icon-loading");
+        var baseUrl = OC.generateUrl('/apps/sciencemesh');
 
-            $.ajax({
-                method: "GET",
-                url: baseUrl + "/ajax/check_connection_settings",
-                contentType: 'application/json',
-                data: {
-                    sciencemesh_iop_url: sciencemesh_iop_url
-                },
-                success: function onSuccess(response) {
-                    $(".section-sciencemesh").removeClass("icon-loading");
-                    if(response){
-                        if (response.enabled) {
-                            var message = t(OCA.ScienceMesh.AppName, "Connection is available");
-                        }else{
-                            var message = t(OCA.ScienceMesh.AppName, "Connection is not available");
-                        }
-
-                        OC.Notification.show(message, {
-                            type: "error",
-                            timeout: 10
-                        });
-
+        $.ajax({
+            method: "GET",
+            url: baseUrl + "/ajax/check_connection_settings",
+            contentType: 'application/json',
+            data: {
+                sciencemesh_iop_url: sciencemesh_iop_url
+            },
+            success: function onSuccess(res) {
+                $(".section-sciencemesh").removeClass("icon-loading");
+                if(res){
+                    let result = JSON.parse(res)
+                    if (result.enabled) {
+                        var message = t(OCA.ScienceMesh.AppName, "Connection is available");
                     }else{
                         var message = t(OCA.ScienceMesh.AppName, "Connection is not available");
-                        OC.Notification.show(message, {
-                            type: "error",
-                            timeout: 10
-                        });
                     }
+
+                    OC.Notification.show(message, {
+                        type: "error",
+                        timeout: 10
+                    });
+
+                }else{
+                    var message = t(OCA.ScienceMesh.AppName, "Connection is not available");
+                    OC.Notification.show(message, {
+                        type: "error",
+                        timeout: 10
+                    });
                 }
-            });
+
+            }
         });
     });
+});
+
 })(jQuery, OC);
