@@ -106,7 +106,8 @@
             success: function onSuccess(res) {
                 $(".section-sciencemesh").removeClass("icon-loading");
                 if(res){
-                    if (res.enabled) {
+                    let result = JSON.parse(res)
+                    if (result.enabled) {
                         var message = t(OCA.ScienceMesh.AppName, "Connection is available");
                     }else{
                         var message = t(OCA.ScienceMesh.AppName, "Connection is not available");
