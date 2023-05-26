@@ -77,6 +77,7 @@ $routes_array = [
 		['name' => 'app#contacts', 'url' => '/contacts', 'verb' => 'GET'],
 		['name' => 'app#settings', 'url' => '/settings', 'verb' => 'GET'],
 		['name' => 'app#invitationsGenerate', 'url' => '/invitations/generate', 'verb' => 'GET'],
+		['name' => 'app#invitationsSends', 'url' => '/invitations/emailsend', 'verb' => 'POST'],
 		['name' => 'app#contactsAccept', 'url' => '/contacts/accept', 'verb' => 'POST'],
 		['name' => 'app#contactsFindUsers', 'url' => '/contacts/users', 'verb' => 'GET'],
 		

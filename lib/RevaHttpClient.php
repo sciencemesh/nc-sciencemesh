@@ -147,8 +147,8 @@ class RevaHttpClient {
 		return "Accepted invite";
 	}
 
-	public function generateTokenFromReva($userId) {
-		$tokenFromReva = $this->revaGet('sciencemesh/generate-invite', $userId);
+	public function generateTokenFromReva($userId, $recipient) {
+		$tokenFromReva = $this->revaGet('sciencemesh/generate-invite', $userId, array('recipient' => $recipient));
 		error_log('Got token from reva!' . $tokenFromReva);
 		return json_decode($tokenFromReva, true);
 	}

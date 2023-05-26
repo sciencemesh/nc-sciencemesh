@@ -61,23 +61,71 @@ document.addEventListener("DOMContentLoaded", function(event) {
     });
     document.getElementById('token-generator').onclick = function () {
         var baseUrl = OC.generateUrl('/apps/sciencemesh');
+        var recipient = document.getElementById("recipient");
         $.ajax({
             url: baseUrl + '/invitations/generate',
             type: 'GET',
             contentType: 'application/json',
-            //data: JSON.stringify(note)
+            data: { 
+                email: recipient.value,
+            },
         }).done(function (response) {
             if (response === '' || response === false) {
                 var element = document.getElementById("invitation-details");
                 element.innerHTML = 'No Sciencemesh Connection';
             } else {
                 var element = document.getElementById("invitation-details");
-                element.innerHTML = `<div class="token-generator"><i class="fa-thin fa-square-check"></i><input type="text" value="${response}" onclick="get_token()" readonly name="meshtoken" class="generated-token-link"><span class="icon-clippy svg" id="share-token-btn"></span><h4 class="message-token" style="padding:8px 0;">New Token Generated!</h4></div>`;
+                element.innerHTML = `<div class="token-generator"><i class="fa-thin fa-square-check"></i><input type="text" value="${response}" onclick="get_token()" readonly name="meshtoken" class="generated-token-link"><span class="icon-clippy svg" id="share-token-btn"></span><span class="icon-mail svg" id="share-token-btn-email"></span><h4 class="message-token" style="padding:8px 0;">New Token Generated!</h4></div>`;
                 $('#test').show();
                 var button = document.querySelector("#share-token-btn");
                 button.addEventListener("click", function() {
                     copyToClipboard();
                 });
+                
+                var buttonEmail = document.querySelector("#share-token-btn-email");
+                buttonEmail.addEventListener("click", function() {
+                    OC.dialogs.prompt(
+                        '',
+                        'Share Token',
+                        function (result,input) {
+                            var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                            if (input !== null) {
+                                if(emailPattern.test(input)){
+                                    $.ajax({
+                                        url: 'invitations/emailsend',
+                                        method: 'POST',
+                                        data: { 
+                                            email: input,
+                                            token: document.querySelector("input[name='meshtoken']").value
+                                        },
+                                        success: function (response) {
+                                            if(response){
+                                                alert('Email sent successfully!');
+                                            }else{
+                                                alert('Email sent failed! Please check the configuration.');
+                                            }
+                                        },
+                                        error: function (xhr, status, error) {
+                                            alert('Email sent failed! Please check the configuration.');
+                                        }
+                                      });
+                                }else{
+                                    alert('Please input Email correctly!')
+                                }
+                            // var email = result.trim();
+                            
+                            }else{
+                                alert('Please input Email address!')
+                            }
+                        },
+                        '',
+                        'Please input the recipient email',
+                        '',
+                        ''
+                      );
+                      
+                });
+
             }
         }).fail(function (response, code) {
             alert('The token is invalid')

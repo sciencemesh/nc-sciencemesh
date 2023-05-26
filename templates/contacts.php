@@ -8,8 +8,10 @@ style('sciencemesh', 'style');
 				<div class="app-content-list">
 					<div id="contact-toolbar" class="files-controls">
 						<button id="token-generator" class=" app-content-list-item-icon">
-							<span class="icon-public button-icon"></span>Invite ScienceMesh user
+							<span class="icon-public button-icon"></span>
+							<span>Invite ScienceMesh user</span>
 						</button>
+						<input type="email" name="recipient" id="recipient" placeholder="Please input the recipient email...">
 						<div id="invitation-details"></div>
 					</div>
 					<small class="contact-title-desc">* List of your ScienceMesh contacts.</small>
