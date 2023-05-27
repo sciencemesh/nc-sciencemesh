@@ -46,12 +46,22 @@ document.addEventListener("DOMContentLoaded", function(event) {
                                 <td>
                                     <p class="username-provider">${username}@${provider}</p>
                                 </td>
+                                <td>
+                                    <button type="button" class="deleteContact" data-username="${username}" data-idp="${idp}">Unfriend</button>
+                                </td>
                             </tr>
                     `;
                 }
                 var element = document.getElementById("show_result");
                 element.innerHTML = result;
                 
+                var button = $(".deleteContact");
+                button.each(function( index , ele) {
+                    ele.addEventListener("click", function() {
+                        deleteContact($(this).data('idp'),$(this).data('username'));
+                    });
+                });
+
                 $('#show_result').show();
             }
         }
@@ -210,6 +220,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
                                         </td>  
                                         <td>
                                             <p class="username-provider">${username}@${provider}</p>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="deleteContact" data-username="${username}" data-idp="${idp}">Unfriend</button>
                                         </td>
                                     </tr>
                             `;
