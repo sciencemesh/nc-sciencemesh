@@ -40,8 +40,9 @@
                         var versionMessage = response.version ? (" (" + t(OCA.ScienceMesh.AppName, "version") + " " + response.version + ")") : "";
 
                         OC.Notification.show(message + versionMessage, {
-                            type: response.error ? "error" : "info",
-                            timeout: 10
+                            type: response.error ? "text-error" : "text-success",
+                            timeout: 5000,
+                            duration: 1000
                         });
                     }
                 }
@@ -81,8 +82,9 @@
                         var versionMessage = response.version ? (" (" + t(OCA.ScienceMesh.AppName, "version") + " " + response.version + ")") : "";
 
                         OC.Notification.show(message + versionMessage, {
-                            type: response.error ? "error" : "info",
-                            timeout: 10
+                            type: response.error ? "text-error" : "text-success",
+                            timeout: 5000,
+                            duration: 1000
                         });
                     }
                 }
@@ -109,20 +111,27 @@
                     let result = JSON.parse(res);
                     if (result.enabled) {
                         var message = t(OCA.ScienceMesh.AppName, "Connection is available");
+                        OC.Notification.show(message, {
+                            type: "text-success",
+                            timeout: 5000,
+                            duration: 10000                            
+                        });
                     }else{
                         var message = t(OCA.ScienceMesh.AppName, "Connection is not available");
+                        OC.Notification.show(message, {
+                            type: "text-error",
+                            timeout: 5000,
+                            duration: 10000
+                        });
                     }
 
-                    OC.Notification.show(message, {
-                        type: "error",
-                        timeout: 10
-                    });
 
                 }else{
                     var message = t(OCA.ScienceMesh.AppName, "Connection is not available");
                     OC.Notification.show(message, {
-                        type: "error",
-                        timeout: 10
+                        type: "text-error",
+                        timeout: 5000,
+                        duration: 1000
                     });
                 }
 
