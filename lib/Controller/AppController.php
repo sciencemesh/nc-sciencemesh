@@ -176,9 +176,25 @@ class AppController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
-	public function contactsFindUsers() {
-		$find_users = $this->httpClient->findAcceptedUsers($this->userId);
-		return new PlainResponse($find_users, Http::STATUS_OK);
+	public function contactsFindUsers($searchToken = "") {
+		$find_users_json = $this->httpClient->findAcceptedUsers($this->userId);
+
+		$find_users = json_decode($find_users_json, false);
+		$return_users = array();
+		if(strlen($searchToken) > 0){
+			if(!empty($find_users)){
+				for($i = count($find_users); $i >= 0 ; $i--){
+					if(str_contains($find_users[$i]->display_name, $searchToken) and !is_null($find_users[$i])){
+						$return_users[] = $find_users[$i];
+					}
+				}
+			}
+		}else{
+			$return_users = json_decode($find_users_json, false);
+		}
+
+		error_log('test:'.json_encode($return_users));
+		return new PlainResponse(json_encode($return_users), Http::STATUS_OK);
 	}
 
 	public function sendNotification(string $recipient, string $subject, string $message): bool
