@@ -283,7 +283,6 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 		$accepted = 0; //pending
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->insert('share_external')
-			// ->setValue('share_type', $qb->createNamedParameter($share_type))
 			->setValue('remote', $qb->createNamedParameter($shareData["remote"]))
 			->setValue('remote_id', $qb->createNamedParameter(trim($shareData["remote_id"], '"')))
 			->setValue('share_token', $qb->createNamedParameter($shareData["share_token"]))
