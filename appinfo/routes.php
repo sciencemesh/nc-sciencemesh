@@ -43,6 +43,7 @@ $routes_array = [
 		['name' => 'ocm#addSentShare', 'url' => '/~{userId}/api/ocm/addSentShare', 'verb' => 'POST'],
 		['name' => 'ocm#addReceivedShare', 'url' => '/~{userId}/api/ocm/addReceivedShare', 'verb' => 'POST'],
 		['name' => 'ocm#GetSentShare', 'url' => '/~{userId}/api/ocm/GetSentShare', 'verb' => 'POST'],
+		['name' => 'ocm#GetSentShareByToken', 'url' => '/~nobody/api/ocm/GetSentShareByToken', 'verb' => 'POST'],
 		['name' => 'ocm#Unshare', 'url' => '/~{userId}/api/ocm/Unshare', 'verb' => 'POST'],
 		['name' => 'ocm#UpdateShare', 'url' => '/~{userId}/api/ocm/UpdateShare', 'verb' => 'POST'],
 		['name' => 'ocm#ListSentShares', 'url' => '/~{userId}/api/ocm/ListSentShares', 'verb' => 'POST'],
