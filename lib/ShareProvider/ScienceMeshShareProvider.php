@@ -133,7 +133,11 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 		// "home" is reva's default work space name, prepending that in the source path:
 		$sourcePath = $prefix . "home/" . implode("/", array_slice($pathParts, $sourceOffset)) . $suffix;
 		$targetPath = $prefix . implode("/", array_slice($pathParts, $targetOffset)) . $suffix;
-		$shareWithParts = explode("@", $shareWith);
+
+		$split_point = '@';
+		$parts = explode($split_point, $shareWith);
+		$last = array_pop($parts);
+		$shareWithParts = array(implode($split_point, $parts), $last);
 
 		$response = $this->revaHttpClient->createShare($sender, [
 			'sourcePath' => $sourcePath,
