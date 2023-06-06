@@ -61,7 +61,7 @@ class ScienceMeshSearchPlugin {
 				'label' => $user['display_name'] ." (". $domain . ")",
 				'value' => [
 					'shareType' => ScienceMeshApp::SHARE_TYPE_SCIENCEMESH,
-					'shareWith' => $user['id']['opaque_id'] ."@". $user['id']['idp'],
+					'shareWith' => $user['id']['opaque_id'] . "@" . $user['id']['idp'] . ScienceMeshApp::SCIENCEMESH_POSTFIX,
 				],
 			];
 		}
