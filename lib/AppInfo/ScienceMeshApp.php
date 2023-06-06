@@ -7,6 +7,7 @@ use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
 
 class ScienceMeshApp extends App {
 	public const APP_ID = 'sciencemesh';
+    public const SCIENCEMESH_POSTFIX = ' (Sciencemesh)';
 	public const SHARE_TYPE_REMOTE = 6;
 	public const SHARE_TYPE_SCIENCEMESH = 6;
 	
