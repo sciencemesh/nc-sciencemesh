@@ -145,7 +145,6 @@ class FederatedShareProviderCopy implements IShareProvider {
 	 * @throws \Exception
 	 */
 	public function create(IShare $share) {
-		error_log("parent create");
 		$shareWith = $share->getSharedWith();
 		$itemSource = $share->getNodeId();
 		$itemType = $share->getNodeType();
