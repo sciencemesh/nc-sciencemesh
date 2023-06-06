@@ -646,4 +646,21 @@ class OcmController extends Controller {
 		}
 		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_BAD_REQUEST);
 	}
+
+       /**
+        * @PublicPage
+        * @NoCSRFRequired
+        * @return Http\DataResponse|JSONResponse
+        *
+        * GetSentShareByToken gets the information for a share by the given token.
+        */
+       public function GetSentShareByToken() {
+               $token = $this->request->getParam("Spec")["Token"];
+               $share = $this->shareProvider->getShareByToken($token);
+               if ($share) {
+                       $response = $this->shareInfoToCs3Share($share);
+                       return new JSONResponse($response, Http::STATUS_OK);
+               }
+               return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_BAD_REQUEST);
+       }
 }
