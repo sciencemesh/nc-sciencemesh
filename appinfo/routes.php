@@ -94,8 +94,16 @@ $routes_array = [
 		["name" => "settings#get_settings", "url" => "/ajax/settings", "verb" => "GET"],
 		["name" => "settings#get_sciencemesh_settings", "url" => "/sciencemesh_settings", "verb" => "GET"],
 		["name" => "settings#save_sciencemesh_settings", "url" => "/ajax/sciencemesh_settings/save", "verb" => "GET"],
-		["name" => "settings#check_connection_settings", "url" => "/ajax/check_connection_settings", "verb" => "GET"]
-
+		["name" => "settings#check_connection_settings", "url" => "/ajax/check_connection_settings", "verb" => "GET"],
+		
+		// API Routes
+		["name" => "api#add_token", "url" => "/api/v1/add_token/{initiator}", "verb" => "POST"],
+		["name" => "api#get_token", "url" => "/api/v1/get_token", "verb" => "GET"],
+		["name" => "api#tokens_list", "url" => "/api/v1/tokens_list/{initiator}", "verb" => "GET"],
+		["name" => "api#add_remote_user", "url" => "/api/v1/add_remote_user/{initiator}", "verb" => "POST"],
+		["name" => "api#get_remote_user", "url" => "/api/v1/get_remote_user/{initiator}", "verb" => "GET"],
+		["name" => "api#find_remote_user", "url" => "/api/v1/find_remote_user/{initiator}", "verb" => "GET"]
+	
 	]
 ];
 
