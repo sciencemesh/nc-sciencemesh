@@ -464,9 +464,6 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 		$qb->select('*')
 			->from('share_external')
 			->where(
-				$qb->expr()->eq('share_type', $qb->createNamedParameter(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH))
-			)
-			->andWhere(
 				$qb->expr()->eq('user', $qb->createNamedParameter($userId))
 			);
 		$cursor = $qb->execute();
