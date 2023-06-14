@@ -50,7 +50,7 @@ class ServerConfig {
 		return $this->config->getAppValue('sciencemesh','country');
 	}
 	public function getIopUrl() {
-		return $this->config->getAppValue('sciencemesh','iopUrl');
+		return rtrim($this->config->getAppValue('sciencemesh','iopUrl'), '/') . '/';
 	}
 	public function getRevaLoopbackSecret() {
 		$ret = $this->config->getAppValue('sciencemesh','revaLoopbackSecret');
