@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 }
                 var element = document.getElementById("show_result");
                 element.innerHTML = result;
-                
+
                 var button = $(".deleteContact");
                 button.each(function( index , ele) {
                     ele.addEventListener("click", function() {
