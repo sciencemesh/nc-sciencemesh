@@ -32,9 +32,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 let result = '';
                 for(i in acceptedUsers) {
                     const displayName = acceptedUsers[i].display_name;
-                    const username = acceptedUsers[i].id.opaque_id;
-                    const idp = acceptedUsers[i].id.idp;
-                    const provider =  (idp.startsWith("http") ? new URL(idp).host : idp);
+                    const username = acceptedUsers[i].user_id;
+                    const idp = acceptedUsers[i].idp;
+                    const provider =  idp ? idp : '';
                     result += `
                             <tr>
                                 <td style="border-radius:100%">
@@ -54,13 +54,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 }
                 var element = document.getElementById("show_result");
                 element.innerHTML = result;
-
+                
                 var button = $(".deleteContact");
                 button.each(function( index , ele) {
                     ele.addEventListener("click", function() {
                         deleteContact($(this).data('idp'),$(this).data('username'));
                     });
                 });
+
                 $('#show_result').show();
             }
         }
@@ -214,58 +215,54 @@ document.addEventListener("DOMContentLoaded", function(event) {
                                     </tr>`;
                 $('#show_result').show(); 
             } else {
-                let token = JSON.parse(response);
-                
-                if(token.length) {
-                    for(tokenData in token) {
-                        let acceptedUsers = JSON.parse(response);
-                        let result = '';
-                        for(i in acceptedUsers) {
-                            var displayName = acceptedUsers[i].display_name;
-                            var username = acceptedUsers[i].id.opaque_id;
-                            var idp = acceptedUsers[i].id.idp;
-                            var provider =  (idp.startsWith("http") ? new URL(idp).host : idp);
-                            result += `
-                                    <tr>
-                                        <td style="border-radius:100%">
-                                            <p class="icon-contacts-dark contacts-profile-img"></p>
-                                        </td>
-                                        <td class="app-content-list-item-line-one contact-item">
-                                            <p class="displayname">${displayName}</p>
-                                        </td>  
-                                        <td>
-                                            <p class="username-provider">${username}@${provider}</p>
-                                        </td>
-                                        <td>
-                                            <button type="button" class="deleteContact" data-username="${username}" data-idp="${idp}">Unfriend</button>
-                                        </td>
-                                    </tr>
-                            `;
-                        }
-                        var element = document.getElementById("show_result");
-                        element.innerHTML = result;
-
-                        var button = $(".deleteContact");
-                        button.each(function( index , ele) {
-                            ele.addEventListener("click", function() {
-                                deleteContact($(this).data('idp'),$(this).data('username'));
-                            });
-                        });
-                    }
-                }else{
+                let acceptedUsers = JSON.parse(response);
+                if (acceptedUsers.length == 0) {
                     const result = `
-                            <tr>
-                                <td>
-                                    <p class="username-provider">There are no contacts!</p>
-                                </td>
-                            </tr>`;                  
+                    <tr>
+                        <td>
+                            <p class="username-provider">There are no contacts!</p>
+                        </td>
+                    </tr>`;                  
                     var element = document.getElementById("show_result");
                     element.innerHTML = result;
-
+                    $('#show_result').show();
+                } else {
+                    let result = '';
+                    for(i in acceptedUsers) {
+                        const displayName = acceptedUsers[i].display_name;
+                        const username = acceptedUsers[i].user_id;
+                        const idp = acceptedUsers[i].idp;
+                        const provider =  idp ? idp : '';
+                        result += `
+                                <tr>
+                                    <td style="border-radius:100%">
+                                        <p class="icon-contacts-dark contacts-profile-img"></p>
+                                    </td>
+                                    <td class="app-content-list-item-line-one contact-item">
+                                        <p class="displayname">${displayName}</p>
+                                    </td>  
+                                    <td>
+                                        <p class="username-provider">${username}@${provider}</p>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="deleteContact" data-username="${username}" data-idp="${idp}">Unfriend</button>
+                                    </td>
+                                </tr>
+                        `;
+                    }
+                    var element = document.getElementById("show_result");
+                    element.innerHTML = result;
+                    
+                    var button = $(".deleteContact");
+                    button.each(function( index , ele) {
+                        ele.addEventListener("click", function() {
+                            deleteContact($(this).data('idp'),$(this).data('username'));
+                        });
+                    });
+    
+                    $('#show_result').show();
                 }
-
-                $('#show_result').show();
-        }
+            }
         }).fail(function (response, code) {
             console.log(response)
             //alert('The token is invalid')
