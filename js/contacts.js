@@ -33,9 +33,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 let result = '';
                 for(i in acceptedUsers) {
                     const displayName = acceptedUsers[i].display_name;
-                    const username = acceptedUsers[i].id.opaque_id;
-                    const idp = acceptedUsers[i].id.idp;
-                    const provider =  (idp.startsWith("http") ? new URL(idp).host : idp);
+                    const username = acceptedUsers[i].user_id;
+                    const idp = acceptedUsers[i].idp;
+                    const provider =  idp ? idp : '';
                     result += `
                             <tr>
                                 <td style="border-radius:100%">
