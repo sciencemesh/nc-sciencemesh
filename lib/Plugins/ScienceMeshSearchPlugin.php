@@ -55,18 +55,16 @@ class ScienceMeshSearchPlugin {
 
 		$result = [];
 		foreach ($users as $user) {
-			$serverUrl = parse_url($user['id']['idp']);
-			$domain = (str_starts_with($user['id']['idp'], "http") ? parse_url($user['id']['idp'])["host"] : $user['id']['idp']);
+			$serverUrl = parse_url($user['idp']);
+			$domain = (str_starts_with($user['idp'], "http") ? parse_url($user['idp'])["host"] : $user['idp']);
 			$result[] = [
 				'label' => $user['display_name'] ." (". $domain . ")",
 				'value' => [
 					'shareType' => ScienceMeshApp::SHARE_TYPE_SCIENCEMESH,
-					'shareWith' => $user['id']['opaque_id'] . "@" . $user['id']['idp'] . ScienceMeshApp::SCIENCEMESH_POSTFIX,
+					'shareWith' => $user['user_id'] . "@" . $user['idp'] . ScienceMeshApp::SCIENCEMESH_POSTFIX,
 				],
 			];
 		}
-		error_log("returning result from sciencemesh:");
-		error_log(var_export($result, true));
 
 		$otherResults = [];
 
@@ -184,9 +182,6 @@ class ScienceMeshSearchPlugin {
 				],
 			];
 		}
-
-		error_log("returning other results:");
-		error_log(var_export($otherResults, true));
 
 		$result = array_merge($result, $otherResults);
 
