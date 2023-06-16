@@ -235,10 +235,12 @@ class OcmController extends Controller {
 	private function shareInfoToCs3Share(IShare $share): array {
 		$shareeParts = explode("@", $share->getSharedWith());
 		if (count($shareeParts) == 1) {
+			error_log("warning, could not find sharee user@host from '" . $share->getSharedWith() . "'");
 			$shareeParts = [ "unknown", "unknown" ];
 		}
 		$ownerParts = explode("@", $share->getShareOwner());
 		if (count($ownerParts) == 1) {
+			error_log("warning, could not find owner user@host from '" . $share->getShareOwner() . "'");
 			$ownerParts = [ "unknown", "unknown" ];
 		}
 		$stime = 0; // $share->getShareTime()->getTimeStamp();

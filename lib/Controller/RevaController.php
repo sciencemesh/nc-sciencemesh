@@ -132,6 +132,7 @@ class RevaController extends Controller {
 		$this->userId = $userId;
 		$this->checkRevadAuth();
 		if ($userId) {
+			error_log("Getting user folder for '$userId'");
 			$this->userFolder = $this->rootFolder->getUserFolder($userId);
 		}
 	}
