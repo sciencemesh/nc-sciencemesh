@@ -241,7 +241,7 @@ class OcmController extends Controller {
 		$ownerParts = explode("@", $share->getShareOwner());
 		if (count($ownerParts) == 1) {
 			error_log("warning, could not find owner user@host from '" . $share->getShareOwner() . "'");
-			$ownerParts = [ "unknown", "unknown" ];
+			$ownerParts = [ $ownerParts[0], "unknown" ];
 		}
 		$stime = 0; // $share->getShareTime()->getTimeStamp();
 		try {
