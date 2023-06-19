@@ -182,7 +182,7 @@ class RevaController extends Controller {
 		return substr($opaqueId, strlen("fileid-"));
 	}
 
-	private function nodeToCS3ResourceInfo(\OCP\Files\Node $node) : array {
+	private function nodeToCS3ResourceInfo(\OCP\Files\Node $node, $token = '') : array {
 		$isDirectory = ($node->getType() === \OCP\Files\FileInfo::TYPE_FOLDER);
 		$nextcloudPath = substr($node->getPath(), strlen($this->userFolder->getPath()) + 1);
 		$revaPath = $this->nextcloudPathToRevaPath($nextcloudPath);
@@ -226,11 +226,12 @@ class RevaController extends Controller {
 				"opaque_id" => $this->userId,
 				"idp" => $this->config->getIopUrl(),
 			],
+			"token" => $token
 		];
 	}
 
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
-	private function shareInfoToCs3Share(IShare $share): array {
+	private function shareInfoToCs3Share(IShare $share, $token = ''): array {
 		$shareeParts = explode("@", $share->getSharedWith());
 		if (count($shareeParts) == 1) {
 			$shareeParts = [ "unknown", "unknown" ];
@@ -295,7 +296,8 @@ class RevaController extends Controller {
 			],
 			"mtime" => [
 				"seconds" => $stime
-			]
+			],
+			"token" => $token,
 		];
 	}
 
@@ -1034,7 +1036,7 @@ class RevaController extends Controller {
 			$share = $this->shareProvider->getReceivedShareByToken($resourceId);
 			$share->setPermissions($permissionsCode);
 			$shareUpdate = $this->shareProvider->UpdateReceivedShare($share);
-			$response = $this->shareInfoToCs3Share($shareUpdate);
+			$response = $this->shareInfoToCs3Share($shareUpdate, $resourceId);
 			$response["state"] = 2;
 			return new JSONResponse($response, Http::STATUS_OK);
 		} catch (\Exception $e) {
@@ -1097,7 +1099,7 @@ class RevaController extends Controller {
 		$name = $this->getNameByOpaqueId($opaqueId);
 		try {
 			$share = $this->shareProvider->getReceivedShareByToken($opaqueId);
-			$response = $this->shareInfoToCs3Share($share);
+			$response = $this->shareInfoToCs3Share($share, $opaqueId);
 			$response["state"] = 2;
 			return new JSONResponse($response, Http::STATUS_OK);
 		} catch (\Exception $e) {
@@ -1137,7 +1139,7 @@ class RevaController extends Controller {
 		$token = $this->request->getParam("Spec")["Token"];
 		$share = $this->shareProvider->getShareByToken($token);
 		if ($share) {
-			$response = $this->shareInfoToCs3Share($share);
+			$response = $this->shareInfoToCs3Share($share, $token);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
 		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_BAD_REQUEST);
