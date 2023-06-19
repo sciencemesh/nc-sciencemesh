@@ -232,7 +232,7 @@ class OcmController extends Controller {
 	}
 
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
-	private function shareInfoToCs3Share(IShare $share): array {
+	private function shareInfoToCs3Share(IShare $share, $token = ''): array {
 		$shareeParts = explode("@", $share->getSharedWith());
 		if (count($shareeParts) == 1) {
 			error_log("warning, could not find sharee user@host from '" . $share->getSharedWith() . "'");
@@ -265,13 +265,13 @@ class OcmController extends Controller {
 			],
 			"permissions" => [
 				"permissions" => [
-					"add_grant" => false,
-					"create_container" => false,
-					"delete" => false,
-					"get_path" => false,
-					"get_quota" => false,
-					"initiate_file_download" => false,
-					"initiate_file_upload" => false,
+					"add_grant" => true,
+					"create_container" => true,
+					"delete" => true,
+					"get_path" => true,
+					"get_quota" => true,
+					"initiate_file_download" => true,
+					"initiate_file_upload" => true,
 				]
 			],
 			// https://github.com/cs3org/go-cs3apis/blob/d29741980082ecd0f70fe10bd2e98cf75764e858/cs3/storage/provider/v1beta1/resources.pb.go#L897
@@ -299,7 +299,8 @@ class OcmController extends Controller {
 			],
 			"mtime" => [
 				"seconds" => $stime
-			]
+			],
+			"token" => $token
 		];
 	}
 
@@ -658,9 +659,9 @@ class OcmController extends Controller {
         */
        public function GetSentShareByToken() {
                $token = $this->request->getParam("Spec")["Token"];
-               $share = $this->shareProvider->getShareByToken($token);
+	       $share = $this->shareProvider->getShareByToken($token);
                if ($share) {
-                       $response = $this->shareInfoToCs3Share($share);
+                       $response = $this->shareInfoToCs3Share($share, $token);
                        return new JSONResponse($response, Http::STATUS_OK);
                }
                return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_BAD_REQUEST);
