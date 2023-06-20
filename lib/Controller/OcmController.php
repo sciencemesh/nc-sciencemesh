@@ -409,7 +409,7 @@ class OcmController extends Controller {
 		if ($this->rootFolder->nodeExists($userId)) {
 			$this->init($userId);
 		} else {
-			return new JSONResponse("User not found", Http:STATUS_ACCESS_DENIED);
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
 		$params = $this->request->getParams();
 		$owner = $params["owner"]["opaqueId"]; // . "@" . $params["owner"]["idp"];
@@ -500,7 +500,7 @@ class OcmController extends Controller {
 		if ($this->rootFolder->nodeExists($userId)) {
 			$this->init($userId);
 		} else {
-			return new JSONResponse("User not found", Http:STATUS_ACCESS_DENIED);
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
 		
 		$scienceMeshData = [
@@ -523,7 +523,7 @@ class OcmController extends Controller {
 		if ($this->rootFolder->nodeExists($userId)) {
 			$this->init($userId);
 		} else {
-			return new JSONResponse("User not found", Http:STATUS_ACCESS_DENIED);
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
@@ -548,7 +548,7 @@ class OcmController extends Controller {
 		if ($this->rootFolder->nodeExists($userId)) {
 			$this->init($userId);
 		} else {
-			return new JSONResponse("User not found", Http:STATUS_ACCESS_DENIED);
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
 		$opaqueId = $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
 		$permissions = $this->request->getParam("p")["permissions"];
@@ -573,7 +573,7 @@ class OcmController extends Controller {
 		if ($this->rootFolder->nodeExists($userId)) {
 			$this->init($userId);
 		} else {
-			return new JSONResponse("User not found", Http:STATUS_ACCESS_DENIED);
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
 		$response = [];
 		$resourceId = $this->request->getParam("received_share")["share"]["resource_id"];
@@ -602,7 +602,7 @@ class OcmController extends Controller {
 		if ($this->rootFolder->nodeExists($userId)) {
 			$this->init($userId);
 		} else {
-			return new JSONResponse("User not found", Http:STATUS_ACCESS_DENIED);
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
 		$responses = [];
 		$shares = $this->shareProvider->getSentShares($userId);
@@ -623,7 +623,7 @@ class OcmController extends Controller {
 		if ($this->rootFolder->nodeExists($userId)) {
 			$this->init($userId);
 		} else {
-			return new JSONResponse("User not found", Http:STATUS_ACCESS_DENIED);
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
 		$responses = [];
 		$shares = $this->shareProvider->getReceivedShares($userId);
@@ -649,7 +649,7 @@ class OcmController extends Controller {
 		if ($this->rootFolder->nodeExists($userId)) {
 			$this->init($userId);
 		} else {
-			return new JSONResponse("User not found", Http:STATUS_ACCESS_DENIED);
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
@@ -674,7 +674,7 @@ class OcmController extends Controller {
 		if ($this->rootFolder->nodeExists($userId)) {
 			$this->init($userId);
 		} else {
-			return new JSONResponse("User not found", Http:STATUS_ACCESS_DENIED);
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
