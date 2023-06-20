@@ -124,7 +124,7 @@ class OcmController extends Controller {
 	private function init($userId) {
 		$this->userId = $userId;
 		$this->checkRevadAuth();
-		if ($userId and $this->rootFolder->nodeExists($userId))
+		if ($userId and $this->rootFolder->nodeExists($userId)) {
 			$this->userFolder = $this->rootFolder->getUserFolder($userId);
 		}
 	}
@@ -406,7 +406,11 @@ class OcmController extends Controller {
 	 * Create a new share in fn with the given access control list.
 	 */
 	public function addSentShare($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http:STATUS_ACCESS_DENIED);
+		}
 		$params = $this->request->getParams();
 		$owner = $params["owner"]["opaqueId"]; // . "@" . $params["owner"]["idp"];
 		$name = $params["name"]; // "fileid-/other/q/f gr"
@@ -493,7 +497,11 @@ class OcmController extends Controller {
 			"owner" => $params["owner"]["opaqueId"], // 'einstein'
 			"user" => $userId // 'marie'
 		];
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http:STATUS_ACCESS_DENIED);
+		}
 		
 		$scienceMeshData = [
 			"is_external" => true,
@@ -512,7 +520,11 @@ class OcmController extends Controller {
 	 * Remove Share from share table
 	 */
 	public function Unshare($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http:STATUS_ACCESS_DENIED);
+		}
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
 		if ($this->shareProvider->deleteSentShareByName($userId, $name)) {
@@ -533,7 +545,11 @@ class OcmController extends Controller {
 	 *
 	 */
 	public function UpdateSentShare($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http:STATUS_ACCESS_DENIED);
+		}
 		$opaqueId = $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
 		$permissions = $this->request->getParam("p")["permissions"];
 		$permissionsCode = $this->getPermissionsCode($permissions);
@@ -554,7 +570,11 @@ class OcmController extends Controller {
 	 * UpdateReceivedShare updates the received share with share state.
 	 */
 	public function UpdateReceivedShare($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http:STATUS_ACCESS_DENIED);
+		}
 		$response = [];
 		$resourceId = $this->request->getParam("received_share")["share"]["resource_id"];
 		$permissions = $this->request->getParam("received_share")["share"]["permissions"];
@@ -579,7 +599,11 @@ class OcmController extends Controller {
 	 * it returns only shares attached to the given resource.
 	 */
 	public function ListSentShares($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http:STATUS_ACCESS_DENIED);
+		}
 		$responses = [];
 		$shares = $this->shareProvider->getSentShares($userId);
 		if ($shares) {
@@ -596,7 +620,11 @@ class OcmController extends Controller {
 	 * ListReceivedShares returns the list of shares the user has access.
 	 */
 	public function ListReceivedShares($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http:STATUS_ACCESS_DENIED);
+		}
 		$responses = [];
 		$shares = $this->shareProvider->getReceivedShares($userId);
 		if ($shares) {
@@ -618,7 +646,11 @@ class OcmController extends Controller {
 	 * GetReceivedShare returns the information for a received share the user has access.
 	 */
 	public function GetReceivedShare($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http:STATUS_ACCESS_DENIED);
+		}
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
 		try {
@@ -639,7 +671,11 @@ class OcmController extends Controller {
 	 * GetSentShare gets the information for a share by the given ref.
 	 */
 	public function GetSentShare($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http:STATUS_ACCESS_DENIED);
+		}
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
 		$share = $this->shareProvider->getSentShareByName($userId,$name);
@@ -658,8 +694,8 @@ class OcmController extends Controller {
         * GetSentShareByToken gets the information for a share by the given token.
         */
        public function GetSentShareByToken() {
-               $token = $this->request->getParam("Spec")["Token"];
-	       $share = $this->shareProvider->getShareByToken($token);
+            $token = $this->request->getParam("Spec")["Token"];
+	        $share = $this->shareProvider->getShareByToken($token);
                if ($share) {
                        $response = $this->shareInfoToCs3Share($share, $token);
                        return new JSONResponse($response, Http::STATUS_OK);
