@@ -345,6 +345,7 @@ class OcmController extends Controller {
 				"opaque_id" => $user->getUID(),
 			],
 			"display_name" => $user->getDisplayName(),
+			"username" => $user->getUID(),
 			"email" => $user->getEmailAddress(),
 			"type" => 1,
 		];
