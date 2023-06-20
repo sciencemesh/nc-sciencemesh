@@ -131,7 +131,7 @@ class RevaController extends Controller {
 		error_log("RevaController init");
 		$this->userId = $userId;
 		$this->checkRevadAuth();
-		if ($userId) {
+		if ($userId and $this->rootFolder->nodeExists($userId))
 			error_log("Getting user folder for '$userId'");
 			$this->userFolder = $this->rootFolder->getUserFolder($userId);
 		}

@@ -124,7 +124,7 @@ class OcmController extends Controller {
 	private function init($userId) {
 		$this->userId = $userId;
 		$this->checkRevadAuth();
-		if ($userId) {
+		if ($userId and $this->rootFolder->nodeExists($userId))
 			$this->userFolder = $this->rootFolder->getUserFolder($userId);
 		}
 	}
