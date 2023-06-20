@@ -124,7 +124,7 @@ class OcmController extends Controller {
 	private function init($userId) {
 		$this->userId = $userId;
 		$this->checkRevadAuth();
-		if ($userId and $this->rootFolder->nodeExists($userId)) {
+		if ($userId and $this->userManager->userExists($userId)) {
 			$this->userFolder = $this->rootFolder->getUserFolder($userId);
 		}
 	}
@@ -406,7 +406,7 @@ class OcmController extends Controller {
 	 * Create a new share in fn with the given access control list.
 	 */
 	public function addSentShare($userId) {
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -497,7 +497,7 @@ class OcmController extends Controller {
 			"owner" => $params["owner"]["opaqueId"], // 'einstein'
 			"user" => $userId // 'marie'
 		];
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -520,7 +520,7 @@ class OcmController extends Controller {
 	 * Remove Share from share table
 	 */
 	public function Unshare($userId) {
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -545,7 +545,7 @@ class OcmController extends Controller {
 	 *
 	 */
 	public function UpdateSentShare($userId) {
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -570,7 +570,7 @@ class OcmController extends Controller {
 	 * UpdateReceivedShare updates the received share with share state.
 	 */
 	public function UpdateReceivedShare($userId) {
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -599,7 +599,7 @@ class OcmController extends Controller {
 	 * it returns only shares attached to the given resource.
 	 */
 	public function ListSentShares($userId) {
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -620,7 +620,7 @@ class OcmController extends Controller {
 	 * ListReceivedShares returns the list of shares the user has access.
 	 */
 	public function ListReceivedShares($userId) {
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -646,7 +646,7 @@ class OcmController extends Controller {
 	 * GetReceivedShare returns the information for a received share the user has access.
 	 */
 	public function GetReceivedShare($userId) {
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -671,7 +671,7 @@ class OcmController extends Controller {
 	 * GetSentShare gets the information for a share by the given ref.
 	 */
 	public function GetSentShare($userId) {
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);

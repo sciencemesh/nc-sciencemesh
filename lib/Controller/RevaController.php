@@ -354,7 +354,7 @@ class RevaController extends Controller {
 	 */
 	public function AddGrant($userId) {
 		error_log("AddGrant");
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -385,7 +385,7 @@ class RevaController extends Controller {
 	 */
 	public function Authenticate($userId) {
 		error_log("Authenticate");
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -433,7 +433,7 @@ class RevaController extends Controller {
 	 */
 	public function CreateDir($userId) {
 		error_log("CreateDir");
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -457,7 +457,7 @@ class RevaController extends Controller {
 	public function CreateHome($userId) {
 		error_log("CreateHome");
 		if (RESTRICT_TO_SCIENCEMESH_FOLDER) {
-			if ($this->rootFolder->nodeExists($userId)) {
+			if ($this->userManager->userExists($userId)) {
 				$this->init($userId);
 			} else {
 				return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -484,7 +484,7 @@ class RevaController extends Controller {
 	public function CreateReference($userId) {
 		error_log("CreateReference");
 
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -553,7 +553,7 @@ class RevaController extends Controller {
 	 */
 	public function Delete($userId) {
 		error_log("Delete");
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -576,7 +576,7 @@ class RevaController extends Controller {
 	 */
 	public function EmptyRecycle($userId) {
 		error_log("EmptyRecycle");
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -601,7 +601,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function GetMD($userId) {
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -638,7 +638,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function GetPathByID($userId) {
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -659,7 +659,7 @@ class RevaController extends Controller {
 	public function InitiateUpload($userId) {
 		$ref = $this->request->getParam("ref");
 		$path = $this->revaPathToNextcloudPath((isset($ref["path"]) ? $ref["path"] : ""));
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -677,7 +677,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function ListFolder($userId) {
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -715,7 +715,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function ListRecycle($userId) {
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -755,7 +755,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function ListRevisions($userId) {
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -771,7 +771,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function RemoveGrant($userId) {
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -788,7 +788,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function RestoreRecycleItem($userId) {
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -819,7 +819,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function RestoreRevision($userId) {
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -836,7 +836,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function SetArbitraryMetadata($userId) {
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -854,7 +854,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function UnsetArbitraryMetadata($userId) {
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -870,7 +870,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function UpdateGrant($userId) {
-		if ($this->rootFolder->nodeExists($userId)) {
+		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
@@ -914,7 +914,7 @@ class RevaController extends Controller {
 		$revaPath = "/$path";
 		error_log("RevaController Upload! $userId $revaPath");
 		try {
-			if ($this->rootFolder->nodeExists($userId)) {
+			if ($this->userManager->userExists($userId)) {
 				$this->init($userId);
 			} else {
 				return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
