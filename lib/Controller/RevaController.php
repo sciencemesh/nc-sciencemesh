@@ -343,7 +343,11 @@ class RevaController extends Controller {
 	 */
 	public function AddGrant($userId) {
 		error_log("AddGrant");
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		// FIXME: Expected a param with a grant to add here;
@@ -370,7 +374,11 @@ class RevaController extends Controller {
 	 */
 	public function Authenticate($userId) {
 		error_log("Authenticate");
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$userId = $this->request->getParam("clientID");
 		$password = $this->request->getParam("clientSecret");
 
@@ -410,7 +418,11 @@ class RevaController extends Controller {
 	 */
 	public function CreateDir($userId) {
 		error_log("CreateDir");
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		try {
 			$this->userFolder->newFolder($path);
@@ -430,7 +442,11 @@ class RevaController extends Controller {
 	public function CreateHome($userId) {
 		error_log("CreateHome");
 		if (RESTRICT_TO_SCIENCEMESH_FOLDER) {
-			$this->init($userId);
+			if ($this->rootFolder->nodeExists($userId)) {
+				$this->init($userId);
+			} else {
+				return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+			}
 			$homeExists = $this->userFolder->nodeExists("sciencemesh");
 			if (!$homeExists) {
 				try {
@@ -452,7 +468,11 @@ class RevaController extends Controller {
 	 */
 	public function CreateReference($userId) {
 		error_log("CreateReference");
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -517,7 +537,11 @@ class RevaController extends Controller {
 	 */
 	public function Delete($userId) {
 		error_log("Delete");
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		try {
 			$node = $this->userFolder->get($path);
@@ -536,7 +560,11 @@ class RevaController extends Controller {
 	 */
 	public function EmptyRecycle($userId) {
 		error_log("EmptyRecycle");
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		// See https://github.com/sciencemesh/oc-sciencemesh/issues/4#issuecomment-1283542906
 		$this->trashManager->deleteAll();
 		return new JSONResponse("OK", Http::STATUS_OK);
@@ -549,7 +577,11 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function GetMD($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$ref = $this->request->getParam("ref");
 		error_log("GetMD " . var_export($ref, true));
 		if (isset($ref["path"])) {
@@ -582,7 +614,11 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function GetPathByID($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		// in progress
 		$path = "subdir/";
 		$storageId = $this->request->getParam("storage_id");
@@ -599,7 +635,11 @@ class RevaController extends Controller {
 	public function InitiateUpload($userId) {
 		$ref = $this->request->getParam("ref");
 		$path = $this->revaPathToNextcloudPath((isset($ref["path"]) ? $ref["path"] : ""));
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$response = [
 			"simple" => $path
 		];
@@ -613,7 +653,11 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function ListFolder($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$ref = $this->request->getParam("ref");
 		$path = $this->revaPathToNextcloudPath((isset($ref["path"]) ? $ref["path"] : ""));
 		$success = $this->userFolder->nodeExists($path);
@@ -635,7 +679,11 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function ListGrants($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		return new JSONResponse("Not implemented",Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -647,7 +695,11 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function ListRecycle($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
 		$result = [];
@@ -683,7 +735,11 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function ListRevisions($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		return new JSONResponse("Not implemented",Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -695,7 +751,11 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function RemoveGrant($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		// FIXME: Expected a grant to remove here;
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
@@ -708,7 +768,11 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function RestoreRecycleItem($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$key = $this->request->getParam("key");
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
@@ -735,7 +799,11 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function RestoreRevision($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		// FIXME: Expected a revision param here;
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
@@ -748,7 +816,11 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function SetArbitraryMetadata($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		$metadata = $this->request->getParam("metadata");
 		// FIXME: What do we do with the existing metadata? Just toss it and overwrite with the new value? Or do we merge?
@@ -762,7 +834,11 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function UnsetArbitraryMetadata($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -774,7 +850,11 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function UpdateGrant($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
 		// FIXME: Expected a paramater with the grant(s)
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
@@ -814,7 +894,11 @@ class RevaController extends Controller {
 		$revaPath = "/$path";
 		error_log("RevaController Upload! $userId $revaPath");
 		try {
-			$this->init($userId);
+			if ($this->rootFolder->nodeExists($userId)) {
+				$this->init($userId);
+			} else {
+				return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+			}
 			$contents = $entityBody = file_get_contents('php://input');
 			// error_log("PUT body = " . var_export($contents, true));
 			error_log("Uploading! $revaPath");
@@ -868,7 +952,11 @@ class RevaController extends Controller {
 	 * Create a new share in fn with the given access control list.
 	 */
 	public function addSentShare($userId) {
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$params = $this->request->getParams();
 		error_log("addSentShare " . var_export($params, true));
 		$owner = $params["owner"]["opaqueId"]; // . "@" . $params["owner"]["idp"];
@@ -963,7 +1051,11 @@ class RevaController extends Controller {
 			"owner" => $params["owner"]["opaqueId"], // 'einstein'
 			"user" => $userId // 'marie'
 		];
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		
 		$scienceMeshData = [
 			"is_external" => true,
@@ -983,7 +1075,11 @@ class RevaController extends Controller {
 	 */
 	public function Unshare($userId) {
 		error_log("Unshare");
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
 		if ($this->shareProvider->deleteSentShareByName($userId, $name)) {
@@ -1005,7 +1101,11 @@ class RevaController extends Controller {
 	 */
 	public function UpdateSentShare($userId) {
 		error_log("UpdateSentShare");
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$opaqueId = $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
 		$permissions = $this->request->getParam("p")["permissions"];
 		$permissionsCode = $this->getPermissionsCode($permissions);
@@ -1027,7 +1127,11 @@ class RevaController extends Controller {
 	 */
 	public function UpdateReceivedShare($userId) {
 		error_log("UpdateReceivedShare");
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$response = [];
 		$resourceId = $this->request->getParam("received_share")["share"]["resource_id"];
 		$permissions = $this->request->getParam("received_share")["share"]["permissions"];
@@ -1053,7 +1157,11 @@ class RevaController extends Controller {
 	 */
 	public function ListSentShares($userId) {
 		error_log("ListSentShares");
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$responses = [];
 		$shares = $this->shareProvider->getSentShares($userId);
 		if ($shares) {
@@ -1071,7 +1179,11 @@ class RevaController extends Controller {
 	 */
 	public function ListReceivedShares($userId) {
 		error_log("ListReceivedShares");
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$responses = [];
 		$shares = $this->shareProvider->getReceivedShares($userId);
 		if ($shares) {
@@ -1094,7 +1206,11 @@ class RevaController extends Controller {
 	 */
 	public function GetReceivedShare($userId) {
 		error_log("GetReceivedShare");
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
 		try {
@@ -1116,7 +1232,11 @@ class RevaController extends Controller {
 	 */
 	public function GetSentShare($userId) {
 		error_log("GetSentShare");
-		$this->init($userId);
+		if ($this->rootFolder->nodeExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
 		$share = $this->shareProvider->getSentShareByName($userId,$name);
