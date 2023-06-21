@@ -397,6 +397,32 @@ class OcmController extends Controller {
 			Http::STATUS_NOT_FOUND
 		);
 	}
+
+	/**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 * @NoSameSiteCookieRequired
+	 *
+	 * Get user list.
+	 */
+	public function GetUserByClaim($dummy) {
+		$this->init(false);
+		$userToCheck = $this->request->getParam('value');
+                if ($this->request->getParam('claim') == 'username') {
+			error_log("GetUserByClaim, claim = 'username', value = $userToCheck");
+		} else {
+			return new JSONResponse('Please set the claim to username', Http:STATUS_BAD_REQUEST);
+		}
+		if ($this->userManager->userExists($userToCheck)) {
+			$user = $this->userManager->get($userToCheck);
+			$response = $this->formatUser($user);
+			return new JSONResponse($response, Http::STATUS_OK);
+		}
+		return new JSONResponse(
+			['message' => 'User does not exist'],
+			Http::STATUS_NOT_FOUND
+		);
+	}
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
