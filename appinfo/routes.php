@@ -53,6 +53,7 @@ $routes_array = [
 		['name' => 'reva#UpdateSentShare', 'url' => '/~{userId}/api/ocm/UpdateSentShare', 'verb' => 'POST'],
 		['name' => 'reva#UpdateReceivedShare', 'url' => '/~{userId}/api/ocm/UpdateReceivedShare', 'verb' => 'POST'],
 		['name' => 'reva#GetUser', 'url' => '/~{dummy}/api/user/GetUser', 'verb' => 'POST'],
+		['name' => 'reva#GetUserByClaim', 'url' => '/~{dummy}/api/user/GetUserByClaim', 'verb' => 'POST'],
 
 		/*
 		['name' => 'storage#createHome', 'url' => '/~{userId}/CreateHome', 'verb' => 'POST'],
