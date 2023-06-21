@@ -957,7 +957,7 @@ class RevaController extends Controller {
                 if ($this->request->getParam('claim') == 'username') {
                        error_log("GetUserByClaim, claim = 'username', value = $userToCheck");
                 } else {
-                       return new JSONResponse('Please set the claim to username', Http:STATUS_BAD_REQUEST);
+                       return new JSONResponse('Please set the claim to username', Http::STATUS_BAD_REQUEST);
                 }
 
 		if ($this->userManager->userExists($userToCheck)) {
