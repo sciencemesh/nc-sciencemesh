@@ -119,6 +119,7 @@ class RevaController extends Controller {
 		$this->userId = $userId;
 		$this->checkRevadAuth();
 		if ($userId) {
+			error_log("Getting user folder for '$userId'");
 			$this->userFolder = $this->rootFolder->getUserFolder($userId);
 		}
 	}
@@ -234,11 +235,13 @@ class RevaController extends Controller {
 	private function shareInfoToCs3Share(IShare $share, $token = ''): array {
 		$shareeParts = explode("@", $share->getSharedWith());
 		if (count($shareeParts) == 1) {
+			error_log("warning, could not find sharee user@host from '" . $share->getSharedWith() . "'");
 			$shareeParts = [ "unknown", "unknown" ];
 		}
 		$ownerParts = explode("@", $share->getShareOwner());
 		if (count($ownerParts) == 1) {
-			$ownerParts = [ "unknown", "unknown" ];
+			error_log("warning, could not find owner user@host from '" . $share->getShareOwner() . "'");
+			$ownerParts = [ $ownerParts[0], "unknown" ];
 		}
 		$stime = 0; // $share->getShareTime()->getTimeStamp();
 		try {
