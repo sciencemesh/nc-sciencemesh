@@ -122,7 +122,8 @@ class RevaController extends Controller {
 			if($this->rootFolder->nodeExists($userId)) {
 				$this->userFolder = $this->rootFolder->getUserFolder($userId);
 			} else {
-				throw new Exception("Home folder not found for user '$userId'");
+				error_log("root folder absolute path '" . $this->rootFolder->getPath() . "'");
+				throw new \Exception("Home folder not found for user '$userId', have they logged in through the ownCloud web interface yet?");
 			}
 		}
 	}
