@@ -115,12 +115,15 @@ class RevaController extends Controller {
 		$this->shareProvider = $shareProvider;
 	}
 	private function init($userId) {
-		error_log("RevaController init");
+		error_log("RevaController init for user '$userId'");
 		$this->userId = $userId;
 		$this->checkRevadAuth();
 		if ($userId) {
-			if($this->rootFolder->nodeExists($userId))
+			if($this->rootFolder->nodeExists($userId)) {
 				$this->userFolder = $this->rootFolder->getUserFolder($userId);
+			} else {
+				throw new Exception("Home folder not found for user '$userId'");
+			}
 		}
 	}
 
