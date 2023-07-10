@@ -419,17 +419,19 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 	}
 
 	public function getReceivedShares($userId): iterable {
+		error_log("listing received shares for user id '$userId'!");
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->select('*')
 			->from('share_external')
 			->where(
-				$qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_REMOTE))
-			)
-			->andWhere(
+			// 	$qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_REMOTE))
+			// )
+			// ->andWhere(
 				$qb->expr()->eq('user', $qb->createNamedParameter($userId))
 			);
 		$cursor = $qb->execute();
 		while ($data = $cursor->fetch()) {
+			error_log("received share!");
 			try {
 				$share = $this->createExternalShareObject($data);
 			} catch (InvalidShare $e) {
@@ -440,6 +442,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 
 			yield $share;
 		}
+		error_log("done listing received shares!");
 		$cursor->closeCursor();
 	}
 
