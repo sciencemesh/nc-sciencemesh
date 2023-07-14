@@ -1292,7 +1292,7 @@ class RevaController extends Controller {
 	public function GetSentShareByToken() {
 		error_log("GetSentShareByToken");
 		$token = $this->request->getParam("Spec")["Token"];
-		$share = $this->shareProvider->getShareByToken($token);
+		$share = $this->shareProvider->getSentShareByToken($token);
 		if ($share) {
 			$response = $this->shareInfoToCs3Share($share, $token);
 			return new JSONResponse($response, Http::STATUS_OK);

@@ -409,6 +409,37 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 	}
 
 	/**
+	 * Get a share by token
+	 *
+	 * @param string $token
+	 * @return IShare
+	 * @throws ShareNotFound
+	 */
+	public function getSentShareByToken($token) {
+		error_log("getSentShareByToken '$token'");
+		$qb = $this->dbConnection->getQueryBuilder();
+		$cursor = $qb->select('*')
+			->from('share')
+			// ->where($qb->expr()->eq('share_type', $qb->createNamedParameter(14)))
+			// ->andWhere($qb->expr()->eq('token', $qb->createNamedParameter($token)))
+			->where($qb->expr()->eq('token', $qb->createNamedParameter($token)))
+			->execute();
+		$data = $cursor->fetch();
+		if ($data === false) {
+			error_log("sent share not found by token '$token'");
+			throw new ShareNotFound('Share not found', $this->l->t('Could not find share'));
+		}
+		try {
+			$share = $this->createShareObject($data);
+		} catch (InvalidShare $e) {
+			error_log("sent share found invalid by token '$token'");
+			throw new ShareNotFound('Share not found', $this->l->t('Could not find share'));
+		}
+		error_log("found sent share ". $data["id"] . "by token '$token'");
+		return $share;
+	}
+
+	/**
 	 * Create a share object from a database row from external shares
 	 *
 	 * @param array $data
