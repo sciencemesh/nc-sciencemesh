@@ -237,19 +237,26 @@ class RevaController extends Controller {
 
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
 	private function shareInfoToCs3Share(IShare $share, $token = ''): array {
+
 		$shareeParts = explode("@", $share->getSharedWith());
 		if (count($shareeParts) == 1) {
 			error_log("warning, could not find sharee user@host from '" . $share->getSharedWith() . "'");
 			$shareeParts = [ "unknown", "unknown" ];
 		}
+		
+		// owner is happend to be always without @ eg: einstein. so the warning will be always printed.
 		$ownerParts = explode("@", $share->getShareOwner());
 		if (count($ownerParts) == 1) {
 			error_log("warning, could not find owner user@host from '" . $share->getShareOwner() . "'");
 			$ownerParts = [ $ownerParts[0], "unknown" ];
 		}
+
 		$stime = 0; // $share->getShareTime()->getTimeStamp();
+
 		try {
-		  $opaqueId = "fileid-" . $share->getNode()->getPath();
+			$filePath = $share->getNode()->getPath();
+		  	$opaqueId = "fileid-" . $filePath;
+			$resourcePath = "/ocm" . $filePath;
 		} catch (\OCP\Files\NotFoundException $e) {
 			$opaqueId = "unknown";
 		}
@@ -264,9 +271,9 @@ class RevaController extends Controller {
 				"opaque_id" => $share->getId()
 			],
 			"resource_id" => [
-
-			  "opaque_id"  => $opaqueId,
+			  "opaque_id"  => $opaqueId
 			],
+			"path" =>$resourcePath,
 			"permissions" => [
 				"permissions" => [
 					"add_grant" => false,
