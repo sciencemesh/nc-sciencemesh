@@ -259,6 +259,7 @@ class RevaController extends Controller {
 			$resourcePath = "/ocm" . $filePath;
 		} catch (\OCP\Files\NotFoundException $e) {
 			$opaqueId = "unknown";
+			$resourcePath = "unknown";
 		}
 
 		// produces JSON that maps to
