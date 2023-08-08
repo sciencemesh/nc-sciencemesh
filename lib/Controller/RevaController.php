@@ -374,6 +374,19 @@ class RevaController extends Controller {
 		];
 	}
 
+	private function formatFederatedUser($username, $remote) {
+		return [
+			"id" => [
+				"idp" => $remote,
+				"opaque_id" => $username,
+			],
+			"display_name" => $username,   // FIXME: this comes in the OCM share payload
+			"username" => $username,
+			"email" => "unknown@unknown",  // FIXME: this comes in the OCM share payload
+			"type" => 6,
+		];
+	}
+
 	/**
 	 * @PublicPage
 	 * @NoAdminRequired
@@ -385,7 +398,17 @@ class RevaController extends Controller {
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
-			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+			$share = $this->shareProvider->getSentShareByToken($userId);
+			if ($share) {
+				$sharedWith = explode("@", $share->getSharedWith());
+				$result = [
+					"user" => $this->formatFederatedUser($sharedWith[0], $sharedWith[1]),
+					"scopes" => [],
+				];
+				return new JSONResponse($result, Http::STATUS_OK);
+			} else {
+				return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+			}
 		}
 		$userId = $this->request->getParam("clientID");
 		$password = $this->request->getParam("clientSecret");
@@ -393,7 +416,7 @@ class RevaController extends Controller {
 		// Try e.g.:
 		// curl -v -H 'Content-Type:application/json' -d'{"clientID":"einstein",clientSecret":"relativity"}' http://einstein:relativity@localhost/index.php/apps/sciencemesh/~einstein/api/auth/Authenticate
 
-    // Ref https://github.com/cs3org/reva/issues/2356
+    	// Ref https://github.com/cs3org/reva/issues/2356
 		if ($password == $this->config->getRevaLoopbackSecret()) {
 			$user = $this->userManager->get($userId);
 		} else {
@@ -402,7 +425,7 @@ class RevaController extends Controller {
 		if ($user) {
 			$result = [
 				"user" => $this->formatUser($user),
-				"scopes" => [
+				"scopes" => [   // FIXME this hardcoded value represents {"resource_id":{"storage_id":"storage-id","opaque_id":"opaque-id"},"path":"some/file/path.txt"} and is not needed
 					"user" => [
 						"resource" => [
 							"decoder" => "json",
