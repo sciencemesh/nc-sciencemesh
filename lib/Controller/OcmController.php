@@ -240,6 +240,7 @@ class OcmController extends Controller {
 			$shareeParts = [ "unknown", "unknown" ];
 		}
 
+		// owner is happend to be always without @ eg: einstein. so the warning will be always printed.
 		$ownerParts = explode("@", $share->getShareOwner());
 		if (count($ownerParts) == 1) {
 			error_log("warning, could not find owner user@host from '" . $share->getShareOwner() . "'");
@@ -253,6 +254,7 @@ class OcmController extends Controller {
 		  $resourcePath = "/ocm" . $filePath;
 		} catch (\OCP\Files\NotFoundException $e) {
 			$opaqueId = "unknown";
+			$resourcePath = "unknown";
 		}
 
 		// produces JSON that maps to
