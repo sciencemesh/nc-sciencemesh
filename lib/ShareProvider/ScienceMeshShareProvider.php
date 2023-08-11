@@ -420,8 +420,6 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$cursor = $qb->select('*')
 			->from('share')
-			// ->where($qb->expr()->eq('share_type', $qb->createNamedParameter(14)))
-			// ->andWhere($qb->expr()->eq('token', $qb->createNamedParameter($token)))
 			->where($qb->expr()->eq('token', $qb->createNamedParameter($token)))
 			->execute();
 		$data = $cursor->fetch();
