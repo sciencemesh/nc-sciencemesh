@@ -251,10 +251,8 @@ class OcmController extends Controller {
 		try {
 			$filePath = $share->getNode()->getPath();
 			$opaqueId = "fileid-" . $filePath;
-		  $resourcePath = "/ocm" . $filePath;
 		} catch (\OCP\Files\NotFoundException $e) {
 			$opaqueId = "unknown";
-			$resourcePath = "unknown";
 		}
 
 		// produces JSON that maps to
@@ -270,7 +268,6 @@ class OcmController extends Controller {
 
 			  "opaque_id"  => $opaqueId,
 			],
-			"path" =>$resourcePath,
 			"permissions" => [
 				"permissions" => [
 					"add_grant" => true,
