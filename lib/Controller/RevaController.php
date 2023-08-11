@@ -651,7 +651,7 @@ class RevaController extends Controller {
 
 		// apparently nodeExists requires relative path to the user folder:
 		// see https://github.com/owncloud/core/blob/b7bcbdd9edabf7d639b4bb42c4fb87862ddf4a80/lib/private/Files/Node/Folder.php#L45-L55;
-		// anthore string manipulation is necessary to extract relative path from full path.
+		// another string manipulation is necessary to extract relative path from full path.
 		$relativePath = $this->effsFullPathToRelativePath($path);
 
 		$success = $this->userFolder->nodeExists($relativePath);
