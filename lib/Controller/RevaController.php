@@ -256,10 +256,8 @@ class RevaController extends Controller {
 		try {
 			$filePath = $share->getNode()->getPath();
 		  	$opaqueId = "fileid-" . $filePath;
-			$resourcePath = "/ocm" . $filePath;
 		} catch (\OCP\Files\NotFoundException $e) {
 			$opaqueId = "unknown";
-			$resourcePath = "unknown";
 		}
 
 		// produces JSON that maps to
@@ -274,7 +272,6 @@ class RevaController extends Controller {
 			"resource_id" => [
 			  "opaque_id"  => $opaqueId
 			],
-			"path" =>$resourcePath,
 			"permissions" => [
 				"permissions" => [
 					"add_grant" => false,
