@@ -435,7 +435,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 			error_log("sent share found invalid by token '$token'");
 			throw new ShareNotFound('Share not found', $this->l->t('Could not find share'));
 		}
-		error_log("found sent share ". $data["id"] . "by token '$token'");
+		error_log("found sent share ". $data["id"] . " by token '$token'");
 		return $share;
 	}
 
