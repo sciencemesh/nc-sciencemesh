@@ -104,10 +104,11 @@ class RevaController extends Controller {
 		$this->userId = $userId;
 		$this->checkRevadAuth();
 		if ($userId) {
+			error_log("root folder absolute path '" . $this->rootFolder->getPath() . "'");
 			if($this->rootFolder->nodeExists($userId)) {
 				$this->userFolder = $this->rootFolder->getUserFolder($userId);
+				error_log("user folder '".$this->userFolder->getPath()."'");
 			} else {
-				error_log("root folder absolute path '" . $this->rootFolder->getPath() . "'");
 				throw new \Exception("Home folder not found for user '$userId', have they logged in through the ownCloud web interface yet?");
 			}
 		}
@@ -117,7 +118,7 @@ class RevaController extends Controller {
 		// first check if revaPath is actually prefixed or not.
 		$len = strlen(REVA_PREFIX); 
   		if (substr($revaPath, 0, $len) === REVA_PREFIX) {
-			$ret = NEXTCLOUD_PREFIX . substr($revaPath, strlen(REVA_PREFIX));
+			$ret = NEXTCLOUD_PREFIX . substr($revaPath, $len);
 		} else {
 			$ret = $revaPath;
 		}
@@ -127,6 +128,22 @@ class RevaController extends Controller {
 
 	private function nextcloudPathToRevaPath($nextcloudPath) {
     	return REVA_PREFIX . substr($nextcloudPath, strlen(NEXTCLOUD_PREFIX));
+	}
+
+	private function effsFullPathToRelativePath($effsFullPath) {
+		// first check if user path is actually prefixed or not.
+		$userFolderPath = $this->userFolder->getPath();
+		$len = strlen($userFolderPath); 
+
+  		if (substr($effsFullPath, 0, $len) === $userFolderPath) {
+			$ret = substr($effsFullPath, $len);
+		} else {
+			$ret = $effsFullPath;
+		}
+
+		error_log("effsFullPathToRelativePath user folder is '$userFolderPath'");
+		error_log("effsFullPathToRelativePath converts '$effsFullPath' to '$ret'");
+    	return $ret;
 	}
 
 	/**
@@ -180,6 +197,7 @@ class RevaController extends Controller {
 		$isDirectory = ($node->getType() === \OCP\Files\FileInfo::TYPE_FOLDER);
 		$nextcloudPath = substr($node->getPath(), strlen($this->userFolder->getPath()) + 1);
 		$revaPath = $this->nextcloudPathToRevaPath($nextcloudPath);
+
 		return [
 			"opaque" => [
 				"map" => null,
@@ -623,7 +641,7 @@ class RevaController extends Controller {
 		}
 
 		$path = $this->revaPathToNextcloudPath($revaPath);
-		error_log("Looking for nc path '$path' in user folder; reva path '$revaPath' ");
+		error_log("Looking for EFSS path '$path' in user folder; reva path '$revaPath' ");
 
 		$dirContents = $this->userFolder->getDirectoryListing();
 		$paths = array_map(function (\OCP\Files\Node $node) {
@@ -631,9 +649,14 @@ class RevaController extends Controller {
 		}, $dirContents);
 		error_log("User folder ".$this->userFolder->getPath()." has: " . implode(",", $paths));
 
-		$success = $this->userFolder->nodeExists($path);
+		// apparently nodeExists requires relative path to the user folder:
+		// see https://github.com/owncloud/core/blob/b7bcbdd9edabf7d639b4bb42c4fb87862ddf4a80/lib/private/Files/Node/Folder.php#L45-L55;
+		// anthore string manipulation is necessary to extract relative path from full path.
+		$relativePath = $this->effsFullPathToRelativePath($path);
+
+		$success = $this->userFolder->nodeExists($relativePath);
 		if ($success) {
-			$node = $this->userFolder->get($path);
+			$node = $this->userFolder->get($relativePath);
 			$resourceInfo = $this->nodeToCS3ResourceInfo($node);
 			return new JSONResponse($resourceInfo, Http::STATUS_OK);
 		}
