@@ -39,9 +39,6 @@ class RevaController extends Controller {
 	/* @var ISession */
 	private $session;
 
-	///** @var LoggerInterface */
-	//private $logger;
-
 	/** @var IUserManager */
 	private $userManager;
 
@@ -56,12 +53,6 @@ class RevaController extends Controller {
 
 	/** @var Config */
 	private $config;
-
-	///** @var ICloudFederationFactory */
-	//private $factory;
-
-	///** @var ICloudIdManager*/
-	//private $cloudIdManager;
 
 	/** @var \OCP\Files\Node */
 	private $lockedNode;
@@ -84,10 +75,6 @@ class RevaController extends Controller {
 		TrashBinManager $trashManager,
 		IManager $shareManager,
 		IGroupManager $groupManager,
-		/*ICloudFederationProviderManager $cloudFederationProviderManager,
-		ICloudFederationFactory $factory,
-		ICloudIdManager $cloudIdManager,*/
-		//LoggerInterface $logger,
 		IAppManager $appManager,
 		IL10N $l10n,
 		ScienceMeshShareProvider $shareProvider
@@ -106,14 +93,12 @@ class RevaController extends Controller {
 		$this->trashManager = $trashManager;
 		$this->shareManager = $shareManager;
 		$this->groupManager = $groupManager;
-		/*$this->cloudFederationProviderManager = $cloudFederationProviderManager;
-		$this->factory = $factory;
-		$this->cloudIdManager = $cloudIdManager;*/
-		//$this->logger = $logger;
+
 		$this->appManager = $appManager;
 		$this->l = $l10n;
 		$this->shareProvider = $shareProvider;
 	}
+
 	private function init($userId) {
 		error_log("RevaController init for user '$userId'");
 		$this->userId = $userId;
@@ -129,15 +114,19 @@ class RevaController extends Controller {
 	}
 
 	private function revaPathToNextcloudPath($revaPath) {
-		$ret = NEXTCLOUD_PREFIX . substr($revaPath, strlen(REVA_PREFIX));
+		// first check if revaPath is actually prefixed or not.
+		$len = strlen(REVA_PREFIX); 
+  		if (substr($revaPath, 0, $len) === REVA_PREFIX) {
+			$ret = NEXTCLOUD_PREFIX . substr($revaPath, strlen(REVA_PREFIX));
+		} else {
+			$ret = $revaPath;
+		}
 		error_log("Interpreting $revaPath as $ret");
-    // return $this->userFolder->getPath() . NEXTCLOUD_PREFIX . substr($revaPath, strlen(REVA_PREFIX));
-    return $ret;
+    	return $ret;
 	}
 
 	private function nextcloudPathToRevaPath($nextcloudPath) {
-    // return REVA_PREFIX . substr($nextcloudPath, strlen($this->userFolder->getPath() . NEXTCLOUD_PREFIX));
-    return REVA_PREFIX . substr($nextcloudPath, strlen(NEXTCLOUD_PREFIX));
+    	return REVA_PREFIX . substr($nextcloudPath, strlen(NEXTCLOUD_PREFIX));
 	}
 
 	/**
@@ -428,9 +417,10 @@ class RevaController extends Controller {
 				$user = $this->userManager->checkPassword($userId, $password);
 		}
 		if ($user) {
+			// FIXME this hardcoded value represents {"resource_id":{"storage_id":"storage-id","opaque_id":"opaque-id"},"path":"some/file/path.txt"} and is not needed
 			$result = [
 				"user" => $this->formatUser($user),
-				"scopes" => [   // FIXME this hardcoded value represents {"resource_id":{"storage_id":"storage-id","opaque_id":"opaque-id"},"path":"some/file/path.txt"} and is not needed
+				"scopes" => [
 					"user" => [
 						"resource" => [
 							"decoder" => "json",
@@ -618,28 +608,36 @@ class RevaController extends Controller {
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$ref = $this->request->getParam("ref");
 		error_log("GetMD " . var_export($ref, true));
+
 		if (isset($ref["path"])) {
-						$revaPath = $ref["path"]; // e.g. GetMD {"ref":{"path":"/home/asdf"},"mdKeys":null}
-		} else if (isset($ref["resource_id"]) && isset($ref["resource_id"]["opaque_id"]) && str_starts_with($ref["resource_id"]["opaque_id"], "fileid-/home/")) {
-						$revaPath = substr($ref["resource_id"]["opaque_id"], strlen("fileid-")); // e.g. GetMD {"ref":{"resource_id":{"storage_id":"00000000-0000-0000-0000-000000000000","opaque_id":"fileid-/home/asdf"}},"mdKeys":null}
+			// e.g. GetMD {"ref": {"path": "/home/asdf"}, "mdKeys": null}
+			$revaPath = $ref["path"];
+		} else if (isset($ref["resource_id"]) && isset($ref["resource_id"]["opaque_id"]) && str_starts_with($ref["resource_id"]["opaque_id"], "fileid-")) {
+			// e.g. GetMD {"ref": {"resource_id": {"storage_id": "00000000-0000-0000-0000-000000000000", "opaque_id": "fileid-/asdf"}}, "mdKeys":null}
+			$revaPath = substr($ref["resource_id"]["opaque_id"], strlen("fileid-"));
 		} else {
-						throw new \Exception("ref not understood!");
+			throw new \Exception("ref not understood!");
 		}
+
 		$path = $this->revaPathToNextcloudPath($revaPath);
-		error_log("Looking for nc path '$path' in user folder; reva path '".$ref["path"]."' ");
+		error_log("Looking for nc path '$path' in user folder; reva path '$revaPath' ");
+
 		$dirContents = $this->userFolder->getDirectoryListing();
 		$paths = array_map(function (\OCP\Files\Node $node) {
 			return $node->getPath();
 		}, $dirContents);
 		error_log("User folder ".$this->userFolder->getPath()." has: " . implode(",", $paths));
+
 		$success = $this->userFolder->nodeExists($path);
 		if ($success) {
 			$node = $this->userFolder->get($path);
 			$resourceInfo = $this->nodeToCS3ResourceInfo($node);
 			return new JSONResponse($resourceInfo, Http::STATUS_OK);
 		}
+
 		return new JSONResponse(["error" => "File not found"], 404);
 	}
 

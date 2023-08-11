@@ -416,7 +416,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 	 * @throws ShareNotFound
 	 */
 	public function getSentShareByToken($token) {
-		error_log("getSentShareByToken '$token'");
+		error_log("share provider getSentShareByToken '$token'");
 		$qb = $this->dbConnection->getQueryBuilder();
 		$cursor = $qb->select('*')
 			->from('share')
