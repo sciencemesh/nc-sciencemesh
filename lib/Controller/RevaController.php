@@ -193,12 +193,40 @@ class RevaController extends Controller {
 		return substr($opaqueId, strlen("fileid-"));
 	}
 
+	private function getChecksum(\OCP\Files\Node $node, $checksumType = 4): string {
+		$checksumTypes = array(
+			1 => "UNSET:",
+			2 => "ADLER32:",
+			3 => "MD5:",
+			4 => "SHA1:",
+		);
+		
+		// checksum is in db table oc_filecache.
+		// folders do not have checksum
+		$checksums = explode(' ', $node->getFileInfo()->getChecksum());
+
+		foreach ($checksums as $checksum)  {
+
+			// Note that the use of !== false is deliberate (neither != false nor === true will return the desired result); 
+			// strpos() returns either the offset at which the needle string begins in the haystack string, or the boolean 
+			// false if the needle isn't found. Since 0 is a valid offset and 0 is "falsey", we can't use simpler constructs
+			//  like !strpos($a, 'are').
+			if (strpos($checksum, $checksumTypes[$checksumType]) !== false) {
+				return substr($checksum, strlen($checksumTypes[$checksumType]));
+			}
+		}
+
+		return '';
+	}
+
 	private function nodeToCS3ResourceInfo(\OCP\Files\Node $node, $token = '') : array {
 		$isDirectory = ($node->getType() === \OCP\Files\FileInfo::TYPE_FOLDER);
 		$nextcloudPath = substr($node->getPath(), strlen($this->userFolder->getPath()) + 1);
 		$revaPath = $this->nextcloudPathToRevaPath($nextcloudPath);
+		
+		
 
-		return [
+		$payload = [
 			"opaque" => [
 				"map" => null,
 			],
@@ -207,10 +235,17 @@ class RevaController extends Controller {
 				"opaque_id" => "fileid-" . $revaPath,
 			],
 			"checksum" => [
-				"type" => 0,
-				"sum" => "",
+				// checksum algorithms:
+				// 1 UNSET
+				// 2 ADLER32
+				// 3 MD5
+				// 4 SHA1
+
+				// note: folders do not have checksum, their type should be unset.
+				"type" => $isDirectory ? 1 : 4,
+				"sum" => $this->getChecksum($node, $isDirectory ? 1 : 4),
 			],
-			"etag" => "deadbeef",
+			"etag" => $node->getEtag(),
 			"mime_type" => ($isDirectory ? "folder" : $node->getMimetype()),
 			"mtime" => [
 				"seconds" => $node->getMTime(),
@@ -240,6 +275,10 @@ class RevaController extends Controller {
 			],
 			"token" => $token
 		];
+
+		error_log("nodeToCS3ResourceInfo " . var_export($payload, true));
+
+		return $payload; 
 	}
 
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
