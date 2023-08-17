@@ -32,9 +32,6 @@ class ScienceMeshApp extends App {
 			return $c->query('UserSession')->getUser();
 		});
 
-
-
-
 		$notificationManager = $server->getNotificationManager();
         $notificationManager->registerNotifier(function () use ($notificationManager) {
             return $this->getContainer()->query('\OCA\ScienceMesh\Notifier\ScienceMeshNotifier');
