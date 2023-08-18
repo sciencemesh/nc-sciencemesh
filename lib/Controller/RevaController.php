@@ -114,7 +114,7 @@ class RevaController extends Controller {
 		}
 	}
 
-	private function revaPathToNextcloudPath($revaPath) {
+	private function revaPathToEfssPath($revaPath) {
 		// first check if revaPath is actually prefixed or not.
 		$len = strlen(REVA_PREFIX); 
   		if (substr($revaPath, 0, $len) === REVA_PREFIX) {
@@ -126,7 +126,7 @@ class RevaController extends Controller {
     	return $ret;
 	}
 
-	private function nextcloudPathToRevaPath($nextcloudPath) {
+	private function effssPathToRevaPath($nextcloudPath) {
     	return REVA_PREFIX . substr($nextcloudPath, strlen(NEXTCLOUD_PREFIX));
 	}
 
@@ -222,7 +222,7 @@ class RevaController extends Controller {
 	private function nodeToCS3ResourceInfo(\OCP\Files\Node $node, $token = '') : array {
 		$isDirectory = ($node->getType() === \OCP\Files\FileInfo::TYPE_FOLDER);
 		$nextcloudPath = substr($node->getPath(), strlen($this->userFolder->getPath()) + 1);
-		$revaPath = $this->nextcloudPathToRevaPath($nextcloudPath);
+		$revaPath = $this->effssPathToRevaPath($nextcloudPath);
 		
 		
 
@@ -407,7 +407,7 @@ class RevaController extends Controller {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
 		
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		// FIXME: Expected a param with a grant to add here;
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -506,7 +506,7 @@ class RevaController extends Controller {
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		try {
 			$this->userFolder->newFolder($path);
 		} catch (NotPermittedException $e) {
@@ -556,7 +556,7 @@ class RevaController extends Controller {
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
@@ -625,7 +625,7 @@ class RevaController extends Controller {
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		try {
 			$node = $this->userFolder->get($path);
 			$node->delete($path);
@@ -679,7 +679,7 @@ class RevaController extends Controller {
 			throw new \Exception("ref not understood!");
 		}
 
-		$path = $this->revaPathToNextcloudPath($revaPath);
+		$path = $this->revaPathToEfssPath($revaPath);
 		error_log("Looking for EFSS path '$path' in user folder; reva path '$revaPath' ");
 
 		$dirContents = $this->userFolder->getDirectoryListing();
@@ -693,13 +693,19 @@ class RevaController extends Controller {
 		// another string manipulation is necessary to extract relative path from full path.
 		$relativePath = $this->effsFullPathToRelativePath($path);
 
-		$success = $this->userFolder->nodeExists($relativePath);
+		// this path is url coded, we need to decode it
+		// for example this converts "we%20have%20space" to "we have space"
+		$relativePathDecoded = urldecode($relativePath);
+
+		$success = $this->userFolder->nodeExists($relativePathDecoded);
 		if ($success) {
-			$node = $this->userFolder->get($relativePath);
+			error_log("File found");
+			$node = $this->userFolder->get($relativePathDecoded);
 			$resourceInfo = $this->nodeToCS3ResourceInfo($node);
 			return new JSONResponse($resourceInfo, Http::STATUS_OK);
 		}
 
+		error_log("File not found");
 		return new JSONResponse(["error" => "File not found"], 404);
 	}
 
@@ -730,7 +736,7 @@ class RevaController extends Controller {
 	 */
 	public function InitiateUpload($userId) {
 		$ref = $this->request->getParam("ref");
-		$path = $this->revaPathToNextcloudPath((isset($ref["path"]) ? $ref["path"] : ""));
+		$path = $this->revaPathToEfssPath((isset($ref["path"]) ? $ref["path"] : ""));
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
@@ -755,7 +761,7 @@ class RevaController extends Controller {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
 		$ref = $this->request->getParam("ref");
-		$path = $this->revaPathToNextcloudPath((isset($ref["path"]) ? $ref["path"] : ""));
+		$path = $this->revaPathToEfssPath((isset($ref["path"]) ? $ref["path"] : ""));
 		$success = $this->userFolder->nodeExists($path);
 		if (!$success) {
 			return new JSONResponse(["error" => "Folder not found"], 404);
@@ -780,7 +786,7 @@ class RevaController extends Controller {
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		return new JSONResponse("Not implemented",Http::STATUS_NOT_IMPLEMENTED);
 	}
 
@@ -801,7 +807,7 @@ class RevaController extends Controller {
 		$result = [];
 		foreach ($trashItems as $node) {
 			if (preg_match("/^sciencemesh/", $node->getOriginalLocation())) {
-				$path = $this->nextcloudPathToRevaPath($node->getOriginalLocation());
+				$path = $this->effssPathToRevaPath($node->getOriginalLocation());
 				$result = [
 					[
 						"opaque" => [
@@ -836,7 +842,7 @@ class RevaController extends Controller {
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		return new JSONResponse("Not implemented",Http::STATUS_NOT_IMPLEMENTED);
 	}
 
@@ -852,7 +858,7 @@ class RevaController extends Controller {
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		// FIXME: Expected a grant to remove here;
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -879,7 +885,7 @@ class RevaController extends Controller {
 				// unique key string, see:
 				// https://github.com/cs3org/cs3apis/blob/6eab4643f5113a54f4ce4cd8cb462685d0cdd2ef/cs3/storage/provider/v1beta1/resources.proto#L318
 
-				if ($this->revaPathToNextcloudPath($key) == $node->getOriginalLocation()) {
+				if ($this->revaPathToEfssPath($key) == $node->getOriginalLocation()) {
 					$this->trashManager->restoreItem($node);
 					return new JSONResponse("OK", Http::STATUS_OK);
 				}
@@ -900,7 +906,7 @@ class RevaController extends Controller {
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		// FIXME: Expected a revision param here;
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -917,7 +923,7 @@ class RevaController extends Controller {
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		$metadata = $this->request->getParam("metadata");
 		// FIXME: What do we do with the existing metadata? Just toss it and overwrite with the new value? Or do we merge?
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
@@ -935,7 +941,7 @@ class RevaController extends Controller {
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
@@ -951,7 +957,7 @@ class RevaController extends Controller {
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		// FIXME: Expected a paramater with the grant(s)
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -998,7 +1004,7 @@ class RevaController extends Controller {
 			$contents = $entityBody = file_get_contents('php://input');
 			// error_log("PUT body = " . var_export($contents, true));
 			error_log("Uploading! $revaPath");
-			$ncPath = $this->revaPathToNextcloudPath($revaPath);
+			$ncPath = $this->revaPathToEfssPath($revaPath);
 			if ($this->userFolder->nodeExists($ncPath)) {
 				$node = $this->userFolder->get($ncPath);
 				$node->putContent($contents);
@@ -1086,7 +1092,7 @@ class RevaController extends Controller {
 		$name = $params["name"]; // "fileid-/other/q/f gr"
 		$resourceOpaqueId = $params["resourceId"]["opaqueId"]; // "fileid-/other/q/f gr"
 		$revaPath = $this->getRevaPathFromOpaqueId($resourceOpaqueId); // "/other/q/f gr"
-		$nextcloudPath = $this->revaPathToNextcloudPath($revaPath);
+		$nextcloudPath = $this->revaPathToEfssPath($revaPath);
 
 		$revaPermissions = null;
 
