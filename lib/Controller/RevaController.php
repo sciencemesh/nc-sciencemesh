@@ -218,12 +218,10 @@ class RevaController extends Controller {
 		return '';
 	}
 
-	private function nodeToCS3ResourceInfo(\OCP\Files\Node $node, $token = '') : array {
+	private function nodeToCS3ResourceInfo(\OCP\Files\Node $node, $token = ''): array {
 		$isDirectory = ($node->getType() === \OCP\Files\FileInfo::TYPE_FOLDER);
 		$efssPath = substr($node->getPath(), strlen($this->userFolder->getPath()) + 1);
 		$revaPath = $this->effssPathToRevaPath($efssPath);
-		
-		
 
 		$payload = [
 			"opaque" => [
