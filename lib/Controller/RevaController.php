@@ -31,7 +31,7 @@ use OCP\IL10N;
 use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 
 define('RESTRICT_TO_SCIENCEMESH_FOLDER', false);
-define('NEXTCLOUD_PREFIX', (RESTRICT_TO_SCIENCEMESH_FOLDER ? 'sciencemesh/' : ''));
+define('EFSS_PREFIX', (RESTRICT_TO_SCIENCEMESH_FOLDER ? 'sciencemesh/' : ''));
 define('REVA_PREFIX', '/home/'); // See https://github.com/pondersource/sciencemesh-php/issues/96#issuecomment-1298656896
 
 class RevaController extends Controller {
@@ -114,35 +114,34 @@ class RevaController extends Controller {
 		}
 	}
 
-	private function revaPathToEfssPath($revaPath) {
-		// first check if revaPath is actually prefixed or not.
-		$len = strlen(REVA_PREFIX); 
-  		if (substr($revaPath, 0, $len) === REVA_PREFIX) {
-			$ret = NEXTCLOUD_PREFIX . substr($revaPath, $len);
+	private function removePrefix($string, $prefix) {
+		// first check if string is actually prefixed or not.
+		$len = strlen($prefix);
+  		if (substr($string, 0, $len) === $prefix) {
+			$ret = substr($string, $len);
 		} else {
-			$ret = $revaPath;
+			$ret = $string;
 		}
-		error_log("Interpreting $revaPath as $ret");
+
+		return $ret;
+	}
+
+	private function revaPathToEfssPath($revaPath) {
+		$ret = EFSS_PREFIX . $this->removePrefix($revaPath, REVA_PREFIX);
+		error_log("revaPathToEfssPath: Interpreting $revaPath as $ret");
     	return $ret;
 	}
 
-	private function effssPathToRevaPath($nextcloudPath) {
-    	return REVA_PREFIX . substr($nextcloudPath, strlen(NEXTCLOUD_PREFIX));
+	private function effssPathToRevaPath($efssPath) {
+		$ret = REVA_PREFIX . $this-> removePrefix($efssPath, EFSS_PREFIX);
+		error_log("effssPathToRevaPath: Interpreting $efssPath as $ret");
+    	return $ret;
 	}
 
 	private function effsFullPathToRelativePath($effsFullPath) {
-		// first check if user path is actually prefixed or not.
-		$userFolderPath = $this->userFolder->getPath();
-		$len = strlen($userFolderPath); 
 
-  		if (substr($effsFullPath, 0, $len) === $userFolderPath) {
-			$ret = substr($effsFullPath, $len);
-		} else {
-			$ret = $effsFullPath;
-		}
-
-		error_log("effsFullPathToRelativePath user folder is '$userFolderPath'");
-		error_log("effsFullPathToRelativePath converts '$effsFullPath' to '$ret'");
+		$ret = $this-> removePrefix($effsFullPath, $this->userFolder->getPath());
+		error_log("effsFullPathToRelativePath: Interpreting $effsFullPath as $ret");
     	return $ret;
 	}
 
@@ -221,8 +220,8 @@ class RevaController extends Controller {
 
 	private function nodeToCS3ResourceInfo(\OCP\Files\Node $node, $token = '') : array {
 		$isDirectory = ($node->getType() === \OCP\Files\FileInfo::TYPE_FOLDER);
-		$nextcloudPath = substr($node->getPath(), strlen($this->userFolder->getPath()) + 1);
-		$revaPath = $this->effssPathToRevaPath($nextcloudPath);
+		$efssPath = substr($node->getPath(), strlen($this->userFolder->getPath()) + 1);
+		$revaPath = $this->effssPathToRevaPath($efssPath);
 		
 		
 
@@ -674,14 +673,19 @@ class RevaController extends Controller {
 			$revaPath = $ref["path"];
 		} else if (isset($ref["resource_id"]) && isset($ref["resource_id"]["opaque_id"]) && str_starts_with($ref["resource_id"]["opaque_id"], "fileid-")) {
 			// e.g. GetMD {"ref": {"resource_id": {"storage_id": "00000000-0000-0000-0000-000000000000", "opaque_id": "fileid-/asdf"}}, "mdKeys":null}
-			$revaPath = substr($ref["resource_id"]["opaque_id"], strlen("fileid-"));
+			$revaPath = $this->removePrefix($ref["resource_id"]["opaque_id"], "fileid-");
 		} else {
 			throw new \Exception("ref not understood!");
 		}
 
-		$path = $this->revaPathToEfssPath($revaPath);
-		error_log("Looking for EFSS path '$path' in user folder; reva path '$revaPath' ");
+		// this path is url coded, we need to decode it
+		// for example this converts "we%20have%20space" to "we have space"
+		$revaPathDecoded = urldecode($revaPath);
 
+		$path = $this->revaPathToEfssPath($revaPathDecoded);
+		error_log("Looking for EFSS path '$path' in user folder; reva path '$revaPathDecoded' ");
+
+		// TODO: Remove this part compeletly. it is only for debugging.
 		$dirContents = $this->userFolder->getDirectoryListing();
 		$paths = array_map(function (\OCP\Files\Node $node) {
 			return $node->getPath();
@@ -693,14 +697,10 @@ class RevaController extends Controller {
 		// another string manipulation is necessary to extract relative path from full path.
 		$relativePath = $this->effsFullPathToRelativePath($path);
 
-		// this path is url coded, we need to decode it
-		// for example this converts "we%20have%20space" to "we have space"
-		$relativePathDecoded = urldecode($relativePath);
-
-		$success = $this->userFolder->nodeExists($relativePathDecoded);
+		$success = $this->userFolder->nodeExists($relativePath);
 		if ($success) {
 			error_log("File found");
-			$node = $this->userFolder->get($relativePathDecoded);
+			$node = $this->userFolder->get($relativePath);
 			$resourceInfo = $this->nodeToCS3ResourceInfo($node);
 			return new JSONResponse($resourceInfo, Http::STATUS_OK);
 		}
@@ -1086,13 +1086,15 @@ class RevaController extends Controller {
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$params = $this->request->getParams();
 		error_log("addSentShare " . var_export($params, true));
+
 		$owner = $params["owner"]["opaqueId"]; // . "@" . $params["owner"]["idp"];
 		$name = $params["name"]; // "fileid-/other/q/f gr"
 		$resourceOpaqueId = $params["resourceId"]["opaqueId"]; // "fileid-/other/q/f gr"
 		$revaPath = $this->getRevaPathFromOpaqueId($resourceOpaqueId); // "/other/q/f gr"
-		$nextcloudPath = $this->revaPathToEfssPath($revaPath);
+		$efssPath = $this->revaPathToEfssPath($revaPath);
 
 		$revaPermissions = null;
 
@@ -1116,34 +1118,34 @@ class RevaController extends Controller {
 				"initiate_file_download" => true
 			];
 		}
-		$nextcloudPermissions = $this->getPermissionsCode($revaPermissions);
+		$efssPermissions = $this->getPermissionsCode($revaPermissions);
 		$shareWith = $granteeUser."@".$granteeHost;
-		// $sharedSecretBase64 = $params["grantee"]["opaque"]["map"]["sharedSecret"]["value"];
-		// $sharedSecret = base64_decode($sharedSecretBase64);
-		// error_log("base64 decoded $sharedSecretBase64 to $sharedSecret");
 		$sharedSecret = $params["token"];
+
 		try {
-			$node = $this->userFolder->get($nextcloudPath);
+			$node = $this->userFolder->get($efssPath);
 		} catch (NotFoundException $e) {
 			return new JSONResponse(["error" => "Share failed. Resource Path not found"], Http::STATUS_BAD_REQUEST);
 		}
+
 		error_log("calling newShare");
 		$share = $this->shareManager->newShare();
 		$share->setNode($node);
+
 		try {
 			$this->lock($share->getNode());
 		} catch (LockedException $e) {
 			throw new OCSNotFoundException($this->l->t('Could not create share'));
 		}
-		$share->setShareType(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH);//IShare::TYPE_SCIENCEMESH);
+
+		$share->setShareType(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH);
 		$share->setSharedBy($userId);
 		$share->setSharedWith($shareWith);
 		$share->setShareOwner($owner);
-		$share->setPermissions($nextcloudPermissions);
+		$share->setPermissions($efssPermissions);
 		$share->setToken($sharedSecret);
 		$share = $this->shareProvider->createInternal($share);
-		// $response = $this->shareInfoToCs3Share($share);
-		// error_log("response:" . json_encode($response));
+
 		return new DataResponse($share->getId(), Http::STATUS_CREATED);
 	}
 
