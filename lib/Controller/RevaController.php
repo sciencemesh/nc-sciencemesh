@@ -760,12 +760,22 @@ class RevaController extends Controller {
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$ref = $this->request->getParam("ref");
-		$path = $this->revaPathToEfssPath((isset($ref["path"]) ? $ref["path"] : ""));
+
+		// this path is url coded, we need to decode it
+		// for example this converts "we%20have%20space" to "we have space"
+		$pathDecoded = urldecode((isset($ref["path"]) ? $ref["path"] : ""));
+		$path = $this->revaPathToEfssPath($pathDecoded);
 		$success = $this->userFolder->nodeExists($path);
+		error_log("ListFolder: $path");
+
 		if (!$success) {
+			error_log("ListFolder: path not found");
 			return new JSONResponse(["error" => "Folder not found"], 404);
 		}
+		error_log("ListFolder: path found");
+
 		$node = $this->userFolder->get($path);
 		$nodes = $node->getDirectoryListing();
 		$resourceInfos = array_map(function (\OCP\Files\Node $node) {
