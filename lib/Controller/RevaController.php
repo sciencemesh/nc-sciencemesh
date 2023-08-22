@@ -126,6 +126,10 @@ class RevaController extends Controller {
 		return $ret;
 	}
 
+	private function revaPathFromOpaqueId($opaqueId) {
+		return $this->removePrefix($opaqueId, "fileid-");
+	}
+
 	private function revaPathToEfssPath($revaPath) {
 		$ret = EFSS_PREFIX . $this->removePrefix($revaPath, REVA_PREFIX);
 		error_log("revaPathToEfssPath: Interpreting $revaPath as $ret");
@@ -180,6 +184,7 @@ class RevaController extends Controller {
 
 		return $date;
 	}
+
 	private function checkRevadAuth() {
 		error_log("checkRevadAuth");
 		$authHeader = $this->request->getHeader('X-Reva-Secret');
@@ -187,9 +192,6 @@ class RevaController extends Controller {
     if ($authHeader != $this->config->getRevaSharedSecret()) {
 		  throw new \OCP\Files\NotPermittedException('Please set an http request header "X-Reva-Secret: <your_shared_secret>"!');
 		}
-	}
-	private function getRevaPathFromOpaqueId($opaqueId) {
-		return substr($opaqueId, strlen("fileid-"));
 	}
 
 	private function getChecksum(\OCP\Files\Node $node, $checksumType = 4): string {
@@ -671,7 +673,7 @@ class RevaController extends Controller {
 			$revaPath = $ref["path"];
 		} else if (isset($ref["resource_id"]) && isset($ref["resource_id"]["opaque_id"]) && str_starts_with($ref["resource_id"]["opaque_id"], "fileid-")) {
 			// e.g. GetMD {"ref": {"resource_id": {"storage_id": "00000000-0000-0000-0000-000000000000", "opaque_id": "fileid-/asdf"}}, "mdKeys":null}
-			$revaPath = $this->removePrefix($ref["resource_id"]["opaque_id"], "fileid-");
+			$revaPath = $this->revaPathFromOpaqueId($ref["resource_id"]["opaque_id"]);
 		} else {
 			throw new \Exception("ref not understood!");
 		}
@@ -1031,6 +1033,7 @@ class RevaController extends Controller {
 			return new JSONResponse(["error" => "Upload failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -1052,6 +1055,7 @@ class RevaController extends Controller {
 			Http::STATUS_NOT_FOUND
 		);
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -1063,22 +1067,25 @@ class RevaController extends Controller {
 		$this->init(false);
 
 		$userToCheck = $this->request->getParam('value');
-                if ($this->request->getParam('claim') == 'username') {
-                       error_log("GetUserByClaim, claim = 'username', value = $userToCheck");
-                } else {
-                       return new JSONResponse('Please set the claim to username', Http::STATUS_BAD_REQUEST);
-                }
+        
+		if ($this->request->getParam('claim') == 'username') {
+            error_log("GetUserByClaim, claim = 'username', value = $userToCheck");
+        } else {
+            return new JSONResponse('Please set the claim to username', Http::STATUS_BAD_REQUEST);
+        }
 
 		if ($this->userManager->userExists($userToCheck)) {
 			$user = $this->userManager->get($userToCheck);
 			$response = $this->formatUser($user);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
+
 		return new JSONResponse(
 			['message' => 'User does not exist'],
 			Http::STATUS_NOT_FOUND
 		);
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -1088,6 +1095,7 @@ class RevaController extends Controller {
 	 * @throws OCSNotFoundException
 	 * Create a new share in fn with the given access control list.
 	 */
+
 	public function addSentShare($userId) {
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
@@ -1101,7 +1109,7 @@ class RevaController extends Controller {
 		$owner = $params["owner"]["opaqueId"]; // . "@" . $params["owner"]["idp"];
 		$name = $params["name"]; // "fileid-/other/q/f gr"
 		$resourceOpaqueId = $params["resourceId"]["opaqueId"]; // "fileid-/other/q/f gr"
-		$revaPath = $this->getRevaPathFromOpaqueId($resourceOpaqueId); // "/other/q/f gr"
+		$revaPath = $this->revaPathFromOpaqueId($resourceOpaqueId); // "/other/q/f gr"
 		$efssPath = $this->revaPathToEfssPath($revaPath);
 
 		$revaPermissions = null;
@@ -1257,6 +1265,7 @@ class RevaController extends Controller {
 		$response = $this->shareInfoToCs3Share($shareUpdated);
 		return new JSONResponse($response, Http::STATUS_OK);
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -1286,6 +1295,7 @@ class RevaController extends Controller {
 			return new JSONResponse(["error" => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -1310,6 +1320,7 @@ class RevaController extends Controller {
 		}
 		return new JSONResponse($responses, Http::STATUS_OK);
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -1336,6 +1347,7 @@ class RevaController extends Controller {
 		}
 		return new JSONResponse($responses, Http::STATUS_OK);
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
