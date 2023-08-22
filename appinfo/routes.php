@@ -62,7 +62,6 @@ $routes_array = [
 		['name' => 'storage#handleDelete', 'url' => '/~{userId}/files/{path}', 'verb' => 'DELETE', 'requirements' => ['path' => '.+']],
 		['name' => 'storage#handleHead', 'url' => '/~{userId}/files/{path}', 'verb' => 'HEAD', 'requirements' => ['path' => '.+']],
 
-
 		// Internal app routes
 		['name' => 'app#contacts', 'url' => '/', 'verb' => 'GET'],
 		['name' => 'app#generate', 'url' => '/generate', 'verb' => 'GET'],
