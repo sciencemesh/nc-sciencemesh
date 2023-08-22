@@ -1002,6 +1002,37 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
+	public function Download($userId, $path) {
+		if ($this->userManager->userExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
+
+		error_log("Download path: $path");
+
+		$effsPath = $this->removePrefix($path, "home/");
+		error_log("Download effs path: $effsPath");
+
+
+		$success = $this->userFolder->nodeExists($effsPath);
+		if ($success) {
+			error_log("Download: file found");
+			$node = $this->userFolder->get($effsPath);
+			$storage = $node->getStorage();
+			return new DataResponse("HI, NOT YET :)", Http::STATUS_OK);
+		}
+
+		error_log("Download: file not found");
+		return new JSONResponse(["error" => "File not found"], 404);
+	}
+
+	/**
+	 * @PublicPage
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 * @return Http\DataResponse|JSONResponse
+	 */
 	public function Upload($userId, $path) {
 		$revaPath = "/$path";
 		error_log("RevaController Upload! $userId $revaPath");
