@@ -17,8 +17,9 @@ use OCP\Files\NotPermittedException;
 use \OCP\Files\NotFoundException;
 
 use OCP\AppFramework\Http;
-use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\DataResponse;
+use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\StreamResponse;
 use OCP\AppFramework\Controller;
 
 use OCP\Share\IManager;
@@ -1014,13 +1015,12 @@ class RevaController extends Controller {
 		$effsPath = $this->removePrefix($path, "home/");
 		error_log("Download effs path: $effsPath");
 
-
 		$success = $this->userFolder->nodeExists($effsPath);
 		if ($success) {
 			error_log("Download: file found");
 			$node = $this->userFolder->get($effsPath);
-			$storage = $node->getStorage();
-			return new DataResponse("HI, NOT YET :)", Http::STATUS_OK);
+			$nodeLocalFilePath = $node->getView()->getLocalFile($node->getPath());
+			return new StreamResponse($nodeLocalFilePath);
 		}
 
 		error_log("Download: file not found");
