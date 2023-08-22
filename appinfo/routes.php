@@ -55,22 +55,12 @@ $routes_array = [
 		['name' => 'reva#GetUser', 'url' => '/~{dummy}/api/user/GetUser', 'verb' => 'POST'],
 		['name' => 'reva#GetUserByClaim', 'url' => '/~{dummy}/api/user/GetUserByClaim', 'verb' => 'POST'],
 
-		/*
-		['name' => 'storage#createHome', 'url' => '/~{userId}/CreateHome', 'verb' => 'POST'],
-		['name' => 'storage#listFolder', 'url' => '/~{userId}/ListFolder', 'verb' => 'POST'],
-		['name' => 'storage#initiateUpload', 'url' => '/~{userId}/InitiateUpload', 'verb' => 'POST'],
-		['name' => 'storage#upload', 'url' => '/~{userId}/Upload', 'verb' => 'POST'],
-		['name' => 'storage#handleUpload', 'url' => '/~{userId}/Upload/{path}', 'verb' => 'PUT'],
-		['name' => 'storage#getMD', 'url' => '/~{userId}/GetMD', 'verb' => 'POST'],
-		*/
-
 		// Files routes
 		['name' => 'storage#handleGet', 'url' => '/~{userId}/files/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+']],
 		['name' => 'storage#handlePost', 'url' => '/~{userId}/files/{path}', 'verb' => 'POST', 'requirements' => ['path' => '.+']],
 		['name' => 'storage#handlePut', 'url' => '/~{userId}/files/{path}', 'verb' => 'PUT', 'requirements' => ['path' => '.+']],
 		['name' => 'storage#handleDelete', 'url' => '/~{userId}/files/{path}', 'verb' => 'DELETE', 'requirements' => ['path' => '.+']],
 		['name' => 'storage#handleHead', 'url' => '/~{userId}/files/{path}', 'verb' => 'HEAD', 'requirements' => ['path' => '.+']],
-
 
 		// Internal app routes
 		['name' => 'app#contacts', 'url' => '/', 'verb' => 'GET'],
