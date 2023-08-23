@@ -38,6 +38,7 @@ $routes_array = [
 		['name' => 'reva#UnsetArbitraryMetadata', 'url' => '/~{userId}/api/storage/UnsetArbitraryMetadata', 'verb' => 'POST'],
 		['name' => 'reva#UpdateGrant', 'url' => '/~{userId}/api/storage/UpdateGrant', 'verb' => 'POST'],
 		['name' => 'reva#Upload', 'url' => '/~{userId}/api/storage/Upload/{path}', 'verb' => 'PUT', 'requirements' => ['path' => '.+']],
+		['name' => 'reva#Download', 'url' => '/~{userId}/api/storage/Download/{path}', 'verb' => 'GET', 'requirements' => array('path' => '.+')],
 
 		// OCM routes
 		['name' => 'reva#addSentShare', 'url' => '/~{userId}/api/ocm/addSentShare', 'verb' => 'POST'],
