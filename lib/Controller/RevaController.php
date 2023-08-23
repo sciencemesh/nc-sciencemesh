@@ -642,6 +642,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function EmptyRecycle($userId) {
+		// DIFFERENT FUNCTION IN NC/OC
 		error_log("EmptyRecycle");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
