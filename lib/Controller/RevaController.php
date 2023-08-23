@@ -137,16 +137,16 @@ class RevaController extends Controller {
     	return $ret;
 	}
 
-	private function effssPathToRevaPath($efssPath) {
+	private function efssPathToRevaPath($efssPath) {
 		$ret = REVA_PREFIX . $this-> removePrefix($efssPath, EFSS_PREFIX);
-		error_log("effssPathToRevaPath: Interpreting $efssPath as $ret");
+		error_log("efssPathToRevaPath: Interpreting $efssPath as $ret");
     	return $ret;
 	}
 
-	private function effsFullPathToRelativePath($effsFullPath) {
+	private function efssFullPathToRelativePath($efssFullPath) {
 
-		$ret = $this-> removePrefix($effsFullPath, $this->userFolder->getPath());
-		error_log("effsFullPathToRelativePath: Interpreting $effsFullPath as $ret");
+		$ret = $this-> removePrefix($efssFullPath, $this->userFolder->getPath());
+		error_log("efssFullPathToRelativePath: Interpreting $efssFullPath as $ret");
     	return $ret;
 	}
 
@@ -224,7 +224,7 @@ class RevaController extends Controller {
 	private function nodeToCS3ResourceInfo(\OCP\Files\Node $node, $token = ''): array {
 		$isDirectory = ($node->getType() === \OCP\Files\FileInfo::TYPE_FOLDER);
 		$efssPath = substr($node->getPath(), strlen($this->userFolder->getPath()) + 1);
-		$revaPath = $this->effssPathToRevaPath($efssPath);
+		$revaPath = $this->efssPathToRevaPath($efssPath);
 
 		$payload = [
 			"opaque" => [
@@ -696,7 +696,7 @@ class RevaController extends Controller {
 		// apparently nodeExists requires relative path to the user folder:
 		// see https://github.com/owncloud/core/blob/b7bcbdd9edabf7d639b4bb42c4fb87862ddf4a80/lib/private/Files/Node/Folder.php#L45-L55;
 		// another string manipulation is necessary to extract relative path from full path.
-		$relativePath = $this->effsFullPathToRelativePath($path);
+		$relativePath = $this->efssFullPathToRelativePath($path);
 
 		$success = $this->userFolder->nodeExists($relativePath);
 		if ($success) {
@@ -818,7 +818,7 @@ class RevaController extends Controller {
 		$result = [];
 		foreach ($trashItems as $node) {
 			if (preg_match("/^sciencemesh/", $node->getOriginalLocation())) {
-				$path = $this->effssPathToRevaPath($node->getOriginalLocation());
+				$path = $this->efssPathToRevaPath($node->getOriginalLocation());
 				$result = [
 					[
 						"opaque" => [
@@ -1012,13 +1012,13 @@ class RevaController extends Controller {
 
 		error_log("Download path: $path");
 
-		$effsPath = $this->removePrefix($path, "home/");
-		error_log("Download effs path: $effsPath");
+		$efssPath = $this->removePrefix($path, "home/");
+		error_log("Download efss path: $efssPath");
 
-		$success = $this->userFolder->nodeExists($effsPath);
+		$success = $this->userFolder->nodeExists($efssPath);
 		if ($success) {
 			error_log("Download: file found");
-			$node = $this->userFolder->get($effsPath);
+			$node = $this->userFolder->get($efssPath);
 			$nodeLocalFilePath = $node->getView()->getLocalFile($node->getPath());
 			return new StreamResponse($nodeLocalFilePath);
 		}
