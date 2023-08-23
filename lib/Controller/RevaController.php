@@ -21,8 +21,9 @@ use OCP\Files\NotPermittedException;
 use \OCP\Files\NotFoundException;
 
 use OCP\AppFramework\Http;
-use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\DataResponse;
+use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\StreamResponse;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\OCS\OCSNotFoundException;
 
@@ -128,12 +129,17 @@ class RevaController extends Controller {
 		$this->shareProvider = $shareProvider;
 	}
 	private function init($userId) {
-		error_log("RevaController init");
+		error_log("RevaController init for user '$userId'");
 		$this->userId = $userId;
 		$this->checkRevadAuth();
 		if ($userId) {
-			error_log("Getting user folder for '$userId'");
-			$this->userFolder = $this->rootFolder->getUserFolder($userId);
+			error_log("root folder absolute path '" . $this->rootFolder->getPath() . "'");
+			if($this->rootFolder->nodeExists($userId)) {
+				$this->userFolder = $this->rootFolder->getUserFolder($userId);
+				error_log("user folder '".$this->userFolder->getPath()."'");
+			} else {
+				throw new \Exception("Home folder not found for user '$userId', have they logged in through the ownCloud web interface yet?");
+			}
 		}
 	}
 
@@ -211,6 +217,7 @@ class RevaController extends Controller {
 	private function checkRevadAuth() {
 		error_log("checkRevadAuth");
 		$authHeader = $this->request->getHeader('X-Reva-Secret');
+
     if ($authHeader != $this->config->getRevaSharedSecret()) {
 		  throw new \OCP\Files\NotPermittedException('Please set an http request header "X-Reva-Secret: <your_shared_secret>"!');
 		}
@@ -307,12 +314,14 @@ class RevaController extends Controller {
 
 		$shareeParts = explode("@", $share->getSharedWith());
 		if (count($shareeParts) == 1) {
+			error_log("warning, could not find sharee user@host from '" . $share->getSharedWith() . "'");
 			$shareeParts = [ "unknown", "unknown" ];
 		}
 
 		// owner is happend to be always without @ eg: einstein. so the warning will be always printed.
 		$ownerParts = explode("@", $share->getShareOwner());
 		if (count($ownerParts) == 1) {
+			error_log("warning, could not find owner user@host from '" . $share->getShareOwner() . "'");
 			$ownerParts = [ "unknown", "unknown" ];
 		}
 
@@ -660,6 +669,7 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 */
 	public function EmptyRecycle($userId) {
+		// DIFFERENT FUNCTION IN NC/OC
 		error_log("EmptyRecycle");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
