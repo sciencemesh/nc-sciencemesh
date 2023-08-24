@@ -125,12 +125,10 @@ class ScienceMeshProviderFactory implements IProviderFactory {
 	public function getProviderForType($shareType) {
 		$provider = null;
 
-		if ($shareType === \OCP\Share::SHARE_TYPE_USER  ||
-			$shareType === \OCP\Share::SHARE_TYPE_GROUP ||
-			$shareType === \OCP\Share::SHARE_TYPE_LINK) {
-			$provider = $this->defaultShareProvider();
-		} elseif ($shareType === \OCP\Share::SHARE_TYPE_REMOTE) {
+		if ($shareType === \OCP\Share::SHARE_TYPE_REMOTE) {
 			$provider = $this->scienceMeshShareProvider();
+		} else {
+			$provider = $this->defaultShareProvider();
 		}
 
 		if ($provider === null) {
