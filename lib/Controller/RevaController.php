@@ -2,19 +2,17 @@
 
 namespace OCA\ScienceMesh\Controller;
 
-use OCA\ScienceMesh\NextcloudAdapter;
-use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
-use OCA\ScienceMesh\Share\ScienceMeshSharePermissions;
-use OCA\ScienceMesh\User\ScienceMeshUserId;
-
-use OCA\Files_Trashbin\Trash\ITrashManager;
-
 use OCP\IRequest;
 use OCP\IUserManager;
 use OCP\IGroupManager;
 use OCP\IURLGenerator;
 use OCP\ISession;
 use OCP\IConfig;
+
+use OCP\IL10N;
+use OCP\App\IAppManager;
+use OCP\Lock\ILockingProvider;
+use OCP\Lock\LockedException;
 
 use OCP\Files\IRootFolder;
 use OCP\Files\NotPermittedException;
@@ -27,7 +25,6 @@ use OCP\AppFramework\Http\StreamResponse;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\OCS\OCSNotFoundException;
 
-use OCA\CloudFederationAPI\Config;
 use OCP\Federation\ICloudFederationFactory;
 use OCP\Federation\ICloudFederationProviderManager;
 use OCP\Federation\ICloudIdManager;
@@ -36,12 +33,13 @@ use OCP\Share\IManager;
 use OCP\Share\IShare;
 use OCP\Share\Exceptions\ShareNotFound;
 
-use Psr\Log\LoggerInterface;
+use OCA\CloudFederationAPI\Config;
+use OCA\Files_Trashbin\Trash\ITrashManager;
 
-use OCP\App\IAppManager;
-use OCP\Lock\ILockingProvider;
-use OCP\Lock\LockedException;
-use OCP\IL10N;
+use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
+use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
+
+use Psr\Log\LoggerInterface;
 
 define('RESTRICT_TO_SCIENCEMESH_FOLDER', false);
 define('EFSS_PREFIX', (RESTRICT_TO_SCIENCEMESH_FOLDER ? 'sciencemesh/' : ''));
@@ -134,12 +132,7 @@ class RevaController extends Controller {
 		$this->checkRevadAuth();
 		if ($userId) {
 			error_log("root folder absolute path '" . $this->rootFolder->getPath() . "'");
-			if($this->rootFolder->nodeExists($userId)) {
-				$this->userFolder = $this->rootFolder->getUserFolder($userId);
-				error_log("user folder '".$this->userFolder->getPath()."'");
-			} else {
-				throw new \Exception("Home folder not found for user '$userId', have they logged in through the ownCloud web interface yet?");
-			}
+			$this->userFolder = $this->rootFolder->getUserFolder($userId);
 		}
 	}
 
@@ -1221,7 +1214,7 @@ class RevaController extends Controller {
 			throw new OCSNotFoundException($this->l->t('Could not create share'));
 		}
 
-		$share->setShareType(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH);
+		$share->setShareType(IShare::TYPE_SCIENCEMESH);
 		$share->setSharedBy($userId);
 		$share->setSharedWith($shareWith);
 		$share->setShareOwner($owner);
