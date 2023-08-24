@@ -120,52 +120,6 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 	 * @throws ShareNotFound
 	 * @throws \Exception
 	 */
-	public function create(IShare $share) {
-		$node = $share->getNode();
-		$shareWith = $share->getSharedWith();
-		$pathParts = explode("/", $node->getPath());
-		$sender = $pathParts[1];
-		$sourceOffset = 3;
-		$targetOffset = 3;
-		$prefix = "/";
-		$suffix = ($node->getType() == "dir" ? "/" : "");
-
-		// "home" is reva's default work space name, prepending that in the source path:
-		$sourcePath = $prefix . "home/" . implode("/", array_slice($pathParts, $sourceOffset)) . $suffix;
-		$targetPath = $prefix . implode("/", array_slice($pathParts, $targetOffset)) . $suffix;
-
-		$split_point = '@';
-		$parts = explode($split_point, $shareWith);
-		$last = array_pop($parts);
-		$shareWithParts = array(implode($split_point, $parts), $last);
-
-		$response = $this->revaHttpClient->createShare($sender, [
-			'sourcePath' => $sourcePath,
-			'targetPath' => $targetPath,
-			'type' => $node->getType(),
-			'recipientUsername' => $shareWithParts[0],
-			'recipientHost' => $shareWithParts[1]
-		]);
-
-		if (!isset($response) || !isset($response->share) || !isset($response->share->owner) || !isset($response->share->owner->idp)) {
-			throw new \Exception("Unexpected response from reva");
-		}
-
-		$share->setId("will-set-this-later");
-		$share->setProviderId($response->share->owner->idp);
-		$share->setShareTime(new \DateTime());
-
-		return $share;
-	}
-
-	/**
-	 * Share a path
-	 *
-	 * @param IShare $share
-	 * @return IShare The share object
-	 * @throws ShareNotFound
-	 * @throws \Exception
-	 */
 	public function createInternal(IShare $share) {
 		error_log("SSP create");
 		$shareWith = $share->getSharedWith();
@@ -195,6 +149,60 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 		$data = $this->getRawShare($shareId);
 
 		return $this->createShareObject($data);
+	}
+
+	/**
+	 * Share a path
+	 *
+	 * @param IShare $share
+	 * @return IShare The share object
+	 * @throws ShareNotFound
+	 * @throws \Exception
+	 */
+	public function create(IShare $share) {
+		$node = $share->getNode();
+		$shareWith = $share->getSharedWith();
+		$pathParts = explode("/", $node->getPath());
+		$sender = $pathParts[1];
+		$sourceOffset = 3;
+		$targetOffset = 3;
+		$prefix = "/";
+		$suffix = ($node->getType() == "dir" ? "/" : "");
+
+		// "home" is reva's default work space name, prepending that in the source path:
+		$sourcePath = $prefix . "home/" . implode("/", array_slice($pathParts, $sourceOffset)) . $suffix;
+		$targetPath = $prefix . implode("/", array_slice($pathParts, $targetOffset)) . $suffix;
+
+		// TODO: make a function for below operation. it is used in a lot placed, but incorrectly.
+		// it should split username@host into an array of 2 element
+		// representing array[0] = username, array[1] = host
+		// requirement:
+		// handle usernames with multiple @ in them.
+		// example: MahdiBaghbani@pondersource@sciencemesh.org
+		// uername: MahdiBaghbani@pondersource
+		// host: sciencemesh.org
+		$split_point = '@';
+		$parts = explode($split_point, $shareWith);
+		$last = array_pop($parts);
+		$shareWithParts = array(implode($split_point, $parts), $last);
+
+		$response = $this->revaHttpClient->createShare($sender, [
+			'sourcePath' => $sourcePath,
+			'targetPath' => $targetPath,
+			'type' => $node->getType(),
+			'recipientUsername' => $shareWithParts[0],
+			'recipientHost' => $shareWithParts[1]
+		]);
+
+		if (!isset($response) || !isset($response->share) || !isset($response->share->owner) || !isset($response->share->owner->idp)) {
+			throw new \Exception("Unexpected response from reva");
+		}
+
+		$share->setId("will-set-this-later");
+		$share->setProviderId($response->share->owner->idp);
+		$share->setShareTime(new \DateTime());
+
+		return $share;
 	}
 
 	/**
@@ -340,6 +348,10 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 		$this->removeShareFromTable($share);
 	}
 
+	// DIFFERENT FUNCTION IN NC/OC
+	// function revokeShare exists in OC but in NC.
+	// TODO: why?
+
 	/**
 	 * Get a share by token
 	 *
@@ -364,6 +376,35 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 			throw new ShareNotFound('Share not found', $this->l->t('Could not find share'));
 		}
 
+		return $share;
+	}
+
+	/**
+	 * Get a share by token
+	 *
+	 * @param string $token
+	 * @return IShare
+	 * @throws ShareNotFound
+	 */
+	public function getSentShareByToken($token) {
+		error_log("share provider getSentShareByToken '$token'");
+		$qb = $this->dbConnection->getQueryBuilder();
+		$cursor = $qb->select('*')
+			->from('share')
+			->where($qb->expr()->eq('token', $qb->createNamedParameter($token)))
+			->execute();
+		$data = $cursor->fetch();
+		if ($data === false) {
+			error_log("sent share not found by token '$token'");
+			throw new ShareNotFound('Share not found', $this->l->t('Could not find share'));
+		}
+		try {
+			$share = $this->createShareObject($data);
+		} catch (InvalidShare $e) {
+			error_log("sent share found invalid by token '$token'");
+			throw new ShareNotFound('Share not found', $this->l->t('Could not find share'));
+		}
+		error_log("found sent share ". $data["id"] . " by token '$token'");
 		return $share;
 	}
 
@@ -419,19 +460,14 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 	}
 
 	public function getReceivedShares($userId): iterable {
-		error_log("listing received shares for user id '$userId'!");
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->select('*')
 			->from('share_external')
 			->where(
-			// 	$qb->expr()->eq('share_type', $qb->createNamedParameter($this::SHARE_TYPE_REMOTE))
-			// )
-			// ->andWhere(
 				$qb->expr()->eq('user', $qb->createNamedParameter($userId))
 			);
 		$cursor = $qb->execute();
 		while ($data = $cursor->fetch()) {
-			error_log("received share!");
 			try {
 				$share = $this->createExternalShareObject($data);
 			} catch (InvalidShare $e) {
@@ -442,7 +478,6 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 
 			yield $share;
 		}
-		error_log("done listing received shares!");
 		$cursor->closeCursor();
 	}
 
@@ -570,7 +605,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 			return false;
 		}
 		// FIXME: side effect?
-		$res = $external?$this->createScienceMeshExternalShare($data):$this->createScienceMeshShare($data);
+		$res = $external ? $this->createScienceMeshExternalShare($data) : $this->createScienceMeshShare($data);
 		return $res;
 	}
 
