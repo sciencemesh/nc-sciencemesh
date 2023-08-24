@@ -40,7 +40,7 @@ class SearchResultType {
      * @since 13.0.0
      */
     public function __construct($label) {
-        $this->label = "ScienceMesh"; // $this->getValidatedType($label);
+        $this->label = "ScienceMesh";
     }
 
     /**

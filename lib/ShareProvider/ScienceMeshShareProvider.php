@@ -32,7 +32,6 @@ use OCA\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\TokenHandler;
 use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 
-
 /**
  * Class ScienceMeshShareProvider
  *
@@ -149,7 +148,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 		return $this->createShareObject($data);
 	}
 
-	function endsWith( $string, $search ) {
+	function stringEndsWith( $string, $search ) {
 		$length = strlen( $search );
 		if( !$length ) {
 			return true;
@@ -168,9 +167,15 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 	public function create(IShare $share) {
 		$node = $share->getNode();
 		$shareWith = $share->getSharedWith();
-		$isScienecemeshUser = $this->endsWith($shareWith, ScienceMeshApp::SCIENCEMESH_POSTFIX);
 
+		// This is the routhing flag for sending a share.
+		// if the recepient of the share is a sciencemesh contact,
+		// the search plugin will mark it by a postfix.
+		$isScienecemeshUser = $this->stringEndsWith($shareWith, ScienceMeshApp::SCIENCEMESH_POSTFIX);
+
+		// Based on the flag, the share will be sent through sciencemesh or regular share provider.
 		if ($isScienecemeshUser) {
+			// remove the postfix flag from the string.
 			$shareWith = str_replace(ScienceMeshApp::SCIENCEMESH_POSTFIX, "", $shareWith);
 
 			$pathParts = explode("/", $node->getPath());
@@ -184,6 +189,14 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 			$sourcePath = $prefix . "home/" . implode("/", array_slice($pathParts, $sourceOffset)) . $suffix;
 			$targetPath = $prefix . implode("/", array_slice($pathParts, $targetOffset)) . $suffix;
 			
+			// TODO: make a function for below operation. it is used in a lot placed, but incorrectly.
+			// it should split username@host into an array of 2 element
+			// representing array[0] = username, array[1] = host
+			// requirement:
+			// handle usernames with multiple @ in them.
+			// example: MahdiBaghbani@pondersource@sciencemesh.org
+			// uername: MahdiBaghbani@pondersource
+			// host: sciencemesh.org
 			$split_point = '@';
 			$parts = explode($split_point, $shareWith);
 			$last = array_pop($parts);
@@ -196,9 +209,11 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 				'recipientUsername' => $shareWithParts[0],
 				'recipientHost' => $shareWithParts[1]
 			]);
+
 			if (!isset($response) || !isset($response->share) || !isset($response->share->owner) || !isset($response->share->owner->idp)) {
 				throw new \Exception("Unexpected response from reva");
 			}
+
 			$share->setId("will-set-this-later");
 			$share->setProviderId($response->share->owner->idp);
 			$share->setShareTime(new \DateTime());
@@ -635,7 +650,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy {
 			return false;
 		}
 		// FIXME: side effect?
-		$res = $external?$this->createScienceMeshExternalShare($data):$this->createScienceMeshShare($data);
+		$res = $external ? $this->createScienceMeshExternalShare($data) : $this->createScienceMeshShare($data);
 		return $res;
 	}
 
