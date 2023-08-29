@@ -35,7 +35,8 @@ define('RESTRICT_TO_SCIENCEMESH_FOLDER', false);
 define('EFSS_PREFIX', (RESTRICT_TO_SCIENCEMESH_FOLDER ? 'sciencemesh/' : ''));
 define('REVA_PREFIX', '/home/'); // See https://github.com/pondersource/sciencemesh-php/issues/96#issuecomment-1298656896
 
-class RevaController extends Controller {
+class RevaController extends Controller
+{
 
 	/* @var ISession */
 	private $session;
@@ -81,7 +82,7 @@ class RevaController extends Controller {
 		ScienceMeshShareProvider $shareProvider
 	) {
 		parent::__construct($AppName, $request);
-		require_once(__DIR__.'/../../vendor/autoload.php');
+		require_once(__DIR__ . '/../../vendor/autoload.php');
 
 		$this->rootFolder = $rootFolder;
 		$this->request = $request;
@@ -100,25 +101,27 @@ class RevaController extends Controller {
 		$this->shareProvider = $shareProvider;
 	}
 
-	private function init($userId) {
+	private function init($userId)
+	{
 		error_log("RevaController init for user '$userId'");
 		$this->userId = $userId;
 		$this->checkRevadAuth();
 		if ($userId) {
 			error_log("root folder absolute path '" . $this->rootFolder->getPath() . "'");
-			if($this->rootFolder->nodeExists($userId)) {
+			if ($this->rootFolder->nodeExists($userId)) {
 				$this->userFolder = $this->rootFolder->getUserFolder($userId);
-				error_log("user folder '".$this->userFolder->getPath()."'");
+				error_log("user folder '" . $this->userFolder->getPath() . "'");
 			} else {
 				throw new \Exception("Home folder not found for user '$userId', have they logged in through the ownCloud web interface yet?");
 			}
 		}
 	}
 
-	private function removePrefix($string, $prefix) {
+	private function removePrefix($string, $prefix)
+	{
 		// first check if string is actually prefixed or not.
 		$len = strlen($prefix);
-  		if (substr($string, 0, $len) === $prefix) {
+		if (substr($string, 0, $len) === $prefix) {
 			$ret = substr($string, $len);
 		} else {
 			$ret = $string;
@@ -127,27 +130,31 @@ class RevaController extends Controller {
 		return $ret;
 	}
 
-	private function revaPathFromOpaqueId($opaqueId) {
+	private function revaPathFromOpaqueId($opaqueId)
+	{
 		return $this->removePrefix($opaqueId, "fileid-");
 	}
 
-	private function revaPathToEfssPath($revaPath) {
+	private function revaPathToEfssPath($revaPath)
+	{
 		$ret = EFSS_PREFIX . $this->removePrefix($revaPath, REVA_PREFIX);
 		error_log("revaPathToEfssPath: Interpreting $revaPath as $ret");
-    	return $ret;
+		return $ret;
 	}
 
-	private function efssPathToRevaPath($efssPath) {
-		$ret = REVA_PREFIX . $this-> removePrefix($efssPath, EFSS_PREFIX);
+	private function efssPathToRevaPath($efssPath)
+	{
+		$ret = REVA_PREFIX . $this->removePrefix($efssPath, EFSS_PREFIX);
 		error_log("efssPathToRevaPath: Interpreting $efssPath as $ret");
-    	return $ret;
+		return $ret;
 	}
 
-	private function efssFullPathToRelativePath($efssFullPath) {
+	private function efssFullPathToRelativePath($efssFullPath)
+	{
 
-		$ret = $this-> removePrefix($efssFullPath, $this->userFolder->getPath());
+		$ret = $this->removePrefix($efssFullPath, $this->userFolder->getPath());
 		error_log("efssFullPathToRelativePath: Interpreting $efssFullPath as $ret");
-    	return $ret;
+		return $ret;
 	}
 
 	/**
@@ -159,7 +166,8 @@ class RevaController extends Controller {
 	 * @throws \OCP\Files\InvalidPathException
 	 * @throws \OCP\Files\NotFoundException
 	 */
-	private function lock(\OCP\Files\Node $node) {
+	private function lock(\OCP\Files\Node $node)
+	{
 		$node->lock(ILockingProvider::LOCK_SHARED);
 		$this->lockedNode = $node;
 	}
@@ -174,7 +182,8 @@ class RevaController extends Controller {
 	 * @throws \Exception
 	 * @return \DateTime
 	 */
-	private function parseDate(string $expireDate): \DateTime {
+	private function parseDate(string $expireDate): \DateTime
+	{
 		try {
 			$date = new \DateTime($expireDate);
 		} catch (\Exception $e) {
@@ -186,28 +195,30 @@ class RevaController extends Controller {
 		return $date;
 	}
 
-	private function checkRevadAuth() {
+	private function checkRevadAuth()
+	{
 		error_log("checkRevadAuth");
 		$authHeader = $this->request->getHeader('X-Reva-Secret');
 
-    if ($authHeader != $this->config->getRevaSharedSecret()) {
-		  throw new \OCP\Files\NotPermittedException('Please set an http request header "X-Reva-Secret: <your_shared_secret>"!');
+		if ($authHeader != $this->config->getRevaSharedSecret()) {
+			throw new \OCP\Files\NotPermittedException('Please set an http request header "X-Reva-Secret: <your_shared_secret>"!');
 		}
 	}
 
-	private function getChecksum(\OCP\Files\Node $node, $checksumType = 4): string {
+	private function getChecksum(\OCP\Files\Node $node, $checksumType = 4): string
+	{
 		$checksumTypes = array(
 			1 => "UNSET:",
 			2 => "ADLER32:",
 			3 => "MD5:",
 			4 => "SHA1:",
 		);
-		
+
 		// checksum is in db table oc_filecache.
 		// folders do not have checksum
 		$checksums = explode(' ', $node->getFileInfo()->getChecksum());
 
-		foreach ($checksums as $checksum)  {
+		foreach ($checksums as $checksum) {
 
 			// Note that the use of !== false is deliberate (neither != false nor === true will return the desired result); 
 			// strpos() returns either the offset at which the needle string begins in the haystack string, or the boolean 
@@ -221,7 +232,8 @@ class RevaController extends Controller {
 		return '';
 	}
 
-	private function nodeToCS3ResourceInfo(\OCP\Files\Node $node, $token = ''): array {
+	private function nodeToCS3ResourceInfo(\OCP\Files\Node $node, $token = ''): array
+	{
 		$isDirectory = ($node->getType() === \OCP\Files\FileInfo::TYPE_FOLDER);
 		$efssPath = substr($node->getPath(), strlen($this->userFolder->getPath()) + 1);
 		$revaPath = $this->efssPathToRevaPath($efssPath);
@@ -278,30 +290,31 @@ class RevaController extends Controller {
 
 		error_log("nodeToCS3ResourceInfo " . var_export($payload, true));
 
-		return $payload; 
+		return $payload;
 	}
 
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
-	private function shareInfoToCs3Share(IShare $share, $token = ''): array {
+	private function shareInfoToCs3Share(IShare $share, $token = ''): array
+	{
 
 		$shareeParts = explode("@", $share->getSharedWith());
 		if (count($shareeParts) == 1) {
 			error_log("warning, could not find sharee user@host from '" . $share->getSharedWith() . "'");
-			$shareeParts = [ "unknown", "unknown" ];
+			$shareeParts = ["unknown", "unknown"];
 		}
-		
+
 		// owner is happend to be always without @ eg: einstein. so the warning will be always printed.
 		$ownerParts = explode("@", $share->getShareOwner());
 		if (count($ownerParts) == 1) {
 			error_log("warning, could not find owner user@host from '" . $share->getShareOwner() . "'");
-			$ownerParts = [ $ownerParts[0], "unknown" ];
+			$ownerParts = [$ownerParts[0], "unknown"];
 		}
 
 		$stime = 0; // $share->getShareTime()->getTimeStamp();
 
 		try {
 			$filePath = $share->getNode()->getPath();
-		  	$opaqueId = "fileid-" . $filePath;
+			$opaqueId = "fileid-" . $filePath;
 		} catch (\OCP\Files\NotFoundException $e) {
 			$opaqueId = "unknown";
 		}
@@ -316,7 +329,7 @@ class RevaController extends Controller {
 				"opaque_id" => $share->getId()
 			],
 			"resource_id" => [
-			  "opaque_id"  => $opaqueId
+				"opaque_id"  => $opaqueId
 			],
 			"permissions" => [
 				"permissions" => [
@@ -332,22 +345,22 @@ class RevaController extends Controller {
 			// https://github.com/cs3org/go-cs3apis/blob/d29741980082ecd0f70fe10bd2e98cf75764e858/cs3/storage/provider/v1beta1/resources.pb.go#L897
 			"grantee" => [
 				"type" => 1, // https://github.com/cs3org/go-cs3apis/blob/d29741980082ecd0f70fe10bd2e98cf75764e858/cs3/storage/provider/v1beta1/resources.pb.go#L135
-			  "id" => [
+				"id" => [
 					"opaque_id" => $shareeParts[0],
 					"idp" => $shareeParts[1]
-			  ],
+				],
 			],
 			"owner" => [
-			  "id" => [
+				"id" => [
 					"opaque_id" => $ownerParts[0],
 					"idp" => $ownerParts[1]
-			  ],
+				],
 			],
 			"creator" => [
 				"id" => [
 					"opaque_id" => $ownerParts[0],
 					"idp" => $ownerParts[1]
-			  ],
+				],
 			],
 			"ctime" => [
 				"seconds" => $stime
@@ -360,7 +373,8 @@ class RevaController extends Controller {
 	}
 
 	# correspondes the permissions we got from Reva to Nextcloud
-	private function getPermissionsCode(array $permissions) : int {
+	private function getPermissionsCode(array $permissions): int
+	{
 		$permissionsCode = 0;
 		if (!empty($permissions["get_path"]) || !empty($permissions["get_quota"]) || !empty($permissions["initiate_file_download"]) || !empty($permissions["initiate_file_upload"]) || !empty($permissions["stat"])) {
 			$permissionsCode += \OCP\Constants::PERMISSION_READ;
@@ -385,7 +399,8 @@ class RevaController extends Controller {
 	 * @return int
 	 * @throws NotFoundException
 	 */
-	private function getStorageUrl($userId) {
+	private function getStorageUrl($userId)
+	{
 		$storageUrl = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute("sciencemesh.storage.handleHead", ["userId" => $userId, "path" => "foo"]));
 		$storageUrl = preg_replace('/foo$/', '', $storageUrl);
 		return $storageUrl;
@@ -399,20 +414,22 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function AddGrant($userId) {
+	public function AddGrant($userId)
+	{
 		error_log("AddGrant");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		
+
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		// FIXME: Expected a param with a grant to add here;
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
-	private function formatUser($user) {
+	private function formatUser($user)
+	{
 		return [
 			"id" => [
 				"idp" => $this->config->getIopUrl(),
@@ -425,7 +442,8 @@ class RevaController extends Controller {
 		];
 	}
 
-	private function formatFederatedUser($username, $remote) {
+	private function formatFederatedUser($username, $remote)
+	{
 		return [
 			"id" => [
 				"idp" => $remote,
@@ -444,7 +462,8 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function Authenticate($userId) {
+	public function Authenticate($userId)
+	{
 		error_log("Authenticate");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
@@ -467,11 +486,11 @@ class RevaController extends Controller {
 		// Try e.g.:
 		// curl -v -H 'Content-Type:application/json' -d'{"clientID":"einstein",clientSecret":"relativity"}' http://einstein:relativity@localhost/index.php/apps/sciencemesh/~einstein/api/auth/Authenticate
 
-    	// Ref https://github.com/cs3org/reva/issues/2356
+		// Ref https://github.com/cs3org/reva/issues/2356
 		if ($password == $this->config->getRevaLoopbackSecret()) {
 			$user = $this->userManager->get($userId);
 		} else {
-				$user = $this->userManager->checkPassword($userId, $password);
+			$user = $this->userManager->checkPassword($userId, $password);
 		}
 		if ($user) {
 			// FIXME this hardcoded value represents {"resource_id":{"storage_id":"storage-id","opaque_id":"opaque-id"},"path":"some/file/path.txt"} and is not needed
@@ -499,7 +518,8 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 * @throws \OCP\Files\NotPermittedException
 	 */
-	public function CreateDir($userId) {
+	public function CreateDir($userId)
+	{
 		error_log("CreateDir");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
@@ -522,7 +542,8 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 * @throws \OCP\Files\NotPermittedException
 	 */
-	public function CreateHome($userId) {
+	public function CreateHome($userId)
+	{
 		error_log("CreateHome");
 		if (RESTRICT_TO_SCIENCEMESH_FOLDER) {
 			if ($this->userManager->userExists($userId)) {
@@ -549,7 +570,8 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function CreateReference($userId) {
+	public function CreateReference($userId)
+	{
 		error_log("CreateReference");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
@@ -566,7 +588,8 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function CreateStorageSpace($userId) {
+	public function CreateStorageSpace($userId)
+	{
 		error_log("CreateStorageSpace");
 		return new JSONResponse([
 			"status" => [
@@ -618,7 +641,8 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 * @throws FileNotFoundException
 	 */
-	public function Delete($userId) {
+	public function Delete($userId)
+	{
 		error_log("Delete");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
@@ -641,7 +665,8 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function EmptyRecycle($userId) {
+	public function EmptyRecycle($userId)
+	{
 		// DIFFERENT FUNCTION IN NC/OC
 		error_log("EmptyRecycle");
 		if ($this->userManager->userExists($userId)) {
@@ -660,7 +685,8 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function GetMD($userId) {
+	public function GetMD($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
@@ -692,7 +718,7 @@ class RevaController extends Controller {
 		$paths = array_map(function (\OCP\Files\Node $node) {
 			return $node->getPath();
 		}, $dirContents);
-		error_log("User folder ".$this->userFolder->getPath()." has: " . implode(",", $paths));
+		error_log("User folder " . $this->userFolder->getPath() . " has: " . implode(",", $paths));
 
 		// apparently nodeExists requires relative path to the user folder:
 		// see https://github.com/owncloud/core/blob/b7bcbdd9edabf7d639b4bb42c4fb87862ddf4a80/lib/private/Files/Node/Folder.php#L45-L55;
@@ -717,7 +743,8 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function GetPathByID($userId) {
+	public function GetPathByID($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
@@ -736,7 +763,8 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function InitiateUpload($userId) {
+	public function InitiateUpload($userId)
+	{
 		$ref = $this->request->getParam("ref");
 		$path = $this->revaPathToEfssPath((isset($ref["path"]) ? $ref["path"] : ""));
 		if ($this->userManager->userExists($userId)) {
@@ -756,7 +784,8 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function ListFolder($userId) {
+	public function ListFolder($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
@@ -792,14 +821,15 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function ListGrants($userId) {
+	public function ListGrants($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
-		return new JSONResponse("Not implemented",Http::STATUS_NOT_IMPLEMENTED);
+		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
 	/**
@@ -808,7 +838,8 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function ListRecycle($userId) {
+	public function ListRecycle($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
@@ -836,7 +867,8 @@ class RevaController extends Controller {
 						"deletion_time" => [
 							"seconds" => 1234567890
 						]
-					]];
+					]
+				];
 			}
 		}
 		return new JSONResponse($result, Http::STATUS_OK);
@@ -848,14 +880,15 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function ListRevisions($userId) {
+	public function ListRevisions($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
-		return new JSONResponse("Not implemented",Http::STATUS_NOT_IMPLEMENTED);
+		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
 	/**
@@ -864,7 +897,8 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function RemoveGrant($userId) {
+	public function RemoveGrant($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
@@ -881,7 +915,8 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function RestoreRecycleItem($userId) {
+	public function RestoreRecycleItem($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
@@ -912,7 +947,8 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function RestoreRevision($userId) {
+	public function RestoreRevision($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
@@ -929,7 +965,8 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function SetArbitraryMetadata($userId) {
+	public function SetArbitraryMetadata($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
@@ -947,7 +984,8 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function UnsetArbitraryMetadata($userId) {
+	public function UnsetArbitraryMetadata($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
@@ -963,7 +1001,8 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function UpdateGrant($userId) {
+	public function UpdateGrant($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
@@ -985,7 +1024,8 @@ class RevaController extends Controller {
 	 *
 	 * @throws \OCP\Files\InvalidPathException
 	 */
-	private function write($path, $contents, Config $config) {
+	private function write($path, $contents, Config $config)
+	{
 		try {
 			if ($this->userFolder->nodeExists($path)) {
 				$node = $this->userFolder->get($path);
@@ -1004,7 +1044,8 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function Download($userId, $path) {
+	public function Download($userId, $path)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
@@ -1034,7 +1075,8 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function Upload($userId, $path) {
+	public function Upload($userId, $path)
+	{
 		$revaPath = "/$path";
 		error_log("RevaController Upload! $userId $revaPath");
 		try {
@@ -1059,7 +1101,7 @@ class RevaController extends Controller {
 				}
 				$node = $this->userFolder->get($dirname);
 				$node->newFile($filename, $contents);
-				return new JSONResponse("CREATED", Http::STATUS_CREATED);	
+				return new JSONResponse("CREATED", Http::STATUS_CREATED);
 			}
 		} catch (\Exception $e) {
 			return new JSONResponse(["error" => "Upload failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
@@ -1073,7 +1115,8 @@ class RevaController extends Controller {
 	 *
 	 * Get user list.
 	 */
-	public function GetUser($dummy) {
+	public function GetUser($dummy)
+	{
 		$this->init(false);
 
 		$userToCheck = $this->request->getParam('opaque_id');
@@ -1095,16 +1138,17 @@ class RevaController extends Controller {
 	 *
 	 * Get user by claim.
 	 */
-	public function GetUserByClaim($dummy) {
+	public function GetUserByClaim($dummy)
+	{
 		$this->init(false);
 
 		$userToCheck = $this->request->getParam('value');
-        
+
 		if ($this->request->getParam('claim') == 'username') {
-            error_log("GetUserByClaim, claim = 'username', value = $userToCheck");
-        } else {
-            return new JSONResponse('Please set the claim to username', Http::STATUS_BAD_REQUEST);
-        }
+			error_log("GetUserByClaim, claim = 'username', value = $userToCheck");
+		} else {
+			return new JSONResponse('Please set the claim to username', Http::STATUS_BAD_REQUEST);
+		}
 
 		if ($this->userManager->userExists($userToCheck)) {
 			$user = $this->userManager->get($userToCheck);
@@ -1128,7 +1172,8 @@ class RevaController extends Controller {
 	 * Create a new share in fn with the given access control list.
 	 */
 
-	public function addSentShare($userId) {
+	public function addSentShare($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
@@ -1146,7 +1191,7 @@ class RevaController extends Controller {
 
 		$revaPermissions = null;
 
-		foreach($params['accessMethods'] as $accessMethod) {
+		foreach ($params['accessMethods'] as $accessMethod) {
 			if (isset($accessMethod['webdavOptions'])) {
 				$revaPermissions = $accessMethod['webdavOptions']['permissions'];
 				break;
@@ -1167,7 +1212,7 @@ class RevaController extends Controller {
 			];
 		}
 		$efssPermissions = $this->getPermissionsCode($revaPermissions);
-		$shareWith = $granteeUser."@".$granteeHost;
+		$shareWith = $granteeUser . "@" . $granteeHost;
 		$sharedSecret = $params["token"];
 
 		try {
@@ -1204,10 +1249,11 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function addReceivedShare($userId) {
+	public function addReceivedShare($userId)
+	{
 		$params = $this->request->getParams();
 		error_log("addReceivedShare " . var_export($params, true));
-		foreach($params['protocols'] as $protocol) {
+		foreach ($params['protocols'] as $protocol) {
 			if (isset($protocol['webdavOptions'])) {
 				$sharedSecret = $protocol['webdavOptions']['sharedSecret'];
 				// make sure you have webdav_endpoint = "https://nc1.docker/" under 
@@ -1235,11 +1281,11 @@ class RevaController extends Controller {
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		
+
 		$scienceMeshData = [
 			"is_external" => true,
 		];
-		
+
 		$id = $this->shareProvider->addScienceMeshShare($scienceMeshData, $shareData);
 		return new JSONResponse($id, 201);
 	}
@@ -1252,7 +1298,8 @@ class RevaController extends Controller {
 	 *
 	 * Remove Share from share table
 	 */
-	public function Unshare($userId) {
+	public function Unshare($userId)
+	{
 		error_log("Unshare");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
@@ -1262,10 +1309,10 @@ class RevaController extends Controller {
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
 		if ($this->shareProvider->deleteSentShareByName($userId, $name)) {
-			return new JSONResponse("Deleted Sent Share",Http::STATUS_OK);
+			return new JSONResponse("Deleted Sent Share", Http::STATUS_OK);
 		} else {
 			if ($this->shareProvider->deleteReceivedShareByOpaqueId($userId, $opaqueId)) {
-				return new JSONResponse("Deleted Received Share",Http::STATUS_OK);
+				return new JSONResponse("Deleted Received Share", Http::STATUS_OK);
 			} else {
 				return new JSONResponse("Could not find share", Http::STATUS_BAD_REQUEST);
 			}
@@ -1278,7 +1325,8 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 *
 	 */
-	public function UpdateSentShare($userId) {
+	public function UpdateSentShare($userId)
+	{
 		error_log("UpdateSentShare");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
@@ -1289,7 +1337,7 @@ class RevaController extends Controller {
 		$permissions = $this->request->getParam("p")["permissions"];
 		$permissionsCode = $this->getPermissionsCode($permissions);
 		$name = $this->getNameByOpaqueId($opaqueId);
-		if (!($share = $this->shareProvider->getSentShareByName($userId,$name))) {
+		if (!($share = $this->shareProvider->getSentShareByName($userId, $name))) {
 			return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 		$share->setPermissions($permissionsCode);
@@ -1305,7 +1353,8 @@ class RevaController extends Controller {
 	 *
 	 * UpdateReceivedShare updates the received share with share state.
 	 */
-	public function UpdateReceivedShare($userId) {
+	public function UpdateReceivedShare($userId)
+	{
 		error_log("UpdateReceivedShare");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
@@ -1336,7 +1385,8 @@ class RevaController extends Controller {
 	 * ListSentShares returns the shares created by the user. If md is provided is not nil,
 	 * it returns only shares attached to the given resource.
 	 */
-	public function ListSentShares($userId) {
+	public function ListSentShares($userId)
+	{
 		error_log("ListSentShares");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
@@ -1359,7 +1409,8 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 * ListReceivedShares returns the list of shares the user has access.
 	 */
-	public function ListReceivedShares($userId) {
+	public function ListReceivedShares($userId)
+	{
 		error_log("ListReceivedShares");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
@@ -1371,7 +1422,7 @@ class RevaController extends Controller {
 		if ($shares) {
 			foreach ($shares as $share) {
 				$response = $this->shareInfoToCs3Share($share);
-				array_push($responses,[
+				array_push($responses, [
 					"share" => $response,
 					"state" => 2
 				]);
@@ -1387,7 +1438,8 @@ class RevaController extends Controller {
 	 *
 	 * GetReceivedShare returns the information for a received share the user has access.
 	 */
-	public function GetReceivedShare($userId) {
+	public function GetReceivedShare($userId)
+	{
 		error_log("GetReceivedShare");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
@@ -1402,7 +1454,7 @@ class RevaController extends Controller {
 			$response["state"] = 2;
 			return new JSONResponse($response, Http::STATUS_OK);
 		} catch (\Exception $e) {
-			return new JSONResponse(["error" => $e->getMessage()],Http::STATUS_BAD_REQUEST);
+			return new JSONResponse(["error" => $e->getMessage()], Http::STATUS_BAD_REQUEST);
 		}
 	}
 
@@ -1413,7 +1465,8 @@ class RevaController extends Controller {
 	 *
 	 * GetSentShare gets the information for a share by the given ref.
 	 */
-	public function GetSentShare($userId) {
+	public function GetSentShare($userId)
+	{
 		error_log("GetSentShare");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
@@ -1422,14 +1475,14 @@ class RevaController extends Controller {
 		}
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
-		$share = $this->shareProvider->getSentShareByName($userId,$name);
+		$share = $this->shareProvider->getSentShareByName($userId, $name);
 		if ($share) {
 			$response = $this->shareInfoToCs3Share($share);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
 		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_BAD_REQUEST);
 	}
-	
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -1437,7 +1490,8 @@ class RevaController extends Controller {
 	 *
 	 * GetSentShareByToken gets the information for a share by the given token.
 	 */
-	public function GetSentShareByToken() {
+	public function GetSentShareByToken()
+	{
 		error_log("GetSentShareByToken");
 		$token = $this->request->getParam("Spec")["Token"];
 		$share = $this->shareProvider->getSentShareByToken($token);
