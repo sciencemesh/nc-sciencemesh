@@ -44,7 +44,6 @@ $routes_array = [
 		['name' => 'reva#addSentShare', 'url' => '/~{userId}/api/ocm/addSentShare', 'verb' => 'POST'],
 		['name' => 'reva#addReceivedShare', 'url' => '/~{userId}/api/ocm/addReceivedShare', 'verb' => 'POST'],
 		['name' => 'reva#GetSentShare', 'url' => '/~{userId}/api/ocm/GetSentShare', 'verb' => 'POST'],
-		['name' => 'reva#GetSentShareByToken', 'url' => '/~nobody/api/ocm/GetSentShareByToken', 'verb' => 'POST'],
 		['name' => 'reva#Unshare', 'url' => '/~{userId}/api/ocm/Unshare', 'verb' => 'POST'],
 		['name' => 'reva#UpdateShare', 'url' => '/~{userId}/api/ocm/UpdateShare', 'verb' => 'POST'],
 		['name' => 'reva#ListSentShares', 'url' => '/~{userId}/api/ocm/ListSentShares', 'verb' => 'POST'],
@@ -55,6 +54,9 @@ $routes_array = [
 		['name' => 'reva#UpdateReceivedShare', 'url' => '/~{userId}/api/ocm/UpdateReceivedShare', 'verb' => 'POST'],
 		['name' => 'reva#GetUser', 'url' => '/~{dummy}/api/user/GetUser', 'verb' => 'POST'],
 		['name' => 'reva#GetUserByClaim', 'url' => '/~{dummy}/api/user/GetUserByClaim', 'verb' => 'POST'],
+		// See: https://github.com/cs3org/reva/pull/4115#discussion_r1308371946
+		// we need to handle this route for both nobody and userId.
+		['name' => 'reva#GetSentShareByToken', 'url' => '/~{userId}/api/ocm/GetSentShareByToken', 'verb' => 'POST'],
 
 		// Files routes
 		['name' => 'storage#handleGet', 'url' => '/~{userId}/files/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+']],

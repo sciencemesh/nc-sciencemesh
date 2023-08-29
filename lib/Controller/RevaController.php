@@ -425,6 +425,7 @@ class RevaController extends Controller
 
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		// FIXME: Expected a param with a grant to add here;
+
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
@@ -480,6 +481,7 @@ class RevaController extends Controller
 				return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 			}
 		}
+
 		$userId = $this->request->getParam("clientID");
 		$password = $this->request->getParam("clientSecret");
 
@@ -508,6 +510,7 @@ class RevaController extends Controller
 			];
 			return new JSONResponse($result, Http::STATUS_OK);
 		}
+
 		return new JSONResponse("Username / password not recognized", 401);
 	}
 
@@ -674,6 +677,7 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		// See https://github.com/sciencemesh/oc-sciencemesh/issues/4#issuecomment-1283542906
 		$this->trashManager->deleteAll();
 		return new JSONResponse("OK", Http::STATUS_OK);
@@ -750,10 +754,12 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		// in progress
 		$path = "subdir/";
 		$storageId = $this->request->getParam("storage_id");
 		$opaqueId = $this->request->getParam("opaque_id");
+
 		return new DataResponse($path, Http::STATUS_OK);
 	}
 
@@ -767,6 +773,7 @@ class RevaController extends Controller
 	{
 		$ref = $this->request->getParam("ref");
 		$path = $this->revaPathToEfssPath((isset($ref["path"]) ? $ref["path"] : ""));
+
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
@@ -775,6 +782,7 @@ class RevaController extends Controller
 		$response = [
 			"simple" => $path
 		];
+
 		return new JSONResponse($response, Http::STATUS_OK);
 	}
 
@@ -812,6 +820,7 @@ class RevaController extends Controller
 		$resourceInfos = array_map(function (\OCP\Files\Node $node) {
 			return $this->nodeToCS3ResourceInfo($node);
 		}, $nodes);
+
 		return new JSONResponse($resourceInfos, Http::STATUS_OK);
 	}
 
@@ -828,7 +837,9 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
+
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
@@ -845,9 +856,11 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
 		$result = [];
+
 		foreach ($trashItems as $node) {
 			if (preg_match("/^sciencemesh/", $node->getOriginalLocation())) {
 				$path = $this->efssPathToRevaPath($node->getOriginalLocation());
@@ -871,6 +884,7 @@ class RevaController extends Controller
 				];
 			}
 		}
+
 		return new JSONResponse($result, Http::STATUS_OK);
 	}
 
@@ -887,7 +901,9 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
+
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
@@ -904,7 +920,9 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
+
 		// FIXME: Expected a grant to remove here;
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -922,6 +940,7 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$key = $this->request->getParam("key");
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
@@ -938,6 +957,7 @@ class RevaController extends Controller
 				}
 			}
 		}
+
 		return new JSONResponse('["error" => "Not found."]', 404);
 	}
 
@@ -954,7 +974,9 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
+
 		// FIXME: Expected a revision param here;
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -972,8 +994,10 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		$metadata = $this->request->getParam("metadata");
+
 		// FIXME: What do we do with the existing metadata? Just toss it and overwrite with the new value? Or do we merge?
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -991,6 +1015,7 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -1008,7 +1033,9 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+	
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
+
 		// FIXME: Expected a paramater with the grant(s)
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -1120,11 +1147,13 @@ class RevaController extends Controller
 		$this->init(false);
 
 		$userToCheck = $this->request->getParam('opaque_id');
+	
 		if ($this->userManager->userExists($userToCheck)) {
 			$user = $this->userManager->get($userToCheck);
 			$response = $this->formatUser($user);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
+
 		return new JSONResponse(
 			['message' => 'User does not exist'],
 			Http::STATUS_NOT_FOUND
@@ -1211,6 +1240,7 @@ class RevaController extends Controller
 				"initiate_file_download" => true
 			];
 		}
+
 		$efssPermissions = $this->getPermissionsCode($revaPermissions);
 		$shareWith = $granteeUser . "@" . $granteeHost;
 		$sharedSecret = $params["token"];
@@ -1263,6 +1293,7 @@ class RevaController extends Controller
 				break;
 			}
 		}
+
 		if (!isset($sharedSecret)) {
 			throw new \Exception('sharedSecret not found');
 		}
@@ -1276,6 +1307,7 @@ class RevaController extends Controller
 			"owner" => $params["owner"]["opaqueId"], // 'einstein'
 			"user" => $userId // 'marie'
 		];
+
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
@@ -1306,8 +1338,10 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
+
 		if ($this->shareProvider->deleteSentShareByName($userId, $name)) {
 			return new JSONResponse("Deleted Sent Share", Http::STATUS_OK);
 		} else {
@@ -1333,6 +1367,7 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$opaqueId = $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
 		$permissions = $this->request->getParam("p")["permissions"];
 		$permissionsCode = $this->getPermissionsCode($permissions);
@@ -1340,6 +1375,7 @@ class RevaController extends Controller
 		if (!($share = $this->shareProvider->getSentShareByName($userId, $name))) {
 			return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
+
 		$share->setPermissions($permissionsCode);
 		$shareUpdated = $this->shareProvider->update($share);
 		$response = $this->shareInfoToCs3Share($shareUpdated);
@@ -1361,10 +1397,12 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$response = [];
 		$resourceId = $this->request->getParam("received_share")["share"]["resource_id"];
 		$permissions = $this->request->getParam("received_share")["share"]["permissions"];
 		$permissionsCode = $this->getPermissionsCode($permissions);
+
 		try {
 			$share = $this->shareProvider->getReceivedShareByToken($resourceId);
 			$share->setPermissions($permissionsCode);
@@ -1393,8 +1431,10 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$responses = [];
 		$shares = $this->shareProvider->getSentShares($userId);
+
 		if ($shares) {
 			foreach ($shares as $share) {
 				array_push($responses, $this->shareInfoToCs3Share($share));
@@ -1417,8 +1457,10 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$responses = [];
 		$shares = $this->shareProvider->getReceivedShares($userId);
+	
 		if ($shares) {
 			foreach ($shares as $share) {
 				$response = $this->shareInfoToCs3Share($share);
@@ -1446,8 +1488,10 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
+
 		try {
 			$share = $this->shareProvider->getReceivedShareByToken($opaqueId);
 			$response = $this->shareInfoToCs3Share($share, $opaqueId);
@@ -1473,13 +1517,16 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
 		$share = $this->shareProvider->getSentShareByName($userId, $name);
+
 		if ($share) {
 			$response = $this->shareInfoToCs3Share($share);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
+
 		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_BAD_REQUEST);
 	}
 
@@ -1490,15 +1537,29 @@ class RevaController extends Controller
 	 *
 	 * GetSentShareByToken gets the information for a share by the given token.
 	 */
-	public function GetSentShareByToken()
+	public function GetSentShareByToken($userId)
 	{
-		error_log("GetSentShareByToken");
+		error_log("GetSentShareByToken: user is -> $userId" );
+
+		// See: https://github.com/cs3org/reva/pull/4115#discussion_r1308371946 
+		if ($userId !== "nobody") {
+			if ($this->userManager->userExists($userId)) {
+				$this->init($userId);
+			} else {
+				return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+			}
+		}
+
 		$token = $this->request->getParam("Spec")["Token"];
+		error_log("GetSentShareByToken: " . var_export($this->request->getParam("Spec"), true));
+
 		$share = $this->shareProvider->getSentShareByToken($token);
+		
 		if ($share) {
 			$response = $this->shareInfoToCs3Share($share, $token);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
+		
 		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_BAD_REQUEST);
 	}
 }
