@@ -268,15 +268,7 @@ class RevaController extends Controller
 				"seconds" => $node->getMTime(),
 			],
 			"path" => $revaPath,
-			"permission_set" => [
-				"add_grant" => false,
-				"create_container" => false,
-				"delete" => false,
-				"get_path" => false,
-				"get_quota" => false,
-				"initiate_file_download" => false,
-				"initiate_file_upload" => false,
-			],
+			"permissions" => $node->getPermissions(),
 			"size" => $node->getSize(),
 			"canonical_metadata" => [
 				"target" => null,
@@ -334,17 +326,7 @@ class RevaController extends Controller
 			"resource_id" => [
 				"opaque_id"  => $opaqueId
 			],
-			"permissions" => [
-				"permissions" => [
-					"add_grant" => false,
-					"create_container" => false,
-					"delete" => false,
-					"get_path" => false,
-					"get_quota" => false,
-					"initiate_file_download" => false,
-					"initiate_file_upload" => false,
-				]
-			],
+			"permissions" => $share->getNode()->getPermissions(),
 			// https://github.com/cs3org/go-cs3apis/blob/d29741980082ecd0f70fe10bd2e98cf75764e858/cs3/storage/provider/v1beta1/resources.pb.go#L897
 			"grantee" => [
 				"type" => 1, // https://github.com/cs3org/go-cs3apis/blob/d29741980082ecd0f70fe10bd2e98cf75764e858/cs3/storage/provider/v1beta1/resources.pb.go#L135
