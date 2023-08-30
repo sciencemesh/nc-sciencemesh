@@ -117,6 +117,11 @@ class RevaController extends Controller
 		}
 	}
 
+	private function getDomainFromURL($url) {
+		// converts https://revaowncloud1.docker/ to revaowncloud1.docker
+		return str_ireplace("www.", "", parse_url($url, PHP_URL_HOST));
+	}
+
 	private function removePrefix($string, $prefix)
 	{
 		// first check if string is actually prefixed or not.
@@ -283,7 +288,7 @@ class RevaController extends Controller
 			],
 			"owner" => [
 				"opaque_id" => $this->userId,
-				"idp" => $this->config->getIopUrl(),
+				"idp" => $this->getDomainFromURL($this->config->getIopUrl()),
 			],
 			"token" => $token
 		];
@@ -303,11 +308,9 @@ class RevaController extends Controller
 			$shareeParts = ["unknown", "unknown"];
 		}
 
-		// owner is happend to be always without @ eg: einstein. so the warning will be always printed.
 		$ownerParts = explode("@", $share->getShareOwner());
 		if (count($ownerParts) == 1) {
-			error_log("warning, could not find owner user@host from '" . $share->getShareOwner() . "'");
-			$ownerParts = [$ownerParts[0], "unknown"];
+			$ownerParts = [$ownerParts[0], $this->getDomainFromURL($this->config->getIopUrl())];
 		}
 
 		$stime = 0; // $share->getShareTime()->getTimeStamp();
@@ -323,7 +326,7 @@ class RevaController extends Controller
 		// https://github.com/cs3org/reva/blob/v1.18.0/pkg/ocm/share/manager/nextcloud/nextcloud.go#L77
 		// and
 		// https://github.com/cs3org/go-cs3apis/blob/d297419/cs3/sharing/ocm/v1beta1/resources.pb.go#L100
-		return [
+		$payload = [
 			"id" => [
 				// https://github.com/cs3org/go-cs3apis/blob/d297419/cs3/sharing/ocm/v1beta1/resources.pb.go#L423
 				"opaque_id" => $share->getId()
@@ -370,6 +373,10 @@ class RevaController extends Controller
 			],
 			"token" => $token,
 		];
+
+		error_log("shareInfoToCs3Share " . var_export($payload, true));
+
+		return $payload;
 	}
 
 	# correspondes the permissions we got from Reva to Nextcloud
@@ -1033,7 +1040,7 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-	
+
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 
 		// FIXME: Expected a paramater with the grant(s)
@@ -1073,6 +1080,7 @@ class RevaController extends Controller
 	 */
 	public function Download($userId, $path)
 	{
+		error_log("Download");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
@@ -1147,7 +1155,7 @@ class RevaController extends Controller
 		$this->init(false);
 
 		$userToCheck = $this->request->getParam('opaque_id');
-	
+
 		if ($this->userManager->userExists($userToCheck)) {
 			$user = $this->userManager->get($userToCheck);
 			$response = $this->formatUser($user);
@@ -1460,7 +1468,7 @@ class RevaController extends Controller
 
 		$responses = [];
 		$shares = $this->shareProvider->getReceivedShares($userId);
-	
+
 		if ($shares) {
 			foreach ($shares as $share) {
 				$response = $this->shareInfoToCs3Share($share);
@@ -1539,7 +1547,7 @@ class RevaController extends Controller
 	 */
 	public function GetSentShareByToken($userId)
 	{
-		error_log("GetSentShareByToken: user is -> $userId" );
+		error_log("GetSentShareByToken: user is -> $userId");
 
 		// See: https://github.com/cs3org/reva/pull/4115#discussion_r1308371946 
 		if ($userId !== "nobody") {
@@ -1554,12 +1562,12 @@ class RevaController extends Controller
 		error_log("GetSentShareByToken: " . var_export($this->request->getParam("Spec"), true));
 
 		$share = $this->shareProvider->getSentShareByToken($token);
-		
+
 		if ($share) {
 			$response = $this->shareInfoToCs3Share($share, $token);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
-		
+
 		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_BAD_REQUEST);
 	}
 }
