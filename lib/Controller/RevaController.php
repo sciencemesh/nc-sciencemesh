@@ -117,7 +117,8 @@ class RevaController extends Controller
 		}
 	}
 
-	private function getDomainFromURL($url) {
+	private function getDomainFromURL($url)
+	{
 		// converts https://revaowncloud1.docker/ to revaowncloud1.docker
 		return str_ireplace("www.", "", parse_url($url, PHP_URL_HOST));
 	}
@@ -300,10 +301,7 @@ class RevaController extends Controller
 			$shareeParts = ["unknown", "unknown"];
 		}
 
-		$ownerParts = explode("@", $share->getShareOwner());
-		if (count($ownerParts) == 1) {
-			$ownerParts = [$ownerParts[0], $this->getDomainFromURL($this->config->getIopUrl())];
-		}
+		$ownerParts = [$share->getShareOwner(), $this->getDomainFromURL($this->config->getIopUrl())];
 
 		$stime = 0; // $share->getShareTime()->getTimeStamp();
 
