@@ -440,7 +440,7 @@ class RevaController extends Controller
 	{
 		return [
 			"id" => [
-				"idp" => $this->config->getIopUrl(),
+				"idp" =>  $this->getDomainFromURL($this->config->getIopUrl()),
 				"opaque_id" => $user->getUID(),
 			],
 			"display_name" => $user->getDisplayName(),
