@@ -33,7 +33,7 @@ use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 
 define('RESTRICT_TO_SCIENCEMESH_FOLDER', false);
 define('EFSS_PREFIX', (RESTRICT_TO_SCIENCEMESH_FOLDER ? 'sciencemesh/' : ''));
-define('REVA_PREFIX', '/home'); // See https://github.com/pondersource/sciencemesh-php/issues/96#issuecomment-1298656896
+define('REVA_PREFIX', '/home/'); // See https://github.com/pondersource/sciencemesh-php/issues/96#issuecomment-1298656896
 
 class RevaController extends Controller
 {
