@@ -147,7 +147,7 @@ class RevaController extends Controller
 			error_log("revaPathToEfssPath: Interpreting special case $revaPath as ''");
 			return '';
 		}
-		$ret = $this->removePrefix($revaPath, REVA_PREFIX);
+		$ret = EFSS_PREFIX . $this->removePrefix($revaPath, REVA_PREFIX);
 		error_log("revaPathToEfssPath: Interpreting $revaPath as $ret");
 		return $ret;
 	}
