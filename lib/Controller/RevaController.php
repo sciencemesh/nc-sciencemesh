@@ -385,9 +385,6 @@ class RevaController extends Controller
 		return $permissionsCode;
 	}
 
-
-
-
 	/**
 	 * @param int
 	 *
