@@ -33,7 +33,7 @@ use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 
 define('RESTRICT_TO_SCIENCEMESH_FOLDER', false);
 define('EFSS_PREFIX', (RESTRICT_TO_SCIENCEMESH_FOLDER ? 'sciencemesh/' : ''));
-define('REVA_PREFIX', '/home/'); // See https://github.com/pondersource/sciencemesh-php/issues/96#issuecomment-1298656896
+define('REVA_PREFIX', '/home'); // See https://github.com/pondersource/sciencemesh-php/issues/96#issuecomment-1298656896
 
 class RevaController extends Controller
 {
@@ -143,7 +143,11 @@ class RevaController extends Controller
 
 	private function revaPathToEfssPath($revaPath)
 	{
-		$ret = EFSS_PREFIX . $this->removePrefix($revaPath, REVA_PREFIX);
+		if ("$revaPath/" == REVA_PREFIX) {
+			error_log("revaPathToEfssPath: Interpreting special case $revaPath as ''");
+			return '';
+		}
+		$ret = $this->removePrefix($revaPath, REVA_PREFIX);
 		error_log("revaPathToEfssPath: Interpreting $revaPath as $ret");
 		return $ret;
 	}
@@ -380,6 +384,10 @@ class RevaController extends Controller
 		}
 		return $permissionsCode;
 	}
+
+
+
+
 	/**
 	 * @param int
 	 *
