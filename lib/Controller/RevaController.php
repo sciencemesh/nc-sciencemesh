@@ -294,8 +294,8 @@ class RevaController extends Controller
 		return $payload;
 	}
 
-	# For ListReceivedShares, GetReceivshareInfoedShare and UpdateReceivedShare we need to include "state:2"
-	private function ToCs3Share(IShare $share, $token = ''): array
+	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
+	private function shareInfoToCs3Share(IShare $share, $token = ''): array
 	{
 		$shareeParts = explode("@", $share->getSharedWith());
 		if (count($shareeParts) == 1) {
