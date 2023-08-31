@@ -330,7 +330,8 @@ class RevaController extends Controller
 		$stime = 0; // $share->getShareTime()->getTimeStamp();
 
 		try {
-			$opaqueId = "fileid-" . $share->getNode()->getPath();
+			$filePath = $share->getNode()->getPath();
+			$opaqueId = "fileid-" . $filePath;
 		} catch (\OCP\Files\NotFoundException $e) {
 			$opaqueId = "unknown";
 		}
@@ -379,7 +380,7 @@ class RevaController extends Controller
 		];
 
 		error_log("shareInfoToCs3Share " . var_export($payload, true));
-		
+
 		return $payload;
 	}
 
@@ -449,6 +450,7 @@ class RevaController extends Controller
 				"opaque_id" => $user->getUID(),
 			],
 			"display_name" => $user->getDisplayName(),
+			"username" => $user->getUID(),
 			"email" => $user->getEmailAddress(),
 			"type" => 1,
 		];
