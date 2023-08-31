@@ -644,7 +644,9 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
+
 		try {
 			$node = $this->userFolder->get($path);
 			$node->delete($path);
@@ -914,8 +916,8 @@ class RevaController extends Controller
 		}
 
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
-
 		// FIXME: Expected a grant to remove here;
+
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
@@ -968,8 +970,8 @@ class RevaController extends Controller
 		}
 
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
-
 		// FIXME: Expected a revision param here;
+
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
@@ -989,8 +991,8 @@ class RevaController extends Controller
 
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		$metadata = $this->request->getParam("metadata");
-
 		// FIXME: What do we do with the existing metadata? Just toss it and overwrite with the new value? Or do we merge?
+
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
@@ -1082,6 +1084,7 @@ class RevaController extends Controller
 			error_log("Download: file found");
 			$node = $this->userFolder->get($efssPath);
 			$nodeLocalFilePath = $node->getView()->getLocalFile($node->getPath());
+			error_log("Download local file path: $nodeLocalFilePath");
 			return new StreamResponse($nodeLocalFilePath);
 		}
 
@@ -1463,6 +1466,7 @@ class RevaController extends Controller
 				]);
 			}
 		}
+
 		return new JSONResponse($responses, Http::STATUS_OK);
 	}
 
