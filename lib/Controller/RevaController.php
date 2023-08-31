@@ -12,6 +12,7 @@ use OCP\IURLGenerator;
 use OCP\ISession;
 use OCP\IConfig;
 
+use OC\Files\View;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotPermittedException;
 use \OCP\Files\NotFoundException;
@@ -1082,7 +1083,8 @@ class RevaController extends Controller
 		if ($success) {
 			error_log("Download: file found");
 			$node = $this->userFolder->get($efssPath);
-			$nodeLocalFilePath = $node->getView()->getLocalFile($node->getPath());
+			$view = new View();
+			$nodeLocalFilePath = $view->getLocalFile($node->getPath());
 			error_log("Download local file path: $nodeLocalFilePath");
 			return new StreamResponse($nodeLocalFilePath);
 		}
