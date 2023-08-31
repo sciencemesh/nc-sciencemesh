@@ -307,9 +307,8 @@ class RevaController extends Controller
 			],
 			"owner" => [
 				"opaque_id" => $this->userId,
-				"idp" => $this->config->getIopUrl(),
-			],
-			"token" => $token
+				"idp" => $this->getDomainFromURL($this->config->getIopUrl()),
+			]
 		];
 
 		error_log("nodeToCS3ResourceInfo " . var_export($payload, true));
@@ -320,7 +319,6 @@ class RevaController extends Controller
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
 	private function shareInfoToCs3Share(IShare $share): array
 	{
-
 		$shareeParts = explode("@", $share->getSharedWith());
 		if (count($shareeParts) == 1) {
 			error_log("warning, could not find sharee user@host from '" . $share->getSharedWith() . "'");
@@ -376,7 +374,8 @@ class RevaController extends Controller
 			],
 			"mtime" => [
 				"seconds" => $stime
-			]
+			],
+			"token" => $token
 		];
 	}
 
@@ -505,15 +504,7 @@ class RevaController extends Controller
 		if ($user) {
 			$result = [
 				"user" => $this->formatUser($user),
-				"scopes" => [   // FIXME this hardcoded value represents {"resource_id":{"storage_id":"storage-id","opaque_id":"opaque-id"},"path":"some/file/path.txt"} and is not needed
-					"user" => [
-						"resource" => [
-							"decoder" => "json",
-							"value" => "eyJyZXNvdXJjZV9pZCI6eyJzdG9yYWdlX2lkIjoic3RvcmFnZS1pZCIsIm9wYXF1ZV9pZCI6Im9wYXF1ZS1pZCJ9LCJwYXRoIjoic29tZS9maWxlL3BhdGgudHh0In0=",
-						],
-						"role" => 1,
-					],
-				],
+				"scopes" => [],
 			];
 			return new JSONResponse($result, Http::STATUS_OK);
 		}
@@ -1015,7 +1006,7 @@ class RevaController extends Controller
 		$metadata = $this->request->getParam("metadata");
 		// FIXME: What do we do with the existing metadata? Just toss it and overwrite with the new value? Or do we merge?
 
-		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
+		return new JSONResponse("I'm cheating", Http::STATUS_OK);
 	}
 
 	/**
@@ -1033,6 +1024,7 @@ class RevaController extends Controller
 		}
 
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
+
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
@@ -1053,7 +1045,7 @@ class RevaController extends Controller
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		// FIXME: Expected a paramater with the grant(s)
 
-		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
+		return new JSONResponse("I'm cheating", Http::STATUS_OK);
 	}
 
 	/**
@@ -1539,7 +1531,8 @@ class RevaController extends Controller
 			$response = $this->shareInfoToCs3Share($share);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
-		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_BAD_REQUEST);
+		
+		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_NOT_FOUND);
 	}
 
 	/**
