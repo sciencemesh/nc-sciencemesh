@@ -437,7 +437,7 @@ class RevaController extends Controller
 	{
 		return [
 			"id" => [
-				"idp" => $remote,
+				"idp" => $this->getDomainFromURL($remote),
 				"opaque_id" => $username,
 			],
 			"display_name" => $username,   // FIXME: this comes in the OCM share payload
@@ -1009,7 +1009,7 @@ class RevaController extends Controller
 		}
 
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
-		
+
 		return new JSONResponse("I'm cheating", Http::STATUS_OK);
 	}
 
