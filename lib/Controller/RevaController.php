@@ -317,7 +317,7 @@ class RevaController extends Controller
 	}
 
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
-	private function shareInfoToCs3Share(IShare $share): array
+	private function shareInfoToCs3Share(IShare $share, $token = ''): array
 	{
 		$shareeParts = explode("@", $share->getSharedWith());
 		if (count($shareeParts) == 1) {
@@ -339,7 +339,7 @@ class RevaController extends Controller
 		// https://github.com/cs3org/reva/blob/v1.18.0/pkg/ocm/share/manager/nextcloud/nextcloud.go#L77
 		// and
 		// https://github.com/cs3org/go-cs3apis/blob/d297419/cs3/sharing/ocm/v1beta1/resources.pb.go#L100
-		return [
+		$payload = [
 			"id" => [
 				// https://github.com/cs3org/go-cs3apis/blob/d297419/cs3/sharing/ocm/v1beta1/resources.pb.go#L423
 				"opaque_id" => $share->getId()
@@ -377,6 +377,10 @@ class RevaController extends Controller
 			],
 			"token" => $token
 		];
+
+		error_log("shareInfoToCs3Share " . var_export($payload, true));
+		
+		return $payload;
 	}
 
 	# correspondes the permissions we got from Reva to Nextcloud
@@ -441,7 +445,7 @@ class RevaController extends Controller
 	{
 		return [
 			"id" => [
-				"idp" => $this->config->getIopUrl(),
+				"idp" => $this->getDomainFromURL($this->config->getIopUrl()),
 				"opaque_id" => $user->getUID(),
 			],
 			"display_name" => $user->getDisplayName(),
@@ -454,7 +458,7 @@ class RevaController extends Controller
 	{
 		return [
 			"id" => [
-				"idp" => $remote,
+				"idp" => $this->getDomainFromURL($remote),
 				"opaque_id" => $username,
 			],
 			"display_name" => $username,   // FIXME: this comes in the OCM share payload
@@ -504,11 +508,19 @@ class RevaController extends Controller
 		if ($user) {
 			$result = [
 				"user" => $this->formatUser($user),
-				"scopes" => [],
+				"scopes" => [
+					"user" => [
+						"resource" => [
+							"decoder" => "json",
+							"value" => "eyJyZXNvdXJjZV9pZCI6eyJzdG9yYWdlX2lkIjoic3RvcmFnZS1pZCIsIm9wYXF1ZV9pZCI6Im9wYXF1ZS1pZCJ9LCJwYXRoIjoic29tZS9maWxlL3BhdGgudHh0In0=",
+						],
+						"role" => 1,
+					],
+				],
 			];
 			return new JSONResponse($result, Http::STATUS_OK);
 		}
-	
+
 		return new JSONResponse("Username / password not recognized", 401);
 	}
 
@@ -1531,7 +1543,7 @@ class RevaController extends Controller
 			$response = $this->shareInfoToCs3Share($share);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
-		
+
 		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_NOT_FOUND);
 	}
 
