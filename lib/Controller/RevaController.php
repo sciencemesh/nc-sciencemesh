@@ -1019,8 +1019,9 @@ class RevaController extends Controller
 
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		$metadata = $this->request->getParam("metadata");
-		// FIXME: What do we do with the existing metadata? Just toss it and overwrite with the new value? Or do we merge?
-
+		
+		// FIXME: this needs to be implemented for real, merging the incoming metadata with the existing ones.
+		// For now we return OK to let the uploads go through, see https://github.com/sciencemesh/nc-sciencemesh/issues/43
 		return new JSONResponse("I'm cheating", Http::STATUS_OK);
 	}
 
@@ -1040,6 +1041,7 @@ class RevaController extends Controller
 
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 
+		// FIXME: this needs to be implemented for real
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
@@ -1058,9 +1060,9 @@ class RevaController extends Controller
 		}
 
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
-		// FIXME: Expected a paramater with the grant(s)
 
-		return new JSONResponse("I'm cheating", Http::STATUS_OK);
+		// FIXME: Expected a paramater with the grant(s)
+		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
 	/**
