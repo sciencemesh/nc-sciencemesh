@@ -1061,12 +1061,13 @@ class RevaController extends Controller
 		return true;
 	}
 
-	/**
-	 * @PublicPage
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 * @return Http\DataResponse|JSONResponse
-	 */
+    /**
+     * @PublicPage
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @return JSONResponse|StreamResponse
+     * @throws NotFoundException
+     */
 	public function Download($userId, $path)
 	{
 		error_log("Download");
@@ -1081,8 +1082,7 @@ class RevaController extends Controller
 		$efssPath = $this->removePrefix($path, "home/");
 		error_log("Download efss path: $efssPath");
 
-		$success = $this->userFolder->nodeExists($efssPath);
-		if ($success) {
+		if ($this->userFolder->nodeExists($efssPath)) {
 			error_log("Download: file found");
 			$node = $this->userFolder->get($efssPath);
 			$view = new View();
@@ -1095,38 +1095,52 @@ class RevaController extends Controller
 		return new JSONResponse(["error" => "File not found"], 404);
 	}
 
-	/**
-	 * @PublicPage
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 * @return Http\DataResponse|JSONResponse
-	 */
-	public function Upload($userId, $path)
-	{
+    /**
+     * @PublicPage
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @param $userId
+     * @param $path
+     * @return JSONResponse
+     */
+	public function Upload($userId, $path): JSONResponse
+    {
 		$revaPath = "/$path";
-		error_log("RevaController Upload! $userId $revaPath");
+		error_log("RevaController Upload! user: $userId , reva path: $revaPath");
+
 		try {
 			if ($this->userManager->userExists($userId)) {
 				$this->init($userId);
 			} else {
 				return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 			}
-			$contents = $entityBody = file_get_contents('php://input');
-			// error_log("PUT body = " . var_export($contents, true));
-			error_log("Uploading! $revaPath");
-			$ncPath = $this->revaPathToEfssPath($revaPath);
-			if ($this->userFolder->nodeExists($ncPath)) {
-				$node = $this->userFolder->get($ncPath);
-				$node->putContent($contents);
+
+			$contents = file_get_contents('php://input');
+            $efssPath = $this->revaPathToEfssPath($revaPath);
+
+			error_log("Uploading! reva path: $revaPath");
+            error_log("Uploading! efss path $efssPath");
+
+			if ($this->userFolder->nodeExists($efssPath)) {
+				$node = $this->userFolder->get($efssPath);
+                $view = new View();
+                $view->file_put_contents($node->getPath(), $contents);
 				return new JSONResponse("OK", Http::STATUS_OK);
 			} else {
-				$filename = basename($ncPath);
-				$dirname = dirname($ncPath);
+                $dirname = dirname($efssPath);
+                $filename = basename($efssPath);
+
 				if (!$this->userFolder->nodeExists($dirname)) {
 					$this->userFolder->newFolder($dirname);
 				}
+
 				$node = $this->userFolder->get($dirname);
-				$node->newFile($filename, $contents);
+				$node->newFile($filename);
+
+                $node = $this->userFolder->get($efssPath);
+                $view = new View();
+                $view->file_put_contents($node->getPath(), $contents);
+
 				return new JSONResponse("CREATED", Http::STATUS_CREATED);
 			}
 		} catch (\Exception $e) {
