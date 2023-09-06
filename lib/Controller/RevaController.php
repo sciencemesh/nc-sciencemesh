@@ -510,7 +510,10 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
+
+		$urlDecodedPath = urldecode($this->request->getParam("path"));
+		$path = $this->revaPathToEfssPath($urlDecodedPath);
+
 		try {
 			$this->userFolder->newFolder($path);
 		} catch (NotPermittedException $e) {
