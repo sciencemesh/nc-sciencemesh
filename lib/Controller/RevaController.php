@@ -121,6 +121,7 @@ class RevaController extends Controller
 	private function getDomainFromURL($url)
 	{
 		// converts https://revaowncloud1.docker/ to revaowncloud1.docker
+		// Note, DO not use it on anything whithout http(s) in the start, it would return null.
 		return str_ireplace("www.", "", parse_url($url, PHP_URL_HOST));
 	}
 
@@ -438,7 +439,7 @@ class RevaController extends Controller
 	{
 		return [
 			"id" => [
-				"idp" => $this->getDomainFromURL($remote),
+				"idp" => $remote,
 				"opaque_id" => $username,
 			],
 			"display_name" => $username,   // FIXME: this comes in the OCM share payload
