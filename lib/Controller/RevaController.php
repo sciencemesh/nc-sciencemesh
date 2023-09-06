@@ -251,9 +251,6 @@ class RevaController extends Controller
 		$revaPath = $this->efssPathToRevaPath($efssPath);
 
 		$payload = [
-			"opaque" => [
-				"map" => null,
-			],
 			"type" => ($isDirectory ? 2 : 1),
 			"id" => [
 				"opaque_id" => "fileid-" . $revaPath,
@@ -277,14 +274,6 @@ class RevaController extends Controller
 			"path" => $revaPath,
 			"permissions" => $node->getPermissions(),
 			"size" => $node->getSize(),
-			"canonical_metadata" => [
-				"target" => null,
-			],
-			"arbitrary_metadata" => [
-				"metadata" => [
-					".placeholder" => "ignore",
-				],
-			],
 			"owner" => [
 				"opaque_id" => $this->userId,
 				"idp" => $this->getDomainFromURL($this->config->getIopUrl()),
