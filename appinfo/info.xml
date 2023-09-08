@@ -23,7 +23,7 @@
     <bugs>https://github.com/pondersource/nc-sciencemesh/issues</bugs>
     <screenshot>https://avatars.githubusercontent.com/u/46584276</screenshot>
     <dependencies>
-        <nextcloud min-version="15" max-version="26"/>
+        <nextcloud min-version="28" max-version="28"/>
         <owncloud min-version="10" max-version="10"/>
     </dependencies>
     <settings>
