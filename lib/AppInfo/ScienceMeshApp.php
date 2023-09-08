@@ -7,7 +7,7 @@ use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
 
 class ScienceMeshApp extends App {
 	public const APP_ID = 'sciencemesh';
-    public const SCIENCEMESH_POSTFIX = ' (Sciencemesh)';
+	public const SCIENCEMESH_POSTFIX = ' (Sciencemesh)';
 	public const SHARE_TYPE_REMOTE = 6;
 	public const SHARE_TYPE_SCIENCEMESH = 6;
 	
@@ -31,9 +31,6 @@ class ScienceMeshApp extends App {
 		$container->registerService('User', function ($c) {
 			return $c->query('UserSession')->getUser();
 		});
-
-
-
 
 		$notificationManager = $server->getNotificationManager();
         $notificationManager->registerNotifier(function () use ($notificationManager) {

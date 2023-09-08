@@ -125,6 +125,9 @@ class AppController extends Controller {
 		$invitationsData = $this->httpClient->generateTokenFromReva($this->userId, $recipient);
 		$inviteLinkStr = $invitationsData["invite_link"];
 
+		// check if invite_link exist before accessing.
+		$inviteLinkStr = isset($invitationsData["invite_link"]) ? $invitationsData["invite_link"] : false;
+
 		if (!$inviteLinkStr) {
 			return new PlainResponse("Unexpected response from Reva", Http::STATUS_INTERNAL_SERVER_ERROR);
 		}

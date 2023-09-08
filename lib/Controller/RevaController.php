@@ -12,13 +12,15 @@ use OCP\IURLGenerator;
 use OCP\ISession;
 use OCP\IConfig;
 
+use OC\Files\View;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotPermittedException;
 use \OCP\Files\NotFoundException;
 
 use OCP\AppFramework\Http;
-use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\DataResponse;
+use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\StreamResponse;
 use OCP\AppFramework\Controller;
 
 use OCP\Share\IManager;
@@ -31,16 +33,14 @@ use OCP\IL10N;
 use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 
 define('RESTRICT_TO_SCIENCEMESH_FOLDER', false);
-define('NEXTCLOUD_PREFIX', (RESTRICT_TO_SCIENCEMESH_FOLDER ? 'sciencemesh/' : ''));
+define('EFSS_PREFIX', (RESTRICT_TO_SCIENCEMESH_FOLDER ? 'sciencemesh/' : ''));
 define('REVA_PREFIX', '/home/'); // See https://github.com/pondersource/sciencemesh-php/issues/96#issuecomment-1298656896
 
-class RevaController extends Controller {
+class RevaController extends Controller
+{
 
 	/* @var ISession */
 	private $session;
-
-	///** @var LoggerInterface */
-	//private $logger;
 
 	/** @var IUserManager */
 	private $userManager;
@@ -56,12 +56,6 @@ class RevaController extends Controller {
 
 	/** @var Config */
 	private $config;
-
-	///** @var ICloudFederationFactory */
-	//private $factory;
-
-	///** @var ICloudIdManager*/
-	//private $cloudIdManager;
 
 	/** @var \OCP\Files\Node */
 	private $lockedNode;
@@ -84,16 +78,12 @@ class RevaController extends Controller {
 		TrashBinManager $trashManager,
 		IManager $shareManager,
 		IGroupManager $groupManager,
-		/*ICloudFederationProviderManager $cloudFederationProviderManager,
-		ICloudFederationFactory $factory,
-		ICloudIdManager $cloudIdManager,*/
-		//LoggerInterface $logger,
 		IAppManager $appManager,
 		IL10N $l10n,
 		ScienceMeshShareProvider $shareProvider
 	) {
 		parent::__construct($AppName, $request);
-		require_once(__DIR__.'/../../vendor/autoload.php');
+		require_once(__DIR__ . '/../../vendor/autoload.php');
 
 		$this->rootFolder = $rootFolder;
 		$this->request = $request;
@@ -106,38 +96,77 @@ class RevaController extends Controller {
 		$this->trashManager = $trashManager;
 		$this->shareManager = $shareManager;
 		$this->groupManager = $groupManager;
-		/*$this->cloudFederationProviderManager = $cloudFederationProviderManager;
-		$this->factory = $factory;
-		$this->cloudIdManager = $cloudIdManager;*/
-		//$this->logger = $logger;
+
 		$this->appManager = $appManager;
 		$this->l = $l10n;
 		$this->shareProvider = $shareProvider;
 	}
-	private function init($userId) {
+
+	private function init($userId)
+	{
 		error_log("RevaController init for user '$userId'");
 		$this->userId = $userId;
 		$this->checkRevadAuth();
 		if ($userId) {
-			if($this->rootFolder->nodeExists($userId)) {
+			error_log("root folder absolute path '" . $this->rootFolder->getPath() . "'");
+			if ($this->rootFolder->nodeExists($userId)) {
 				$this->userFolder = $this->rootFolder->getUserFolder($userId);
+				error_log("user folder '" . $this->userFolder->getPath() . "'");
 			} else {
-				error_log("root folder absolute path '" . $this->rootFolder->getPath() . "'");
 				throw new \Exception("Home folder not found for user '$userId', have they logged in through the ownCloud web interface yet?");
 			}
 		}
 	}
 
-	private function revaPathToNextcloudPath($revaPath) {
-		$ret = NEXTCLOUD_PREFIX . substr($revaPath, strlen(REVA_PREFIX));
-		error_log("Interpreting $revaPath as $ret");
-    // return $this->userFolder->getPath() . NEXTCLOUD_PREFIX . substr($revaPath, strlen(REVA_PREFIX));
-    return $ret;
+	private function getDomainFromURL($url)
+	{
+		// converts https://revaowncloud1.docker/ to revaowncloud1.docker
+		// Note: do not use it on anything whithout http(s) in the start, it would return null.
+		return str_ireplace("www.", "", parse_url($url, PHP_URL_HOST));
 	}
 
-	private function nextcloudPathToRevaPath($nextcloudPath) {
-    // return REVA_PREFIX . substr($nextcloudPath, strlen($this->userFolder->getPath() . NEXTCLOUD_PREFIX));
-    return REVA_PREFIX . substr($nextcloudPath, strlen(NEXTCLOUD_PREFIX));
+	private function removePrefix($string, $prefix)
+	{
+		// first check if string is actually prefixed or not.
+		$len = strlen($prefix);
+		if (substr($string, 0, $len) === $prefix) {
+			$ret = substr($string, $len);
+		} else {
+			$ret = $string;
+		}
+
+		return $ret;
+	}
+
+	private function revaPathFromOpaqueId($opaqueId)
+	{
+		return $this->removePrefix($opaqueId, "fileid-");
+	}
+
+	private function revaPathToEfssPath($revaPath)
+	{
+		if ("$revaPath/" == REVA_PREFIX) {
+			error_log("revaPathToEfssPath: Interpreting special case $revaPath as ''");
+			return '';
+		}
+		$ret = EFSS_PREFIX . $this->removePrefix($revaPath, REVA_PREFIX);
+		error_log("revaPathToEfssPath: Interpreting $revaPath as $ret");
+		return $ret;
+	}
+
+	private function efssPathToRevaPath($efssPath)
+	{
+		$ret = REVA_PREFIX . $this->removePrefix($efssPath, EFSS_PREFIX);
+		error_log("efssPathToRevaPath: Interpreting $efssPath as $ret");
+		return $ret;
+	}
+
+	private function efssFullPathToRelativePath($efssFullPath)
+	{
+
+		$ret = $this->removePrefix($efssFullPath, $this->userFolder->getPath());
+		error_log("efssFullPathToRelativePath: Interpreting $efssFullPath as $ret");
+		return $ret;
 	}
 
 	/**
@@ -149,7 +178,8 @@ class RevaController extends Controller {
 	 * @throws \OCP\Files\InvalidPathException
 	 * @throws \OCP\Files\NotFoundException
 	 */
-	private function lock(\OCP\Files\Node $node) {
+	private function lock(\OCP\Files\Node $node)
+	{
 		$node->lock(ILockingProvider::LOCK_SHARED);
 		$this->lockedNode = $node;
 	}
@@ -164,7 +194,8 @@ class RevaController extends Controller {
 	 * @throws \Exception
 	 * @return \DateTime
 	 */
-	private function parseDate(string $expireDate): \DateTime {
+	private function parseDate(string $expireDate): \DateTime
+	{
 		try {
 			$date = new \DateTime($expireDate);
 		} catch (\Exception $e) {
@@ -175,81 +206,101 @@ class RevaController extends Controller {
 
 		return $date;
 	}
-	private function checkRevadAuth() {
+
+	private function checkRevadAuth()
+	{
 		error_log("checkRevadAuth");
 		$authHeader = $this->request->getHeader('X-Reva-Secret');
 
-    if ($authHeader != $this->config->getRevaSharedSecret()) {
-		  throw new \OCP\Files\NotPermittedException('Please set an http request header "X-Reva-Secret: <your_shared_secret>"!');
+		if ($authHeader != $this->config->getRevaSharedSecret()) {
+			throw new \OCP\Files\NotPermittedException('Please set an http request header "X-Reva-Secret: <your_shared_secret>"!');
 		}
 	}
-	private function getRevaPathFromOpaqueId($opaqueId) {
-		return substr($opaqueId, strlen("fileid-"));
+
+	private function getChecksum(\OCP\Files\Node $node, $checksumType = 4): string
+	{
+		$checksumTypes = array(
+			1 => "UNSET:",
+			2 => "ADLER32:",
+			3 => "MD5:",
+			4 => "SHA1:",
+		);
+
+		// checksum is in db table oc_filecache.
+		// folders do not have checksum
+		$checksums = explode(' ', $node->getFileInfo()->getChecksum());
+
+		foreach ($checksums as $checksum) {
+
+			// Note that the use of !== false is deliberate (neither != false nor === true will return the desired result); 
+			// strpos() returns either the offset at which the needle string begins in the haystack string, or the boolean 
+			// false if the needle isn't found. Since 0 is a valid offset and 0 is "falsey", we can't use simpler constructs
+			//  like !strpos($a, 'are').
+			if (strpos($checksum, $checksumTypes[$checksumType]) !== false) {
+				return substr($checksum, strlen($checksumTypes[$checksumType]));
+			}
+		}
+
+		return '';
 	}
 
-	private function nodeToCS3ResourceInfo(\OCP\Files\Node $node, $token = '') : array {
+	private function nodeToCS3ResourceInfo(\OCP\Files\Node $node, $token = ''): array
+	{
 		$isDirectory = ($node->getType() === \OCP\Files\FileInfo::TYPE_FOLDER);
-		$nextcloudPath = substr($node->getPath(), strlen($this->userFolder->getPath()) + 1);
-		$revaPath = $this->nextcloudPathToRevaPath($nextcloudPath);
-		return [
-			"opaque" => [
-				"map" => null,
-			],
+		$efssPath = substr($node->getPath(), strlen($this->userFolder->getPath()) + 1);
+		$revaPath = $this->efssPathToRevaPath($efssPath);
+
+		$payload = [
 			"type" => ($isDirectory ? 2 : 1),
 			"id" => [
 				"opaque_id" => "fileid-" . $revaPath,
 			],
 			"checksum" => [
-				"type" => 0,
-				"sum" => "",
+				// checksum algorithms:
+				// 1 UNSET
+				// 2 ADLER32
+				// 3 MD5
+				// 4 SHA1
+
+				// note: folders do not have checksum, their type should be unset.
+				"type" => $isDirectory ? 1 : 4,
+				"sum" => $this->getChecksum($node, $isDirectory ? 1 : 4),
 			],
-			"etag" => "deadbeef",
+			"etag" => $node->getEtag(),
 			"mime_type" => ($isDirectory ? "folder" : $node->getMimetype()),
 			"mtime" => [
 				"seconds" => $node->getMTime(),
 			],
 			"path" => $revaPath,
-			"permission_set" => [
-				"add_grant" => false,
-				"create_container" => false,
-				"delete" => false,
-				"get_path" => false,
-				"get_quota" => false,
-				"initiate_file_download" => false,
-				"initiate_file_upload" => false,
-			],
+			"permissions" => $node->getPermissions(),
 			"size" => $node->getSize(),
-			"canonical_metadata" => [
-				"target" => null,
-			],
-			"arbitrary_metadata" => [
-				"metadata" => [
-					".placeholder" => "ignore",
-				],
-			],
 			"owner" => [
 				"opaque_id" => $this->userId,
-				"idp" => $this->config->getIopUrl(),
-			],
-			"token" => $token
+				"idp" => $this->getDomainFromURL($this->config->getIopUrl()),
+			]
 		];
+
+		error_log("nodeToCS3ResourceInfo " . var_export($payload, true));
+
+		return $payload;
 	}
 
 	# For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
-	private function shareInfoToCs3Share(IShare $share, $token = ''): array {
+	private function shareInfoToCs3Share(IShare $share, $token = ''): array
+	{
 		$shareeParts = explode("@", $share->getSharedWith());
 		if (count($shareeParts) == 1) {
 			error_log("warning, could not find sharee user@host from '" . $share->getSharedWith() . "'");
-			$shareeParts = [ "unknown", "unknown" ];
+			$shareeParts = ["unknown", "unknown"];
 		}
-		$ownerParts = explode("@", $share->getShareOwner());
-		if (count($ownerParts) == 1) {
-			error_log("warning, could not find owner user@host from '" . $share->getShareOwner() . "'");
-			$ownerParts = [ $ownerParts[0], "unknown" ];
-		}
+
+		$ownerParts = [$share->getShareOwner(), $this->getDomainFromURL($this->config->getIopUrl())];
+
 		$stime = 0; // $share->getShareTime()->getTimeStamp();
+
 		try {
-		  $opaqueId = "fileid-" . $share->getNode()->getPath();
+			$filePath = $share->getNode()->getPath();
+			$opaqueId = "fileid-" . $filePath;
 		} catch (\OCP\Files\NotFoundException $e) {
 			$opaqueId = "unknown";
 		}
@@ -258,45 +309,34 @@ class RevaController extends Controller {
 		// https://github.com/cs3org/reva/blob/v1.18.0/pkg/ocm/share/manager/nextcloud/nextcloud.go#L77
 		// and
 		// https://github.com/cs3org/go-cs3apis/blob/d297419/cs3/sharing/ocm/v1beta1/resources.pb.go#L100
-		return [
+		$payload = [
 			"id" => [
 				// https://github.com/cs3org/go-cs3apis/blob/d297419/cs3/sharing/ocm/v1beta1/resources.pb.go#L423
 				"opaque_id" => $share->getId()
 			],
 			"resource_id" => [
-
-			  "opaque_id"  => $opaqueId,
+				"opaque_id"  => $opaqueId
 			],
-			"permissions" => [
-				"permissions" => [
-					"add_grant" => false,
-					"create_container" => false,
-					"delete" => false,
-					"get_path" => false,
-					"get_quota" => false,
-					"initiate_file_download" => false,
-					"initiate_file_upload" => false,
-				]
-			],
+			"permissions" => $share->getNode()->getPermissions(),
 			// https://github.com/cs3org/go-cs3apis/blob/d29741980082ecd0f70fe10bd2e98cf75764e858/cs3/storage/provider/v1beta1/resources.pb.go#L897
 			"grantee" => [
 				"type" => 1, // https://github.com/cs3org/go-cs3apis/blob/d29741980082ecd0f70fe10bd2e98cf75764e858/cs3/storage/provider/v1beta1/resources.pb.go#L135
-			  "id" => [
+				"id" => [
 					"opaque_id" => $shareeParts[0],
 					"idp" => $shareeParts[1]
-			  ],
+				],
 			],
 			"owner" => [
-			  "id" => [
+				"id" => [
 					"opaque_id" => $ownerParts[0],
 					"idp" => $ownerParts[1]
-			  ],
+				],
 			],
 			"creator" => [
 				"id" => [
 					"opaque_id" => $ownerParts[0],
 					"idp" => $ownerParts[1]
-			  ],
+				],
 			],
 			"ctime" => [
 				"seconds" => $stime
@@ -304,12 +344,17 @@ class RevaController extends Controller {
 			"mtime" => [
 				"seconds" => $stime
 			],
-			"token" => $token,
+			"token" => $token
 		];
+
+		error_log("shareInfoToCs3Share " . var_export($payload, true));
+
+		return $payload;
 	}
 
 	# correspondes the permissions we got from Reva to Nextcloud
-	private function getPermissionsCode(array $permissions) : int {
+	private function getPermissionsCode(array $permissions): int
+	{
 		$permissionsCode = 0;
 		if (!empty($permissions["get_path"]) || !empty($permissions["get_quota"]) || !empty($permissions["initiate_file_download"]) || !empty($permissions["initiate_file_upload"]) || !empty($permissions["stat"])) {
 			$permissionsCode += \OCP\Constants::PERMISSION_READ;
@@ -328,13 +373,15 @@ class RevaController extends Controller {
 		}
 		return $permissionsCode;
 	}
+
 	/**
 	 * @param int
 	 *
 	 * @return int
 	 * @throws NotFoundException
 	 */
-	private function getStorageUrl($userId) {
+	private function getStorageUrl($userId)
+	{
 		$storageUrl = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute("sciencemesh.storage.handleHead", ["userId" => $userId, "path" => "foo"]));
 		$storageUrl = preg_replace('/foo$/', '', $storageUrl);
 		return $storageUrl;
@@ -348,23 +395,26 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function AddGrant($userId) {
+	public function AddGrant($userId)
+	{
 		error_log("AddGrant");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
+
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		// FIXME: Expected a param with a grant to add here;
+
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
-	private function formatUser($user) {
+	private function formatUser($user)
+	{
 		return [
 			"id" => [
-				"idp" => $this->config->getIopUrl(),
+				"idp" =>  $this->getDomainFromURL($this->config->getIopUrl()),
 				"opaque_id" => $user->getUID(),
 			],
 			"display_name" => $user->getDisplayName(),
@@ -374,32 +424,59 @@ class RevaController extends Controller {
 		];
 	}
 
+	private function formatFederatedUser($username, $remote)
+	{
+		return [
+			"id" => [
+				"idp" => $remote,
+				"opaque_id" => $username,
+			],
+			"display_name" => $username,   // FIXME: this comes in the OCM share payload
+			"username" => $username,
+			"email" => "unknown@unknown",  // FIXME: this comes in the OCM share payload
+			"type" => 6,
+		];
+	}
+
 	/**
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function Authenticate($userId) {
+	public function Authenticate($userId)
+	{
 		error_log("Authenticate");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
-			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+			$share = $this->shareProvider->getSentShareByToken($userId);
+			if ($share) {
+				$sharedWith = explode("@", $share->getSharedWith());
+				$result = [
+					"user" => $this->formatFederatedUser($sharedWith[0], $sharedWith[1]),
+					"scopes" => [],
+				];
+				return new JSONResponse($result, Http::STATUS_OK);
+			} else {
+				return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+			}
 		}
+
 		$userId = $this->request->getParam("clientID");
 		$password = $this->request->getParam("clientSecret");
 
 		// Try e.g.:
 		// curl -v -H 'Content-Type:application/json' -d'{"clientID":"einstein",clientSecret":"relativity"}' http://einstein:relativity@localhost/index.php/apps/sciencemesh/~einstein/api/auth/Authenticate
 
-    // Ref https://github.com/cs3org/reva/issues/2356
+		// Ref https://github.com/cs3org/reva/issues/2356
 		if ($password == $this->config->getRevaLoopbackSecret()) {
 			$user = $this->userManager->get($userId);
 		} else {
-				$user = $this->userManager->checkPassword($userId, $password);
+			$user = $this->userManager->checkPassword($userId, $password);
 		}
 		if ($user) {
+			// FIXME this hardcoded value represents {"resource_id":{"storage_id":"storage-id","opaque_id":"opaque-id"},"path":"some/file/path.txt"} and is not needed
 			$result = [
 				"user" => $this->formatUser($user),
 				"scopes" => [
@@ -414,6 +491,7 @@ class RevaController extends Controller {
 			];
 			return new JSONResponse($result, Http::STATUS_OK);
 		}
+
 		return new JSONResponse("Username / password not recognized", 401);
 	}
 
@@ -424,14 +502,18 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 * @throws \OCP\Files\NotPermittedException
 	 */
-	public function CreateDir($userId) {
+	public function CreateDir($userId)
+	{
 		error_log("CreateDir");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
+
+		$urlDecodedPath = urldecode($this->request->getParam("path"));
+		$path = $this->revaPathToEfssPath($urlDecodedPath);
+
 		try {
 			$this->userFolder->newFolder($path);
 		} catch (NotPermittedException $e) {
@@ -447,7 +529,8 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 * @throws \OCP\Files\NotPermittedException
 	 */
-	public function CreateHome($userId) {
+	public function CreateHome($userId)
+	{
 		error_log("CreateHome");
 		if (RESTRICT_TO_SCIENCEMESH_FOLDER) {
 			if ($this->userManager->userExists($userId)) {
@@ -474,14 +557,15 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function CreateReference($userId) {
+	public function CreateReference($userId)
+	{
 		error_log("CreateReference");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
@@ -491,7 +575,8 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function CreateStorageSpace($userId) {
+	public function CreateStorageSpace($userId)
+	{
 		error_log("CreateStorageSpace");
 		return new JSONResponse([
 			"status" => [
@@ -543,14 +628,17 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 * @throws FileNotFoundException
 	 */
-	public function Delete($userId) {
+	public function Delete($userId)
+	{
 		error_log("Delete");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
+
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
+
 		try {
 			$node = $this->userFolder->get($path);
 			$node->delete($path);
@@ -566,13 +654,16 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function EmptyRecycle($userId) {
+	public function EmptyRecycle($userId)
+	{
+		// DIFFERENT FUNCTION IN NC/OC
 		error_log("EmptyRecycle");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		// See https://github.com/sciencemesh/oc-sciencemesh/issues/4#issuecomment-1283542906
 		$this->trashManager->deleteAll();
 		return new JSONResponse("OK", Http::STATUS_OK);
@@ -584,34 +675,48 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function GetMD($userId) {
+	public function GetMD($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$ref = $this->request->getParam("ref");
 		error_log("GetMD " . var_export($ref, true));
+
 		if (isset($ref["path"])) {
-						$revaPath = $ref["path"]; // e.g. GetMD {"ref":{"path":"/home/asdf"},"mdKeys":null}
-		} else if (isset($ref["resource_id"]) && isset($ref["resource_id"]["opaque_id"]) && str_starts_with($ref["resource_id"]["opaque_id"], "fileid-/home/")) {
-						$revaPath = substr($ref["resource_id"]["opaque_id"], strlen("fileid-")); // e.g. GetMD {"ref":{"resource_id":{"storage_id":"00000000-0000-0000-0000-000000000000","opaque_id":"fileid-/home/asdf"}},"mdKeys":null}
+			// e.g. GetMD {"ref": {"path": "/home/asdf"}, "mdKeys": null}
+			$revaPath = $ref["path"];
+		} else if (isset($ref["resource_id"]) && isset($ref["resource_id"]["opaque_id"]) && str_starts_with($ref["resource_id"]["opaque_id"], "fileid-")) {
+			// e.g. GetMD {"ref": {"resource_id": {"storage_id": "00000000-0000-0000-0000-000000000000", "opaque_id": "fileid-/asdf"}}, "mdKeys":null}
+			$revaPath = $this->revaPathFromOpaqueId($ref["resource_id"]["opaque_id"]);
 		} else {
-						throw new \Exception("ref not understood!");
+			throw new \Exception("ref not understood!");
 		}
-		$path = $this->revaPathToNextcloudPath($revaPath);
-		error_log("Looking for nc path '$path' in user folder; reva path '".$ref["path"]."' ");
-		$dirContents = $this->userFolder->getDirectoryListing();
-		$paths = array_map(function (\OCP\Files\Node $node) {
-			return $node->getPath();
-		}, $dirContents);
-		error_log("User folder ".$this->userFolder->getPath()." has: " . implode(",", $paths));
-		$success = $this->userFolder->nodeExists($path);
+
+		// this path is url coded, we need to decode it
+		// for example this converts "we%20have%20space" to "we have space"
+		$revaPathDecoded = urldecode($revaPath);
+
+		$path = $this->revaPathToEfssPath($revaPathDecoded);
+		error_log("Looking for EFSS path '$path' in user folder; reva path '$revaPathDecoded' ");
+
+		// apparently nodeExists requires relative path to the user folder:
+		// see https://github.com/owncloud/core/blob/b7bcbdd9edabf7d639b4bb42c4fb87862ddf4a80/lib/private/Files/Node/Folder.php#L45-L55;
+		// another string manipulation is necessary to extract relative path from full path.
+		$relativePath = $this->efssFullPathToRelativePath($path);
+
+		$success = $this->userFolder->nodeExists($relativePath);
 		if ($success) {
-			$node = $this->userFolder->get($path);
+			error_log("File found");
+			$node = $this->userFolder->get($relativePath);
 			$resourceInfo = $this->nodeToCS3ResourceInfo($node);
 			return new JSONResponse($resourceInfo, Http::STATUS_OK);
 		}
+
+		error_log("File not found");
 		return new JSONResponse(["error" => "File not found"], 404);
 	}
 
@@ -621,16 +726,19 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function GetPathByID($userId) {
+	public function GetPathByID($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		// in progress
 		$path = "subdir/";
 		$storageId = $this->request->getParam("storage_id");
 		$opaqueId = $this->request->getParam("opaque_id");
+
 		return new DataResponse($path, Http::STATUS_OK);
 	}
 
@@ -640,9 +748,11 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function InitiateUpload($userId) {
+	public function InitiateUpload($userId)
+	{
 		$ref = $this->request->getParam("ref");
-		$path = $this->revaPathToNextcloudPath((isset($ref["path"]) ? $ref["path"] : ""));
+		$path = $this->revaPathToEfssPath((isset($ref["path"]) ? $ref["path"] : ""));
+
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
@@ -651,6 +761,7 @@ class RevaController extends Controller {
 		$response = [
 			"simple" => $path
 		];
+
 		return new JSONResponse($response, Http::STATUS_OK);
 	}
 
@@ -660,23 +771,35 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function ListFolder($userId) {
+	public function ListFolder($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$ref = $this->request->getParam("ref");
-		$path = $this->revaPathToNextcloudPath((isset($ref["path"]) ? $ref["path"] : ""));
+
+		// this path is url coded, we need to decode it
+		// for example this converts "we%20have%20space" to "we have space"
+		$pathDecoded = urldecode((isset($ref["path"]) ? $ref["path"] : ""));
+		$path = $this->revaPathToEfssPath($pathDecoded);
 		$success = $this->userFolder->nodeExists($path);
+		error_log("ListFolder: $path");
+
 		if (!$success) {
+			error_log("ListFolder: path not found");
 			return new JSONResponse(["error" => "Folder not found"], 404);
 		}
+		error_log("ListFolder: path found");
+
 		$node = $this->userFolder->get($path);
 		$nodes = $node->getDirectoryListing();
 		$resourceInfos = array_map(function (\OCP\Files\Node $node) {
 			return $this->nodeToCS3ResourceInfo($node);
 		}, $nodes);
+
 		return new JSONResponse($resourceInfos, Http::STATUS_OK);
 	}
 
@@ -686,14 +809,17 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function ListGrants($userId) {
+	public function ListGrants($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
-		return new JSONResponse("Not implemented",Http::STATUS_NOT_IMPLEMENTED);
+
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
+
+		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
 	/**
@@ -702,18 +828,21 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function ListRecycle($userId) {
+	public function ListRecycle($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
 		$result = [];
+
 		foreach ($trashItems as $node) {
 			if (preg_match("/^sciencemesh/", $node->getOriginalLocation())) {
-				$path = $this->nextcloudPathToRevaPath($node->getOriginalLocation());
+				$path = $this->efssPathToRevaPath($node->getOriginalLocation());
 				$result = [
 					[
 						"opaque" => [
@@ -730,9 +859,11 @@ class RevaController extends Controller {
 						"deletion_time" => [
 							"seconds" => 1234567890
 						]
-					]];
+					]
+				];
 			}
 		}
+
 		return new JSONResponse($result, Http::STATUS_OK);
 	}
 
@@ -742,30 +873,16 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function ListRevisions($userId) {
+	public function ListRevisions($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
-		return new JSONResponse("Not implemented",Http::STATUS_NOT_IMPLEMENTED);
-	}
 
-	/**
-	 * @PublicPage
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 * @return Http\DataResponse|JSONResponse
-	 */
-	public function RemoveGrant($userId) {
-		if ($this->userManager->userExists($userId)) {
-			$this->init($userId);
-		} else {
-			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
-		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
-		// FIXME: Expected a grant to remove here;
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
+
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
@@ -775,12 +892,34 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function RestoreRecycleItem($userId) {
+	public function RemoveGrant($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
+		// FIXME: Expected a grant to remove here;
+
+		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
+	}
+
+	/**
+	 * @PublicPage
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 * @return Http\DataResponse|JSONResponse
+	 */
+	public function RestoreRecycleItem($userId)
+	{
+		if ($this->userManager->userExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
+
 		$key = $this->request->getParam("key");
 		$user = $this->userManager->get($userId);
 		$trashItems = $this->trashManager->listTrashRoot($user);
@@ -791,12 +930,13 @@ class RevaController extends Controller {
 				// unique key string, see:
 				// https://github.com/cs3org/cs3apis/blob/6eab4643f5113a54f4ce4cd8cb462685d0cdd2ef/cs3/storage/provider/v1beta1/resources.proto#L318
 
-				if ($this->revaPathToNextcloudPath($key) == $node->getOriginalLocation()) {
+				if ($this->revaPathToEfssPath($key) == $node->getOriginalLocation()) {
 					$this->trashManager->restoreItem($node);
 					return new JSONResponse("OK", Http::STATUS_OK);
 				}
 			}
 		}
+
 		return new JSONResponse('["error" => "Not found."]', 404);
 	}
 
@@ -806,14 +946,17 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function RestoreRevision($userId) {
+	public function RestoreRevision($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
+
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		// FIXME: Expected a revision param here;
+
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
 
@@ -823,16 +966,20 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function SetArbitraryMetadata($userId) {
+	public function SetArbitraryMetadata($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
+
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		$metadata = $this->request->getParam("metadata");
-		// FIXME: What do we do with the existing metadata? Just toss it and overwrite with the new value? Or do we merge?
-		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
+
+		// FIXME: this needs to be implemented for real, merging the incoming metadata with the existing ones.
+		// For now we return OK to let the uploads go through, see https://github.com/sciencemesh/nc-sciencemesh/issues/43
+		return new JSONResponse("I'm cheating", Http::STATUS_OK);
 	}
 
 	/**
@@ -841,14 +988,18 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function UnsetArbitraryMetadata($userId) {
+	public function UnsetArbitraryMetadata($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
-		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
+
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
+
+		// FIXME: this needs to be implemented for real
+		return new JSONResponse("I'm cheating", Http::STATUS_OK);
 	}
 
 	/**
@@ -857,13 +1008,16 @@ class RevaController extends Controller {
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function UpdateGrant($userId) {
+	public function UpdateGrant($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToNextcloudPath($this->request->getParam("path"));
+
+		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
+
 		// FIXME: Expected a paramater with the grant(s)
 		return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
 	}
@@ -879,7 +1033,8 @@ class RevaController extends Controller {
 	 *
 	 * @throws \OCP\Files\InvalidPathException
 	 */
-	private function write($path, $contents, Config $config) {
+	private function write($path, $contents, Config $config)
+	{
 		try {
 			if ($this->userFolder->nodeExists($path)) {
 				$node = $this->userFolder->get($path);
@@ -892,43 +1047,93 @@ class RevaController extends Controller {
 		return true;
 	}
 
-	/**
-	 * @PublicPage
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 * @return Http\DataResponse|JSONResponse
-	 */
-	public function Upload($userId, $path) {
+    /**
+     * @PublicPage
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @return JSONResponse|StreamResponse
+     * @throws NotFoundException
+     */
+	public function Download($userId, $path)
+	{
+		error_log("Download");
+		if ($this->userManager->userExists($userId)) {
+			$this->init($userId);
+		} else {
+			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+		}
+
+		error_log("Download path: $path");
+
+		$efssPath = $this->removePrefix($path, "home/");
+		error_log("Download efss path: $efssPath");
+
+		if ($this->userFolder->nodeExists($efssPath)) {
+			error_log("Download: file found");
+			$node = $this->userFolder->get($efssPath);
+			$view = new View();
+			$nodeLocalFilePath = $view->getLocalFile($node->getPath());
+			error_log("Download local file path: $nodeLocalFilePath");
+			return new StreamResponse($nodeLocalFilePath);
+		}
+
+		error_log("Download: file not found");
+		return new JSONResponse(["error" => "File not found"], 404);
+	}
+
+    /**
+     * @PublicPage
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @param $userId
+     * @param $path
+     * @return JSONResponse
+     */
+	public function Upload($userId, $path): JSONResponse
+    {
 		$revaPath = "/$path";
-		error_log("RevaController Upload! $userId $revaPath");
+		error_log("RevaController Upload! user: $userId , reva path: $revaPath");
+
 		try {
 			if ($this->userManager->userExists($userId)) {
 				$this->init($userId);
 			} else {
 				return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 			}
-			$contents = $entityBody = file_get_contents('php://input');
-			// error_log("PUT body = " . var_export($contents, true));
-			error_log("Uploading! $revaPath");
-			$ncPath = $this->revaPathToNextcloudPath($revaPath);
-			if ($this->userFolder->nodeExists($ncPath)) {
-				$node = $this->userFolder->get($ncPath);
-				$node->putContent($contents);
+
+			$contents = file_get_contents('php://input');
+            $efssPath = $this->revaPathToEfssPath($revaPath);
+
+			error_log("Uploading! reva path: $revaPath");
+            error_log("Uploading! efss path $efssPath");
+
+			if ($this->userFolder->nodeExists($efssPath)) {
+				$node = $this->userFolder->get($efssPath);
+                $view = new View();
+                $view->file_put_contents($node->getPath(), $contents);
 				return new JSONResponse("OK", Http::STATUS_OK);
 			} else {
-				$filename = basename($ncPath);
-				$dirname = dirname($ncPath);
+                $dirname = dirname($efssPath);
+                $filename = basename($efssPath);
+
 				if (!$this->userFolder->nodeExists($dirname)) {
 					$this->userFolder->newFolder($dirname);
 				}
+
 				$node = $this->userFolder->get($dirname);
-				$node->newFile($filename, $contents);
-				return new JSONResponse("CREATED", Http::STATUS_CREATED);	
+				$node->newFile($filename);
+
+                $node = $this->userFolder->get($efssPath);
+                $view = new View();
+                $view->file_put_contents($node->getPath(), $contents);
+
+				return new JSONResponse("CREATED", Http::STATUS_CREATED);
 			}
 		} catch (\Exception $e) {
 			return new JSONResponse(["error" => "Upload failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -936,20 +1141,24 @@ class RevaController extends Controller {
 	 *
 	 * Get user list.
 	 */
-	public function GetUser($dummy) {
+	public function GetUser($dummy)
+	{
 		$this->init(false);
 
 		$userToCheck = $this->request->getParam('opaque_id');
+
 		if ($this->userManager->userExists($userToCheck)) {
 			$user = $this->userManager->get($userToCheck);
 			$response = $this->formatUser($user);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
+
 		return new JSONResponse(
 			['message' => 'User does not exist'],
 			Http::STATUS_NOT_FOUND
 		);
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -957,26 +1166,30 @@ class RevaController extends Controller {
 	 *
 	 * Get user by claim.
 	 */
-	public function GetUserByClaim($dummy) {
+	public function GetUserByClaim($dummy)
+	{
 		$this->init(false);
 
 		$userToCheck = $this->request->getParam('value');
-                if ($this->request->getParam('claim') == 'username') {
-                       error_log("GetUserByClaim, claim = 'username', value = $userToCheck");
-                } else {
-                       return new JSONResponse('Please set the claim to username', Http::STATUS_BAD_REQUEST);
-                }
+
+		if ($this->request->getParam('claim') == 'username') {
+			error_log("GetUserByClaim, claim = 'username', value = $userToCheck");
+		} else {
+			return new JSONResponse('Please set the claim to username', Http::STATUS_BAD_REQUEST);
+		}
 
 		if ($this->userManager->userExists($userToCheck)) {
 			$user = $this->userManager->get($userToCheck);
 			$response = $this->formatUser($user);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
+
 		return new JSONResponse(
 			['message' => 'User does not exist'],
 			Http::STATUS_NOT_FOUND
 		);
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -986,23 +1199,27 @@ class RevaController extends Controller {
 	 * @throws OCSNotFoundException
 	 * Create a new share in fn with the given access control list.
 	 */
-	public function addSentShare($userId) {
+
+	public function addSentShare($userId)
+	{
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$params = $this->request->getParams();
 		error_log("addSentShare " . var_export($params, true));
+
 		$owner = $params["owner"]["opaqueId"]; // . "@" . $params["owner"]["idp"];
 		$name = $params["name"]; // "fileid-/other/q/f gr"
 		$resourceOpaqueId = $params["resourceId"]["opaqueId"]; // "fileid-/other/q/f gr"
-		$revaPath = $this->getRevaPathFromOpaqueId($resourceOpaqueId); // "/other/q/f gr"
-		$nextcloudPath = $this->revaPathToNextcloudPath($revaPath);
+		$revaPath = $this->revaPathFromOpaqueId($resourceOpaqueId); // "/other/q/f gr"
+		$efssPath = $this->revaPathToEfssPath($revaPath);
 
 		$revaPermissions = null;
 
-		foreach($params['accessMethods'] as $accessMethod) {
+		foreach ($params['accessMethods'] as $accessMethod) {
 			if (isset($accessMethod['webdavOptions'])) {
 				$revaPermissions = $accessMethod['webdavOptions']['permissions'];
 				break;
@@ -1022,34 +1239,35 @@ class RevaController extends Controller {
 				"initiate_file_download" => true
 			];
 		}
-		$nextcloudPermissions = $this->getPermissionsCode($revaPermissions);
-		$shareWith = $granteeUser."@".$granteeHost;
-		// $sharedSecretBase64 = $params["grantee"]["opaque"]["map"]["sharedSecret"]["value"];
-		// $sharedSecret = base64_decode($sharedSecretBase64);
-		// error_log("base64 decoded $sharedSecretBase64 to $sharedSecret");
+
+		$efssPermissions = $this->getPermissionsCode($revaPermissions);
+		$shareWith = $granteeUser . "@" . $granteeHost;
 		$sharedSecret = $params["token"];
+
 		try {
-			$node = $this->userFolder->get($nextcloudPath);
+			$node = $this->userFolder->get($efssPath);
 		} catch (NotFoundException $e) {
 			return new JSONResponse(["error" => "Share failed. Resource Path not found"], Http::STATUS_BAD_REQUEST);
 		}
+
 		error_log("calling newShare");
 		$share = $this->shareManager->newShare();
 		$share->setNode($node);
+
 		try {
 			$this->lock($share->getNode());
 		} catch (LockedException $e) {
 			throw new OCSNotFoundException($this->l->t('Could not create share'));
 		}
-		$share->setShareType(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH);//IShare::TYPE_SCIENCEMESH);
+
+		$share->setShareType(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH);
 		$share->setSharedBy($userId);
 		$share->setSharedWith($shareWith);
 		$share->setShareOwner($owner);
-		$share->setPermissions($nextcloudPermissions);
+		$share->setPermissions($efssPermissions);
 		$share->setToken($sharedSecret);
 		$share = $this->shareProvider->createInternal($share);
-		// $response = $this->shareInfoToCs3Share($share);
-		// error_log("response:" . json_encode($response));
+
 		return new DataResponse($share->getId(), Http::STATUS_CREATED);
 	}
 
@@ -1060,10 +1278,11 @@ class RevaController extends Controller {
 	 * @PublicPage
 	 * @return Http\DataResponse|JSONResponse
 	 */
-	public function addReceivedShare($userId) {
+	public function addReceivedShare($userId)
+	{
 		$params = $this->request->getParams();
 		error_log("addReceivedShare " . var_export($params, true));
-		foreach($params['protocols'] as $protocol) {
+		foreach ($params['protocols'] as $protocol) {
 			if (isset($protocol['webdavOptions'])) {
 				$sharedSecret = $protocol['webdavOptions']['sharedSecret'];
 				// make sure you have webdav_endpoint = "https://nc1.docker/" under 
@@ -1073,6 +1292,7 @@ class RevaController extends Controller {
 				break;
 			}
 		}
+
 		if (!isset($sharedSecret)) {
 			throw new \Exception('sharedSecret not found');
 		}
@@ -1086,16 +1306,17 @@ class RevaController extends Controller {
 			"owner" => $params["owner"]["opaqueId"], // 'einstein'
 			"user" => $userId // 'marie'
 		];
+
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		
+
 		$scienceMeshData = [
 			"is_external" => true,
 		];
-		
+
 		$id = $this->shareProvider->addScienceMeshShare($scienceMeshData, $shareData);
 		return new JSONResponse($id, 201);
 	}
@@ -1108,20 +1329,23 @@ class RevaController extends Controller {
 	 *
 	 * Remove Share from share table
 	 */
-	public function Unshare($userId) {
+	public function Unshare($userId)
+	{
 		error_log("Unshare");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
+
 		if ($this->shareProvider->deleteSentShareByName($userId, $name)) {
-			return new JSONResponse("Deleted Sent Share",Http::STATUS_OK);
+			return new JSONResponse("Deleted Sent Share", Http::STATUS_OK);
 		} else {
 			if ($this->shareProvider->deleteReceivedShareByOpaqueId($userId, $opaqueId)) {
-				return new JSONResponse("Deleted Received Share",Http::STATUS_OK);
+				return new JSONResponse("Deleted Received Share", Http::STATUS_OK);
 			} else {
 				return new JSONResponse("Could not find share", Http::STATUS_BAD_REQUEST);
 			}
@@ -1134,25 +1358,29 @@ class RevaController extends Controller {
 	 * @return Http\DataResponse|JSONResponse
 	 *
 	 */
-	public function UpdateSentShare($userId) {
+	public function UpdateSentShare($userId)
+	{
 		error_log("UpdateSentShare");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$opaqueId = $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
 		$permissions = $this->request->getParam("p")["permissions"];
 		$permissionsCode = $this->getPermissionsCode($permissions);
 		$name = $this->getNameByOpaqueId($opaqueId);
-		if (!($share = $this->shareProvider->getSentShareByName($userId,$name))) {
+		if (!($share = $this->shareProvider->getSentShareByName($userId, $name))) {
 			return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
+
 		$share->setPermissions($permissionsCode);
 		$shareUpdated = $this->shareProvider->update($share);
 		$response = $this->shareInfoToCs3Share($shareUpdated);
 		return new JSONResponse($response, Http::STATUS_OK);
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -1160,17 +1388,20 @@ class RevaController extends Controller {
 	 *
 	 * UpdateReceivedShare updates the received share with share state.
 	 */
-	public function UpdateReceivedShare($userId) {
+	public function UpdateReceivedShare($userId)
+	{
 		error_log("UpdateReceivedShare");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$response = [];
 		$resourceId = $this->request->getParam("received_share")["share"]["resource_id"];
 		$permissions = $this->request->getParam("received_share")["share"]["permissions"];
 		$permissionsCode = $this->getPermissionsCode($permissions);
+
 		try {
 			$share = $this->shareProvider->getReceivedShareByToken($resourceId);
 			$share->setPermissions($permissionsCode);
@@ -1182,6 +1413,7 @@ class RevaController extends Controller {
 			return new JSONResponse(["error" => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -1190,15 +1422,18 @@ class RevaController extends Controller {
 	 * ListSentShares returns the shares created by the user. If md is provided is not nil,
 	 * it returns only shares attached to the given resource.
 	 */
-	public function ListSentShares($userId) {
+	public function ListSentShares($userId)
+	{
 		error_log("ListSentShares");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$responses = [];
 		$shares = $this->shareProvider->getSentShares($userId);
+
 		if ($shares) {
 			foreach ($shares as $share) {
 				array_push($responses, $this->shareInfoToCs3Share($share));
@@ -1206,32 +1441,38 @@ class RevaController extends Controller {
 		}
 		return new JSONResponse($responses, Http::STATUS_OK);
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @return Http\DataResponse|JSONResponse
 	 * ListReceivedShares returns the list of shares the user has access.
 	 */
-	public function ListReceivedShares($userId) {
+	public function ListReceivedShares($userId)
+	{
 		error_log("ListReceivedShares");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$responses = [];
 		$shares = $this->shareProvider->getReceivedShares($userId);
+
 		if ($shares) {
 			foreach ($shares as $share) {
 				$response = $this->shareInfoToCs3Share($share);
-				array_push($responses,[
+				array_push($responses, [
 					"share" => $response,
 					"state" => 2
 				]);
 			}
 		}
+
 		return new JSONResponse($responses, Http::STATUS_OK);
 	}
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -1239,22 +1480,25 @@ class RevaController extends Controller {
 	 *
 	 * GetReceivedShare returns the information for a received share the user has access.
 	 */
-	public function GetReceivedShare($userId) {
+	public function GetReceivedShare($userId)
+	{
 		error_log("GetReceivedShare");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
+
 		try {
 			$share = $this->shareProvider->getReceivedShareByToken($opaqueId);
 			$response = $this->shareInfoToCs3Share($share, $opaqueId);
 			$response["state"] = 2;
 			return new JSONResponse($response, Http::STATUS_OK);
 		} catch (\Exception $e) {
-			return new JSONResponse(["error" => $e->getMessage()],Http::STATUS_BAD_REQUEST);
+			return new JSONResponse(["error" => $e->getMessage()], Http::STATUS_BAD_REQUEST);
 		}
 	}
 
@@ -1265,23 +1509,27 @@ class RevaController extends Controller {
 	 *
 	 * GetSentShare gets the information for a share by the given ref.
 	 */
-	public function GetSentShare($userId) {
+	public function GetSentShare($userId)
+	{
 		error_log("GetSentShare");
 		if ($this->userManager->userExists($userId)) {
 			$this->init($userId);
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
+
 		$opaqueId = $this->request->getParam("Spec")["Id"]["opaque_id"];
 		$name = $this->getNameByOpaqueId($opaqueId);
-		$share = $this->shareProvider->getSentShareByName($userId,$name);
+		$share = $this->shareProvider->getSentShareByName($userId, $name);
+
 		if ($share) {
 			$response = $this->shareInfoToCs3Share($share);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
-		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_BAD_REQUEST);
+
+		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_NOT_FOUND);
 	}
-	
+
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -1289,14 +1537,29 @@ class RevaController extends Controller {
 	 *
 	 * GetSentShareByToken gets the information for a share by the given token.
 	 */
-	public function GetSentShareByToken() {
-		error_log("GetSentShareByToken");
+	public function GetSentShareByToken($userId)
+	{
+		error_log("GetSentShareByToken: user is -> $userId");
+
+		// See: https://github.com/cs3org/reva/pull/4115#discussion_r1308371946 
+		if ($userId !== "nobody") {
+			if ($this->userManager->userExists($userId)) {
+				$this->init($userId);
+			} else {
+				return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
+			}
+		}
+
 		$token = $this->request->getParam("Spec")["Token"];
+		error_log("GetSentShareByToken: " . var_export($this->request->getParam("Spec"), true));
+
 		$share = $this->shareProvider->getSentShareByToken($token);
+
 		if ($share) {
 			$response = $this->shareInfoToCs3Share($share, $token);
 			return new JSONResponse($response, Http::STATUS_OK);
 		}
+
 		return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_BAD_REQUEST);
 	}
 }
