@@ -451,7 +451,7 @@ class RevaController extends Controller
 	{
 		return [
 			"id" => [
-				"idp" => $this->getDomainFromURL($remote),
+				"idp" => $remote,
 				"opaque_id" => $username,
 			],
 			"display_name" => $username,   // FIXME: this comes in the OCM share payload
