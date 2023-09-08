@@ -143,6 +143,7 @@ class RevaController extends Controller
 	private function getDomainFromURL($url)
 	{
 		// converts https://revaowncloud1.docker/ to revaowncloud1.docker
+		// Note: DO not use it on anything whithout http(s) in the start, it would return null.
 		return str_ireplace("www.", "", parse_url($url, PHP_URL_HOST));
 	}
 
@@ -272,9 +273,6 @@ class RevaController extends Controller
 		$revaPath = $this->efssPathToRevaPath($efssPath);
 
 		$payload = [
-			"opaque" => [
-				"map" => null,
-			],
 			"type" => ($isDirectory ? 2 : 1),
 			"id" => [
 				"opaque_id" => "fileid-" . $revaPath,
@@ -298,14 +296,6 @@ class RevaController extends Controller
 			"path" => $revaPath,
 			"permissions" => $node->getPermissions(),
 			"size" => $node->getSize(),
-			"canonical_metadata" => [
-				"target" => null,
-			],
-			"arbitrary_metadata" => [
-				"metadata" => [
-					".placeholder" => "ignore",
-				],
-			],
 			"owner" => [
 				"opaque_id" => $this->userId,
 				"idp" => $this->getDomainFromURL($this->config->getIopUrl()),
@@ -542,7 +532,10 @@ class RevaController extends Controller
 		} else {
 			return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 		}
-		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
+
+		$urlDecodedPath = urldecode($this->request->getParam("path"));
+		$path = $this->revaPathToEfssPath($urlDecodedPath);
+
 		try {
 			$this->userFolder->newFolder($path);
 		} catch (NotPermittedException $e) {
@@ -740,13 +733,6 @@ class RevaController extends Controller
 
 		$path = $this->revaPathToEfssPath($revaPathDecoded);
 		error_log("Looking for EFSS path '$path' in user folder; reva path '$revaPathDecoded' ");
-
-		// TODO: Remove this part compeletly. it is only for debugging.
-		$dirContents = $this->userFolder->getDirectoryListing();
-		$paths = array_map(function (\OCP\Files\Node $node) {
-			return $node->getPath();
-		}, $dirContents);
-		error_log("User folder " . $this->userFolder->getPath() . " has: " . implode(",", $paths));
 
 		// apparently nodeExists requires relative path to the user folder:
 		// see https://github.com/owncloud/core/blob/b7bcbdd9edabf7d639b4bb42c4fb87862ddf4a80/lib/private/Files/Node/Folder.php#L45-L55;
@@ -1019,7 +1005,7 @@ class RevaController extends Controller
 
 		$path = $this->revaPathToEfssPath($this->request->getParam("path"));
 		$metadata = $this->request->getParam("metadata");
-		
+
 		// FIXME: this needs to be implemented for real, merging the incoming metadata with the existing ones.
 		// For now we return OK to let the uploads go through, see https://github.com/sciencemesh/nc-sciencemesh/issues/43
 		return new JSONResponse("I'm cheating", Http::STATUS_OK);
@@ -1094,7 +1080,8 @@ class RevaController extends Controller
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-	 * @return Http\DataResponse|JSONResponse
+	 * @return JSONResponse|StreamResponse
+	 * @throws NotFoundException
 	 */
 	public function Download($userId, $path)
 	{
@@ -1110,8 +1097,7 @@ class RevaController extends Controller
 		$efssPath = $this->removePrefix($path, "home/");
 		error_log("Download efss path: $efssPath");
 
-		$success = $this->userFolder->nodeExists($efssPath);
-		if ($success) {
+		if ($this->userFolder->nodeExists($efssPath)) {
 			error_log("Download: file found");
 			$node = $this->userFolder->get($efssPath);
 			$view = new View();
@@ -1128,34 +1114,48 @@ class RevaController extends Controller
 	 * @PublicPage
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
-	 * @return Http\DataResponse|JSONResponse
+	 * @param $userId
+	 * @param $path
+	 * @return JSONResponse
 	 */
-	public function Upload($userId, $path)
+	public function Upload($userId, $path): JSONResponse
 	{
 		$revaPath = "/$path";
-		error_log("RevaController Upload! $userId $revaPath");
+		error_log("RevaController Upload! user: $userId , reva path: $revaPath");
+
 		try {
 			if ($this->userManager->userExists($userId)) {
 				$this->init($userId);
 			} else {
 				return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
 			}
-			$contents = $entityBody = file_get_contents('php://input');
-			// error_log("PUT body = " . var_export($contents, true));
-			error_log("Uploading! $revaPath");
-			$ncPath = $this->revaPathToEfssPath($revaPath);
-			if ($this->userFolder->nodeExists($ncPath)) {
-				$node = $this->userFolder->get($ncPath);
-				$node->putContent($contents);
+
+			$contents = file_get_contents('php://input');
+			$efssPath = $this->revaPathToEfssPath($revaPath);
+
+			error_log("Uploading! reva path: $revaPath");
+			error_log("Uploading! efss path $efssPath");
+
+			if ($this->userFolder->nodeExists($efssPath)) {
+				$node = $this->userFolder->get($efssPath);
+				$view = new View();
+				$view->file_put_contents($node->getPath(), $contents);
 				return new JSONResponse("OK", Http::STATUS_OK);
 			} else {
-				$filename = basename($ncPath);
-				$dirname = dirname($ncPath);
+				$dirname = dirname($efssPath);
+				$filename = basename($efssPath);
+
 				if (!$this->userFolder->nodeExists($dirname)) {
 					$this->userFolder->newFolder($dirname);
 				}
+
 				$node = $this->userFolder->get($dirname);
-				$node->newFile($filename, $contents);
+				$node->newFile($filename);
+
+				$node = $this->userFolder->get($efssPath);
+				$view = new View();
+				$view->file_put_contents($node->getPath(), $contents);
+
 				return new JSONResponse("CREATED", Http::STATUS_CREATED);
 			}
 		} catch (\Exception $e) {
