@@ -121,7 +121,7 @@ class RevaController extends Controller
 	private function getDomainFromURL($url)
 	{
 		// converts https://revaowncloud1.docker/ to revaowncloud1.docker
-		// Note, DO not use it on anything whithout http(s) in the start, it would return null.
+		// Note: do not use it on anything whithout http(s) in the start, it would return null.
 		return str_ireplace("www.", "", parse_url($url, PHP_URL_HOST));
 	}
 
@@ -702,13 +702,6 @@ class RevaController extends Controller
 
 		$path = $this->revaPathToEfssPath($revaPathDecoded);
 		error_log("Looking for EFSS path '$path' in user folder; reva path '$revaPathDecoded' ");
-
-		// TODO: Remove this part compeletly. it is only for debugging.
-		$dirContents = $this->userFolder->getDirectoryListing();
-		$paths = array_map(function (\OCP\Files\Node $node) {
-			return $node->getPath();
-		}, $dirContents);
-		error_log("User folder " . $this->userFolder->getPath() . " has: " . implode(",", $paths));
 
 		// apparently nodeExists requires relative path to the user folder:
 		// see https://github.com/owncloud/core/blob/b7bcbdd9edabf7d639b4bb42c4fb87862ddf4a80/lib/private/Files/Node/Folder.php#L45-L55;
