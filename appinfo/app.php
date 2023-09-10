@@ -1,10 +1,12 @@
 <?php
 declare(strict_types=1);
 
-$app = \OC::$server->query(\OCA\ScienceMesh\AppInfo\ScienceMeshApp::class);
+use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 
-\OC::$server->getNavigationManager()->add(function () {
-    $urlGenerator = \OC::$server->getURLGenerator();
+$app = OC::$server->query(ScienceMeshApp::class);
+
+OC::$server->getNavigationManager()->add(function () {
+    $urlGenerator = OC::$server->getURLGenerator();
 
     return [
         // The string under which your app will be referenced in owncloud
@@ -21,6 +23,6 @@ $app = \OC::$server->query(\OCA\ScienceMesh\AppInfo\ScienceMeshApp::class);
         'icon' => $urlGenerator->imagePath('sciencemesh', 'app.svg'),
 
         // The application's title, used in the navigation & the settings page of your app
-        'name' => \OC::$server->getL10N('sciencemesh')->t('ScienceMesh'),
+        'name' => OC::$server->getL10N('sciencemesh')->t('ScienceMesh'),
     ];
 });

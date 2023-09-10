@@ -5,6 +5,7 @@ namespace OCA\ScienceMesh\AppInfo;
 use OCA\ScienceMesh\Controller\PageController;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
 use OCP\AppFramework\App;
+use OCP\AppFramework\QueryException;
 
 
 class Application extends App
@@ -22,7 +23,10 @@ class Application extends App
         });
     }
 
-    public function getScienceMeshShareProvider()
+    /**
+     * @throws QueryException
+     */
+    public function getScienceMeshShareProvider(): ScienceMeshShareProvider
     {
         $container = $this->getContainer();
 
