@@ -2,8 +2,12 @@
 
 namespace OCA\ScienceMesh\AppInfo;
 
+use OC;
+use OCA\ScienceMesh\GlobalConfig\GlobalScaleConfig;
+use OCA\ScienceMesh\Service\UserService;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
 use OCP\AppFramework\App;
+use OCP\AppFramework\QueryException;
 
 class ScienceMeshApp extends App
 {
@@ -20,7 +24,7 @@ class ScienceMeshApp extends App
         $server = $container->getServer();
 
         $container->registerService('UserService', function ($c) {
-            return new \OCA\ScienceMesh\Service\UserService(
+            return new UserService(
                 $c->query('UserSession')
             );
         });
@@ -28,7 +32,7 @@ class ScienceMeshApp extends App
             return $c->query('ServerContainer')->getUserSession();
         });
 
-        // currently logged in user, userId can be gotten by calling the
+        // currently logged-in user, userId can be gotten by calling the
         // getUID() method on it
         $container->registerService('User', function ($c) {
             return $c->query('UserSession')->getUser();
@@ -38,7 +42,7 @@ class ScienceMeshApp extends App
         $notificationManager->registerNotifier(function () use ($notificationManager) {
             return $this->getContainer()->query('\OCA\ScienceMesh\Notifier\ScienceMeshNotifier');
         }, function () {
-            $l = \OC::$server->getL10N('sciencemesh');
+            $l = OC::$server->getL10N('sciencemesh');
             return [
                 'id' => 'sciencemesh',
                 'name' => $l->t('Science Mesh'),
@@ -48,8 +52,9 @@ class ScienceMeshApp extends App
 
     /**
      * @return ScienceMeshShareProvider
+     * @throws QueryException
      */
-    public function getScienceMeshShareProvider()
+    public function getScienceMeshShareProvider(): ScienceMeshShareProvider
     {
         $container = $this->getContainer();
         $dbConnection = $container->query("OCP\IDBConnection");
