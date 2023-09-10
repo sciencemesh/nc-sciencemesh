@@ -2,19 +2,17 @@
 
 namespace OCA\ScienceMesh\Controller;
 
+use Exception;
+use OC;
 use OCA\ScienceMesh\AppConfig;
-use OCA\ScienceMesh\Crypt;
-use OCA\ScienceMesh\DocumentService;
 use OCA\ScienceMesh\RevaHttpClient;
+use OCA\ScienceMesh\ServerConfig;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\TemplateResponse;
-use OCP\AppFramework\Http\TextPlainResponse;
 use OCP\IConfig;
-use OCP\IL10N;
-use OCP\ILogger;
 use OCP\IRequest;
-use OCP\IURLGenerator;
+use OCP\Util;
 
 /**
  * Settings controller for the administration page
@@ -22,46 +20,45 @@ use OCP\IURLGenerator;
 class SettingsController extends Controller
 {
     const CATALOG_URL = "https://iop.sciencemesh.uni-muenster.de/iop/mentix/sitereg";
-    private $logger;
-    private $config;
-    private $urlGenerator;
-    private $serverConfig;
-    private $sciencemeshConfig;
-    private $userId;
+
+    /** @var AppConfig */
+    private AppConfig $config;
+
+    /** @var ServerConfig */
+    private ServerConfig $serverConfig;
+
+    /** @var IConfig */
+    private IConfig $sciencemeshConfig;
+
+    /** @var string */
+    private string $userId;
 
     /**
      * @param string $AppName - application name
      * @param IRequest $request - request object
-     * @param IURLGenerator $urlGenerator - url generator service
-     * @param IL10N $trans - l10n service
-     * @param ILogger $logger - logger
      * @param AppConfig $config - application configuration
      */
-    public function __construct($AppName,
-                                IRequest $request,
-                                IURLGenerator $urlGenerator,
-                                IL10N $trans,
-                                ILogger $logger,
-                                AppConfig $config,
-                                IConfig $sciencemeshConfig,
-        $userId
+    public function __construct(
+        string    $AppName,
+        IRequest  $request,
+        AppConfig $config,
+        IConfig   $sciencemeshConfig,
+        string    $userId
     )
     {
         parent::__construct($AppName, $request);
-        $this->serverConfig = new \OCA\ScienceMesh\ServerConfig($sciencemeshConfig);
 
-        $this->urlGenerator = $urlGenerator;
-        $this->logger = $logger;
+        $this->serverConfig = new ServerConfig($sciencemeshConfig);
         $this->config = $config;
         $this->sciencemeshConfig = $sciencemeshConfig;
         $this->userId = $userId;
 
-        $eventDispatcher = \OC::$server->getEventDispatcher();
+        $eventDispatcher = OC::$server->getEventDispatcher();
         $eventDispatcher->addListener(
             'OCA\Files::loadAdditionalScripts',
             function () {
-                \OCP\Util::addScript('sciencemesh', 'settings');
-                \OCP\Util::addStyle('sciencemesh', 'style');
+                Util::addScript('sciencemesh', 'settings');
+                Util::addStyle('sciencemesh', 'style');
             }
         );
     }
@@ -75,7 +72,7 @@ class SettingsController extends Controller
      * @NoCSRFRequired
      * @return TemplateResponse
      */
-    public function index()
+    public function index(): TemplateResponse
     {
         $data = $this->loadSettings();
         if (!$data) {
@@ -97,7 +94,7 @@ class SettingsController extends Controller
 
     private function loadSettings()
     {
-        $query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+        $query = OC::$server->getDatabaseConnection()->getQueryBuilder();
         $query->select('*')->from('sciencemesh');
         $result = $query->execute();
         $row = $result->fetch();
@@ -109,7 +106,7 @@ class SettingsController extends Controller
      * Simply method that posts back the payload of the request
      * @NoAdminRequired
      */
-    public function saveSettings($apikey, $sitename, $siteurl, $country, $iopurl, $numusers, $numfiles, $numstorage)
+    public function saveSettings($apikey, $sitename, $siteurl, $country, $iopurl, $numusers, $numfiles, $numstorage): DataResponse
     {
         $siteid = null;
 
@@ -127,7 +124,7 @@ class SettingsController extends Controller
         if ($apikey !== "" && $sitename !== "" && $siteurl !== "" && $iopurl !== "") {
             try {
                 $siteid = $this->submitSettings($apikey, $sitename, $siteurl, $country, $iopurl);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 return new DataResponse([
                     'error' => $e->getMessage()
                 ]);
@@ -138,7 +135,7 @@ class SettingsController extends Controller
         $this->deleteSettings();
         try {
             $this->storeSettings($apikey, $sitename, $siteurl, $siteid, $country, $iopurl, $numusers, $numfiles, $numstorage);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new DataResponse([
                 'error' => 'error storing settings: ' . $e->getMessage()
             ]);
@@ -147,6 +144,9 @@ class SettingsController extends Controller
         return new DataResponse(["siteid" => $siteid]);
     }
 
+    /**
+     * @throws Exception
+     */
     private function submitSettings($apikey, $sitename, $siteurl, $country, $iopurl)
     {
         // fill out a data object as needed by Mentix
@@ -177,20 +177,23 @@ class SettingsController extends Controller
         if ($status == 200) {
             return $respData["id"];
         } else {
-            throw new \Exception($respData["error"]);
+            throw new Exception($respData["error"]);
         }
     }
 
     private function deleteSettings()
     {
-        $deleteQuery = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+        $deleteQuery = OC::$server->getDatabaseConnection()->getQueryBuilder();
         $deleteQuery->delete('sciencemesh');
         $deleteQuery->execute();
     }
 
+    /**
+     * @throws Exception
+     */
     private function storeSettings($apikey, $sitename, $siteurl, $siteid, $country, $iopurl, $numusers, $numfiles, $numstorage)
     {
-        $query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+        $query = OC::$server->getDatabaseConnection()->getQueryBuilder();
         $query->insert('sciencemesh')
             ->setValue('apikey', $query->createNamedParameter($apikey))
             ->setValue('sitename', $query->createNamedParameter($sitename))
@@ -204,8 +207,8 @@ class SettingsController extends Controller
         $result = $query->execute();
 
         if (!$result) {
-            \OC::$server->getLogger()->error('sciencemesh database cound not be updated', ['app' => 'sciencemesh']);
-            throw new \Exception('sciencemesh database cound not be updated');
+            OC::$server->getLogger()->error('sciencemesh database could not be updated', ['app' => 'sciencemesh']);
+            throw new Exception('sciencemesh database could not be updated');
         }
     }
 
@@ -217,25 +220,24 @@ class SettingsController extends Controller
      * @NoAdminRequired
      * @PublicPage
      */
-    public function GetSettings()
+    public function GetSettings(): array
     {
-        $result = [
+        return [
             "formats" => $this->config->FormatsSetting(),
             "sameTab" => $this->config->GetSameTab(),
             "shareAttributesVersion" => $this->config->ShareAttributesVersion()
         ];
-        return $result;
     }
 
     /**
      * Save sciencemesh settings
      *
-     * @return array
+     * @return DataResponse
      *
      * @NoAdminRequired
      * @PublicPage
      */
-    public function SaveSciencemeshSettings()
+    public function SaveSciencemeshSettings(): DataResponse
     {
         $sciencemesh_iop_url = $this->request->getParam('sciencemesh_iop_url');
         $sciencemesh_shared_secret = $this->request->getParam('sciencemesh_shared_secret');
@@ -249,13 +251,13 @@ class SettingsController extends Controller
     /**
      * Check IOP URL connection
      *
-     * @return array
+     * @return DataResponse
      *
      * @NoAdminRequired
      * @PublicPage
      */
 
-    public function checkConnectionSettings()
+    public function checkConnectionSettings(): DataResponse
     {
         $revaHttpClient = new RevaHttpClient($this->sciencemeshConfig, false);
         $response_sciencemesh_iop_url = $revaHttpClient->ocmProvider($this->userId);

@@ -10,6 +10,8 @@
 
 namespace OCA\ScienceMesh\Controller;
 
+use Exception;
+use OC;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
@@ -22,22 +24,30 @@ use OCP\IRequest;
 
 class PageController extends Controller
 {
-    protected $connection;
-    private $logger;
-    private $userId;
-    /** @var IClientService */
-    private $httpClientService;
+    /** @var IDBConnection */
+    protected IDBConnection $connection;
 
-    public function __construct($AppName,
-                                IRequest $request,
-        $UserId,
-                                IDBConnection $connection,
-                                IClientService $httpClientService,
-                                ILogger $logger)
+    /** @var ILogger */
+    private ILogger $logger;
+
+    /** @var string */
+    private string $userId;
+
+    /** @var IClientService */
+    private IClientService $httpClientService;
+
+    public function __construct(
+        string         $AppName,
+        IRequest       $request,
+        string         $userId,
+        IDBConnection  $connection,
+        IClientService $httpClientService,
+        ILogger        $logger
+    )
     {
 
         parent::__construct($AppName, $request);
-        $this->userId = $UserId;
+        $this->userId = $userId;
         $this->connection = $connection;
         $this->httpClientService = $httpClientService;
         $this->logger = $logger;
@@ -46,14 +56,14 @@ class PageController extends Controller
     /**
      * CAUTION: the @Stuff turns off security checks; for this page no admin is
      *          required and no CSRF check. If you don't know what CSRF is, read
-     *          it up in the docs or you might create a security hole. This is
+     *          it up in the docs, or you might create a security hole. This is
      *          basically the only required method to add this exemption, don't
      *          add it to any other method if you don't exactly know what it does
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function index()
+    public function index(): TemplateResponse
     {
         $params = ['user' => $this->userId];
         return new TemplateResponse('sciencemesh', 'main', $params);  // templates/main.php
@@ -63,7 +73,7 @@ class PageController extends Controller
      * Simply method that posts back the payload of the request
      * @NoAdminRequired
      */
-    public function doEcho($echo)
+    public function doEcho($echo): DataResponse
     {
         return new DataResponse(['echo' => $echo]);
     }
@@ -100,7 +110,7 @@ class PageController extends Controller
                 $this->logger->error("sciencemesh: error getting metrics from iop");
                 return new DataResponse(['error' => 'error getting metrics from iop'], Http::STATUS_INTERNAL_SERVER_ERROR);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error($e->getMessage());
             return new DataResponse(['error' => 'error getting metrics from iop'], Http::STATUS_INTERNAL_SERVER_ERROR);
         }
@@ -108,7 +118,7 @@ class PageController extends Controller
 
     private function loadSettings()
     {
-        $query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+        $query = OC::$server->getDatabaseConnection()->getQueryBuilder();
         $query->select('*')->from('sciencemesh');
         $result = $query->execute();
         $row = $result->fetch();
@@ -125,7 +135,7 @@ class PageController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function getInternalMetrics()
+    public function getInternalMetrics(): JSONResponse
     {
         //$metrics = $this->getInternal();
         $settings = $this->loadSettings();
@@ -143,7 +153,7 @@ class PageController extends Controller
         return new JSONResponse($payload);
     }
 
-    /* to get them from system rathen than manual input */
+    /* to get them from system rather than manual input */
     /*
     private function getInternal() {
         $queryBuilder = $this->connection->getQueryBuilder();

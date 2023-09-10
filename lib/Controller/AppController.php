@@ -2,6 +2,9 @@
 
 namespace OCA\ScienceMesh\Controller;
 
+use DateTime;
+use Exception;
+use InvalidArgumentException;
 use OCA\ScienceMesh\PlainResponse;
 use OCA\ScienceMesh\RevaHttpClient;
 use OCP\AppFramework\Controller;
@@ -12,8 +15,6 @@ use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IConfig;
 use OCP\IRequest;
-use OCP\IURLGenerator;
-use OCP\IUserManager;
 use OCP\IUserSession;
 use OCP\Mail\IMailer;
 use OCP\Mail\IMailerException;
@@ -22,32 +23,49 @@ use OCP\Notification\IManager as INotificationManager;
 
 class AppController extends Controller
 {
-    private $userId;
-    private $userManager;
-    private $urlGenerator;
-    private $config;
-    private $userSession;
-    private $generateToken;
-    private $acceptToken;
-    private $httpClient;
-    private $mailer;
+    /** @var string */
+    private string $userId;
 
-    public function __construct($AppName, ITimeFactory $timeFactory, INotificationManager $notificationManager, IRequest $request, IConfig $config, IUserManager $userManager, IURLGenerator $urlGenerator, $userId, IUserSession $userSession, RevaHttpClient $httpClient, IMailer $mailer)
+    /** @var IConfig */
+    private IConfig $config;
+
+    /** @var IUserSession */
+    private IUserSession $userSession;
+
+    /** @var RevaHttpClient */
+    private RevaHttpClient $httpClient;
+
+    /** @var IMailer */
+    private IMailer $mailer;
+
+    /** @var INotificationManager */
+    private INotificationManager $notificationManager;
+
+    /** @var ITimeFactory */
+    private ITimeFactory $timeFactory;
+
+    public function __construct(
+        string               $AppName,
+        ITimeFactory         $timeFactory,
+        INotificationManager $notificationManager,
+        IRequest             $request,
+        IConfig              $config,
+        string               $userId,
+        IUserSession         $userSession,
+        RevaHttpClient       $httpClient,
+        IMailer              $mailer
+    )
     {
         parent::__construct($AppName, $request);
 
         $this->userId = $userId;
-        $this->userManager = $userManager;
         $this->request = $request;
-        $this->urlGenerator = $urlGenerator;
         $this->notificationManager = $notificationManager;
         $this->timeFactory = $timeFactory;
         $this->config = $config;
-        $this->serverConfig = new \OCA\ScienceMesh\ServerConfig($config, $urlGenerator, $userManager);
         $this->userSession = $userSession;
         $this->httpClient = $httpClient;
         $this->mailer = $mailer;
-
     }
 
     /**
@@ -57,13 +75,11 @@ class AppController extends Controller
     public function notifications()
     {
         $user = $this->userSession->getUser();
-        //$user = $this->userManager->get("alice");
         $shortMessage = "ScienceMesh notification!";
-        $longMessage = "A longer notification message from ScienceMesh";
         $notification = $this->notificationManager->createNotification();
 
         $time = $this->timeFactory->getTime();
-        $datetime = new \DateTime();
+        $datetime = new DateTime();
         $datetime->setTimestamp($time);
 
         try {
@@ -80,12 +96,9 @@ class AppController extends Controller
                 ->setSubject('remote_share', [$shortMessage])
                 ->addAction($acceptAction)
                 ->addAction($declineAction);
-            if ($longMessage !== '') {
-                $notification->setMessage('remote_share', [$longMessage]);
-            }
 
             $this->notificationManager->notify($notification);
-        } catch (\InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             return new DataResponse(null, Http::STATUS_INTERNAL_SERVER_ERROR);
         }
 
@@ -105,7 +118,7 @@ class AppController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function generate()
+    public function generate(): TemplateResponse
     {
         return new TemplateResponse('sciencemesh', 'generate');
     }
@@ -114,7 +127,7 @@ class AppController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function accept()
+    public function accept(): TemplateResponse
     {
         return new TemplateResponse('sciencemesh', 'accept');
     }
@@ -123,14 +136,13 @@ class AppController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function invitationsGenerate()
+    public function invitationsGenerate(): PlainResponse
     {
         $recipient = $this->request->getParam('email');
         $invitationsData = $this->httpClient->generateTokenFromReva($this->userId, $recipient);
-        $inviteLinkStr = $invitationsData["invite_link"];
 
         // check if invite_link exist before accessing.
-        $inviteLinkStr = isset($invitationsData["invite_link"]) ? $invitationsData["invite_link"] : false;
+        $inviteLinkStr = $invitationsData["invite_link"] ?? false;
 
         if (!$inviteLinkStr) {
             return new PlainResponse("Unexpected response from Reva", Http::STATUS_INTERNAL_SERVER_ERROR);
@@ -143,7 +155,7 @@ class AppController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function invitationsSends($AppName)
+    public function invitationsSends($AppName): PlainResponse
     {
         $email = $this->request->getParam('email');
         $token = $this->request->getParam('token');
@@ -178,6 +190,8 @@ class AppController extends Controller
             error_log(json_encode($e));
 
             return false;
+        } catch (Exception $e) {
+            return false;
         }
     }
 
@@ -185,7 +199,7 @@ class AppController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function contacts()
+    public function contacts(): TemplateResponse
     {
         $contactsData = [
         ];
@@ -196,7 +210,7 @@ class AppController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function contactsAccept()
+    public function contactsAccept(): PlainResponse
     {
         $providerDomain = $this->request->getParam('providerDomain');
         $token = $this->request->getParam('token');
@@ -208,7 +222,7 @@ class AppController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function contactsFindUsers($searchToken = "")
+    public function contactsFindUsers($searchToken = ""): PlainResponse
     {
         $find_users_json = $this->httpClient->findAcceptedUsers($this->userId);
 
