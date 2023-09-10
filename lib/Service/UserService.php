@@ -2,18 +2,22 @@
 
 namespace OCA\ScienceMesh\Service;
 
-class UserService {
-	private $userSession;
+class UserService
+{
+    private $userSession;
 
-	public function __construct($userSession) {
-		$this->userSession = $userSession;
-	}
+    public function __construct($userSession)
+    {
+        $this->userSession = $userSession;
+    }
 
-	public function login($userId, $password) {
-		return $this->userSession->login($userId, $password);
-	}
+    public function login($userId, $password)
+    {
+        return $this->userSession->login($userId, $password);
+    }
 
-	public function logout() {
-		$this->userSession->logout();
-	}
+    public function logout()
+    {
+        $this->userSession->logout();
+    }
 }

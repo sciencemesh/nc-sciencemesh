@@ -20,10 +20,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 namespace OCA\ScienceMesh\GlobalConfig;
+
 use OCP\IConfig;
 
-class GlobalScaleConfig implements IGlobalScaleConfig {
+class GlobalScaleConfig implements IGlobalScaleConfig
+{
 
     /** @var IConfig */
     private $config;
@@ -33,28 +36,19 @@ class GlobalScaleConfig implements IGlobalScaleConfig {
      *
      * @param IConfig $config
      */
-    public function __construct(IConfig $config) {
+    public function __construct(IConfig $config)
+    {
         $this->config = $config;
-    }
-
-    /**
-     * check if global scale is enabled
-     *
-     * @since 12.0.1
-     * @return bool
-     */
-    public function isGlobalScaleEnabled() {
-        $enabled = $this->config->getSystemValue('gs.enabled', false);
-        return $enabled !== false;
     }
 
     /**
      * check if federation should only be used internally in a global scale setup
      *
-     * @since 12.0.1
      * @return bool
+     * @since 12.0.1
      */
-    public function onlyInternalFederation() {
+    public function onlyInternalFederation()
+    {
         // if global scale is disabled federation works always globally
         $gsEnabled = $this->isGlobalScaleEnabled();
         if ($gsEnabled === false) {
@@ -64,5 +58,17 @@ class GlobalScaleConfig implements IGlobalScaleConfig {
         $enabled = $this->config->getSystemValue('gs.federation', 'internal');
 
         return $enabled === 'internal';
+    }
+
+    /**
+     * check if global scale is enabled
+     *
+     * @return bool
+     * @since 12.0.1
+     */
+    public function isGlobalScaleEnabled()
+    {
+        $enabled = $this->config->getSystemValue('gs.enabled', false);
+        return $enabled !== false;
     }
 }

@@ -2,9 +2,6 @@
 
 namespace OCA\ScienceMesh;
 
-use \DateInterval;
-use \DateTime;
-
 use OCP\IConfig;
 use OCP\ILogger;
 
@@ -13,7 +10,8 @@ use OCP\ILogger;
  *
  * @package OCA\ScienceMesh
  */
-class AppConfig {
+class AppConfig
+{
 
     /**
      * Application name
@@ -39,7 +37,8 @@ class AppConfig {
     /**
      * @param string $AppName - application name
      */
-    public function __construct($AppName) {
+    public function __construct($AppName)
+    {
 
         $this->appName = $AppName;
 
@@ -47,11 +46,13 @@ class AppConfig {
         $this->logger = \OC::$server->getLogger();
     }
 
-    public function GetConfigValue($key) {
+    public function GetConfigValue($key)
+    {
         return $this->config->getSystemValue($this->appName)[$key];
     }
 
-    public function SetConfigValue($key, $value) {
+    public function SetConfigValue($key, $value)
+    {
         $this->config->setAppValue($this->appName, $key, $value);
     }
 }

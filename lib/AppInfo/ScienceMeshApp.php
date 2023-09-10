@@ -2,37 +2,39 @@
 
 namespace OCA\ScienceMesh\AppInfo;
 
-use OCP\AppFramework\App;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
+use OCP\AppFramework\App;
 
-class ScienceMeshApp extends App {
-	public const APP_ID = 'sciencemesh';
-	public const SCIENCEMESH_POSTFIX = ' (Sciencemesh)';
-	public const SHARE_TYPE_REMOTE = 6;
-	public const SHARE_TYPE_SCIENCEMESH = 6;
-	
-	public function __construct() {
-		parent::__construct(self::APP_ID);
+class ScienceMeshApp extends App
+{
+    public const APP_ID = 'sciencemesh';
+    public const SCIENCEMESH_POSTFIX = ' (Sciencemesh)';
+    public const SHARE_TYPE_REMOTE = 6;
+    public const SHARE_TYPE_SCIENCEMESH = 6;
 
-		$container = $this->getContainer();
-		$server = $container->getServer();
+    public function __construct()
+    {
+        parent::__construct(self::APP_ID);
 
-		$container->registerService('UserService', function ($c) {
-			return new \OCA\ScienceMesh\Service\UserService(
-				$c->query('UserSession')
-			);
-		});
-		$container->registerService('UserSession', function ($c) {
-			return $c->query('ServerContainer')->getUserSession();
-		});
+        $container = $this->getContainer();
+        $server = $container->getServer();
 
-		// currently logged in user, userId can be gotten by calling the
-		// getUID() method on it
-		$container->registerService('User', function ($c) {
-			return $c->query('UserSession')->getUser();
-		});
+        $container->registerService('UserService', function ($c) {
+            return new \OCA\ScienceMesh\Service\UserService(
+                $c->query('UserSession')
+            );
+        });
+        $container->registerService('UserSession', function ($c) {
+            return $c->query('ServerContainer')->getUserSession();
+        });
 
-		$notificationManager = $server->getNotificationManager();
+        // currently logged in user, userId can be gotten by calling the
+        // getUID() method on it
+        $container->registerService('User', function ($c) {
+            return $c->query('UserSession')->getUser();
+        });
+
+        $notificationManager = $server->getNotificationManager();
         $notificationManager->registerNotifier(function () use ($notificationManager) {
             return $this->getContainer()->query('\OCA\ScienceMesh\Notifier\ScienceMeshNotifier');
         }, function () {
@@ -42,7 +44,7 @@ class ScienceMeshApp extends App {
                 'name' => $l->t('Science Mesh'),
             ];
         });
-	}
+    }
 
     /**
      * @return ScienceMeshShareProvider

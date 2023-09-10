@@ -20,6 +20,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 namespace OCA\ScienceMesh\GlobalConfig;
 
 /**
@@ -29,21 +30,22 @@ namespace OCA\ScienceMesh\GlobalConfig;
  *
  * @since 12.0.1
  */
-interface IGlobalScaleConfig {
+interface IGlobalScaleConfig
+{
 
     /**
      * check if global scale is enabled
      *
-     * @since 12.0.1
      * @return bool
+     * @since 12.0.1
      */
     public function isGlobalScaleEnabled();
 
     /**
      * check if federation should only be used internally in a global scale setup
      *
-     * @since 12.0.1
      * @return bool
+     * @since 12.0.1
      */
     public function onlyInternalFederation();
 }

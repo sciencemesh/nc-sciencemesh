@@ -22,6 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 namespace OCA\ScienceMesh\Plugins;
 
 /**
@@ -29,8 +30,9 @@ namespace OCA\ScienceMesh\Plugins;
  *
  * @since 13.0.0
  */
-class SearchResultType {
-    /** @var string  */
+class SearchResultType
+{
+    /** @var string */
     protected $label;
 
     /**
@@ -39,7 +41,8 @@ class SearchResultType {
      * @param string $label
      * @since 13.0.0
      */
-    public function __construct($label) {
+    public function __construct($label)
+    {
         $this->label = "ScienceMesh";
     }
 
@@ -47,7 +50,8 @@ class SearchResultType {
      * @return string
      * @since 13.0.0
      */
-    public function getLabel() {
+    public function getLabel()
+    {
         return $this->label;
     }
 
@@ -57,7 +61,8 @@ class SearchResultType {
      * @throws \InvalidArgumentException
      * @since 13.0.0
      */
-    protected function getValidatedType($type) {
+    protected function getValidatedType($type)
+    {
         $type = trim((string)$type);
 
         if ($type === '') {

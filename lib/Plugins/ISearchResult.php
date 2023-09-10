@@ -20,6 +20,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 namespace OCA\ScienceMesh\Plugins;
 
 /**
@@ -27,7 +28,8 @@ namespace OCA\ScienceMesh\Plugins;
  *
  * @since 13.0.0
  */
-interface ISearchResult {
+interface ISearchResult
+{
     /**
      * @param SearchResultType $type
      * @param array $matches

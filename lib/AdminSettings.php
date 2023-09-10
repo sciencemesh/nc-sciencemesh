@@ -7,9 +7,11 @@ use OCP\Settings\ISettings;
 /**
  * Settings controller for the administration page
  */
-class AdminSettings implements ISettings {
+class AdminSettings implements ISettings
+{
 
-    public function __construct() {
+    public function __construct()
+    {
     }
 
     /**
@@ -17,8 +19,14 @@ class AdminSettings implements ISettings {
      *
      * @return TemplateResponse
      */
-    public function getPanel() {
+    public function getPanel()
+    {
         return $this->getForm();
+    }
+
+    public function getForm()
+    {
+        return null;
     }
 
     /**
@@ -26,7 +34,8 @@ class AdminSettings implements ISettings {
      *
      * @return string
      */
-    public function getSectionID() {
+    public function getSectionID()
+    {
         return "general";
     }
 
@@ -35,15 +44,13 @@ class AdminSettings implements ISettings {
      *
      * @return int
      */
-    public function getPriority() {
+    public function getPriority()
+    {
         return 50;
     }
-    
-    public function getSection() {
-        return null;
-    }
-    
-    public function getForm() {
+
+    public function getSection()
+    {
         return null;
     }
 }

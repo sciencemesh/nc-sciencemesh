@@ -22,51 +22,55 @@
 
 namespace OCA\ScienceMesh\ShareProvider;
 
+use OCA\ScienceMesh\RevaHttpClient;
 use OCP\IConfig;
 use OCP\IUserManager;
-use OCA\ScienceMesh\RevaHttpClient;
 
 /**
  * Class ScienceMeshShareHelper
  *
  * @package OCA\ScienceMesh\ShareProvider\ShareAPIHelper
  */
-class ShareAPIHelper {
-	/** @var IConfig */
-	private $config;
+class ShareAPIHelper
+{
+    /** @var IConfig */
+    private $config;
 
-	/** @var IUserManager */
-	private $userManager;
+    /** @var IUserManager */
+    private $userManager;
 
-	/** @var RevaHttpClient */
-	private $revaHttpClient;
+    /** @var RevaHttpClient */
+    private $revaHttpClient;
 
-	/**
-	 * ShareAPIHelper constructor.
-	 *
-	 * @param IConfig $config
-	 * @param IUserManager $userManager
-	 */
-	public function __construct(
-		IConfig $config,
-		IUserManager $userManager
-	) {
-		$this->config = $config;
-		$this->userManager = $userManager;
-		$this->revaHttpClient = new RevaHttpClient($this->config);
-	}
+    /**
+     * ShareAPIHelper constructor.
+     *
+     * @param IConfig $config
+     * @param IUserManager $userManager
+     */
+    public function __construct(
+        IConfig      $config,
+        IUserManager $userManager
+    )
+    {
+        $this->config = $config;
+        $this->userManager = $userManager;
+        $this->revaHttpClient = new RevaHttpClient($this->config);
+    }
 
-	public function formatShare($share) {
-		$result = [];
-		$result['share_with'] = $share->getSharedWith();
-		$result['share_with_displayname'] = $result['share_with'];
-		$result['token'] = $share->getToken();
-		return $result;
-	}
-	
-	public function createShare($share, $shareWith, $permissions, $expireDate) {
-		error_log("ShareAPIHelper createShare, doing nothing");
-		$share->setSharedWith($shareWith);
-		$share->setPermissions($permissions);
-	}
+    public function formatShare($share)
+    {
+        $result = [];
+        $result['share_with'] = $share->getSharedWith();
+        $result['share_with_displayname'] = $result['share_with'];
+        $result['token'] = $share->getToken();
+        return $result;
+    }
+
+    public function createShare($share, $shareWith, $permissions, $expireDate)
+    {
+        error_log("ShareAPIHelper createShare, doing nothing");
+        $share->setSharedWith($shareWith);
+        $share->setPermissions($permissions);
+    }
 }

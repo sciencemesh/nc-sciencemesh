@@ -1,19 +1,21 @@
 <?php
+
 namespace OCA\ScienceMesh\Settings;
 
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\IConfig;
 use OCP\IL10N;
 use OCP\Settings\ISettings;
-use OCA\Sciencemesh\ServerConfig;
 
-class SciencemeshSettingsAdmin implements ISettings {
+class SciencemeshSettingsAdmin implements ISettings
+{
     private IL10N $l;
     private IConfig $config;
 
     public function __construct(IConfig $config,
-                                IL10N $l
-                                ) {
+                                IL10N   $l
+    )
+    {
         $this->config = $config;
         $this->l = $l;
         $this->serverConfig = new \OCA\ScienceMesh\ServerConfig($config);
@@ -23,17 +25,19 @@ class SciencemeshSettingsAdmin implements ISettings {
     /**
      * @return TemplateResponse
      */
-    public function getPanel() {
+    public function getPanel()
+    {
         $parameters = [
             'sciencemeshSetting' => $this->config->getSystemValue('sciencemesh_advance_settings', true),
             'sciencemeshIopUrl' => $this->serverConfig->getIopUrl(),
             'sciencemeshRevaSharedSecret' => $this->serverConfig->getRevaSharedSecret()
         ];
-        
+
         return new TemplateResponse('sciencemesh', 'settings/admin', $parameters, '');
     }
 
-    public function getSectionID() {
+    public function getSectionID()
+    {
         return 'sciencemesh_settings'; // Name of the previously created section.
     }
 
@@ -44,7 +48,8 @@ class SciencemeshSettingsAdmin implements ISettings {
      *
      * E.g.: 70
      */
-    public function getPriority() {
+    public function getPriority()
+    {
         return 10;
     }
 }
