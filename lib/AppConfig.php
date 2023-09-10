@@ -2,11 +2,12 @@
 
 namespace OCA\ScienceMesh;
 
+use OC;
 use OCP\IConfig;
 use OCP\ILogger;
 
 /**
- * Application configutarion
+ * Application configuration
  *
  * @package OCA\ScienceMesh
  */
@@ -18,32 +19,32 @@ class AppConfig
      *
      * @var string
      */
-    private $appName;
+    private string $appName;
 
     /**
      * Config service
      *
      * @var IConfig
      */
-    private $config;
+    private IConfig $config;
 
     /**
      * Logger
      *
      * @var ILogger
      */
-    private $logger;
+    private ILogger $logger;
 
     /**
      * @param string $AppName - application name
      */
-    public function __construct($AppName)
+    public function __construct(string $AppName)
     {
 
         $this->appName = $AppName;
 
-        $this->config = \OC::$server->getConfig();
-        $this->logger = \OC::$server->getLogger();
+        $this->config = OC::$server->getConfig();
+        $this->logger = OC::$server->getLogger();
     }
 
     public function GetConfigValue($key)

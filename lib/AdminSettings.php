@@ -2,6 +2,7 @@
 
 namespace OCA\ScienceMesh;
 
+use OCP\AppFramework\Http\TemplateResponse;
 use OCP\Settings\ISettings;
 
 /**
@@ -19,7 +20,7 @@ class AdminSettings implements ISettings
      *
      * @return TemplateResponse
      */
-    public function getPanel()
+    public function getPanel(): ?TemplateResponse
     {
         return $this->getForm();
     }
@@ -34,7 +35,7 @@ class AdminSettings implements ISettings
      *
      * @return string
      */
-    public function getSectionID()
+    public function getSectionID(): string
     {
         return "general";
     }
@@ -44,7 +45,7 @@ class AdminSettings implements ISettings
      *
      * @return int
      */
-    public function getPriority()
+    public function getPriority(): int
     {
         return 50;
     }

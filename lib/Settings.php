@@ -4,10 +4,11 @@ namespace OCA\ScienceMesh;
 
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\Settings\ISettings;
+use OCP\Template;
 
 class Settings implements ISettings
 {
-    private $config;
+    private Serverconfig $config;
 
     public function __construct(Serverconfig $config)
     {
@@ -31,13 +32,33 @@ class Settings implements ISettings
         return $response;
     }
 
-    public function getSection()
+    public function getSection(): string
     {
         return 'sharing';
     }
 
-    public function getPriority()
+    public function getPriority(): int
     {
         return 50;
+    }
+
+    /**
+     * The panel controller method that returns a template to the UI
+     * @return TemplateResponse | Template
+     * @since 10.0
+     */
+    public function getPanel()
+    {
+        // TODO: Implement getPanel() method.
+    }
+
+    /**
+     * A string to identify the section in the UI / HTML and URL
+     * @return string
+     * @since 10.0
+     */
+    public function getSectionID()
+    {
+        // TODO: Implement getSectionID() method.
     }
 }

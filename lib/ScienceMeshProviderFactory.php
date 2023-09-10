@@ -20,10 +20,12 @@
 
 namespace OCA\ScienceMesh;
 
+use OC\Share\Constants;
 use OC\Share20\DefaultShareProvider;
 use OC\Share20\Exception\ProviderException;
 use OCA\ScienceMesh\AppInfo\Application;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
+use OCP\AppFramework\QueryException;
 use OCP\IServerContainer;
 use OCP\Share\IProviderFactory;
 
@@ -36,11 +38,13 @@ class ScienceMeshProviderFactory implements IProviderFactory
 {
 
     /** @var IServerContainer */
-    private $serverContainer;
-    /** @var DefaultShareProvider */
-    private $defaultProvider = null;
-    /** @var ScienceMeshShareProvider */
-    private $scienceMeshShareProvider = null;
+    private IServerContainer $serverContainer;
+
+    /** @var ?DefaultShareProvider */
+    private ?DefaultShareProvider $defaultProvider = null;
+
+    /** @var ?ScienceMeshShareProvider */
+    private ?ScienceMeshShareProvider $scienceMeshShareProvider = null;
 
     /**
      * IProviderFactory constructor.
@@ -51,7 +55,10 @@ class ScienceMeshProviderFactory implements IProviderFactory
         $this->serverContainer = $serverContainer;
     }
 
-    public function getProviders()
+    /**
+     * @throws QueryException
+     */
+    public function getProviders(): array
     {
         return [
             $this->defaultShareProvider(),
@@ -64,12 +71,11 @@ class ScienceMeshProviderFactory implements IProviderFactory
      *
      * @return DefaultShareProvider
      */
-    protected function defaultShareProvider()
+    protected function defaultShareProvider(): DefaultShareProvider
     {
         if ($this->defaultProvider === null) {
             // serverContainer really has to be more than just an IServerContainer
             // because getLazyRootFolder() is only in \OC\Server
-            '@phan-var \OC\Server $this->serverContainer';
             $this->defaultProvider = new DefaultShareProvider(
                 $this->serverContainer->getDatabaseConnection(),
                 $this->serverContainer->getUserManager(),
@@ -84,8 +90,9 @@ class ScienceMeshProviderFactory implements IProviderFactory
      * Create the federated share provider
      *
      * @return ScienceMeshShareProvider
+     * @throws QueryException
      */
-    protected function scienceMeshShareProvider()
+    protected function scienceMeshShareProvider(): ?ScienceMeshShareProvider
     {
         if ($this->scienceMeshShareProvider === null) {
             /*
@@ -108,6 +115,7 @@ class ScienceMeshProviderFactory implements IProviderFactory
 
     /**
      * @inheritdoc
+     * @throws QueryException
      */
     public function getProvider($id)
     {
@@ -127,12 +135,11 @@ class ScienceMeshProviderFactory implements IProviderFactory
 
     /**
      * @inheritdoc
+     * @throws QueryException
      */
     public function getProviderForType($shareType)
     {
-        $provider = null;
-
-        if ($shareType === \OCP\Share::SHARE_TYPE_REMOTE) {
+        if ($shareType === Constants::SHARE_TYPE_REMOTE) {
             $provider = $this->scienceMeshShareProvider();
         } else {
             $provider = $this->defaultShareProvider();

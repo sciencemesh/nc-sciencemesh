@@ -2,8 +2,12 @@
 
 namespace OCA\ScienceMesh;
 
+use Exception;
 use OCP\IConfig;
 
+/**
+ * @throws Exception
+ */
 function random_str(
     int    $length = 64,
     string $keyspace = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -27,7 +31,7 @@ class ServerConfig
 {
 
     /** @var IConfig */
-    private $config;
+    private IConfig $config;
 
     /**
      * @param IConfig $config
@@ -62,11 +66,14 @@ class ServerConfig
         return $this->config->getAppValue('sciencemesh', 'country');
     }
 
-    public function getIopUrl()
+    public function getIopUrl(): string
     {
         return rtrim($this->config->getAppValue('sciencemesh', 'iopUrl'), '/') . '/';
     }
 
+    /**
+     * @throws Exception
+     */
     public function getRevaLoopbackSecret()
     {
         $ret = $this->config->getAppValue('sciencemesh', 'revaLoopbackSecret');
@@ -77,6 +84,9 @@ class ServerConfig
         return $ret;
     }
 
+    /**
+     * @throws Exception
+     */
     public function getRevaSharedSecret()
     {
         $ret = $this->config->getAppValue('sciencemesh', 'revaSharedSecret');
