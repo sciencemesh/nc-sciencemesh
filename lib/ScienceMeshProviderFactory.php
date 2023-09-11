@@ -1,21 +1,14 @@
 <?php
 /**
+ * ownCloud - sciencemesh
+ *
+ * This file is licensed under the MIT License. See the LICENCE file.
+ * @license MIT
+ * @copyright Sciencemesh 2020 - 2023
+ *
  * @author Navid Shokri <navid.pdp11@gmail.org>
- * @copyright Copyright (c) 2018, ownCloud GmbH
- * @license AGPL-3.0
- *
- * This code is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License, version 3,
- * as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License, version 3,
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *
+ * @author Michiel De Jong <michiel@pondersource.com>
+ * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.ir>
  */
 
 namespace OCA\ScienceMesh;

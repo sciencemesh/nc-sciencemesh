@@ -1,5 +1,16 @@
 <?php
 /**
+ * ownCloud - sciencemesh
+ *
+ * This file is licensed under the MIT License. See the LICENCE file.
+ * @license MIT
+ * @copyright Sciencemesh 2020 - 2023
+ *
+ * @author Michiel De Jong <michiel@pondersource.com>
+ * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.ir>
+ */
+
+/**
  * Create your routes in here. The name is the lowercase name of the controller
  * without the controller part, the stuff after the hash is the method.
  * e.g. page#index -> OCA\ScienceMesh\Controller\PageController->index()
@@ -47,7 +58,8 @@ $routes_array = [
         ['name' => 'reva#Unshare', 'url' => '/~{userId}/api/ocm/Unshare', 'verb' => 'POST'],
         ['name' => 'reva#UpdateShare', 'url' => '/~{userId}/api/ocm/UpdateShare', 'verb' => 'POST'],
         ['name' => 'reva#ListSentShares', 'url' => '/~{userId}/api/ocm/ListSentShares', 'verb' => 'POST'],
-        ['name' => 'reva#ListSentShares', 'url' => '/~{userId}/api/ocm/ListShares', 'verb' => 'POST'], // alias for ListSentShares
+        // alias for ListSentShares
+        ['name' => 'reva#ListSentShares', 'url' => '/~{userId}/api/ocm/ListShares', 'verb' => 'POST'],
         ['name' => 'reva#ListReceivedShares', 'url' => '/~{userId}/api/ocm/ListReceivedShares', 'verb' => 'POST'],
         ['name' => 'reva#GetReceivedShare', 'url' => '/~{userId}/api/ocm/GetReceivedShare', 'verb' => 'POST'],
         ['name' => 'reva#UpdateSentShare', 'url' => '/~{userId}/api/ocm/UpdateSentShare', 'verb' => 'POST'],

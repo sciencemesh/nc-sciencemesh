@@ -693,7 +693,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
     }
 
 
-    protected function revokeShare($share, $isOwner)
+    protected function revokeShare(IShare $share, bool $isOwner)
     {
         if ($this->userManager->userExists($share->getShareOwner()) && $this->userManager->userExists($share->getSharedBy())) {
             // If both the owner and the initiator of the share are local users we don't have to notify anybody else

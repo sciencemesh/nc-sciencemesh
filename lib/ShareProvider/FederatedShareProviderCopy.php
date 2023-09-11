@@ -1,37 +1,37 @@
 <?php
 /**
+ * ownCloud - sciencemesh
+ *
+ * This file is licensed under the MIT License. See the LICENCE file.
+ * @license MIT
+ * @copyright Sciencemesh 2020 - 2023
+ *
  * @author Björn Schießle <bjoern@schiessle.org>
  * @author Robin Appelman <icewind@owncloud.com>
  * @author Roeland Jago Douma <rullzer@owncloud.com>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
- *
- * @copyright Copyright (c) 2018, ownCloud GmbH
- * @license AGPL-3.0
- *
- * This code is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License, version 3,
- * as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License, version 3,
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *
+ * @author Michiel De Jong <michiel@pondersource.com>
+ * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.ir>
  */
 
 namespace OCA\ScienceMesh\ShareProvider;
 
+use DateTime;
+use Exception;
+use OC;
+use OC\Files\Filesystem;
+use OC\HintException;
 use OC\Share20\Exception\InvalidShare;
 use OC\Share20\Share;
+use OC_Util;
 use OCA\FederatedFileSharing\Address;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\TokenHandler;
+use OCA\Files_Sharing\External\Manager;
 use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\Files\InvalidPathException;
 use OCP\Files\IRootFolder;
 use OCP\Files\Node;
 use OCP\Files\NotFoundException;
@@ -40,11 +40,18 @@ use OCP\IDBConnection;
 use OCP\IL10N;
 use OCP\ILogger;
 use OCP\IUserManager;
+use OCP\Share\Exceptions\IllegalIDChangeException;
 use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IShare;
 use OCP\Share\IShareProvider;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
+use function array_chunk;
+use function is_array;
+use function is_bool;
+use function is_string;
+use function sprintf;
+use function time;
 
 /**
  * Class FederatedShareProvider
@@ -54,40 +61,40 @@ use Symfony\Component\EventDispatcher\GenericEvent;
 class FederatedShareProviderCopy implements IShareProvider
 {
     /** @var IDBConnection */
-    protected $dbConnection;
+    protected IDBConnection $dbConnection;
 
     /** @var EventDispatcherInterface */
-    protected $eventDispatcher;
+    protected EventDispatcherInterface $eventDispatcher;
 
     /** @var AddressHandler */
-    protected $addressHandler;
+    protected AddressHandler $addressHandler;
 
     /** @var Notifications */
-    protected $notifications;
+    protected Notifications $notifications;
 
     /** @var TokenHandler */
-    protected $tokenHandler;
+    protected TokenHandler $tokenHandler;
 
     /** @var IL10N */
-    protected $l;
+    protected IL10N $l;
 
     /** @var ILogger */
-    protected $logger;
+    protected ILogger $logger;
 
     /** @var IRootFolder */
-    protected $rootFolder;
+    protected IRootFolder $rootFolder;
 
     /** @var IConfig */
-    protected $config;
+    protected IConfig $config;
 
     /** @var string */
-    protected $externalShareTable = 'share_external';
+    protected string $externalShareTable = 'share_external';
 
     /** @var string */
-    protected $shareTable = 'share';
+    protected string $shareTable = 'share';
 
     /** @var IUserManager */
-    protected $userManager;
+    protected IUserManager $userManager;
 
     /**
      * DefaultShareProvider constructor.
@@ -134,7 +141,7 @@ class FederatedShareProviderCopy implements IShareProvider
      * @param IShare $share
      * @return IShare The share object
      * @throws ShareNotFound
-     * @throws \Exception
+     * @throws Exception
      */
     public function create(IShare $share)
     {
@@ -152,8 +159,8 @@ class FederatedShareProviderCopy implements IShareProvider
         if (!empty($alreadyShared)) {
             $message = 'Sharing %s failed, because this item is already shared with %s';
             $message_t = $this->l->t('Sharing %s failed, because this item is already shared with %s', [$share->getNode()->getName(), $shareWith]);
-            $this->logger->debug(\sprintf($message, $share->getNode()->getName(), $shareWith), ['app' => 'Federated File Sharing']);
-            throw new \Exception($message_t);
+            $this->logger->debug(sprintf($message, $share->getNode()->getName(), $shareWith), ['app' => 'Federated File Sharing']);
+            throw new Exception($message_t);
         }
 
         // don't allow federated shares if source and target server are the same
@@ -165,7 +172,7 @@ class FederatedShareProviderCopy implements IShareProvider
             $message = 'Not allowed to create a federated share with the same user.';
             $message_t = $this->l->t('Not allowed to create a federated share with the same user');
             $this->logger->debug($message, ['app' => 'Federated File Sharing']);
-            throw new \Exception($message_t);
+            throw new Exception($message_t);
         }
 
         $share->setSharedWith($shareWithAddress->getCloudId());
@@ -179,12 +186,12 @@ class FederatedShareProviderCopy implements IShareProvider
         if ($remoteShare) {
             try {
                 $uidOwner = $remoteShare['owner'] . '@' . $remoteShare['remote'];
-                $shareId = $this->addShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $uidOwner, $permissions, $expiration, 'tmp_token_' . \time());
+                $shareId = $this->addShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $uidOwner, $permissions, $expiration, 'tmp_token_' . time());
                 $share->setId($shareId);
                 [$token, $remoteId] = $this->askOwnerToReShare($shareWith, $share, $shareId);
                 // remote share was create successfully if we get a valid token as return
-                $send = \is_string($token) && $token !== '';
-            } catch (\Exception $e) {
+                $send = is_string($token) && $token !== '';
+            } catch (Exception $e) {
                 // fall back to old re-share behavior if the remote server
                 // doesn't support flat re-shares (was introduced with ownCloud 9.1)
                 $this->removeShareFromTable($share);
@@ -196,7 +203,7 @@ class FederatedShareProviderCopy implements IShareProvider
             } else {
                 $this->removeShareFromTable($share);
                 $message_t = $this->l->t('File is already shared with %s', [$shareWith]);
-                throw new \Exception($message_t);
+                throw new Exception($message_t);
             }
         } else {
             $shareId = $this->createFederatedShare($share);
@@ -208,8 +215,13 @@ class FederatedShareProviderCopy implements IShareProvider
 
     /**
      * @inheritdoc
+     *
+     * @throws InvalidPathException
+     * @throws NotFoundException
+     * @throws InvalidShare
+     * @throws IllegalIDChangeException
      */
-    public function getSharedWith($userId, $shareType, $node, $limit, $offset)
+    public function getSharedWith($userId, $shareType, $node, $limit, $offset): array
     {
         /** @var IShare[] $shares */
         $shares = [];
@@ -252,9 +264,9 @@ class FederatedShareProviderCopy implements IShareProvider
      * @param array $data
      * @return IShare
      * @throws InvalidShare
-     * @throws ShareNotFound
+     * @throws IllegalIDChangeException
      */
-    protected function createShareObject($data)
+    protected function createShareObject(array $data)
     {
         $share = new Share($this->rootFolder, $this->userManager);
         $share->setId($data['id'])
@@ -264,7 +276,7 @@ class FederatedShareProviderCopy implements IShareProvider
             ->setMailSend((bool)$data['mail_send'])
             ->setToken($data['token']);
 
-        $shareTime = new \DateTime();
+        $shareTime = new DateTime();
         $shareTime->setTimestamp((int)$data['stime']);
         $share->setShareTime($shareTime);
         $share->setSharedWith($data['share_with']);
@@ -282,7 +294,7 @@ class FederatedShareProviderCopy implements IShareProvider
         }
 
         if ($data['expiration'] !== null) {
-            $expiration = \DateTime::createFromFormat('Y-m-d H:i:s', $data['expiration']);
+            $expiration = DateTime::createFromFormat('Y-m-d H:i:s', $data['expiration']);
             $share->setExpirationDate($expiration);
         }
 
@@ -299,10 +311,10 @@ class FederatedShareProviderCopy implements IShareProvider
      *
      * @param string $userId
      * @param int $id
-     * @return \OCP\Files\File|\OCP\Files\Folder
+     * @return Node
      * @throws InvalidShare
      */
-    protected function getNode($userId, $id)
+    protected function getNode(string $userId, int $id): Node
     {
         try {
             $userFolder = $this->rootFolder->getUserFolder($userId);
@@ -324,7 +336,7 @@ class FederatedShareProviderCopy implements IShareProvider
      *
      * @return string Containing only [a-zA-Z0-9]
      */
-    public function identifier()
+    public function identifier(): string
     {
         return 'ocFederatedSharing';
     }
@@ -336,7 +348,7 @@ class FederatedShareProviderCopy implements IShareProvider
      * @return array
      * @throws ShareNotFound
      */
-    protected function getShareFromExternalShareTable(IShare $share)
+    protected function getShareFromExternalShareTable(IShare $share): array
     {
         $query = $this->dbConnection->getQueryBuilder();
         $query->select('*')->from($this->externalShareTable)
@@ -360,10 +372,20 @@ class FederatedShareProviderCopy implements IShareProvider
      * @param string $sharedBy
      * @param string $uidOwner
      * @param int $permissions
+     * @param $expiration
      * @param string $token
      * @return int
      */
-    protected function addShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $uidOwner, $permissions, $expiration, $token)
+    protected function addShareToDB(
+        int    $itemSource,
+        string $itemType,
+        string $shareWith,
+        string $sharedBy,
+        string $uidOwner,
+        int    $permissions,
+               $expiration,
+        string $token
+    ): int
     {
         $qb = $this->dbConnection->getQueryBuilder();
         $qb->insert($this->shareTable)
@@ -377,7 +399,7 @@ class FederatedShareProviderCopy implements IShareProvider
             ->setValue('permissions', $qb->createNamedParameter($permissions))
             ->setValue('expiration', $qb->createNamedParameter($expiration, IQueryBuilder::PARAM_DATE))
             ->setValue('token', $qb->createNamedParameter($token))
-            ->setValue('stime', $qb->createNamedParameter(\time()));
+            ->setValue('stime', $qb->createNamedParameter(time()));
 
         /*
          * Added to fix https://github.com/owncloud/core/issues/22215
@@ -386,9 +408,7 @@ class FederatedShareProviderCopy implements IShareProvider
         $qb->setValue('file_target', $qb->createNamedParameter(''));
 
         $qb->execute();
-        $id = $qb->getLastInsertId();
-
-        return (int)$id;
+        return $qb->getLastInsertId();
     }
 
     /**
@@ -396,9 +416,9 @@ class FederatedShareProviderCopy implements IShareProvider
      * @param IShare $share
      * @param string $shareId internal share Id
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
-    protected function askOwnerToReShare($shareWith, IShare $share, $shareId)
+    protected function askOwnerToReShare(string $shareWith, IShare $share, string $shareId): array
     {
         $remoteShare = $this->getShareFromExternalShareTable($share);
         $token = $remoteShare['share_token'];
@@ -432,7 +452,7 @@ class FederatedShareProviderCopy implements IShareProvider
      *
      * @param string $shareId
      */
-    protected function removeShareFromTableById($shareId)
+    protected function removeShareFromTableById(string $shareId)
     {
         $qb = $this->dbConnection->getQueryBuilder();
         $qb->delete($this->shareTable)
@@ -448,6 +468,8 @@ class FederatedShareProviderCopy implements IShareProvider
      * Delete a share (owner unShares the file)
      *
      * @param IShare $share
+     * @throws ShareNotFound
+     * @throws HintException
      */
     public function delete(IShare $share)
     {
@@ -486,9 +508,9 @@ class FederatedShareProviderCopy implements IShareProvider
      * @param IShare $share
      * @param bool $isOwner the user can either be the owner or the user who re-shared it
      * @throws ShareNotFound
-     * @throws \OC\HintException
+     * @throws HintException
      */
-    protected function revokeShare($share, $isOwner)
+    protected function revokeShare(IShare $share, bool $isOwner)
     {
         // also send a unShare request to the initiator
         if ($this->shouldNotifyRemote($share)) {
@@ -508,7 +530,7 @@ class FederatedShareProviderCopy implements IShareProvider
      * @param IShare $share
      * @return bool
      */
-    protected function shouldNotifyRemote($share)
+    protected function shouldNotifyRemote(IShare $share): bool
     {
         // We notify owner/initiator, if they are not the same user and ANY of them is NOT a local user
         // they could be both local e.g. if recipient of local share shared it via federation
@@ -524,14 +546,14 @@ class FederatedShareProviderCopy implements IShareProvider
      * @return string
      * @throws ShareNotFound
      */
-    public function getRemoteId(IShare $share)
+    public function getRemoteId(IShare $share): string
     {
         $query = $this->dbConnection->getQueryBuilder();
         $query->select('remote_id')->from('federated_reshares')
             ->where($query->expr()->eq('share_id', $query->createNamedParameter((int)$share->getId())));
         $data = $query->execute()->fetch();
 
-        if (!\is_array($data) || !isset($data['remote_id'])) {
+        if (!is_array($data) || !isset($data['remote_id'])) {
             throw new ShareNotFound();
         }
 
@@ -544,9 +566,9 @@ class FederatedShareProviderCopy implements IShareProvider
      * @param IShare $share
      * @return int
      * @throws ShareNotFound
-     * @throws \Exception
+     * @throws Exception
      */
-    protected function createFederatedShare(IShare $share)
+    protected function createFederatedShare(IShare $share): int
     {
         $token = $this->tokenHandler->generateToken();
         $shareId = $this->addShareToDB(
@@ -584,7 +606,7 @@ class FederatedShareProviderCopy implements IShareProvider
             /* Check for failure or null return from sending and pick up an error message
              * if there is one coming from the remote server, otherwise use a generic one.
              */
-            if (\is_bool($result)) {
+            if (is_bool($result)) {
                 $status = $result;
             } elseif (isset($result['ocs']['meta']['status'])) {
                 $status = $result['ocs']['meta']['status'];
@@ -602,9 +624,9 @@ class FederatedShareProviderCopy implements IShareProvider
                 } else {
                     $message_t = $this->l->t("Federated Sharing failed: %s", [$msg]);
                 }
-                throw new \Exception($message_t);
+                throw new Exception($message_t);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Failed to notify remote server of federated share, removing share (' . $e->getMessage() . ')');
             $this->removeShareFromTableById($shareId);
             throw $e;
@@ -619,7 +641,7 @@ class FederatedShareProviderCopy implements IShareProvider
      * @param int $shareId
      * @param string $token
      */
-    protected function updateSuccessfulReShare($shareId, $token)
+    protected function updateSuccessfulReShare(int $shareId, string $token)
     {
         $query = $this->dbConnection->getQueryBuilder();
         $query->update($this->shareTable)
@@ -633,8 +655,10 @@ class FederatedShareProviderCopy implements IShareProvider
      *
      * @param IShare $share
      * @return IShare The share object
+     * @throws ShareNotFound
+     * @throws HintException
      */
-    public function update(IShare $share)
+    public function update(IShare $share): IShare
     {
         /*
          * We allow updating the permissions of federated shares
@@ -661,7 +685,7 @@ class FederatedShareProviderCopy implements IShareProvider
      *
      * @param IShare $share
      * @throws ShareNotFound
-     * @throws \OC\HintException
+     * @throws HintException
      */
     protected function sendPermissionUpdate(IShare $share)
     {
@@ -678,10 +702,10 @@ class FederatedShareProviderCopy implements IShareProvider
     /**
      * store remote ID in federated reShare table
      *
-     * @param $shareId
-     * @param $remoteId
+     * @param int $shareId
+     * @param int $remoteId
      */
-    public function storeRemoteId($shareId, $remoteId)
+    public function storeRemoteId(int $shareId, int $remoteId)
     {
         $query = $this->dbConnection->getQueryBuilder();
         $query->insert('federated_reshares')
@@ -701,7 +725,7 @@ class FederatedShareProviderCopy implements IShareProvider
      * @return array
      * @throws ShareNotFound
      */
-    protected function getRawShare($id)
+    protected function getRawShare($id): array
     {
         // Now fetch the inserted share and create a complete share object
         $qb = $this->dbConnection->getQueryBuilder();
@@ -723,7 +747,7 @@ class FederatedShareProviderCopy implements IShareProvider
     /**
      * @inheritdoc
      */
-    public function move(IShare $share, $recipient)
+    public function move(IShare $share, $recipient): IShare
     {
         /*
          * This function does nothing yet as it is just for outgoing
@@ -737,8 +761,10 @@ class FederatedShareProviderCopy implements IShareProvider
      *
      * @param IShare $parent
      * @return IShare[]
+     * @throws InvalidShare
+     * @throws IllegalIDChangeException
      */
-    public function getChildren(IShare $parent)
+    public function getChildren(IShare $parent): array
     {
         $children = [];
 
@@ -773,7 +799,7 @@ class FederatedShareProviderCopy implements IShareProvider
     /**
      * @inheritdoc
      */
-    public function getAllSharesBy($userId, $shareTypes, $nodeIDs, $reshares)
+    public function getAllSharesBy($userId, $shareTypes, $nodeIDs, $reshares): array
     {
         $shares = [];
 
@@ -813,7 +839,7 @@ class FederatedShareProviderCopy implements IShareProvider
 
         $qb->orderBy('id');
 
-        $nodeIdsChunks = \array_chunk($nodeIDs, 900);
+        $nodeIdsChunks = array_chunk($nodeIDs, 900);
         foreach ($nodeIdsChunks as $nodeIdsChunk) {
             $qb->setParameter('file_source_ids', $nodeIdsChunk, IQueryBuilder::PARAM_INT_ARRAY);
 
@@ -830,7 +856,7 @@ class FederatedShareProviderCopy implements IShareProvider
     /**
      * @inheritdoc
      */
-    public function getSharesBy($userId, $shareType, $node, $reshares, $limit, $offset)
+    public function getSharesBy($userId, $shareType, $node, $reshares, $limit, $offset): array
     {
         $qb = $this->dbConnection->getQueryBuilder();
         $qb->select('*')
@@ -886,6 +912,9 @@ class FederatedShareProviderCopy implements IShareProvider
 
     /**
      * @inheritdoc
+     *
+     * @throws InvalidShare
+     * @throws IllegalIDChangeException
      */
     public function getShareById($id, $recipientId = null)
     {
@@ -925,10 +954,14 @@ class FederatedShareProviderCopy implements IShareProvider
     /**
      * Get shares for a given path
      *
-     * @param \OCP\Files\Node $path
+     * @param Node $path
      * @return IShare[]
+     * @throws InvalidPathException
+     * @throws NotFoundException
+     * @throws InvalidShare
+     * @throws IllegalIDChangeException
      */
-    public function getSharesByPath(Node $path)
+    public function getSharesByPath(Node $path): array
     {
         $qb = $this->dbConnection->getQueryBuilder();
 
@@ -950,7 +983,7 @@ class FederatedShareProviderCopy implements IShareProvider
     /**
      * @inheritdoc
      */
-    public function getAllSharedWith($userId, $node)
+    public function getAllSharedWith($userId, $node): array
     {
         return $this->getSharedWith($userId, ScienceMeshApp::SHARE_TYPE_SCIENCEMESH, $node, -1, 0);
     }
@@ -960,7 +993,7 @@ class FederatedShareProviderCopy implements IShareProvider
      *
      * @param string $token
      * @return IShare
-     * @throws ShareNotFound
+     * @throws ShareNotFound|IllegalIDChangeException
      */
     public function getShareByToken($token)
     {
@@ -989,8 +1022,11 @@ class FederatedShareProviderCopy implements IShareProvider
 
     /**
      * @inheritDoc
+     *
+     * @throws InvalidShare
+     * @throws IllegalIDChangeException
      */
-    public function getSharesWithInvalidFileid(int $limit)
+    public function getSharesWithInvalidFileid(int $limit): array
     {
         // mimic the implementation for the default share provider in core
         $validShareTypes = [
@@ -1073,10 +1109,10 @@ class FederatedShareProviderCopy implements IShareProvider
      *
      * @return bool
      */
-    public function isCronjobScanExternalEnabled()
+    public function isCronjobScanExternalEnabled(): bool
     {
         $result = $this->config->getAppValue('files_sharing', 'cronjob_scan_external_enabled', 'no');
-        return ($result === 'yes') ? true : false;
+        return $result === 'yes';
     }
 
     /**
@@ -1084,10 +1120,10 @@ class FederatedShareProviderCopy implements IShareProvider
      *
      * @return bool
      */
-    public function isOutgoingServer2serverShareEnabled()
+    public function isOutgoingServer2serverShareEnabled(): bool
     {
         $result = $this->config->getAppValue('files_sharing', 'outgoing_server2server_share_enabled', 'yes');
-        return ($result === 'yes') ? true : false;
+        return $result === 'yes';
     }
 
     /**
@@ -1095,16 +1131,16 @@ class FederatedShareProviderCopy implements IShareProvider
      *
      * @return bool
      */
-    public function isIncomingServer2serverShareEnabled()
+    public function isIncomingServer2serverShareEnabled(): bool
     {
         $result = $this->config->getAppValue('files_sharing', 'incoming_server2server_share_enabled', 'yes');
-        return ($result === 'yes') ? true : false;
+        return $result === 'yes';
     }
 
     /**
      * @inheritdoc
      */
-    public function updateForRecipient(IShare $share, $recipient)
+    public function updateForRecipient(IShare $share, $recipient): IShare
     {
         /*
          * This function does nothing yet as it is just for outgoing
@@ -1118,7 +1154,7 @@ class FederatedShareProviderCopy implements IShareProvider
      * @param string $shareToken
      * @return mixed
      */
-    public function unshare($remoteId, $shareToken)
+    public function unshare(string $remoteId, string $shareToken)
     {
         $query = $this->dbConnection->getQueryBuilder();
         $query->select('*')->from($this->externalShareTable)
@@ -1165,15 +1201,15 @@ class FederatedShareProviderCopy implements IShareProvider
      *
      * @return int
      */
-    public function addShare($remote, $token, $name, $owner, $shareWith, $remoteId)
+    public function addShare($remote, $token, $name, $owner, $shareWith, $remoteId): int
     {
-        \OC_Util::setupFS($shareWith);
-        $externalManager = new \OCA\Files_Sharing\External\Manager(
+        OC_Util::setupFS($shareWith);
+        $externalManager = new Manager(
             $this->dbConnection,
-            \OC\Files\Filesystem::getMountManager(),
-            \OC\Files\Filesystem::getLoader(),
-            \OC::$server->getNotificationManager(),
-            \OC::$server->getEventDispatcher(),
+            Filesystem::getMountManager(),
+            Filesystem::getLoader(),
+            OC::$server->getNotificationManager(),
+            OC::$server->getEventDispatcher(),
             $shareWith
         );
         $externalManager->addShare(
@@ -1186,7 +1222,7 @@ class FederatedShareProviderCopy implements IShareProvider
             $shareWith,
             $remoteId
         );
-        return $this->dbConnection->lastInsertId("*PREFIX*{$this->externalShareTable}");
+        return $this->dbConnection->lastInsertId("*PREFIX*$this->externalShareTable");
     }
 
     /**
@@ -1195,13 +1231,12 @@ class FederatedShareProviderCopy implements IShareProvider
      *
      * @return bool
      */
-    public function getAccepted($remote, $shareWith)
+    public function getAccepted(string $remote, string $shareWith): bool
     {
         $event = $this->eventDispatcher->dispatch(
             new GenericEvent('', ['remote' => $remote]),
             'remoteshare.received'
         );
-        '@phan-var GenericEvent $event';
         if ($event->getArgument('autoAddServers')) {
             return false;
         }
@@ -1229,7 +1264,7 @@ class FederatedShareProviderCopy implements IShareProvider
     /**
      * @inheritdoc
      */
-    public function getProviderCapabilities()
+    public function getProviderCapabilities(): array
     {
         return [
             'sciencemesh' => [

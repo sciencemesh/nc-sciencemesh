@@ -29,7 +29,7 @@ class GlobalScaleConfig implements IGlobalScaleConfig
 {
 
     /** @var IConfig */
-    private $config;
+    private IConfig $config;
 
     /**
      * Config constructor.
@@ -47,7 +47,7 @@ class GlobalScaleConfig implements IGlobalScaleConfig
      * @return bool
      * @since 12.0.1
      */
-    public function onlyInternalFederation()
+    public function onlyInternalFederation(): bool
     {
         // if global scale is disabled federation works always globally
         $gsEnabled = $this->isGlobalScaleEnabled();
@@ -66,7 +66,7 @@ class GlobalScaleConfig implements IGlobalScaleConfig
      * @return bool
      * @since 12.0.1
      */
-    public function isGlobalScaleEnabled()
+    public function isGlobalScaleEnabled(): bool
     {
         $enabled = $this->config->getSystemValue('gs.enabled', false);
         return $enabled !== false;

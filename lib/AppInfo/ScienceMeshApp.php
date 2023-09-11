@@ -1,10 +1,19 @@
 <?php
+/**
+ * ownCloud - sciencemesh
+ *
+ * This file is licensed under the MIT License. See the LICENCE file.
+ * @license MIT
+ * @copyright Sciencemesh 2020 - 2023
+ *
+ * @author Michiel De Jong <michiel@pondersource.com>
+ * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.ir>
+ */
 
 namespace OCA\ScienceMesh\AppInfo;
 
 use OC;
 use OCA\ScienceMesh\GlobalConfig\GlobalScaleConfig;
-use OCA\ScienceMesh\Service\UserService;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
 use OCP\AppFramework\App;
 use OCP\AppFramework\QueryException;
@@ -22,21 +31,6 @@ class ScienceMeshApp extends App
 
         $container = $this->getContainer();
         $server = $container->getServer();
-
-        $container->registerService('UserService', function ($c) {
-            return new UserService(
-                $c->query('UserSession')
-            );
-        });
-        $container->registerService('UserSession', function ($c) {
-            return $c->query('ServerContainer')->getUserSession();
-        });
-
-        // currently logged-in user, userId can be gotten by calling the
-        // getUID() method on it
-        $container->registerService('User', function ($c) {
-            return $c->query('UserSession')->getUser();
-        });
 
         $notificationManager = $server->getNotificationManager();
         $notificationManager->registerNotifier(function () use ($notificationManager) {

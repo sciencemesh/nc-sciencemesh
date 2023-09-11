@@ -39,7 +39,7 @@ interface IGlobalScaleConfig
      * @return bool
      * @since 12.0.1
      */
-    public function isGlobalScaleEnabled();
+    public function isGlobalScaleEnabled(): bool;
 
     /**
      * check if federation should only be used internally in a global scale setup
@@ -47,5 +47,5 @@ interface IGlobalScaleConfig
      * @return bool
      * @since 12.0.1
      */
-    public function onlyInternalFederation();
+    public function onlyInternalFederation(): bool;
 }

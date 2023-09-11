@@ -1,4 +1,14 @@
 <?php
+/**
+ * ownCloud - sciencemesh
+ *
+ * This file is licensed under the MIT License. See the LICENCE file.
+ * @license MIT
+ * @copyright Sciencemesh 2020 - 2023
+ *
+ * @author Michiel De Jong <michiel@pondersource.com>
+ * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.ir>
+ */
 
 namespace OCA\ScienceMesh\AppInfo;
 
