@@ -33,49 +33,48 @@ use OCP\Notification\IManager as INotificationManager;
 
 class AppController extends Controller
 {
-    /** @var string */
-    private string $userId;
+    /** @var ?string */
+    private ?string $userId;
 
     /** @var IConfig */
     private IConfig $config;
+
+    /** @var IMailer */
+    private IMailer $mailer;
+
+    /** @var ITimeFactory */
+    private ITimeFactory $timeFactory;
 
     /** @var IUserSession */
     private IUserSession $userSession;
 
     /** @var RevaHttpClient */
-    private RevaHttpClient $httpClient;
-
-    /** @var IMailer */
-    private IMailer $mailer;
+    private RevaHttpClient $revaHttpClient;
 
     /** @var INotificationManager */
     private INotificationManager $notificationManager;
 
-    /** @var ITimeFactory */
-    private ITimeFactory $timeFactory;
-
     public function __construct(
         string               $AppName,
-        ITimeFactory         $timeFactory,
-        INotificationManager $notificationManager,
-        IRequest             $request,
+        ?string              $userId,
         IConfig              $config,
-        string               $userId,
+        IMailer              $mailer,
+        IRequest             $request,
+        ITimeFactory         $timeFactory,
         IUserSession         $userSession,
-        RevaHttpClient       $httpClient,
-        IMailer              $mailer
+        RevaHttpClient       $revaHttpClient,
+        INotificationManager $notificationManager
     )
     {
         parent::__construct($AppName, $request);
 
         $this->userId = $userId;
-        $this->request = $request;
-        $this->notificationManager = $notificationManager;
-        $this->timeFactory = $timeFactory;
         $this->config = $config;
-        $this->userSession = $userSession;
-        $this->httpClient = $httpClient;
         $this->mailer = $mailer;
+        $this->timeFactory = $timeFactory;
+        $this->userSession = $userSession;
+        $this->revaHttpClient = $revaHttpClient;
+        $this->notificationManager = $notificationManager;
     }
 
     /**
@@ -149,7 +148,7 @@ class AppController extends Controller
     public function invitationsGenerate(): PlainResponse
     {
         $recipient = $this->request->getParam('email');
-        $invitationsData = $this->httpClient->generateTokenFromReva($this->userId, $recipient);
+        $invitationsData = $this->revaHttpClient->generateTokenFromReva($this->userId, $recipient);
 
         // check if invite_link exist before accessing.
         $inviteLinkStr = $invitationsData["invite_link"] ?? false;
@@ -224,7 +223,7 @@ class AppController extends Controller
     {
         $providerDomain = $this->request->getParam('providerDomain');
         $token = $this->request->getParam('token');
-        $result = $this->httpClient->acceptInvite($providerDomain, $token, $this->userId);
+        $result = $this->revaHttpClient->acceptInvite($providerDomain, $token, $this->userId);
         return new PlainResponse($result, Http::STATUS_OK);
     }
 
@@ -234,7 +233,7 @@ class AppController extends Controller
      */
     public function contactsFindUsers($searchToken = ""): PlainResponse
     {
-        $find_users_json = $this->httpClient->findAcceptedUsers($this->userId);
+        $find_users_json = $this->revaHttpClient->findAcceptedUsers($this->userId);
 
         $find_users = json_decode($find_users_json, false);
         $return_users = array();

@@ -1,19 +1,22 @@
 <?php
 /**
- * @copyright Copyright (c) 2020 - 2023, Ponder Source.
+ * ownCloud - sciencemesh
  *
- * @author Michiel de Jong <michiel@pondersource.com>
- * @author Triantafullenia-Doumani <triantafyllenia@tuta.io>
- * @author Mohammad Mahdi Baghbani Pourvahid <mahdi.baghbani1@gmail.com>
- * @author Benz Schenk <benz.schenk@brokkoli.be>
- * @author Yvo Brevoort <yvo@muze.nl>
- *
+ * This file is licensed under the MIT License. See the LICENCE file.
  * @license MIT
+ * @copyright Sciencemesh 2020 - 2023
  *
+ * @author Yvo Brevoort <yvo@muze.nl>
+ * @author Benz Schenk <benz.schenk@brokkoli.be>
+ * @author Michiel De Jong <michiel@pondersource.com>
+ * @author Triantafullenia-Doumani <triantafyllenia@tuta.io>
+ * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.ir>
  */
 
 namespace OCA\ScienceMesh\ShareProvider;
 
+use DateTime;
+use Exception;
 use OC\Share20\Exception\InvalidShare;
 use OC\Share20\Share;
 use OCA\FederatedFileSharing\AddressHandler;
@@ -28,6 +31,7 @@ use OCP\IDBConnection;
 use OCP\IL10N;
 use OCP\ILogger;
 use OCP\IUserManager;
+use OCP\Share\Exceptions\IllegalIDChangeException;
 use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IShare;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -41,10 +45,13 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
 {
 
     /** @var RevaHttpClient */
-    protected $revaHttpClient;
+    protected RevaHttpClient $revaHttpClient;
+
+    /** @var array */
+    protected array $supportedShareType;
 
     /**
-     * DefaultShareProvider constructor.
+     * ScienceMeshShareProvider constructor.
      *
      * @param IDBConnection $connection
      * @param EventDispatcherInterface $eventDispatcher
@@ -94,7 +101,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
      *
      * @return boolean
      */
-    public function isShareTypeSupported($shareType)
+    public function isShareTypeSupported(int $shareType): bool
     {
         return in_array($shareType, $this->supportedShareType);
     }
@@ -105,9 +112,9 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
      * @param IShare $share
      * @return IShare The share object
      * @throws ShareNotFound
-     * @throws \Exception
+     * @throws Exception
      */
-    public function createInternal(IShare $share)
+    public function createInternal(IShare $share): IShare
     {
         error_log("SMSP: createInternal");
         $shareWith = $share->getSharedWith();
@@ -123,7 +130,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
             $message = 'Sharing %1$s failed, because this item is already shared with %2$s';
             $message_t = $this->l->t('Sharing %1$s failed, because this item is already shared with user %2$s', [$share->getNode()->getName(), $shareWith]);
             $this->logger->debug(sprintf($message, $share->getNode()->getName(), $shareWith), ['app' => 'ScienceMesh']);
-            throw new \Exception($message_t);
+            throw new Exception($message_t);
         }
 
 
@@ -133,7 +140,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
             $message = 'ScienceMesh shares require read permissions';
             $message_t = $this->l->t('ScienceMesh shares require read permissions');
             $this->logger->debug($message, ['app' => 'ScienceMesh']);
-            throw new \Exception($message_t);
+            throw new Exception($message_t);
         }
 
         $share->setSharedWith($shareWith);
@@ -148,24 +155,20 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
      *
      * @param IShare $share
      * @return int
-     * @throws ShareNotFound
-     * @throws \Exception
+     * @throws Exception
      */
-    protected function createScienceMeshShare(IShare $share)
+    protected function createScienceMeshShare(IShare $share): int
     {
-        $token = $share->getToken(); // $this->tokenHandler->generateToken();
-        $shareId = $this->addSentShareToDB(
+        return $this->addSentShareToDB(
             $share->getNodeId(),
             $share->getNodeType(),
             $share->getSharedWith(),
             $share->getSharedBy(),
             $share->getShareOwner(),
             $share->getPermissions(),
-            $token,
+            $share->getToken(),
             $share->getShareType()
         );
-
-        return $shareId;
     }
 
     /**
@@ -181,7 +184,16 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
      * @param int $shareType
      * @return int
      */
-    protected function addSentShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $uidOwner, $permissions, $token, $shareType)
+    protected function addSentShareToDB(
+        int    $itemSource,
+        string $itemType,
+        string $shareWith,
+        string $sharedBy,
+        string $uidOwner,
+        int    $permissions,
+        string $token,
+        int    $shareType
+    ): int
     {
         $qb = $this->dbConnection->getQueryBuilder();
         $qb->insert('share')
@@ -203,9 +215,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
         $qb->setValue('file_target', $qb->createNamedParameter(''));
 
         $qb->execute();
-        $id = $qb->getLastInsertId();
-
-        return (int)$id;
+        return $qb->getLastInsertId();
     }
 
     /**
@@ -214,20 +224,20 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
      * @param IShare $share
      * @return IShare The share object
      * @throws ShareNotFound
-     * @throws \Exception
+     * @throws Exception
      */
-    public function create(IShare $share)
+    public function create(IShare $share): IShare
     {
         $node = $share->getNode();
         $shareWith = $share->getSharedWith();
 
-        // This is the routhing flag for sending a share.
-        // if the recepient of the share is a sciencemesh contact,
+        // This is the routing flag for sending a share.
+        // if the recipient of the share is a sciencemesh contact,
         // the search plugin will mark it by a postfix.
-        $isScienecemeshUser = $this->stringEndsWith($shareWith, ScienceMeshApp::SCIENCEMESH_POSTFIX);
+        $isSciencemeshUser = $this->stringEndsWith($shareWith, ScienceMeshApp::SCIENCEMESH_POSTFIX);
 
         // Based on the flag, the share will be sent through sciencemesh or regular share provider.
-        if ($isScienecemeshUser) {
+        if ($isSciencemeshUser) {
             // remove the postfix flag from the string.
             $shareWith = str_replace(ScienceMeshApp::SCIENCEMESH_POSTFIX, "", $shareWith);
 
@@ -248,7 +258,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
             // requirement:
             // handle usernames with multiple @ in them.
             // example: MahdiBaghbani@pondersource@sciencemesh.org
-            // uername: MahdiBaghbani@pondersource
+            // username: MahdiBaghbani@pondersource
             // host: sciencemesh.org
             $split_point = '@';
             $parts = explode($split_point, $shareWith);
@@ -264,12 +274,12 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
             ]);
 
             if (!isset($response) || !isset($response->share) || !isset($response->share->owner) || !isset($response->share->owner->idp)) {
-                throw new \Exception("Unexpected response from reva");
+                throw new Exception("Unexpected response from reva");
             }
 
             $share->setId("will-set-this-later");
             $share->setProviderId($response->share->owner->idp);
-            $share->setShareTime(new \DateTime());
+            $share->setShareTime(new DateTime());
         } else {
             $share = parent::create($share);
         }
@@ -277,7 +287,14 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
         return $share;
     }
 
-    function stringEndsWith($string, $search)
+    /**
+     * Check if a given string ends with a substring.
+     *
+     * @param string $string
+     * @param string $search
+     * @return bool
+     */
+    function stringEndsWith(string $string, string $search): bool
     {
         $length = strlen($search);
         if (!$length) {
@@ -292,7 +309,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
      * @param IShare $share
      * @return IShare The share object
      */
-    public function updateReceivedShare(IShare $share)
+    public function updateReceivedShare(IShare $share): IShare
     {
         /*
          * We allow updating the permissions of sciencemesh shares
@@ -310,9 +327,9 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
      *
      * @param string $token
      * @return IShare
-     * @throws ShareNotFound
+     * @throws ShareNotFound|IllegalIDChangeException
      */
-    public function getReceivedShareByToken($token)
+    public function getReceivedShareByToken(string $token)
     {
         $qb = $this->dbConnection->getQueryBuilder();
         $cursor = $qb->select('*')
@@ -324,13 +341,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
         if ($data === false) {
             throw new ShareNotFound('Share not found', $this->l->t('Could not find share'));
         }
-        try {
-            $share = $this->createExternalShareObject($data);
-        } catch (InvalidShare $e) {
-            throw new ShareNotFound('Share not found', $this->l->t('Could not find share'));
-        }
-
-        return $share;
+        return $this->createExternalShareObject($data);
     }
 
     /**
@@ -338,10 +349,9 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
      *
      * @param array $data
      * @return IShare
-     * @throws InvalidShare
-     * @throws ShareNotFound
+     * @throws IllegalIDChangeException
      */
-    protected function createExternalShareObject($data)
+    protected function createExternalShareObject(array $data)
     {
         $share = new Share($this->rootFolder, $this->userManager);
         $share->setId((int)$data['id'])
@@ -360,29 +370,19 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
      *
      * @return string Containing only [a-zA-Z0-9]
      */
-    public function identifier()
+    public function identifier(): string
     {
         return 'sciencemesh';
     }
 
     /**
-     * in case of a re-share we need to send the other use (initiator or owner)
-     * a message that the file was unshared
-     *
-     * @param IShare $share
-     * @param bool $isOwner the user can either be the owner or the user who re-sahred it
-     * @throws ShareNotFound
-     * @throws \OC\HintException
-     */
-    // TODO: review
-    /**
      * Get a share by token
      *
      * @param string $token
      * @return IShare
-     * @throws ShareNotFound
+     * @throws ShareNotFound|IllegalIDChangeException
      */
-    public function getSentShareByToken($token)
+    public function getSentShareByToken(string $token): IShare
     {
         error_log("share provider getSentShareByToken '$token'");
         $qb = $this->dbConnection->getQueryBuilder();
@@ -405,7 +405,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
         return $share;
     }
 
-    public function getSentShares($userId): iterable
+    public function getSentShares(int $userId): iterable
     {
         $qb = $this->dbConnection->getQueryBuilder();
 
@@ -425,9 +425,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
         while ($data = $cursor->fetch()) {
             try {
                 $share = $this->createShareObject($data);
-            } catch (InvalidShare $e) {
-                continue;
-            } catch (ShareNotFound $e) {
+            } catch (InvalidShare|IllegalIDChangeException $e) {
                 continue;
             }
 
@@ -448,9 +446,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
         while ($data = $cursor->fetch()) {
             try {
                 $share = $this->createExternalShareObject($data);
-            } catch (InvalidShare $e) {
-                continue;
-            } catch (ShareNotFound $e) {
+            } catch (IllegalIDChangeException $e) {
                 continue;
             }
 
@@ -459,7 +455,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
         $cursor->closeCursor();
     }
 
-    public function deleteSentShareByName($userId, $name)
+    public function deleteSentShareByName($userId, $name): bool
     {
         $qb = $this->dbConnection->getQueryBuilder();
         $qb->select('fileid')
@@ -509,7 +505,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
         $this->removeShareFromTable($share);
     }
 
-    public function deleteReceivedShareByOpaqueId($userId, $opaqueId)
+    public function deleteReceivedShareByOpaqueId($userId, $opaqueId): bool
     {
         $qb = $this->dbConnection->getQueryBuilder();
         $qb->select('*')
@@ -532,11 +528,15 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
                 ->andWhere(
                     $qb->expr()->eq('share_token', $qb->createNamedParameter($opaqueId))
                 );
-            $cursor = $qb->execute();
+            $qb->execute();
             return true;
         }
     }
 
+    /**
+     * @throws IllegalIDChangeException
+     * @throws ShareNotFound
+     */
     public function getSentShareByPath($userId, $path)
     {
         $qb = $this->dbConnection->getQueryBuilder();
@@ -574,6 +574,9 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
         return $share;
     }
 
+    /**
+     * @throws Exception
+     */
     public function getShareByOpaqueId($opaqueId)
     {
         $qb = $this->dbConnection->getQueryBuilder();
@@ -599,9 +602,8 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
         if (!$data) {
             return false;
         }
-        // FIXME: side effect?
-        $res = $external ? $this->createScienceMeshExternalShare($data) : $this->createScienceMeshShare($data);
-        return $res;
+
+        return $external ? $this->createScienceMeshExternalShare($data) : $this->createScienceMeshShare($data);
     }
 
     public function addScienceMeshUser($user)
@@ -632,7 +634,10 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
         }
     }
 
-    public function addScienceMeshShare($scienceMeshData, $shareData)
+    /**
+     * @throws Exception
+     */
+    public function addScienceMeshShare($scienceMeshData, $shareData): int
     {
         if ($scienceMeshData['is_external']) {
             return $this->addReceivedShareToDB($shareData);
@@ -644,17 +649,10 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
     /**
      * add share to the database and return the ID
      *
-     * @param int $itemSource
-     * @param string $itemType
-     * @param string $shareWith
-     * @param string $sharedBy
-     * @param string $uidOwner
-     * @param int $permissions
-     * @param string $token
-     * @param int $shareType
+     * @param $shareData
      * @return int
      */
-    public function addReceivedShareToDB($shareData)
+    public function addReceivedShareToDB($shareData): int
     {
         $mountpoint = "{{TemporaryMountPointName#" . $shareData["name"] . "}}";
         $mountpoint_hash = md5($mountpoint);
@@ -687,9 +685,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
             ->setValue('mountpoint_hash', $qb->createNamedParameter($mountpoint_hash))
             ->setValue('accepted', $qb->createNamedParameter($accepted));
         $qb->execute();
-        $id = $qb->getLastInsertId();
-
-        return (int)$id;
+        return $qb->getLastInsertId();
     }
 
 
@@ -700,8 +696,6 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
             return;
         }
 
-
-        //****
         // also send a unShare request to the initiator, if this is a different user than the owner
         if ($share->getShareOwner() !== $share->getSharedBy()) {
             if ($isOwner) {

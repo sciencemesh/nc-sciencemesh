@@ -23,8 +23,8 @@
 
 namespace OCA\ScienceMesh\Notifier;
 
+use InvalidArgumentException;
 use OCP\IURLGenerator;
-use OCP\L10N\IFactory;
 use OCP\Notification\INotification;
 use OCP\Notification\INotifier;
 
@@ -32,10 +32,9 @@ class ScienceMeshNotifier implements INotifier
 {
 
     /** @var IURLGenerator */
-    protected $urlGenerator;
+    protected IURLGenerator $urlGenerator;
 
     /**
-     * @param IFactory $l10nFactory
      * @param IURLGenerator $urlGenerator
      */
     public function __construct(IURLGenerator $urlGenerator)
@@ -55,7 +54,7 @@ class ScienceMeshNotifier implements INotifier
     }
 
     /**
-     * Human readable name describing the notifier
+     * Human-readable name describing the notifier
      *
      * @return string
      * @since 17.0.0
@@ -69,14 +68,13 @@ class ScienceMeshNotifier implements INotifier
      * @param INotification $notification
      * @param string $languageCode The code of the language that should be used to prepare the notification
      * @return INotification
-     * @throws \InvalidArgumentException When the notification was not prepared by a notifier
-     * @throws AlreadyProcessedException When the notification is not needed anymore and should be deleted
+     * @throws InvalidArgumentException When the notification was not prepared by a notifier
      */
 
-    public function prepare(INotification $notification, string $languageCode): INotification
+    public function prepare(INotification $notification, $languageCode): INotification
     {
         if ($notification->getApp() !== 'sciencemesh') {
-            throw new \InvalidArgumentException('Unknown app');
+            throw new InvalidArgumentException('Unknown app');
         }
 
         switch ($notification->getSubject()) {
@@ -92,7 +90,6 @@ class ScienceMeshNotifier implements INotifier
                 if (isset($messageParams[0]) && $messageParams[0] !== '') {
                     $notification->setParsedMessage($messageParams[0]);
                 }
-//				$notification->setParsedMessage(json_encode($subjectParams));
                 $notification->setIcon($this->urlGenerator->getAbsoluteURL($this->urlGenerator->imagePath('notifications', 'notifications-dark.svg')));
 
                 // Deal with the actions for a known subject
@@ -101,12 +98,10 @@ class ScienceMeshNotifier implements INotifier
                         case 'accept':
                             $action->setParsedLabel("Accept")
                                 ->setLink($this->urlGenerator->linkToRouteAbsolute('sciencemesh.app.shared'), 'GET');
-                            //	->setLink($this->urlGenerator->linkToRouteAbsolute('sciencemesh.app.shared'), 'GET'); // , ['id' => $notification->getObjectId()]), 'POST');
                             break;
                         case 'decline':
                             $action->setParsedLabel("Decline")
                                 ->setLink($this->urlGenerator->linkToRouteAbsolute('sciencemesh.app.shared'), 'GET');
-                            //	->setLink($this->urlGenerator->linkToRouteAbsolute('sciencemesh.app.shared'), 'GET'); // , ['id' => $notification->getObjectId()]), 'DELETE');
                             break;
                     }
 
@@ -116,7 +111,7 @@ class ScienceMeshNotifier implements INotifier
                 return $notification;
 
             default:
-                throw new \InvalidArgumentException('Unknown subject');
+                throw new InvalidArgumentException('Unknown subject');
         }
     }
 }

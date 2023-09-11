@@ -2,38 +2,46 @@
 
 namespace OCA\ScienceMesh\Plugins;
 
+use OC\Share\Constants;
 use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 use OCA\ScienceMesh\RevaHttpClient;
 use OCP\Contacts\IManager;
 use OCP\IConfig;
-use OCP\IUserManager;
 use OCP\IUserSession;
-use OCP\Share;
 use OCP\Util\UserSearch;
+use function explode;
+use function is_array;
+use function substr_count;
 
 class ScienceMeshSearchPlugin
 {
-    protected $shareeEnumeration;
+    protected bool $shareeEnumeration;
 
     /** @var IManager */
-    protected $contactsManager;
+    protected IManager $contactsManager;
 
     /** @var int */
-    protected $offset = 0;
+    protected int $offset = 0;
 
     /** @var int */
-    protected $limit = 10;
+    protected int $limit = 10;
 
     /** @var UserSearch */
-    protected $userSearch;
+    protected UserSearch $userSearch;
 
     /** @var IConfig */
-    private $config;
+    private IConfig $config;
 
     /** @var string */
-    private $userId = '';
+    private string $userId = '';
+    private RevaHttpClient $revaHttpClient;
 
-    public function __construct(IManager $contactsManager, IConfig $config, IUserManager $userManager, IUserSession $userSession, UserSearch $userSearch)
+    public function __construct(
+        IManager     $contactsManager,
+        IConfig      $config,
+        IUserSession $userSession,
+        UserSearch   $userSearch
+    )
     {
         $this->config = $config;
         $user = $userSession->getUser();
@@ -46,7 +54,7 @@ class ScienceMeshSearchPlugin
         $this->revaHttpClient = new RevaHttpClient($this->config);
     }
 
-    public function search($search)
+    public function search($search): array
     {
         $result = json_decode($this->revaHttpClient->findAcceptedUsers($this->userId), true);
         if (!isset($result)) {
@@ -70,7 +78,7 @@ class ScienceMeshSearchPlugin
 
         $otherResults = [];
 
-        $searchProperties = \explode(',', $this->config->getAppValue('dav', 'remote_search_properties', 'CLOUD,FN'));
+        $searchProperties = explode(',', $this->config->getAppValue('dav', 'remote_search_properties', 'CLOUD,FN'));
         // Search in contacts
         $matchMode = $this->config->getSystemValue('accounts.enable_medial_search', true) === true
             ? 'ANY'
@@ -89,13 +97,13 @@ class ScienceMeshSearchPlugin
                 continue;
             }
             if (!isset($contact['CLOUD'])) {
-                // we need a cloud id to setup a remote share
+                // we need a cloud id to set up a remote share
                 continue;
             }
 
             // we can have multiple cloud domains, always convert to an array
             $cloudIds = $contact['CLOUD'];
-            if (!\is_array($cloudIds)) {
+            if (!is_array($cloudIds)) {
                 $cloudIds = [$cloudIds];
             }
 
@@ -109,7 +117,7 @@ class ScienceMeshSearchPlugin
                     $otherResults[] = [
                         'label' => $contact['FN'],
                         'value' => [
-                            'shareType' => Share::SHARE_TYPE_REMOTE,
+                            'shareType' => Constants::SHARE_TYPE_REMOTE,
                             'shareWith' => $cloudId,
                             'server' => $serverUrl,
                         ],
@@ -122,12 +130,12 @@ class ScienceMeshSearchPlugin
                 foreach ($searchProperties as $property) {
                     // do we even have this property for this contact/
                     if (!isset($contact[$property])) {
-                        // Skip this property since our contact doesnt have it
+                        // Skip this property since our contact doesn't have it
                         continue;
                     }
                     // check if we have a match
                     $values = $contact[$property];
-                    if (!\is_array($values)) {
+                    if (!is_array($values)) {
                         $values = [$values];
                     }
                     foreach ($values as $value) {
@@ -136,7 +144,7 @@ class ScienceMeshSearchPlugin
                             $this->result['exact']['remotes'][] = [
                                 'label' => $contact['FN'],
                                 'value' => [
-                                    'shareType' => Share::SHARE_TYPE_REMOTE,
+                                    'shareType' => Constants::SHARE_TYPE_REMOTE,
                                     'shareWith' => $cloudId,
                                     'server' => $serverUrl,
                                 ],
@@ -148,12 +156,12 @@ class ScienceMeshSearchPlugin
                     }
                 }
 
-                // If we get here, we didnt find an exact match, so add to other matches
+                // If we get here, we didn't find an exact match, so add to other matches
                 if ($this->userSearch->isSearchable($search)) {
                     $otherResults[] = [
                         'label' => $contact['FN'],
                         'value' => [
-                            'shareType' => Share::SHARE_TYPE_REMOTE,
+                            'shareType' => Constants::SHARE_TYPE_REMOTE,
                             'shareWith' => $cloudId,
                             'server' => $serverUrl,
                         ],
@@ -162,12 +170,12 @@ class ScienceMeshSearchPlugin
             }
         }
 
-        // remove the exact user results if we dont allow autocomplete
+        // remove the exact user results if we don't allow autocomplete
         if (!$this->shareeEnumeration) {
             $otherResults = [];
         }
 
-        if (!$foundRemoteById && \substr_count($search, '@') >= 1
+        if (!$foundRemoteById && substr_count($search, '@') >= 1
             && $this->offset === 0 && $this->userSearch->isSearchable($search)
             // if an exact local user is found, only keep the remote entry if
             // its domain does not match the trusted domains
@@ -179,14 +187,12 @@ class ScienceMeshSearchPlugin
             $otherResults[] = [
                 'label' => $search,
                 'value' => [
-                    'shareType' => Share::SHARE_TYPE_REMOTE,
+                    'shareType' => Constants::SHARE_TYPE_REMOTE,
                     'shareWith' => $search,
                 ],
             ];
         }
 
-        $result = array_merge($result, $otherResults);
-
-        return $result;
+        return array_merge($result, $otherResults);
     }
 }
