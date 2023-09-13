@@ -20,9 +20,13 @@ use OCP\AppFramework\QueryException;
 
 class ScienceMeshApp extends App
 {
+    /** @var string */
     public const APP_ID = 'sciencemesh';
+
+    /** @var string */
     public const SCIENCEMESH_POSTFIX = ' (Sciencemesh)';
-    public const SHARE_TYPE_REMOTE = 6;
+
+    /** @var int */
     public const SHARE_TYPE_SCIENCEMESH = 6;
 
     public function __construct()
@@ -44,6 +48,7 @@ class ScienceMeshApp extends App
         });
     }
 
+    // TODO @Mahdi: below function is probably useless, check and remove.
     /**
      * @return ScienceMeshShareProvider
      * @throws QueryException

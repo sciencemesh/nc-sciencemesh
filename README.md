@@ -35,7 +35,7 @@ and package managers, so people that simply want to build the app won't need to 
 # Before running tests
 
 * add this app to your Nextcloud instance as /apps/sciencemesh
-* run `php -S localhost:8080` in the root of your nextcloud folder (or run it with Apache / nginx / MAMP / etc)
+* run `php -S localhost:8080` in the root of your nextcloud folder (or run it with Apache / nginx / MAMP / etc.)
 * create a user 'tester' (password e.g. '123')
 * log in and enable the 'sciencemesh' app
 * in your local reva checkout, run:
@@ -94,7 +94,7 @@ or
 This will run the PHP unit and integration tests and if a package.json is present in the **js/** folder will execute *
 *npm run test**
 
-Of course you can also install [PHPUnit](http://phpunit.de/getting-started.html) and use the configurations directly:
+Of course, you can also install [PHPUnit](http://phpunit.de/getting-started.html) and use the configurations directly:
 
      phpunit -c phpunit.xml
 

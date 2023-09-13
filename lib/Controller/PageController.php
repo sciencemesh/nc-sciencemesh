@@ -27,33 +27,33 @@ use OCP\IRequest;
 
 class PageController extends Controller
 {
-    /** @var IDBConnection */
-    protected IDBConnection $connection;
+    /** @var string */
+    private string $userId;
 
     /** @var ILogger */
     private ILogger $logger;
 
-    /** @var string */
-    private string $userId;
+    /** @var IDBConnection */
+    protected IDBConnection $connection;
 
     /** @var IClientService */
     private IClientService $httpClientService;
 
     public function __construct(
-        string         $AppName,
-        IRequest       $request,
+        string         $appName,
         string         $userId,
+        ILogger        $logger,
+        IRequest       $request,
         IDBConnection  $connection,
-        IClientService $httpClientService,
-        ILogger        $logger
+        IClientService $httpClientService
     )
     {
+        parent::__construct($appName, $request);
 
-        parent::__construct($AppName, $request);
         $this->userId = $userId;
+        $this->logger = $logger;
         $this->connection = $connection;
         $this->httpClientService = $httpClientService;
-        $this->logger = $logger;
     }
 
     /**
@@ -69,7 +69,8 @@ class PageController extends Controller
     public function index(): TemplateResponse
     {
         $params = ['user' => $this->userId];
-        return new TemplateResponse('sciencemesh', 'main', $params);  // templates/main.php
+        // templates/main.php
+        return new TemplateResponse('sciencemesh', 'main', $params);
     }
 
     /**
@@ -105,8 +106,6 @@ class PageController extends Controller
             ]);
 
             if ($response->getStatusCode() === Http::STATUS_OK) {
-                //$result = json_decode($response->getBody(), true);
-                //return (is_array($result)) ? $result : [];
                 echo($response->getBody());
                 return new Http\Response();
             } else {
@@ -129,7 +128,8 @@ class PageController extends Controller
         $row['numusers'] = intval($row['numusers']);
         $row['numfiles'] = intval($row['numfiles']);
         $row['numstorage'] = intval($row['numstorage']);
-        unset($row['apikey']); // Remove the private API key from the exposed settings
+        // Remove the private API key from the exposed settings
+        unset($row['apikey']);
         return $row;
     }
 
@@ -140,7 +140,6 @@ class PageController extends Controller
      */
     public function getInternalMetrics(): JSONResponse
     {
-        //$metrics = $this->getInternal();
         $settings = $this->loadSettings();
         if (!$settings) {
             return new JSONResponse([]);

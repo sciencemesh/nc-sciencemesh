@@ -12,6 +12,7 @@
 
 namespace OCA\ScienceMesh\AppInfo;
 
+use Exception;
 use OCA\ScienceMesh\Controller\PageController;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
 use OCP\AppFramework\App;
@@ -25,6 +26,7 @@ class Application extends App
         parent::__construct('sciencemesh', $urlParams);
 
         $container = $this->getContainer();
+
         $container->registerService('PageController', function ($c) {
             return new PageController(
                 $c->query('AppName'),
@@ -35,6 +37,7 @@ class Application extends App
 
     /**
      * @throws QueryException
+     * @throws Exception
      */
     public function getScienceMeshShareProvider(): ScienceMeshShareProvider
     {

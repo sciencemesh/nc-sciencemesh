@@ -55,7 +55,7 @@ class AppController extends Controller
     private INotificationManager $notificationManager;
 
     public function __construct(
-        string               $AppName,
+        string               $appName,
         ?string              $userId,
         IConfig              $config,
         IMailer              $mailer,
@@ -66,7 +66,7 @@ class AppController extends Controller
         INotificationManager $notificationManager
     )
     {
-        parent::__construct($AppName, $request);
+        parent::__construct($appName, $request);
 
         $this->userId = $userId;
         $this->config = $config;

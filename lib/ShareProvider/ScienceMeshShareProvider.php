@@ -63,6 +63,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
      * @param IRootFolder $rootFolder
      * @param IConfig $config
      * @param IUserManager $userManager
+     * @throws Exception
      */
     public function __construct(
         IDBConnection            $connection,

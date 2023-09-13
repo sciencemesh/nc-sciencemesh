@@ -34,21 +34,111 @@ use OCP\IConfig;
  */
 class RevaHttpClient
 {
-    private $client;
     private string $revaUrl;
     private $revaLoopbackSecret;
+    private ServerConfig $serverConfig;
 
     /**
      * RevaHttpClient constructor.
      *
+     * @throws Exception
      */
-    public function __construct(IConfig $config, $curlDebug = true)
+    public function __construct(IConfig $config)
     {
-        $this->config = $config;
         $this->serverConfig = new ServerConfig($config);
         $this->revaUrl = $this->serverConfig->getIopUrl();
         $this->revaLoopbackSecret = $this->serverConfig->getRevaLoopbackSecret();
-        $this->curlDebug = $curlDebug;
+    }
+
+    private function curlGet(string $url, string $user, array $params = [])
+    {
+        $ch = curl_init();
+        if (sizeof($params)) {
+            $url .= "?" . http_build_query($params);
+        }
+
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        if ($this->revaLoopbackSecret) {
+            curl_setopt($ch, CURLOPT_USERPWD, $user . ":" . $this->revaLoopbackSecret);
+            curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        }
+
+        $output = curl_exec($ch);
+        $info = curl_getinfo($ch);
+        error_log('curl output:' . var_export($output, true) . ' info: ' . var_export($info, true));
+        curl_close($ch);
+
+        return $output;
+    }
+
+    private function curlPost(string $url, string $user, array $params = [])
+    {
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params, JSON_PRETTY_PRINT));
+        if ($this->revaLoopbackSecret) {
+            curl_setopt($ch, CURLOPT_USERPWD, $user . ":" . $this->revaLoopbackSecret);
+            curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        }
+        $output = curl_exec($ch);
+        $info = curl_getinfo($ch);
+        curl_close($ch);
+        return $output;
+    }
+
+    private function revaPost(string $route, string $user, array $params = [])
+    {
+        $url = $this->revaUrl . $route;
+        return $this->curlPost($url, $user, $params);
+    }
+
+    private function revaGet(string $route, string $user, array $params = [])
+    {
+        $url = $this->revaUrl . $route;
+        return $this->curlGet($url, $user, $params);
+    }
+
+    public function ocmProvider(string $userId)
+    {
+        // TODO: @Mahdi: handle failures in this request.
+        return $this->revaGet('ocm-provider', $userId);
+    }
+
+    public function generateTokenFromReva(string $userId, string $recipient)
+    {
+        // TODO: @Mahdi: handle failures in this request.
+        $tokenFromReva = $this->revaGet('sciencemesh/generate-invite', $userId, array('recipient' => $recipient));
+        error_log('Got token from reva!' . $tokenFromReva);
+        return json_decode($tokenFromReva, true);
+    }
+
+    public function findAcceptedUsers(string $userId)
+    {
+        // TODO: @Mahdi: handle failures in this request.
+        $users = $this->revaGet('sciencemesh/find-accepted-users', $userId);
+        error_log("users " . var_export($users, true));
+        if ($users === "null\n") {
+            error_log("users corrected!");
+            $users = "[]";
+        }
+        return $users;
+    }
+
+    public function acceptInvite(string $providerDomain, string $token, string $userId): string
+    {
+        // TODO: @Mahdi: handle failures in this request.
+        $empty = $this->revaPost('sciencemesh/accept-invite', $userId, [
+            'providerDomain' => $providerDomain,
+            'token' => $token
+        ]);
+        return "Accepted invite";
     }
 
     /**
@@ -76,96 +166,9 @@ class RevaHttpClient
         if (!isset($params['recipientHost'])) {
             throw new Exception("Missing recipientHost", 400);
         }
+        // TODO: @Mahdi: handle failures in this request.
         error_log("Calling reva/sciencemesh/create-share " . json_encode($params));
         $responseText = $this->revaPost('sciencemesh/create-share', $user, $params);
         return json_decode($responseText);
-    }
-
-    private function revaPost(string $route, string $user, array $params = [])
-    {
-        $url = $this->revaUrl . $route;
-        return $this->curlPost($url, $user, $params);
-    }
-
-    private function curlPost(string $url, string $user, array $params = [])
-    {
-        $ch = curl_init();
-
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params, JSON_PRETTY_PRINT));
-        if ($this->revaLoopbackSecret) {
-            curl_setopt($ch, CURLOPT_USERPWD, $user . ":" . $this->revaLoopbackSecret);
-            curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-        }
-        $output = curl_exec($ch);
-        $info = curl_getinfo($ch);
-        curl_close($ch);
-        return $output;
-    }
-
-    public function ocmProvider(string $userId)
-    {
-        return $this->revaGet('ocm-provider', $userId);
-    }
-
-    private function revaGet(string $route, string $user, array $params = [])
-    {
-        $url = $this->revaUrl . $route;
-        return $this->curlGet($url, $user, $params);
-    }
-
-    private function curlGet(string $url, string $user, array $params = [])
-    {
-        $ch = curl_init();
-        if (sizeof($params)) {
-            $url .= "?" . http_build_query($params);
-        }
-
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        if ($this->revaLoopbackSecret) {
-            curl_setopt($ch, CURLOPT_USERPWD, $user . ":" . $this->revaLoopbackSecret);
-            curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-        }
-
-        $output = curl_exec($ch);
-        $info = curl_getinfo($ch);
-        error_log('curl output:' . var_export($output, true) . ' info: ' . var_export($info, true));
-        curl_close($ch);
-
-        return $output;
-    }
-
-    public function findAcceptedUsers(string $userId)
-    {
-        $users = $this->revaGet('sciencemesh/find-accepted-users', $userId);
-        error_log("users " . var_export($users, true));
-        if ($users === "null\n") {
-            error_log("users corrected!");
-            $users = "[]";
-        }
-        return $users;
-    }
-
-    public function acceptInvite(string $providerDomain, string $token, string $userId): string
-    {
-        // TODO: @Mahdi: handle failures in this POST.
-        $empty = $this->revaPost('sciencemesh/accept-invite', $userId, [
-            'providerDomain' => $providerDomain,
-            'token' => $token
-        ]);
-        return "Accepted invite";
-    }
-
-    public function generateTokenFromReva(string $userId, string $recipient)
-    {
-        $tokenFromReva = $this->revaGet('sciencemesh/generate-invite', $userId, array('recipient' => $recipient));
-        error_log('Got token from reva!' . $tokenFromReva);
-        return json_decode($tokenFromReva, true);
     }
 }

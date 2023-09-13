@@ -80,7 +80,7 @@ class RevaController extends Controller
     private Folder $userFolder;
 
     public function __construct(
-        string                   $AppName,
+        string                   $appName,
         IRootFolder              $rootFolder,
         IRequest                 $request,
         IUserManager             $userManager,
@@ -91,7 +91,7 @@ class RevaController extends Controller
         ScienceMeshShareProvider $shareProvider
     )
     {
-        parent::__construct($AppName, $request);
+        parent::__construct($appName, $request);
         require_once(__DIR__ . '/../../vendor/autoload.php');
 
         $this->rootFolder = $rootFolder;

@@ -31,6 +31,9 @@ class SettingsController extends Controller
 {
     const CATALOG_URL = "https://iop.sciencemesh.uni-muenster.de/iop/mentix/sitereg";
 
+    /** @var string */
+    private string $userId;
+
     /** @var AppConfig */
     private AppConfig $config;
 
@@ -40,28 +43,25 @@ class SettingsController extends Controller
     /** @var IConfig */
     private IConfig $sciencemeshConfig;
 
-    /** @var string */
-    private string $userId;
-
     /**
-     * @param string $AppName - application name
+     * @param string $appName - application name
      * @param IRequest $request - request object
      * @param AppConfig $config - application configuration
      */
     public function __construct(
-        string    $AppName,
-        IRequest  $request,
+        string    $appName,
+        string    $userId,
         AppConfig $config,
-        IConfig   $sciencemeshConfig,
-        string    $userId
+        IRequest  $request,
+        IConfig   $sciencemeshConfig
     )
     {
-        parent::__construct($AppName, $request);
+        parent::__construct($appName, $request);
 
-        $this->serverConfig = new ServerConfig($sciencemeshConfig);
-        $this->config = $config;
-        $this->sciencemeshConfig = $sciencemeshConfig;
         $this->userId = $userId;
+        $this->config = $config;
+        $this->serverConfig = new ServerConfig($sciencemeshConfig);
+        $this->sciencemeshConfig = $sciencemeshConfig;
 
         $eventDispatcher = OC::$server->getEventDispatcher();
         $eventDispatcher->addListener(
@@ -265,11 +265,12 @@ class SettingsController extends Controller
      *
      * @NoAdminRequired
      * @PublicPage
+     * @throws Exception
      */
 
     public function checkConnectionSettings(): DataResponse
     {
-        $revaHttpClient = new RevaHttpClient($this->sciencemeshConfig, false);
+        $revaHttpClient = new RevaHttpClient($this->sciencemeshConfig);
         $response_sciencemesh_iop_url = $revaHttpClient->ocmProvider($this->userId);
         return new DataResponse($response_sciencemesh_iop_url);
     }

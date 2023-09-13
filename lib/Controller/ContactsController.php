@@ -18,6 +18,7 @@ use OCP\AppFramework\Http;
 
 class ContactsController extends Controller
 {
+    // TODO: @Mahdi @Giuseppe: is delete contact implemented in Reva?
     public function deleteContact(): PlainResponse
     {
         error_log('contact ' . $_POST['username'] . ' is deleted');
