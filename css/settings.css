@@ -19,42 +19,53 @@
 #content .section-sciencemesh h2 .icon-info {
     padding-top: 17px;
 }
+
 .sciencemesh-error {
     color: red;
 }
+
 .sciencemesh-header {
     display: inline-block;
     margin-top: 16px;
 }
+
 .section-sciencemesh input {
     display: block;
     width: 250px;
 }
+
 .sciencemesh-hide {
     display: none;
 }
+
 #sciencemeshAdv {
     cursor: pointer;
     text-decoration: none;
 }
+
 #sciencemeshAdv .icon {
     display: inline-block;
     margin-bottom: -3px;
 }
+
 #sciencemeshAddrSave {
     float: left;
 }
+
 .sciencemesh-demo {
     margin-left: 90px;
 }
+
 #s2id_sciencemeshLimitGroups {
     margin-bottom: 16px;
 }
+
 .sciencemesh-exts {
     column-width: 100px;
     -moz-column-width: 100px;
     -webkit-column-width: 100px;
 }
+
 .sciencemesh-tables {
     column-width: 140px;
     -moz-column-width: 140px;

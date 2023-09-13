@@ -18,10 +18,10 @@ jobs:
       # do not stop on another job's failure
       fail-fast: false
       matrix:
-        php-versions: ['7.4']
-        databases: ['sqlite']
-        server-versions: ['master']
-  
+        php-versions: [ '7.4' ]
+        databases: [ 'sqlite' ]
+        server-versions: [ 'master' ]
+
     name: php${{ matrix.php-versions }}-${{ matrix.databases }}-${{ matrix.server-versions }}
 
     steps:
@@ -68,9 +68,9 @@ jobs:
         working-directory: apps/${{ env.APP_NAME }}
         run: ./vendor/phpunit/phpunit/phpunit -c phpunit.xml
 
-#      - name: PHPUnit integration
-#        working-directory: apps/${{ env.APP_NAME }}
-#        run: ./vendor/phpunit/phpunit/phpunit -c phpunit.integration.xml
+  #      - name: PHPUnit integration
+  #        working-directory: apps/${{ env.APP_NAME }}
+  #        run: ./vendor/phpunit/phpunit/phpunit -c phpunit.integration.xml
 
   mysql:
     runs-on: ubuntu-latest
@@ -79,10 +79,10 @@ jobs:
       # do not stop on another job's failure
       fail-fast: false
       matrix:
-        php-versions: ['7.3', '7.4']
-        databases: ['mysql']
-        server-versions: ['master']
-  
+        php-versions: [ '7.3', '7.4' ]
+        databases: [ 'mysql' ]
+        server-versions: [ 'master' ]
+
     name: php${{ matrix.php-versions }}-${{ matrix.databases }}-${{ matrix.server-versions }}
 
     services:
@@ -138,9 +138,9 @@ jobs:
         working-directory: apps/${{ env.APP_NAME }}
         run: ./vendor/phpunit/phpunit/phpunit -c phpunit.xml
 
-#     - name: PHPUnit integration
-#       working-directory: apps/${{ env.APP_NAME }}
-#       run: ./vendor/phpunit/phpunit/phpunit -c phpunit.integration.xml
+  #     - name: PHPUnit integration
+  #       working-directory: apps/${{ env.APP_NAME }}
+  #       run: ./vendor/phpunit/phpunit/phpunit -c phpunit.integration.xml
 
   pgsql:
     runs-on: ubuntu-latest
@@ -149,10 +149,10 @@ jobs:
       # do not stop on another job's failure
       fail-fast: false
       matrix:
-        php-versions: ['7.4']
-        databases: ['pgsql']
-        server-versions: ['master']
-  
+        php-versions: [ '7.4' ]
+        databases: [ 'pgsql' ]
+        server-versions: [ 'master' ]
+
     name: php${{ matrix.php-versions }}-${{ matrix.databases }}-${{ matrix.server-versions }}
 
     services:

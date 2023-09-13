@@ -9,7 +9,10 @@ script("sciencemesh", "settings-admin");
     <p>
         <label><?php p($l->t("API Key")) ?>
             <input id="sciencemesh-api-key" value="<?php p($_["apiKey"]) ?>" placeholder="" type="text">
-            <em>An API key is needed to register your site with ScienceMesh. If you do not have a key yet, you can register for a free ScienceMesh account using <a href="https://iop.sciencemesh.uni-muenster.de/iop/siteacc/register" target="_blank">this link</a>.</em>
+            <em>An API key is needed to register your site with ScienceMesh. If you do not have a key yet, you can
+                register for a free ScienceMesh account using <a
+                        href="https://iop.sciencemesh.uni-muenster.de/iop/siteacc/register" target="_blank">this
+                    link</a>.</em>
         </label>
     </p>
     <p>
@@ -26,14 +29,17 @@ script("sciencemesh", "settings-admin");
     </p>
     <p>
         <label><?php p($l->t("Site URL")) ?>
-            <input id="sciencemesh-site-url" value="<?php p($_["siteUrl"]) ?>" placeholder="https://nextcloud.example.com" type="text">
+            <input id="sciencemesh-site-url" value="<?php p($_["siteUrl"]) ?>"
+                   placeholder="https://nextcloud.example.com" type="text">
             <em>The URL at which your site can be reached.</em>
         </label>
     </p>
     <p>
         <label><?php p($l->t("Country Code")) ?>
             <input id="sciencemesh-country" value="<?php p($_["country"]) ?>" placeholder="CH" type="text">
-            <em>The 2- or 3-digit code of the site's country. A list of all codes can be found <a href="https://www.nationsonline.org/oneworld/country_code_list.htm" target="_blank">here</a>.</em>
+            <em>The 2- or 3-digit code of the site's country. A list of all codes can be found <a
+                        href="https://www.nationsonline.org/oneworld/country_code_list.htm"
+                        target="_blank">here</a>.</em>
         </label>
     </p>
     <h2 id="sciencemesh-iop">
@@ -41,14 +47,17 @@ script("sciencemesh", "settings-admin");
     </h2>
     <p>
         <label><?php p($l->t("IOP Service Address")) ?>
-            <input id="sciencemesh-iop-url" value="<?php p($_["iopUrl"]) ?>" placeholder="https://nextcloud.example.com/iop" type="text">
-            <em>The main URL of your IOP service. If the IOP is running on the same host as this NextCloud instance, you can simply use <strong>http://localhost:&#x3C;iop-port&#x3E;</strong> here.</em>
+            <input id="sciencemesh-iop-url" value="<?php p($_["iopUrl"]) ?>"
+                   placeholder="https://nextcloud.example.com/iop" type="text">
+            <em>The main URL of your IOP service. If the IOP is running on the same host as this NextCloud instance, you
+                can simply use <strong>http://localhost:&#x3C;iop-port&#x3E;</strong> here.</em>
         </label>
     </p>
     <h2 id="sciencemesh-metrics">
         <?php p($l->t('ScienceMesh Metrics Settings')); ?>
     </h2>
-    <p><strong>Note: </strong>The following settings need to be provided manually for now, as they are not yet extracted automatically from Nextcloud. This will change in the future, though.</p>
+    <p><strong>Note: </strong>The following settings need to be provided manually for now, as they are not yet extracted
+        automatically from Nextcloud. This will change in the future, though.</p>
     <p>
         <label><?php p($l->t("Number of users")) ?>
             <input id="sciencemesh-num-users" value="<?php p($_["numUsers"]) ?>" placeholder="0" type="number">

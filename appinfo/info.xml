@@ -2,36 +2,44 @@
 <info>
     <id>sciencemesh</id>
     <name>ScienceMesh</name>
-    <summary>Connect your ownCloud-10 instance to your Reva instance and the Science Mesh</summary>
-    <description>Connect your ownCloud-10 instance to your Reva instance and the Science Mesh</description>
-    <version>0.5.0</version>
-    <licence>agpl</licence>
-    <author homepage="https://sciencemesh.io" >ScienceMesh Community</author>
-    <author mail="support@pondersource.com" homepage="https://pondersource.com" >Stichting Ponder Source</author>
-    <author mail="info@muze.nl" homepage="https://www.muze.nl" >Muze B.V.</author>
-    <author mail="michiel@pondersource.com" >Michiel de Jong (Ponder Source)</author>
-    <author mail="yvo@muze.nl" >Yvo Brevoort (Muze)</author>
-    <author mail="mahdi.baghbani1@gmail.com" >Mahdi Baghbani (Ponder Source)</author>
-    <author mail="parhamin2010@gmail.com" >Parham Rahimpour (Ponder Source)</author>
-    <author mail="mr.vahedi68@gmail.com" >Mohammadreza Vahedi (Ponder Source)</author>
-    <author mail="triantafyllenia@tuta.io" >Triantafullenia Doumani (Ponder Source)</author>
-    <author mail="benz.schenk@brokkoli.be" >Benz Schenk (Ponder Source)</author>
-    <author mail="ismail94.94@mail.ru" >Ismoil Shifoev (Ponder Source)</author>
-    <author mail="github@pother.ca" >Ben Peachey (Muze)</author>
     <namespace>ScienceMesh</namespace>
     <category>integration</category>
-    <bugs>https://github.com/pondersource/nc-sciencemesh/issues</bugs>
     <screenshot>https://avatars.githubusercontent.com/u/46584276</screenshot>
+    <summary>Connect your ownCloud-10 instance to your Reva instance and the Science Mesh</summary>
+    <description>Connect your ownCloud-10 instance to your Reva instance and the Science Mesh</description>
+
+    <licence>agpl</licence>
+    <version>0.5.0</version>
+
+    <website>https://sciencemesh.io</website>
+    <bugs>https://github.com/sciencemesh/nc-sciencemesh/issues</bugs>
+    <repository type="git">https://github.com/sciencemesh/nc-sciencemesh</repository>
+
+    <author homepage="https://sciencemesh.io">ScienceMesh Community</author>
+    <author mail="support@pondersource.com" homepage="https://pondersource.com">Stichting Ponder Source</author>
+    <author mail="info@muze.nl" homepage="https://www.muze.nl">Muze B.V.</author>
+    <author mail="michiel@pondersource.com">Michiel de Jong (Ponder Source)</author>
+    <author mail="yvo@muze.nl">Yvo Brevoort (Muze)</author>
+    <author mail="mahdi.baghbani1@gmail.com">Mahdi Baghbani (Ponder Source)</author>
+    <author mail="parhamin2010@gmail.com">Parham Rahimpour (Ponder Source)</author>
+    <author mail="mr.vahedi68@gmail.com">Mohammadreza Vahedi (Ponder Source)</author>
+    <author mail="triantafyllenia@tuta.io">Triantafullenia Doumani (Ponder Source)</author>
+    <author mail="benz.schenk@brokkoli.be">Benz Schenk (Ponder Source)</author>
+    <author mail="ismail94.94@mail.ru">Ismoil Shifoev (Ponder Source)</author>
+    <author mail="github@pother.ca">Ben Peachey (Muze)</author>
+
     <dependencies>
         <nextcloud min-version="28" max-version="28"/>
         <owncloud min-version="10" max-version="10"/>
     </dependencies>
+
     <settings>
         <admin>OCA\ScienceMesh\Settings\SciencemeshSettingsAdmin</admin>
     </settings>
     <settings-sections>
         <admin>OCA\ScienceMesh\Sections\SciencemeshSettingsAdmin</admin>
     </settings-sections>
+
     <navigations>
         <navigation>
             <name>ScienceMesh</name>

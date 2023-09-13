@@ -1,15 +1,28 @@
 <?php
+/**
+ * ownCloud - sciencemesh
+ *
+ * This file is licensed under the MIT License. See the LICENCE file.
+ * @license MIT
+ * @copyright Sciencemesh 2020 - 2023
+ *
+ * @author Michiel De Jong <michiel@pondersource.com>
+ * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.ir>
+ */
 
 namespace OCA\ScienceMesh;
 
+use OCP\AppFramework\Http\TemplateResponse;
 use OCP\Settings\ISettings;
 
 /**
  * Settings controller for the administration page
  */
-class AdminSettings implements ISettings {
+class AdminSettings implements ISettings
+{
 
-    public function __construct() {
+    public function __construct()
+    {
     }
 
     /**
@@ -17,8 +30,14 @@ class AdminSettings implements ISettings {
      *
      * @return TemplateResponse
      */
-    public function getPanel() {
+    public function getPanel(): ?TemplateResponse
+    {
         return $this->getForm();
+    }
+
+    public function getForm()
+    {
+        return null;
     }
 
     /**
@@ -26,7 +45,8 @@ class AdminSettings implements ISettings {
      *
      * @return string
      */
-    public function getSectionID() {
+    public function getSectionID(): string
+    {
         return "general";
     }
 
@@ -35,15 +55,13 @@ class AdminSettings implements ISettings {
      *
      * @return int
      */
-    public function getPriority() {
+    public function getPriority(): int
+    {
         return 50;
     }
-    
-    public function getSection() {
-        return null;
-    }
-    
-    public function getForm() {
+
+    public function getSection()
+    {
         return null;
     }
 }

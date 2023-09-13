@@ -8,11 +8,11 @@ use Nextcloud\CodingStandard\Config;
 
 $config = new Config();
 $config
-	->getFinder()
-	->ignoreVCSIgnored(true)
-	->notPath('build')
-	->notPath('l10n')
-	->notPath('src')
-	->notPath('vendor')
-	->in(__DIR__);
+    ->getFinder()
+    ->ignoreVCSIgnored(true)
+    ->notPath('build')
+    ->notPath('l10n')
+    ->notPath('src')
+    ->notPath('vendor')
+    ->in(__DIR__);
 return $config;
