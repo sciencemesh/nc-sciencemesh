@@ -50,6 +50,18 @@ class RevaHttpClient
         $this->revaLoopbackSecret = $this->serverConfig->getRevaLoopbackSecret();
     }
 
+    public function ocmProvider(string $userId)
+    {
+        // TODO: @Mahdi: handle failures in this request.
+        return $this->revaGet('ocm-provider', $userId);
+    }
+
+    private function revaGet(string $route, string $user, array $params = [])
+    {
+        $url = $this->revaUrl . $route;
+        return $this->curlGet($url, $user, $params);
+    }
+
     private function curlGet(string $url, string $user, array $params = [])
     {
         $ch = curl_init();
@@ -71,44 +83,6 @@ class RevaHttpClient
         curl_close($ch);
 
         return $output;
-    }
-
-    private function curlPost(string $url, string $user, array $params = [])
-    {
-        $ch = curl_init();
-
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params, JSON_PRETTY_PRINT));
-        if ($this->revaLoopbackSecret) {
-            curl_setopt($ch, CURLOPT_USERPWD, $user . ":" . $this->revaLoopbackSecret);
-            curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-        }
-        $output = curl_exec($ch);
-        $info = curl_getinfo($ch);
-        curl_close($ch);
-        return $output;
-    }
-
-    private function revaPost(string $route, string $user, array $params = [])
-    {
-        $url = $this->revaUrl . $route;
-        return $this->curlPost($url, $user, $params);
-    }
-
-    private function revaGet(string $route, string $user, array $params = [])
-    {
-        $url = $this->revaUrl . $route;
-        return $this->curlGet($url, $user, $params);
-    }
-
-    public function ocmProvider(string $userId)
-    {
-        // TODO: @Mahdi: handle failures in this request.
-        return $this->revaGet('ocm-provider', $userId);
     }
 
     public function generateTokenFromReva(string $userId, string $recipient)
@@ -139,6 +113,32 @@ class RevaHttpClient
             'token' => $token
         ]);
         return "Accepted invite";
+    }
+
+    private function revaPost(string $route, string $user, array $params = [])
+    {
+        $url = $this->revaUrl . $route;
+        return $this->curlPost($url, $user, $params);
+    }
+
+    private function curlPost(string $url, string $user, array $params = [])
+    {
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params, JSON_PRETTY_PRINT));
+        if ($this->revaLoopbackSecret) {
+            curl_setopt($ch, CURLOPT_USERPWD, $user . ":" . $this->revaLoopbackSecret);
+            curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        }
+        $output = curl_exec($ch);
+        $info = curl_getinfo($ch);
+        curl_close($ch);
+        return $output;
     }
 
     /**

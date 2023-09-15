@@ -27,21 +27,15 @@ use OCP\IRequest;
 
 class PageController extends Controller
 {
-    /** @var string */
-    private string $userId;
-
-    /** @var ILogger */
-    private ILogger $logger;
-
     /** @var IDBConnection */
     protected IDBConnection $connection;
-
+    /** @var ILogger */
+    private ILogger $logger;
     /** @var IClientService */
     private IClientService $httpClientService;
 
     public function __construct(
         string         $appName,
-        string         $userId,
         ILogger        $logger,
         IRequest       $request,
         IDBConnection  $connection,
@@ -50,7 +44,6 @@ class PageController extends Controller
     {
         parent::__construct($appName, $request);
 
-        $this->userId = $userId;
         $this->logger = $logger;
         $this->connection = $connection;
         $this->httpClientService = $httpClientService;
@@ -68,9 +61,8 @@ class PageController extends Controller
      */
     public function index(): TemplateResponse
     {
-        $params = ['user' => $this->userId];
         // templates/main.php
-        return new TemplateResponse('sciencemesh', 'main', $params);
+        return new TemplateResponse('sciencemesh', 'main');
     }
 
     /**
@@ -154,21 +146,4 @@ class PageController extends Controller
         $payload = ["metrics" => $metrics, "settings" => $settings];
         return new JSONResponse($payload);
     }
-
-    /* to get them from system rather than manual input */
-    /*
-    private function getInternal() {
-        $queryBuilder = $this->connection->getQueryBuilder();
-        $queryBuilder->select($queryBuilder->createFunction('count(*)'))
-            ->from('users');
-        $result = $queryBuilder->execute();
-        $count = $result->fetchColumn();
-        $hostname = \OCP\Util::getServerHostName();
-        $params = [
-            'total_users' => intval($count),
-        ];
-        return $params;
-    }
-     */
-
 }

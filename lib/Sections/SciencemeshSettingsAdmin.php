@@ -9,6 +9,7 @@
  * @author Michiel De Jong <michiel@pondersource.com>
  * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.ir>
  */
+
 namespace OCA\ScienceMesh\Sections;
 
 use OCP\IL10N;
