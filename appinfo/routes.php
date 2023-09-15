@@ -19,9 +19,7 @@
  * it's instantiated in there
  */
 
-namespace OCA\MyApp\AppInfo;
-
-use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
+namespace OCA\ScienceMesh\AppInfo;
 
 $routes_array = [
     'routes' => [

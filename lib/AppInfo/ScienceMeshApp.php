@@ -12,60 +12,61 @@
 
 namespace OCA\ScienceMesh\AppInfo;
 
-use OC;
-use OCA\ScienceMesh\GlobalConfig\GlobalScaleConfig;
+use Exception;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
 use OCP\AppFramework\App;
-use OCP\AppFramework\QueryException;
 
 class ScienceMeshApp extends App
 {
     /** @var string */
-    public const APP_ID = 'sciencemesh';
-
-    /** @var string */
     public const SCIENCEMESH_POSTFIX = ' (Sciencemesh)';
 
+    // TODO: @Mahdi check if this can be replaced by Constants::SHARE_TYPE_REMOTE
     /** @var int */
     public const SHARE_TYPE_SCIENCEMESH = 6;
 
-    public function __construct()
+    /** @var ScienceMeshShareProvider */
+    protected ScienceMeshShareProvider $scienceMeshShareProvider;
+
+    /**
+     * @throws Exception
+     */
+    public function __construct(array $urlParams = array())
     {
-        parent::__construct(self::APP_ID);
+        parent::__construct('sciencemesh', $urlParams);
 
         $container = $this->getContainer();
-        $server = $container->getServer();
 
-        $notificationManager = $server->getNotificationManager();
-        $notificationManager->registerNotifier(function () use ($notificationManager) {
-            return $this->getContainer()->query('\OCA\ScienceMesh\Notifier\ScienceMeshNotifier');
-        }, function () {
-            $l = OC::$server->getL10N('sciencemesh');
-            return [
-                'id' => 'sciencemesh',
-                'name' => $l->t('Science Mesh'),
-            ];
-        });
+        $connection = $container->query("OCP\IDBConnection");
+        $eventDispatcher = $container->query("Symfony\Component\EventDispatcher\EventDispatcherInterface");
+        $addressHandler = $container->query("OCA\FederatedFileSharing\AddressHandler");
+        $notifications = $container->query("OCA\FederatedFileSharing\Notifications");
+        $tokenHandler = $container->query("OCA\FederatedFileSharing\TokenHandler");
+        $l10n = $container->query("OCP\IL10N");
+        $logger = $container->query("OCP\ILogger");
+        $rootFolder = $container->query("OCP\Files\IRootFolder");
+        $config = $container->query("OCP\IConfig");
+        $userManager = $container->query("OCP\IUserManager");
+
+        $this->scienceMeshShareProvider = new ScienceMeshShareProvider(
+            $connection,
+            $eventDispatcher,
+            $addressHandler,
+            $notifications,
+            $tokenHandler,
+            $l10n,
+            $logger,
+            $rootFolder,
+            $config,
+            $userManager
+        );
     }
 
-    // TODO @Mahdi: below function is probably useless, check and remove.
     /**
-     * @return ScienceMeshShareProvider
-     * @throws QueryException
+     * @throws Exception
      */
     public function getScienceMeshShareProvider(): ScienceMeshShareProvider
     {
-        $container = $this->getContainer();
-        $dbConnection = $container->query("OCP\IDBConnection");
-        $i10n = $container->query("OCP\IL10N");
-
-        $logger = $container->query("OCP\ILogger");
-        $rootFolder = $container->query("OCP\Files\IRootFolder");
-
-        $config = $container->query("OCP\IConfig");
-        $userManager = $container->query("OCP\IUserManger");
-        $gsConfig = new GlobalScaleConfig($config);
-
-        return new ScienceMeshShareProvider($dbConnection, $i10n, $logger, $rootFolder, $config, $userManager, $gsConfig);
+        return $this->scienceMeshShareProvider;
     }
 }

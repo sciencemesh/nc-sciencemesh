@@ -13,23 +13,23 @@
 
 namespace OCA\ScienceMesh;
 
+use Exception;
 use OC\Share\Constants;
 use OC\Share20\DefaultShareProvider;
 use OC\Share20\Exception\ProviderException;
-use OCA\ScienceMesh\AppInfo\Application;
+use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
 use OCP\AppFramework\QueryException;
 use OCP\IServerContainer;
 use OCP\Share\IProviderFactory;
 
 /**
- * Class ProviderFactory
+ * Class ScienceMeshProviderFactory
  *
- * @package OC\Share20
+ * @package OCA\ScienceMesh
  */
 class ScienceMeshProviderFactory implements IProviderFactory
 {
-
     /** @var IServerContainer */
     private IServerContainer $serverContainer;
 
@@ -67,8 +67,6 @@ class ScienceMeshProviderFactory implements IProviderFactory
     protected function defaultShareProvider(): DefaultShareProvider
     {
         if ($this->defaultProvider === null) {
-            // serverContainer really has to be more than just an IServerContainer
-            // because getLazyRootFolder() is only in \OC\Server
             $this->defaultProvider = new DefaultShareProvider(
                 $this->serverContainer->getDatabaseConnection(),
                 $this->serverContainer->getUserManager(),
@@ -80,10 +78,10 @@ class ScienceMeshProviderFactory implements IProviderFactory
     }
 
     /**
-     * Create the federated share provider
+     * Create the sciencemesh share provider
      *
      * @return ScienceMeshShareProvider
-     * @throws QueryException
+     * @throws QueryException|Exception
      */
     protected function scienceMeshShareProvider(): ?ScienceMeshShareProvider
     {
@@ -92,15 +90,14 @@ class ScienceMeshProviderFactory implements IProviderFactory
              * Check if the app is enabled
              */
             $appManager = $this->serverContainer->getAppManager();
-            //** change to science mesh  */
             if (!$appManager->isEnabledForUser('sciencemesh')) {
+                // TODO: @Mahdi what if sciencemesh is disabled and federatedfilesharing is enabled?
+                // we are overriding the base share provider, so if sciencemesh is disabled all
+                // federated share capability will be disabled.
                 return null;
             }
 
-            /*
-             * TODO: add factory to federated sharing app
-             */
-            $scienceMeshApplication = new Application();
+            $scienceMeshApplication = new ScienceMeshApp();
             $this->scienceMeshShareProvider = $scienceMeshApplication->getScienceMeshShareProvider();
         }
         return $this->scienceMeshShareProvider;
@@ -132,6 +129,7 @@ class ScienceMeshProviderFactory implements IProviderFactory
      */
     public function getProviderForType($shareType)
     {
+        // TODO: @Mahdi possible conflict with rd-sram as Constants::SHARE_TYPE_GROUP is not handled by sciencemesh.
         if ($shareType === Constants::SHARE_TYPE_REMOTE) {
             $provider = $this->scienceMeshShareProvider();
         } else {
