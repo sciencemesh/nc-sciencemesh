@@ -31,5 +31,4 @@ style('sciencemesh', 'style');
         <input type="button" name="sciencemesh_setting_submit_btn" id="sciencemesh_setting_submit_btn"
                value="Save settings">
     </div>
-    </div>
 </section>

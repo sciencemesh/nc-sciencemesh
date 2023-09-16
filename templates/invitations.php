@@ -1,6 +1,6 @@
 <?php
-script('sciencemesh', 'invitations');
 style('sciencemesh', 'style');
+script('sciencemesh', 'invitations');
 script("sciencemesh", "vendor/simplyedit/simply-edit");
 script("sciencemesh", "vendor/simplyedit/simply.everything");
 ?>
