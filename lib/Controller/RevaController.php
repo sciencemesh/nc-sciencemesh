@@ -418,7 +418,7 @@ class RevaController extends Controller
         return new JSONResponse("OK", Http::STATUS_OK);
     }
 
-    // TODO: @Mahdi: WHat does this even mean? what is state:2 ?
+    // TODO: @Mahdi What does this even mean? what is state:2 ?
     // For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
 
     /**
@@ -451,7 +451,7 @@ class RevaController extends Controller
         return new JSONResponse("OK", Http::STATUS_OK);
     }
 
-    // TODO: @Mahdi: ???
+    // TODO: @Mahdi what is this?
     // corresponds the permissions we got from Reva to Nextcloud
 
     /**

@@ -24,7 +24,7 @@ namespace OCA\ScienceMesh\AppInfo;
 $routes_array = [
     'routes' => [
 
-        // TODO @Mahdi: Split this RevaController into different controllers.
+        // TODO: @Mahdi Split this RevaController into different controllers.
 
         // auth routes.
         ['name' => 'reva#Authenticate', 'url' => '/~{userId}/api/auth/Authenticate', 'verb' => 'POST'],
@@ -36,7 +36,7 @@ $routes_array = [
         ['name' => 'reva#Unshare', 'url' => '/~{userId}/api/ocm/Unshare', 'verb' => 'POST'],
         ['name' => 'reva#UpdateShare', 'url' => '/~{userId}/api/ocm/UpdateShare', 'verb' => 'POST'],
 
-        // TODO @Mahdi: why do we have alias here? check with @Giuseppe and Reva EFSS code.
+        // TODO: @Mahdi why do we have alias here? check with @Giuseppe and Reva EFSS code.
         ['name' => 'reva#ListSentShares', 'url' => '/~{userId}/api/ocm/ListSentShares', 'verb' => 'POST'],
         // alias for ListSentShares.
         ['name' => 'reva#ListSentShares', 'url' => '/~{userId}/api/ocm/ListShares', 'verb' => 'POST'],
@@ -76,7 +76,7 @@ $routes_array = [
         ['name' => 'reva#UpdateGrant', 'url' => '/~{userId}/api/storage/UpdateGrant', 'verb' => 'POST'],
         ['name' => 'reva#Upload', 'url' => '/~{userId}/api/storage/Upload/{path}', 'verb' => 'PUT', 'requirements' => ['path' => '.+']],
 
-        // TODO @Mahdi: Are these used anywhere in Reva?
+        // TODO: @Mahdi Are these used anywhere in Reva?
         // files routes.
         ['name' => 'storage#handleGet', 'url' => '/~{userId}/files/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+']],
         ['name' => 'storage#handlePost', 'url' => '/~{userId}/files/{path}', 'verb' => 'POST', 'requirements' => ['path' => '.+']],
@@ -92,7 +92,7 @@ $routes_array = [
         ['name' => 'app#invitationsSends', 'url' => '/invitations/emailsend', 'verb' => 'POST'],
         ['name' => 'app#invitationsGenerate', 'url' => '/invitations/generate', 'verb' => 'GET'],
 
-        // TODO @Mahdi: Move these to contacts controller.
+        // TODO: @Mahdi Move these to contacts controller.
         ['name' => 'app#contacts', 'url' => '/contacts', 'verb' => 'GET'],
         ['name' => 'app#contactsAccept', 'url' => '/contacts/accept', 'verb' => 'POST'],
         ['name' => 'app#contactsFindUsers', 'url' => '/contacts/users', 'verb' => 'GET'],
@@ -100,17 +100,16 @@ $routes_array = [
         // contacts routes.
         ['name' => 'contacts#deleteContact', 'url' => '/contact/deleteContact', 'verb' => 'POST'],
 
-        // TODO @Mahdi: Are these used anywhere?
+        // TODO: @Mahdi Are these used anywhere?
         // page routes.
         ['name' => 'page#get_metrics', 'url' => '/metrics', 'verb' => 'GET'],
         ['name' => 'page#get_internal_metrics', 'url' => '/internal_metrics', 'verb' => 'GET'],
 
+        // TODO: @Mahdi Fix settings endpoints.
         // settings routes.
-        ["name" => "settings#get_settings", "url" => "/ajax/settings", "verb" => "GET"],
-        ["name" => "settings#save_settings", "url" => "/ajax/settings/address", "verb" => "PUT"],
-        ["name" => "settings#get_sciencemesh_settings", "url" => "/sciencemesh_settings", "verb" => "GET"],
-        ["name" => "settings#save_sciencemesh_settings", "url" => "/ajax/sciencemesh_settings/save", "verb" => "GET"],
-        ["name" => "settings#check_connection_settings", "url" => "/ajax/check_connection_settings", "verb" => "GET"]
+        ["name" => "settings#saveSettings", "url" => "/ajax/settings/address", "verb" => "PUT"],
+        ["name" => "settings#saveSciencemeshSettings", "url" => "/ajax/sciencemesh_settings/save", "verb" => "GET"],
+        ["name" => "settings#checkConnectionSettings", "url" => "/ajax/check_connection_settings", "verb" => "GET"]
     ]
 ];
 

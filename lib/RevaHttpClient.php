@@ -52,7 +52,7 @@ class RevaHttpClient
 
     public function ocmProvider(string $userId)
     {
-        // TODO: @Mahdi: handle failures in this request.
+        // TODO: @Mahdi handle failures in this request.
         return $this->revaGet('ocm-provider', $userId);
     }
 
@@ -87,7 +87,7 @@ class RevaHttpClient
 
     public function generateTokenFromReva(string $userId, string $recipient)
     {
-        // TODO: @Mahdi: handle failures in this request.
+        // TODO: @Mahdi handle failures in this request.
         $tokenFromReva = $this->revaGet('sciencemesh/generate-invite', $userId, array('recipient' => $recipient));
         error_log('Got token from reva!' . $tokenFromReva);
         return json_decode($tokenFromReva, true);
@@ -95,7 +95,7 @@ class RevaHttpClient
 
     public function findAcceptedUsers(string $userId)
     {
-        // TODO: @Mahdi: handle failures in this request.
+        // TODO: @Mahdi handle failures in this request.
         $users = $this->revaGet('sciencemesh/find-accepted-users', $userId);
         error_log("users " . var_export($users, true));
         if ($users === "null\n") {
@@ -107,7 +107,7 @@ class RevaHttpClient
 
     public function acceptInvite(string $providerDomain, string $token, string $userId): string
     {
-        // TODO: @Mahdi: handle failures in this request.
+        // TODO: @Mahdi handle failures in this request.
         $empty = $this->revaPost('sciencemesh/accept-invite', $userId, [
             'providerDomain' => $providerDomain,
             'token' => $token
@@ -166,7 +166,7 @@ class RevaHttpClient
         if (!isset($params['recipientHost'])) {
             throw new Exception("Missing recipientHost", 400);
         }
-        // TODO: @Mahdi: handle failures in this request.
+        // TODO: @Mahdi handle failures in this request.
         error_log("Calling reva/sciencemesh/create-share " . json_encode($params));
         $responseText = $this->revaPost('sciencemesh/create-share', $user, $params);
         return json_decode($responseText);
