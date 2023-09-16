@@ -31,7 +31,7 @@ OC::$server->getNavigationManager()->add(function () {
         'href' => $urlGenerator->linkToRoute('sciencemesh.app.contacts'),
 
         // The icon that will be shown in the navigation, located in img/
-        'icon' => $urlGenerator->imagePath('sciencemesh', 'app.svg'),
+        'icon' => $urlGenerator->imagePath('sciencemesh', 'app-white.svg'),
 
         // The application's title, used in the navigation & the settings page of your app
         'name' => OC::$server->getL10N('sciencemesh')->t('ScienceMesh'),
