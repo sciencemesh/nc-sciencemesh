@@ -31,8 +31,10 @@ class SciencemeshSettingsAdmin implements ISettings
     }
 
     /**
+     * The panel controller method that returns a template to the UI
      * @return TemplateResponse
      * @throws Exception
+     * @since 10.0
      */
     public function getPanel(): TemplateResponse
     {
@@ -45,17 +47,20 @@ class SciencemeshSettingsAdmin implements ISettings
         return new TemplateResponse('sciencemesh', 'settings/admin', $parameters, '');
     }
 
+    /**
+     * A string to identify the section in the UI / HTML and URL
+     * @return string
+     * @since 10.0
+     */
     public function getSectionID(): string
     {
         return 'sciencemesh_settings'; // Name of the previously created section.
     }
 
     /**
-     * @return int whether the form should be rather on the top or bottom of
-     * the admin section. The forms are arranged in ascending order of the
-     * priority values. It is required to return a value between 0 and 100.
-     *
-     * E.g.: 70
+     * The number used to order the section in the UI.
+     * @return int between 0 and 100, with 100 being the highest priority
+     * @since 10.0
      */
     public function getPriority(): int
     {
