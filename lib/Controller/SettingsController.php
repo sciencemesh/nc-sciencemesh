@@ -14,7 +14,6 @@ namespace OCA\ScienceMesh\Controller;
 
 use Exception;
 use OC;
-use OCA\ScienceMesh\AppConfig;
 use OCA\ScienceMesh\RevaHttpClient;
 use OCA\ScienceMesh\ServerConfig;
 use OCP\AppFramework\Controller;
@@ -34,9 +33,6 @@ class SettingsController extends Controller
     /** @var string */
     private string $userId;
 
-    /** @var AppConfig */
-    private AppConfig $config;
-
     /** @var ServerConfig */
     private ServerConfig $serverConfig;
 
@@ -46,20 +42,17 @@ class SettingsController extends Controller
     /**
      * @param string $appName - application name
      * @param IRequest $request - request object
-     * @param AppConfig $config - application configuration
      */
     public function __construct(
-        string    $appName,
-        string    $userId,
-        AppConfig $config,
-        IRequest  $request,
-        IConfig   $sciencemeshConfig
+        string   $appName,
+        string   $userId,
+        IRequest $request,
+        IConfig  $sciencemeshConfig
     )
     {
         parent::__construct($appName, $request);
 
         $this->userId = $userId;
-        $this->config = $config;
         $this->serverConfig = new ServerConfig($sciencemeshConfig);
         $this->sciencemeshConfig = $sciencemeshConfig;
 
@@ -223,23 +216,6 @@ class SettingsController extends Controller
     }
 
     /**
-     * Get app settings
-     *
-     * @return array
-     *
-     * @NoAdminRequired
-     * @PublicPage
-     */
-    public function GetSettings(): array
-    {
-        return [
-            "formats" => $this->config->FormatsSetting(),
-            "sameTab" => $this->config->GetSameTab(),
-            "shareAttributesVersion" => $this->config->ShareAttributesVersion()
-        ];
-    }
-
-    /**
      * Save sciencemesh settings
      *
      * @return DataResponse
@@ -247,7 +223,7 @@ class SettingsController extends Controller
      * @NoAdminRequired
      * @PublicPage
      */
-    public function SaveSciencemeshSettings(): DataResponse
+    public function saveSciencemeshSettings(): DataResponse
     {
         $sciencemesh_iop_url = $this->request->getParam('sciencemesh_iop_url');
         $sciencemesh_shared_secret = $this->request->getParam('sciencemesh_shared_secret');

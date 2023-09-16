@@ -39,6 +39,7 @@ use OCP\IURLGenerator;
 use OCP\IUserManager;
 use OCP\Lock\ILockingProvider;
 use OCP\Lock\LockedException;
+use OCP\Share\Exceptions\IllegalIDChangeException;
 use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IManager;
 use OCP\Share\IShare;
@@ -149,6 +150,7 @@ class RevaController extends Controller
 
     /**
      * @throws NotPermittedException
+     * @throws Exception
      */
     private function checkRevadAuth()
     {
@@ -191,7 +193,7 @@ class RevaController extends Controller
      * @param $userId
      * @return JSONResponse
      * @throws NotPermittedException
-     * @throws ShareNotFound
+     * @throws ShareNotFound|IllegalIDChangeException
      */
     public function Authenticate($userId): JSONResponse
     {
@@ -255,6 +257,7 @@ class RevaController extends Controller
      * @throws NotFoundException
      * @throws NotPermittedException
      * @throws ShareNotFound
+     * @throws IllegalIDChangeException
      */
     public function GetSentShareByToken($userId): JSONResponse
     {
@@ -415,7 +418,7 @@ class RevaController extends Controller
         return new JSONResponse("OK", Http::STATUS_OK);
     }
 
-    // TODO: @Mahdi: WHat does this even mean? what is state:2 ?
+    // TODO: @Mahdi What does this even mean? what is state:2 ?
     // For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
 
     /**
@@ -448,7 +451,7 @@ class RevaController extends Controller
         return new JSONResponse("OK", Http::STATUS_OK);
     }
 
-    // TODO: @Mahdi: ???
+    // TODO: @Mahdi what is this?
     // corresponds the permissions we got from Reva to Nextcloud
 
     /**

@@ -14,6 +14,7 @@ namespace OCA\ScienceMesh;
 
 use Exception;
 use OCP\IConfig;
+use RangeException;
 
 /**
  * @throws Exception
@@ -24,7 +25,7 @@ function random_str(
 ): string
 {
     if ($length < 1) {
-        throw new \RangeException("Length must be a positive integer");
+        throw new RangeException("Length must be a positive integer");
     }
     $pieces = [];
     $max = mb_strlen($keyspace, '8bit') - 1;
