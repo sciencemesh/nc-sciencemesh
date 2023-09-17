@@ -1315,49 +1315,164 @@ class RevaController extends Controller
      */
     public function addReceivedShare($userId): JSONResponse
     {
-        $params = $this->request->getParams();
-        error_log("addReceivedShare " . var_export($params, true));
-        foreach ($params['protocols'] as $protocol) {
-            if (isset($protocol['webdavOptions'])) {
-                $sharedSecret = $protocol['webdavOptions']['sharedSecret'];
-                // make sure you have webdav_endpoint = "https://nc1.docker/" under
-                // [grpc.services.ocmshareprovider] in the sending Reva's config
-                $uri = $protocol['webdavOptions']['uri']; // e.g. https://nc1.docker/remote.php/dav/ocm/vaKE36Wf1lJWCvpDcRQUScraVP5quhzA
-                $remote = implode('/', array_slice(explode('/', $uri), 0, 3)); // e.g. https://nc1.docker
-                break;
-            }
-        }
-
-        if (!isset($sharedSecret)) {
-            throw new Exception('sharedSecret not found');
-        }
-
-        if (!isset($remote)) {
-            throw new Exception('protocols[[webdavOptions][uri]] not found');
-        }
-
-        $shareData = [
-            "remote" => $remote, //https://nc1.docker
-            "remote_id" => $params["remoteShareId"], // the id of the share in the oc_share table of the remote.
-            "share_token" => $sharedSecret, // 'tDPRTrLI4hE3C5T'
-            "password" => "",
-            "name" => rtrim($params["name"], "/"), // '/grfe'
-            "owner" => $params["owner"]["opaqueId"], // 'einstein'
-            "user" => $userId // 'marie'
-        ];
-
         if ($this->userManager->userExists($userId)) {
             $this->init($userId);
         } else {
             return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
         }
 
-        $scienceMeshData = [
-            "is_external" => true,
+        $params = $this->request->getParams();
+        error_log("addReceivedShare " . var_export($params, true));
+
+        $name = $params["name"] ?? null;
+        $shareState = $params["state"] ?? null;
+        $shareType = $params["shareType"] ?? null;
+        $ctime = $params["ctime"]["seconds"] ?? null;
+        $mtime = $params["mtime"]["seconds"] ?? null;
+        $resourceType = $params["resourceType"] ?? null;
+        $remoteShareId = $params["remoteShareId"] ?? null;
+
+        if (!isset($name)) {
+            return new JSONResponse("name not found in the request.", Http::STATUS_BAD_REQUEST);
+        }
+        if (!isset($shareState)) {
+            return new JSONResponse("shareState not found in the request.", Http::STATUS_BAD_REQUEST);
+        }
+        if (!isset($shareType)) {
+            return new JSONResponse("shareType not found in the request.", Http::STATUS_BAD_REQUEST);
+        }
+        if (!isset($ctime)) {
+            return new JSONResponse("ctime not found in the request.", Http::STATUS_BAD_REQUEST);
+        }
+        if (!isset($mtime)) {
+            return new JSONResponse("mtime not found in the request.", Http::STATUS_BAD_REQUEST);
+        }
+        if (!isset($resourceType)) {
+            return new JSONResponse("resourceType not found in the request.", Http::STATUS_BAD_REQUEST);
+        }
+        if (!isset($remoteShareId)) {
+            return new JSONResponse("remoteShareId not found in the request.", Http::STATUS_BAD_REQUEST);
+        }
+
+        if (isset($params["grantee"]["userId"])) {
+            $granteeIDP = $params["grantee"]["userId"]["idp"] ?? null;
+            $granteeOpaqueID = $params["grantee"]["userId"]["opaqueId"] ?? null;
+        }
+
+        if (isset($params["owner"])) {
+            $ownerIDP = $params["owner"]["idp"] ?? null;
+            $ownerOpaqueID = $params["owner"]["opaqueId"] ?? null;
+        }
+
+        if (isset($params["creator"])) {
+            $creatorIDP = $params["creator"]["idp"] ?? null;
+            $creatorOpaqueID = $params["creator"]["opaqueId"] ?? null;
+        }
+
+        if (!isset($granteeIDP)) {
+            return new JSONResponse("grantee idp not found in the request.", Http::STATUS_BAD_REQUEST);
+        }
+        if (!isset($granteeOpaqueID)) {
+            return new JSONResponse("grantee opaqueId not found in the request.", Http::STATUS_BAD_REQUEST);
+        }
+        if (!isset($ownerIDP)) {
+            return new JSONResponse("owner idp not found in the request.", Http::STATUS_BAD_REQUEST);
+        }
+        if (!isset($ownerOpaqueID)) {
+            return new JSONResponse("owner opaqueId not found in the request.", Http::STATUS_BAD_REQUEST);
+        }
+        if (!isset($creatorIDP)) {
+            return new JSONResponse("creator idp not found in the request.", Http::STATUS_BAD_REQUEST);
+        }
+        if (!isset($creatorOpaqueID)) {
+            return new JSONResponse("creator opaqueId not found in the request.", Http::STATUS_BAD_REQUEST);
+        }
+
+        $ocmProtocolTransfer = [];
+        $ocmProtocolWebapps = [];
+        $ocmProtocolWebdavs = [];
+
+        foreach ($params["protocols"] as $protocol) {
+            if (isset($protocol["transferOptions"])) {
+                $ocmProtocolTransfer[] = $protocol["transferOptions"];
+            }
+            if (isset($protocol["webappOptions"])) {
+                $ocmProtocolWebapps[] = $protocol["webappOptions"];
+            }
+            if (isset($protocol["webdavOptions"])) {
+                // TODO: @Mahdi remove this hard coded value once Reva sends integer value for permissions.
+                $webdav = $protocol["webdavOptions"];
+                $webdav["permissions"] = 1;
+                $ocmProtocolWebdavs[] = $webdav;
+            }
+        }
+
+        // NOTE: @Mahdi with this approach, if there is multiple WebDAV options in the payload, only the last one will
+        // be added to EFSS native Database.
+        foreach ($ocmProtocolWebdavs as $webdav) {
+            $sharedSecret = $webdav['sharedSecret'] ?? null;
+            // URI example: https://nc1.docker/remote.php/dav/ocm/vaKE36Wf1lJWCvpDcRQUScraVP5quhzA
+            $uri = $webdav['uri'] ?? null;
+            // Remote extracted from URI: https://nc1.docker
+            // below line splits uri by the '/' character, picks first 3 items aka ['https:', '', 'nc.docker']
+            // and joins them again with '/' character in between.
+            $remote = isset($uri) ? implode('/', array_slice(explode('/', $uri), 0, 3)) : null;
+        }
+
+        if (!isset($sharedSecret)) {
+            return new JSONResponse("WebDAV sharedSecret not found in the request.", Http::STATUS_BAD_REQUEST);
+        }
+        if (!isset($remote)) {
+            return new JSONResponse("WebDAV URI not found in the request.", Http::STATUS_BAD_REQUEST);
+        }
+
+        // TODO: write checks for webapp and transfer protocols missing properties and return STATUS_BAD_REQUEST.
+
+        // prepare data for adding to database.
+        $efssShareData = [
+            // https://nc1.docker
+            "remote" => $remote,
+            // the id of the share in the oc_share table of the remote.
+            "remote_id" => $params["remoteShareId"],
+            // 'tDPRTrLI4hE3C5T'
+            "share_token" => $sharedSecret,
+            "password" => null,
+            // 'TestFolder'
+            "name" => rtrim($params["name"], "/"),
+            // 'einstein'
+            "owner" => $params["owner"]["opaqueId"],
+            // receiver 'marie'
+            "user" => $userId
         ];
 
-        $id = $this->shareProvider->addScienceMeshShare($scienceMeshData, $shareData);
-        return new JSONResponse($id, 201);
+        $efssShareID = $this->shareProvider->addReceivedOcmShareToEfssDatabaseTable($efssShareData);
+
+        // TODO: remove hardcoded values and use enums when Reva specifies the correct values.
+        // see: https://github.com/sciencemesh/nc-sciencemesh/issues/45
+        $ocmShareData = [
+            "share_external_id" => $efssShareID,
+            "name" => $name,
+            // TODO: hardcoded.
+            "item_type" => $shareType === "SHARE_TYPE_USER" ? 1 : 0,
+            "share_with" => $granteeOpaqueID . "@" . $granteeIDP,
+            "owner" => $ownerOpaqueID . "@" . $ownerIDP,
+            "initiator" => $creatorOpaqueID . "@" . $creatorIDP,
+            "ctime" => $ctime,
+            "mtime" => $mtime,
+            "expiration" => $params["expiration"] ?? null,
+            // TODO: hardcoded.
+            "type" => $resourceType === "RESOURCE_TYPE_CONTAINER" ? 1 : 0,
+            // TODO: hardcoded.
+            "state" => $shareState === "SHARE_STATE_PENDING" ? 1 : 0,
+            "remote_share_id" => $remoteShareId,
+            "transfers" => $ocmProtocolTransfer,
+            "webapps" => $ocmProtocolWebapps,
+            "webdavs" => $ocmProtocolWebdavs,
+        ];
+
+        $this->shareProvider->addReceivedOcmShareToSciencemeshDatabaseTable($ocmShareData);
+
+        return new JSONResponse($efssShareID, Http::STATUS_CREATED);
     }
 
     /**
