@@ -220,7 +220,10 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
     }
 
     /**
-     * Share a path
+     * Share a path.
+     *
+     * This method is being called by:
+     * https://github.com/owncloud/core/blob/e95e978f452787e55515ac3e43763e4adcf87d14/lib/private/Share20/Manager.php#L832C3-L832C3
      *
      * @param IShare $share
      * @return IShare The share object

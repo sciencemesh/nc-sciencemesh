@@ -12,6 +12,7 @@
 
 namespace OCA\ScienceMesh\Plugins;
 
+use Exception;
 use OC\Share\Constants;
 use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 use OCA\ScienceMesh\RevaHttpClient;
@@ -21,6 +22,7 @@ use OCP\IUserSession;
 use OCP\Util\UserSearch;
 use function explode;
 use function is_array;
+use function strtolower;
 use function substr_count;
 
 class ScienceMeshSearchPlugin
@@ -46,6 +48,9 @@ class ScienceMeshSearchPlugin
     private string $userId = '';
     private RevaHttpClient $revaHttpClient;
 
+    /**
+     * @throws Exception
+     */
     public function __construct(
         IManager     $contactsManager,
         IConfig      $config,
@@ -117,11 +122,11 @@ class ScienceMeshSearchPlugin
                 $cloudIds = [$cloudIds];
             }
 
-            $lowerSearch = \strtolower($search);
+            $lowerSearch = strtolower($search);
             foreach ($cloudIds as $cloudId) {
                 list(, $serverUrl) = $this->splitUserRemote($cloudId);
 
-                if (\strtolower($cloudId) === $lowerSearch) {
+                if (strtolower($cloudId) === $lowerSearch) {
                     $foundRemoteById = true;
                     // Save this as an exact match and continue with next CLOUD
                     $otherResults[] = [
@@ -150,7 +155,7 @@ class ScienceMeshSearchPlugin
                     }
                     foreach ($values as $value) {
                         // check if we have an exact match
-                        if (\strtolower($value) === $lowerSearch) {
+                        if (strtolower($value) === $lowerSearch) {
                             $this->result['exact']['remotes'][] = [
                                 'label' => $contact['FN'],
                                 'value' => [
