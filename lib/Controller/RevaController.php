@@ -248,6 +248,7 @@ class RevaController extends Controller
 
     /**
      * GetSentShareByToken gets the information for a share by the given token.
+     *
      * @PublicPage
      * @NoCSRFRequired
      * @param $userId
@@ -285,26 +286,41 @@ class RevaController extends Controller
         return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_BAD_REQUEST);
     }
 
+    // TODO: @Mahdi What does this even mean? what is state:2 ?
+    // For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
     /**
      * @throws NotFoundException
      * @throws InvalidPathException
      */
-    private function shareInfoToCs3Share(IShare $share, $token = ''): array
+    private function shareInfoToCs3Share(IShare $share, $token = ""): array
     {
-        $shareeParts = explode("@", $share->getSharedWith());
-        if (count($shareeParts) == 1) {
-            error_log("warning, could not find sharee user@host from '" . $share->getSharedWith() . "'");
-            $shareeParts = ["unknown", "unknown"];
+        // TODO: @Mahdi modify this function to distinguish between sent/received shares and handle them accordingly!
+
+        $shareId = $share->getId();
+        $ocmShareData = $this->shareProvider->getOcmShareFromSciencemeshDatabaseTable($shareId);
+
+        // attempt to extract info from native efss database.
+        $granteeParts = explode("@", $share->getSharedWith());
+
+        // if native efss database failed to provide all the info. use ocm payload sored in sciencemesh table.
+        if (count($granteeParts) < 2) {
+            if (isset($ocmShareData["share_with"])) {
+                $granteeParts = explode("@", $ocmShareData["share_with"]);
+            } else {
+                $granteeParts = ["unknown", "unknown"];
+            }
         }
 
         $ownerParts = [$share->getShareOwner(), $this->getDomainFromURL($this->config->getIopUrl())];
 
-        $stime = 0; // $share->getShareTime()->getTimeStamp();
+        $stime = $share->getShareTime()->getTimeStamp();
 
         try {
             $filePath = $share->getNode()->getPath();
+            // TODO: @Mahdi why is this hardcoded?
             $opaqueId = "fileid-" . $filePath;
         } catch (NotFoundException $e) {
+            // TODO: @Mahdi why aren't we stopping right here if the file isn't found?
             $opaqueId = "unknown";
         }
 
@@ -315,7 +331,7 @@ class RevaController extends Controller
         $payload = [
             "id" => [
                 // https://github.com/cs3org/go-cs3apis/blob/d297419/cs3/sharing/ocm/v1beta1/resources.pb.go#L423
-                "opaque_id" => $share->getId()
+                "opaque_id" => $shareId,
             ],
             "resource_id" => [
                 "opaque_id" => $opaqueId
@@ -323,10 +339,12 @@ class RevaController extends Controller
             "permissions" => $share->getNode()->getPermissions(),
             // https://github.com/cs3org/go-cs3apis/blob/d29741980082ecd0f70fe10bd2e98cf75764e858/cs3/storage/provider/v1beta1/resources.pb.go#L897
             "grantee" => [
-                "type" => 1, // https://github.com/cs3org/go-cs3apis/blob/d29741980082ecd0f70fe10bd2e98cf75764e858/cs3/storage/provider/v1beta1/resources.pb.go#L135
+                // TODO: @Mahdi @Giuseppe is type needed?
+                // https://github.com/cs3org/go-cs3apis/blob/d29741980082ecd0f70fe10bd2e98cf75764e858/cs3/storage/provider/v1beta1/resources.pb.go#L135
+                "type" => 1,
                 "id" => [
-                    "opaque_id" => $shareeParts[0],
-                    "idp" => $shareeParts[1]
+                    "opaque_id" => $granteeParts[0],
+                    "idp" => $granteeParts[1]
                 ],
             ],
             "owner" => [
@@ -358,7 +376,7 @@ class RevaController extends Controller
     private function getDomainFromURL($url)
     {
         // converts https://revaowncloud1.docker/ to revaowncloud1.docker
-        // Note: do not use it on anything without http(s) in the start, it would return null.
+        // NOTE: do not use it on anything without http(s) in the start, it would return null.
         return str_ireplace("www.", "", parse_url($url, PHP_URL_HOST));
     }
 
@@ -369,9 +387,12 @@ class RevaController extends Controller
                 "idp" => $remote,
                 "opaque_id" => $username,
             ],
-            "display_name" => $username,   // FIXME: this comes in the OCM share payload
+            // FIXME: this comes in the OCM share payload
+            "display_name" => $username,
             "username" => $username,
-            "email" => "unknown@unknown",  // FIXME: this comes in the OCM share payload
+            // FIXME: @Giuseppe this comes in the OCM share payload
+            // FIXME: @Mahdi No, Email is not coming from OCM share payload
+            "email" => "unknown@unknown",
             "type" => 6,
         ];
     }
@@ -417,9 +438,6 @@ class RevaController extends Controller
         }
         return new JSONResponse("OK", Http::STATUS_OK);
     }
-
-    // TODO: @Mahdi What does this even mean? what is state:2 ?
-    // For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
 
     /**
      * @PublicPage
@@ -671,7 +689,7 @@ class RevaController extends Controller
                 // 3 MD5
                 // 4 SHA1
 
-                // note: folders do not have checksum, their type should be unset.
+                // NOTE: folders do not have checksum, their type should be unset.
                 "type" => $isDirectory ? 1 : 4,
                 "sum" => $this->getChecksum($node, $isDirectory ? 1 : 4),
             ],
@@ -712,11 +730,11 @@ class RevaController extends Controller
 
         // checksum is in db table oc_filecache.
         // folders do not have checksum
-        $checksums = explode(' ', $node->getFileInfo()->getChecksum());
+        $checksums = explode(" ", $node->getFileInfo()->getChecksum());
 
         foreach ($checksums as $checksum) {
 
-            // Note that the use of !== false is deliberate (neither != false nor === true will return the desired result);
+            // NOTE: that the use of !== false is deliberate (neither != false nor === true will return the desired result);
             // strpos() returns either the offset at which the needle string begins in the haystack string, or the boolean
             // false if the needle isn't found. Since 0 is a valid offset and 0 is "false", we can't use simpler constructs
             //  like !strpos($a, 'are').
@@ -725,7 +743,7 @@ class RevaController extends Controller
             }
         }
 
-        return '';
+        return "";
     }
 
     /**
@@ -743,6 +761,7 @@ class RevaController extends Controller
             return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
         }
 
+        // TODO: @Mahdi what is "in progress"? what should be done here?
         // in progress
         $path = "subdir/";
         $storageId = $this->request->getParam("storage_id");
@@ -1144,6 +1163,7 @@ class RevaController extends Controller
 
     /**
      * Get user list.
+     *
      * @PublicPage
      * @NoCSRFRequired
      * @NoSameSiteCookieRequired
@@ -1169,6 +1189,7 @@ class RevaController extends Controller
 
     /**
      * Get user by claim.
+     *
      * @PublicPage
      * @NoCSRFRequired
      * @NoSameSiteCookieRequired
@@ -1201,6 +1222,7 @@ class RevaController extends Controller
 
     /**
      * Create a new share in fn with the given access control list.
+     *
      * @PublicPage
      * @NoCSRFRequired
      * @return Http\DataResponse|JSONResponse
@@ -1300,7 +1322,6 @@ class RevaController extends Controller
     private function lock(Node $node)
     {
         $node->lock(ILockingProvider::LOCK_SHARED);
-        $this->lockedNode = $node;
     }
 
     /**
@@ -1325,30 +1346,18 @@ class RevaController extends Controller
         error_log("addReceivedShare " . var_export($params, true));
 
         $name = $params["name"] ?? null;
-        $shareState = $params["state"] ?? null;
-        $shareType = $params["shareType"] ?? null;
         $ctime = $params["ctime"]["seconds"] ?? null;
         $mtime = $params["mtime"]["seconds"] ?? null;
-        $resourceType = $params["resourceType"] ?? null;
         $remoteShareId = $params["remoteShareId"] ?? null;
 
         if (!isset($name)) {
             return new JSONResponse("name not found in the request.", Http::STATUS_BAD_REQUEST);
-        }
-        if (!isset($shareState)) {
-            return new JSONResponse("shareState not found in the request.", Http::STATUS_BAD_REQUEST);
-        }
-        if (!isset($shareType)) {
-            return new JSONResponse("shareType not found in the request.", Http::STATUS_BAD_REQUEST);
         }
         if (!isset($ctime)) {
             return new JSONResponse("ctime not found in the request.", Http::STATUS_BAD_REQUEST);
         }
         if (!isset($mtime)) {
             return new JSONResponse("mtime not found in the request.", Http::STATUS_BAD_REQUEST);
-        }
-        if (!isset($resourceType)) {
-            return new JSONResponse("resourceType not found in the request.", Http::STATUS_BAD_REQUEST);
         }
         if (!isset($remoteShareId)) {
             return new JSONResponse("remoteShareId not found in the request.", Http::STATUS_BAD_REQUEST);
@@ -1387,61 +1396,66 @@ class RevaController extends Controller
         if (!isset($creatorOpaqueID)) {
             return new JSONResponse("creator opaqueId not found in the request.", Http::STATUS_BAD_REQUEST);
         }
-
-        $ocmProtocolTransfer = [];
-        $ocmProtocolWebapps = [];
-        $ocmProtocolWebdavs = [];
-
-        foreach ($params["protocols"] as $protocol) {
-            if (isset($protocol["transferOptions"])) {
-                $ocmProtocolTransfer[] = $protocol["transferOptions"];
-            }
-            if (isset($protocol["webappOptions"])) {
-                $ocmProtocolWebapps[] = $protocol["webappOptions"];
-            }
-            if (isset($protocol["webdavOptions"])) {
-                // TODO: @Mahdi remove this hard coded value once Reva sends integer value for permissions.
-                $webdav = $protocol["webdavOptions"];
-                $webdav["permissions"] = 1;
-                $ocmProtocolWebdavs[] = $webdav;
-            }
+        if (!isset($protocol["webdavOptions"])) {
+            return new JSONResponse("webdavOptions not found in the request.", Http::STATUS_BAD_REQUEST);
         }
 
-        // NOTE: @Mahdi with this approach, if there is multiple WebDAV options in the payload, only the last one will
-        // be added to EFSS native Database.
-        foreach ($ocmProtocolWebdavs as $webdav) {
-            $sharedSecret = $webdav['sharedSecret'] ?? null;
-            // URI example: https://nc1.docker/remote.php/dav/ocm/vaKE36Wf1lJWCvpDcRQUScraVP5quhzA
-            $uri = $webdav['uri'] ?? null;
-            // Remote extracted from URI: https://nc1.docker
-            // below line splits uri by the '/' character, picks first 3 items aka ['https:', '', 'nc.docker']
-            // and joins them again with '/' character in between.
-            $remote = isset($uri) ? implode('/', array_slice(explode('/', $uri), 0, 3)) : null;
+        // these can be null.
+        $ocmProtocolTransfer = $protocol["transferOptions"] ?? null;
+        $ocmProtocolWebapp = $protocol["webappOptions"] ?? null;
+
+        // this cannot be null and null case has been handled before this line with status bad request.
+        $ocmProtocolWebdav = $protocol["webdavOptions"];
+
+
+        // handle bad cases and eliminate null variables.
+        if (!isset($ocmProtocolWebdav["permissions"]["permissions"])) {
+            return new JSONResponse("webdavOptions permissions not found in the request.", Http::STATUS_BAD_REQUEST);
+        }
+        if (!isset($ocmProtocolWebdav["sharedSecret"])) {
+            return new JSONResponse("webdavOptions sharedSecret not found in the request.", Http::STATUS_BAD_REQUEST);
+        }
+        if (!isset($ocmProtocolWebdav["uri"])) {
+            return new JSONResponse("webdavOptions uri not found in the request.", Http::STATUS_BAD_REQUEST);
         }
 
-        if (!isset($sharedSecret)) {
-            return new JSONResponse("WebDAV sharedSecret not found in the request.", Http::STATUS_BAD_REQUEST);
-        }
+        // convert permissions from array to integer
+        $integerPermissions = $this->getPermissionsCode($ocmProtocolWebdav["permissions"]["permissions"]);
+        $ocmProtocolWebdav["permissions"] = $integerPermissions;
+
+        $sharedSecret = $ocmProtocolWebdav["sharedSecret"];
+        // URI example: https://nc1.docker/remote.php/dav/ocm/vaKE36Wf1lJWCvpDcRQUScraVP5quhzA
+        $uri = $ocmProtocolWebdav["uri"];
+        // remote extracted from URI: https://nc1.docker
+        // below line splits uri by the "/" character, picks first 3 items aka ["https:", "", "nc.docker"]
+        // and joins them again with "/" character in between.
+        $remote = isset($uri) ? implode("/", array_slice(explode("/", $uri), 0, 3)) : null;
+
         if (!isset($remote)) {
-            return new JSONResponse("WebDAV URI not found in the request.", Http::STATUS_BAD_REQUEST);
+            return new JSONResponse("Correct WebDAV URI not found in the request. remote is: $remote", Http::STATUS_BAD_REQUEST);
         }
 
-        // TODO: write checks for webapp and transfer protocols missing properties and return STATUS_BAD_REQUEST.
+        // TODO: @Mahdi write checks for webapp and transfer protocols missing properties and return STATUS_BAD_REQUEST.
+
+        // remove trailing "/" from share name.
+        $name = rtrim($name, "/");
 
         // prepare data for adding to database.
         $efssShareData = [
-            // https://nc1.docker
+            // "https://nc1.docker"
             "remote" => $remote,
             // the id of the share in the oc_share table of the remote.
-            "remote_id" => $params["remoteShareId"],
+            "remote_id" => $remoteShareId,
             // 'tDPRTrLI4hE3C5T'
             "share_token" => $sharedSecret,
+            // password is always null.
+            // TODO: @Mahdi Is it?
             "password" => null,
-            // 'TestFolder'
-            "name" => rtrim($params["name"], "/"),
-            // 'einstein'
-            "owner" => $params["owner"]["opaqueId"],
-            // receiver 'marie'
+            // "TestFolder"
+            "name" => $name,
+            // "einstein"
+            "owner" => $ownerOpaqueID,
+            // receiver "marie"
             "user" => $userId
         ];
 
@@ -1452,22 +1466,16 @@ class RevaController extends Controller
         $ocmShareData = [
             "share_external_id" => $efssShareID,
             "name" => $name,
-            // TODO: hardcoded.
-            "item_type" => $shareType === "SHARE_TYPE_USER" ? 1 : 0,
             "share_with" => $granteeOpaqueID . "@" . $granteeIDP,
             "owner" => $ownerOpaqueID . "@" . $ownerIDP,
             "initiator" => $creatorOpaqueID . "@" . $creatorIDP,
             "ctime" => $ctime,
             "mtime" => $mtime,
             "expiration" => $params["expiration"] ?? null,
-            // TODO: hardcoded.
-            "type" => $resourceType === "RESOURCE_TYPE_CONTAINER" ? 1 : 0,
-            // TODO: hardcoded.
-            "state" => $shareState === "SHARE_STATE_PENDING" ? 1 : 0,
             "remote_share_id" => $remoteShareId,
-            "transfers" => $ocmProtocolTransfer,
-            "webapps" => $ocmProtocolWebapps,
-            "webdavs" => $ocmProtocolWebdavs,
+            "transfer" => $ocmProtocolTransfer,
+            "webapp" => $ocmProtocolWebapp,
+            "webdav" => $ocmProtocolWebdav,
         ];
 
         $this->shareProvider->addReceivedOcmShareToSciencemeshDatabaseTable($ocmShareData);
@@ -1477,6 +1485,7 @@ class RevaController extends Controller
 
     /**
      * Remove Share from share table
+     *
      * @PublicPage
      * @NoCSRFRequired
      * @param $userId
@@ -1542,6 +1551,7 @@ class RevaController extends Controller
 
     /**
      * UpdateReceivedShare updates the received share with share state.
+     *
      * @PublicPage
      * @NoCSRFRequired
      * @param $userId
@@ -1577,6 +1587,7 @@ class RevaController extends Controller
     /**
      * ListSentShares returns the shares created by the user. If md is provided is not nil,
      * it returns only shares attached to the given resource.
+     *
      * @PublicPage
      * @NoCSRFRequired
      * @param $userId
@@ -1608,6 +1619,7 @@ class RevaController extends Controller
 
     /**
      * ListReceivedShares returns the list of shares the user has access.
+     *
      * @PublicPage
      * @NoCSRFRequired
      * @param $userId
@@ -1643,6 +1655,7 @@ class RevaController extends Controller
 
     /**
      * GetReceivedShare returns the information for a received share the user has access.
+     *
      * @PublicPage
      * @NoCSRFRequired
      * @param $userId
@@ -1673,6 +1686,7 @@ class RevaController extends Controller
 
     /**
      * GetSentShare gets the information for a share by the given ref.
+     *
      * @PublicPage
      * @NoCSRFRequired
      * @param $userId

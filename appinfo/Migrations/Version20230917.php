@@ -15,15 +15,15 @@ use Doctrine\DBAL\Schema\Schema;
 use OCP\Migration\ISchemaMigration;
 
 /** Creates initial schema */
-class Version20230916 implements ISchemaMigration
+class Version20230917 implements ISchemaMigration
 {
     public function changeSchema(Schema $schema, array $options)
     {
         $prefix = $options["tablePrefix"];
 
-        // ocm_received_shares table.
-        if (!$schema->hasTable("{$prefix}sciencemesh_ocm_received_shares")) {
-            $table = $schema->createTable("{$prefix}sciencemesh_ocm_received_shares");
+        // ocm_sent_shares table.
+        if (!$schema->hasTable("{$prefix}sciencemesh_ocm_sent_shares")) {
+            $table = $schema->createTable("{$prefix}sciencemesh_ocm_sent_shares");
 
             $table->addColumn("id", "bigint", [
                 "autoincrement" => true,
@@ -32,7 +32,7 @@ class Version20230916 implements ISchemaMigration
                 "length" => 11,
             ]);
 
-            $table->addColumn("share_external_id", "bigint", [
+            $table->addColumn("share_internal_id", "bigint", [
                 "unsigned" => false,
                 "notnull" => true,
                 "length" => 11,
@@ -41,7 +41,7 @@ class Version20230916 implements ISchemaMigration
             $table->addColumn("name", "string", [
                 "length" => 255,
                 "notnull" => true,
-                "comment" => "Original name on the remote server"
+                "comment" => "Original name on the sending server"
             ]);
 
             $table->addColumn("share_with", "string", [
@@ -78,18 +78,11 @@ class Version20230916 implements ISchemaMigration
                 "length" => 11,
             ]);
 
-            $table->addColumn("remote_share_id", "string", [
-                "length" => 255,
-                "notnull" => false,
-                "default" => null,
-                "comment" => "share ID at the remote server"
-            ]);
-
             $table->setPrimaryKey(["id"]);
 
             $table->addUniqueIndex(
-                ["share_external_id"],
-                "sm_ocm_rx_ex_id_idx"
+                ["share_internal_id"],
+                "sm_ocm_tx_in_id_idx"
             );
             $table->addUniqueIndex(
                 ["share_with"],
@@ -98,10 +91,10 @@ class Version20230916 implements ISchemaMigration
         }
 
         // ocm_protocol_transfer table.
-        if (!$schema->hasTable("{$prefix}sciencemesh_ocm_received_share_protocol_transfer")) {
-            $table = $schema->createTable("{$prefix}sciencemesh_ocm_received_share_protocol_transfer");
+        if (!$schema->hasTable("{$prefix}sciencemesh_ocm_sent_share_protocol_transfer")) {
+            $table = $schema->createTable("{$prefix}sciencemesh_ocm_sent_share_protocol_transfer");
 
-            $table->addColumn("ocm_received_share_id", "bigint", [
+            $table->addColumn("ocm_sent_share_id", "bigint", [
                 "unsigned" => true,
                 "notnull" => true,
                 "length" => 11,
@@ -124,16 +117,16 @@ class Version20230916 implements ISchemaMigration
             ]);
 
             $table->addUniqueIndex(
-                ["ocm_received_share_id"],
-                "sm_ocm_rx_share_id_tx_idx"
+                ["ocm_sent_share_id"],
+                "sm_ocm_tx_share_id_tx_idx"
             );
         }
 
         // ocm_protocol_webapp table.
-        if (!$schema->hasTable("{$prefix}sciencemesh_ocm_received_share_protocol_webapp")) {
-            $table = $schema->createTable("{$prefix}sciencemesh_ocm_received_share_protocol_webapp");
+        if (!$schema->hasTable("{$prefix}sciencemesh_ocm_sent_share_protocol_webapp")) {
+            $table = $schema->createTable("{$prefix}sciencemesh_ocm_sent_share_protocol_webapp");
 
-            $table->addColumn("ocm_received_share_id", "bigint", [
+            $table->addColumn("ocm_sent_share_id", "bigint", [
                 "unsigned" => true,
                 "notnull" => true,
                 "length" => 11,
@@ -151,16 +144,16 @@ class Version20230916 implements ISchemaMigration
             ]);
 
             $table->addUniqueIndex(
-                ["ocm_received_share_id"],
-                "sm_ocm_rx_share_id_app_idx"
+                ["ocm_sent_share_id"],
+                "sm_ocm_tx_share_id_app_idx"
             );
         }
 
         // ocm_protocol_webdav table.
-        if (!$schema->hasTable("{$prefix}sciencemesh_ocm_received_share_protocol_webdav")) {
-            $table = $schema->createTable("{$prefix}sciencemesh_ocm_received_share_protocol_webdav");
+        if (!$schema->hasTable("{$prefix}sciencemesh_ocm_sent_share_protocol_webdav")) {
+            $table = $schema->createTable("{$prefix}sciencemesh_sent_share_ocm_protocol_webdav");
 
-            $table->addColumn("ocm_received_share_id", "bigint", [
+            $table->addColumn("ocm_sent_share_id", "bigint", [
                 "unsigned" => true,
                 "notnull" => true,
                 "length" => 11,
@@ -183,8 +176,8 @@ class Version20230916 implements ISchemaMigration
             ]);
 
             $table->addUniqueIndex(
-                ["ocm_received_share_id"],
-                "sm_ocm_rx_share_id_dav_idx"
+                ["ocm_sent_share_id"],
+                "sm_ocm_tx_share_id_dav_idx"
             );
         }
     }
