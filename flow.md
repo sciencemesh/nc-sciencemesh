@@ -48,3 +48,12 @@ sm app creates share object via sm share provider `createInternal` that inserts 
 probably owncloud would inform the recepient by these request (should dig deeper to be sure):
 "POST /ocs/v2.php/apps/files_sharing/api/v1/shares?format=json HTTP/1.1" 200
 "GET /ocs/v2.php/apps/files_sharing/api/v1/shares?format=json&path=%2Ftest&reshares=true
+
+
+## Receiver
+
+Reva will call these in order:
+1. "POST /index.php/apps/sciencemesh/~unauthenticated/api/user/GetUser HTTP/1.1" 200
+2. "POST /index.php/apps/sciencemesh/~marie/api/ocm/addReceivedShare HTTP/1.1" 400
+
+FIX: 400 in addReceivedShare
