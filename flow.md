@@ -29,18 +29,136 @@ reva received the request and does these calls in order:
 2. "POST /index.php/apps/sciencemesh/~einstein/api/storage/CreateHome HTTP/1.1"
 3. "POST /index.php/apps/sciencemesh/~einstein/api/storage/GetMD HTTP/1.1" 200
 sm response:
-```
-array (\n  'type' => 2,\n  'id' => \n  array (\n    'opaque_id' => 'fileid-/home/test',\n  ),\n  'checksum' => \n  array (\n    'type' => 1,\n    'sum' => '',\n  ),\n  'etag' => '65129328493b0',\n  'mime_type' => 'folder',\n  'mtime' => \n  array (\n    'seconds' => 1695716136,\n  ),\n  'path' => '/home/test',\n  'permissions' => 31,\n  'size' => 0,\n  'owner' => \n  array (\n    'opaque_id' => 'einstein',\n    'idp' => 'revaowncloud1.docker',\n  ),\n)
+```php
+array (
+    'type' => 2,
+    'id' => 
+        array (
+          'opaque_id' => 'fileid-/home/test',
+        ),
+    'checksum' => 
+        array (
+          'type' => 1,
+          'sum' => '',
+        ),
+    'etag' => '65129328493b0',
+    'mime_type' => 'folder',
+    'mtime' => 
+        array (
+          'seconds' => 1695716136,
+        ),
+    'path' => '/home/test',
+    'permissions' => 31,
+    'size' => 0,
+    'owner' => 
+        array (
+          'opaque_id' => 'einstein',
+          'idp' => 'revaowncloud1.docker',
+        ),
+)
 ```
 4. "POST /index.php/apps/sciencemesh/~einstein/api/storage/GetMD HTTP/1.1" 200
 sm response:
-```
-array (\n  'type' => 2,\n  'id' => \n  array (\n    'opaque_id' => 'fileid-/home/test',\n  ),\n  'checksum' => \n  array (\n    'type' => 1,\n    'sum' => '',\n  ),\n  'etag' => '65129328493b0',\n  'mime_type' => 'folder',\n  'mtime' => \n  array (\n    'seconds' => 1695716136,\n  ),\n  'path' => '/home/test',\n  'permissions' => 31,\n  'size' => 0,\n  'owner' => \n  array (\n    'opaque_id' => 'einstein',\n    'idp' => 'revaowncloud1.docker',\n  ),\n)
+```php
+array (
+    'type' => 2,
+    'id' => 
+        array (
+          'opaque_id' => 'fileid-/home/test',
+        ),
+    'checksum' => 
+        array (
+          'type' => 1,
+          'sum' => '',
+        ),
+    'etag' => '65129328493b0',
+    'mime_type' => 'folder',
+    'mtime' => 
+        array (
+          'seconds' => 1695716136,
+        ),
+    'path' => '/home/test',
+    'permissions' => 31,
+    'size' => 0,
+    'owner' => 
+        array (
+          'opaque_id' => 'einstein',
+          'idp' => 'revaowncloud1.docker',
+        ),
+)
 ```
 5. "POST /index.php/apps/sciencemesh/~einstein/api/ocm/addSentShare HTTP/1.1" 201
 reva payload:
-```
-array (\n  'userId' => 'einstein',\n  '_route' => 'sciencemesh.reva.addSentShare',\n  'resourceId' => \n  array (\n    'storageId' => 'nextcloud',\n    'opaqueId' => 'fileid-/home/test',\n  ),\n  'name' => 'test',\n  'token' => 'Y7bWUulmHrhfUJ8LRknNpkZQGcRRkMk7',\n  'grantee' => \n  array (\n    'type' => 'GRANTEE_TYPE_USER',\n    'userId' => \n    array (\n      'idp' => 'revaowncloud2.docker',\n      'opaqueId' => 'marie',\n    ),\n  ),\n  'owner' => \n  array (\n    'idp' => 'revaowncloud1.docker',\n    'opaqueId' => 'einstein',\n    'type' => 'USER_TYPE_PRIMARY',\n  ),\n  'creator' => \n  array (\n    'idp' => 'revaowncloud1.docker',\n    'opaqueId' => 'einstein',\n  ),\n  'ctime' => \n  array (\n    'seconds' => '1695716163',\n    'nanos' => 943856286,\n  ),\n  'mtime' => \n  array (\n    'seconds' => '1695716163',\n    'nanos' => 943856286,\n  ),\n  'shareType' => 'SHARE_TYPE_USER',\n  'accessMethods' => \n  array (\n    0 => \n    array (\n      'webdavOptions' => \n      array (\n        'permissions' => \n        array (\n          'getPath' => true,\n          'getQuota' => true,\n          'initiateFileDownload' => true,\n          'listGrants' => true,\n          'listContainer' => true,\n          'listFileVersions' => true,\n          'listRecycle' => true,\n          'stat' => true,\n        ),\n      ),\n    ),\n    1 => \n    array (\n      'webappOptions' => \n      array (\n        'viewMode' => 'VIEW_MODE_READ_ONLY',\n      ),\n    ),\n  ),\n)
+```php
+array (
+    'userId' => 'einstein',
+    '_route' => 'sciencemesh.reva.addSentShare',
+    'resourceId' => 
+        array (
+          'storageId' => 'nextcloud',
+          'opaqueId' => 'fileid-/home/test',
+        ),
+    'name' => 'test',
+    'token' => 'Y7bWUulmHrhfUJ8LRknNpkZQGcRRkMk7',
+    'grantee' => 
+        array (
+          'type' => 'GRANTEE_TYPE_USER',
+          'userId' => 
+              array (
+                'idp' => 'revaowncloud2.docker',
+                'opaqueId' => 'marie',
+              ),
+        ),
+    'owner' => 
+        array (
+          'idp' => 'revaowncloud1.docker',
+          'opaqueId' => 'einstein',
+          'type' => 'USER_TYPE_PRIMARY',
+        ),
+    'creator' => 
+        array (
+          'idp' => 'revaowncloud1.docker',
+          'opaqueId' => 'einstein',
+        ),
+    'ctime' => 
+        array (
+          'seconds' => '1695716163',
+          'nanos' => 943856286,
+        ),
+    'mtime' => 
+        array (
+          'seconds' => '1695716163',
+          'nanos' => 943856286,
+        ),
+    'shareType' => 'SHARE_TYPE_USER',
+    'accessMethods' => 
+    array (
+      0 => 
+      array (
+        'webdavOptions' => 
+            array (
+              'permissions' => 
+                  array (
+                    'getPath' => true,
+                    'getQuota' => true,
+                    'initiateFileDownload' => true,
+                    'listGrants' => true,
+                    'listContainer' => true,
+                    'listFileVersions' => true,
+                    'listRecycle' => true,
+                    'stat' => true,
+                  ),
+            ),
+      ),
+      1 => 
+          array (
+            'webappOptions' => 
+                array (
+                  'viewMode' => 'VIEW_MODE_READ_ONLY',
+                ),
+          ),
+    ),
+)
 ```
 
 sm app creates share object via sm share provider `createInternal` that inserts share into efss native db.
