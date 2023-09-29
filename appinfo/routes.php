@@ -37,19 +37,23 @@ $routes_array = [
         ['name' => 'reva#UpdateShare', 'url' => '/~{userId}/api/ocm/UpdateShare', 'verb' => 'POST'],
 
         // TODO: @Mahdi why do we have alias here? check with @Giuseppe and Reva EFSS code.
+        // check in reva code, and make it to use clear names like ListSentShares and ListRxShares
         ['name' => 'reva#ListSentShares', 'url' => '/~{userId}/api/ocm/ListSentShares', 'verb' => 'POST'],
-        // alias for ListSentShares.
+        // alias for ListSentShares. https://github.com/cs3org/reva/blob/76d29f92b4872df37d7c3ac78f6a1574df1d320d/pkg/ocm/share/repository/nextcloud/nextcloud.go#L267
         ['name' => 'reva#ListSentShares', 'url' => '/~{userId}/api/ocm/ListShares', 'verb' => 'POST'],
 
         ['name' => 'reva#ListReceivedShares', 'url' => '/~{userId}/api/ocm/ListReceivedShares', 'verb' => 'POST'],
         ['name' => 'reva#GetReceivedShare', 'url' => '/~{userId}/api/ocm/GetReceivedShare', 'verb' => 'POST'],
         ['name' => 'reva#UpdateSentShare', 'url' => '/~{userId}/api/ocm/UpdateSentShare', 'verb' => 'POST'],
         ['name' => 'reva#UpdateReceivedShare', 'url' => '/~{userId}/api/ocm/UpdateReceivedShare', 'verb' => 'POST'],
-        ['name' => 'reva#GetUser', 'url' => '/~{dummy}/api/user/GetUser', 'verb' => 'POST'],
-        ['name' => 'reva#GetUserByClaim', 'url' => '/~{dummy}/api/user/GetUserByClaim', 'verb' => 'POST'],
+
         // See: https://github.com/cs3org/reva/pull/4115#discussion_r1308371946
         // we need to handle this route for both nobody and userId.
         ['name' => 'reva#GetSentShareByToken', 'url' => '/~{userId}/api/ocm/GetSentShareByToken', 'verb' => 'POST'],
+
+        # TODO: @Mahdi move them to user controller.
+        ['name' => 'reva#GetUser', 'url' => '/~{dummy}/api/user/GetUser', 'verb' => 'POST'],
+        ['name' => 'reva#GetUserByClaim', 'url' => '/~{dummy}/api/user/GetUserByClaim', 'verb' => 'POST'],
 
         // storage routes.
         ['name' => 'reva#AddGrant', 'url' => '/~{userId}/api/storage/AddGrant', 'verb' => 'POST'],
@@ -77,12 +81,14 @@ $routes_array = [
         ['name' => 'reva#Upload', 'url' => '/~{userId}/api/storage/Upload/{path}', 'verb' => 'PUT', 'requirements' => ['path' => '.+']],
 
         // TODO: @Mahdi Are these used anywhere in Reva?
+        /*
         // files routes.
         ['name' => 'storage#handleGet', 'url' => '/~{userId}/files/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+']],
         ['name' => 'storage#handlePost', 'url' => '/~{userId}/files/{path}', 'verb' => 'POST', 'requirements' => ['path' => '.+']],
         ['name' => 'storage#handlePut', 'url' => '/~{userId}/files/{path}', 'verb' => 'PUT', 'requirements' => ['path' => '.+']],
         ['name' => 'storage#handleDelete', 'url' => '/~{userId}/files/{path}', 'verb' => 'DELETE', 'requirements' => ['path' => '.+']],
         ['name' => 'storage#handleHead', 'url' => '/~{userId}/files/{path}', 'verb' => 'HEAD', 'requirements' => ['path' => '.+']],
+        */
 
         // internal app routes.
         ['name' => 'app#contacts', 'url' => '/', 'verb' => 'GET'],
