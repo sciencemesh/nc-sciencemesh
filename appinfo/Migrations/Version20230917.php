@@ -151,7 +151,7 @@ class Version20230917 implements ISchemaMigration
 
         // ocm_protocol_webdav table.
         if (!$schema->hasTable("{$prefix}sciencemesh_ocm_sent_share_protocol_webdav")) {
-            $table = $schema->createTable("{$prefix}sciencemesh_sent_share_ocm_protocol_webdav");
+            $table = $schema->createTable("{$prefix}sciencemesh_ocm_sent_share_protocol_webdav");
 
             $table->addColumn("ocm_sent_share_id", "bigint", [
                 "unsigned" => true,
