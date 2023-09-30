@@ -24,6 +24,7 @@ use OCA\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\TokenHandler;
 use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 use OCA\ScienceMesh\RevaHttpClient;
+use OCA\ScienceMesh\ServerConfig;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\IConfig;
@@ -44,11 +45,14 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 class ScienceMeshShareProvider extends FederatedShareProviderCopy
 {
 
-    /** @var RevaHttpClient */
-    protected RevaHttpClient $revaHttpClient;
+    /** @var ServerConfig */
+    private ServerConfig $serverConfig;
 
     /** @var array */
     protected array $supportedShareType;
+
+    /** @var RevaHttpClient */
+    protected RevaHttpClient $revaHttpClient;
 
     /**
      * ScienceMeshShareProvider constructor.
@@ -91,8 +95,9 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
             $userManager
         );
 
-        $this->supportedShareType[] = ScienceMeshApp::SHARE_TYPE_SCIENCEMESH;
+        $this->serverConfig = new ServerConfig($config);
         $this->revaHttpClient = new RevaHttpClient($config);
+        $this->supportedShareType[] = ScienceMeshApp::SHARE_TYPE_SCIENCEMESH;
     }
 
     /**
@@ -123,12 +128,12 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
         $node = $share->getNode();
         $shareWith = $share->getSharedWith();
 
-        // This is the routing flag for sending a share.
+        // this is the routing flag for sending a share.
         // if the recipient of the share is a sciencemesh contact,
         // the search plugin will mark it by a postfix.
         $isSciencemeshUser = $this->stringEndsWith($shareWith, ScienceMeshApp::SCIENCEMESH_POSTFIX);
 
-        // Based on the flag, the share will be sent through sciencemesh or regular share provider.
+        // based on the flag, the share will be sent through sciencemesh or regular share provider.
         if ($isSciencemeshUser) {
             // remove the postfix flag from the string.
             $shareWith = str_replace(ScienceMeshApp::SCIENCEMESH_POSTFIX, "", $shareWith);
@@ -164,6 +169,49 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
             $last = array_pop($parts);
             $shareWithParts = array(implode($split_point, $parts), $last);
 
+            // don't allow ScienceMesh shares if source and target server are the same.
+            // this means users with the same reva iop cannot share with each other via sciencemesh and
+            // should use their native efss capabilities to do so.
+            // see: https://github.com/sciencemesh/nc-sciencemesh/issues/57
+            if ($this->serverConfig->getIopIdp() === $shareWithParts[1]) {
+                $message = "Not allowed to create a ScienceMesh share for a user on the same server %s as sender.";
+                $message_t = $this->l->t(
+                    "Not allowed to create a ScienceMesh share for a user on the same server %s as sender.",
+                    [$shareWithParts[1]]
+                );
+                $this->logger->debug(
+                    sprintf(
+                        $message, $shareWithParts[1]
+                    ),
+                    ["app" => "sciencemesh"]
+                );
+                throw new Exception($message_t);
+            }
+
+            // check if file is not already shared with the remote user.
+            $alreadyShared = $this->getSharedWith(
+                $shareWith,
+                $share->getShareType(),
+                $share->getNode(),
+                1,
+                0
+            );
+
+            if (!empty($alreadyShared)) {
+                $message = "Sharing %s failed, because this item is already shared with %s";
+                $message_t = $this->l->t(
+                    "Sharing %s failed, because this item is already shared with %s",
+                    [$share->getNode()->getName(), $share->getSharedWith()]
+                );
+                $this->logger->debug(
+                    sprintf(
+                        $message, $share->getNode()->getName(), $share->getSharedWith()
+                    ),
+                    ["app" => "sciencemesh"]
+                );
+                throw new Exception($message_t);
+            }
+
             $response = $this->revaHttpClient->createShare($sender, [
                 "sourcePath" => $sourcePath,
                 "targetPath" => $targetPath,
@@ -172,8 +220,16 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
                 "recipientHost" => $shareWithParts[1]
             ]);
 
-            if (!isset($response) || !isset($response->share) || !isset($response->share->owner) || !isset($response->share->owner->idp)) {
-                throw new Exception("Unexpected response from reva");
+            if (!isset($response->share->owner->idp)) {
+                $message = "Unexpected response from Reva, response share owner idp doesn't exist.";
+                $message_t = $this->l->t(
+                    "Unexpected response from Reva, response share owner idp doesn't exist.",
+                );
+                $this->logger->error(
+                    $message,
+                    ["app" => "sciencemesh"]
+                );
+                throw new Exception($message_t);
             }
 
             $share->setId("will-set-this-later");
@@ -258,6 +314,8 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
             ->andWhere($qb->expr()->eq("share_token", $qb->createNamedParameter($token)))
             ->execute();
         $data = $cursor->fetch();
+        $cursor->closeCursor();
+
         if ($data === false) {
             throw new ShareNotFound("Share not found", $this->l->t("Could not find share"));
         }
@@ -305,22 +363,27 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
     public function getSentShareByToken(string $token): IShare
     {
         error_log("share provider getSentShareByToken '$token'");
+
         $qb = $this->dbConnection->getQueryBuilder();
         $cursor = $qb->select("*")
             ->from("share")
             ->where($qb->expr()->eq("token", $qb->createNamedParameter($token)))
             ->execute();
         $data = $cursor->fetch();
+        $cursor->closeCursor();
+
         if ($data === false) {
             error_log("sent share not found by token '$token'");
             throw new ShareNotFound("Share not found", $this->l->t("Could not find share"));
         }
+
         try {
             $share = $this->createShareObject($data);
         } catch (InvalidShare $e) {
             error_log("sent share found invalid by token '$token'");
             throw new ShareNotFound("Share not found", $this->l->t("Could not find share"));
         }
+
         error_log("found sent share " . $data["id"] . " by token '$token'");
         return $share;
     }
@@ -385,9 +448,13 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
             );
         $cursor = $qb->execute();
         $data = $cursor->fetch();
+        $cursor->closeCursor();
+
         if (!$data) {
             return false;
         }
+
+
         $id = $data["fileid"];
         $isShare = $qb->select("*")
             ->from("share")
@@ -438,6 +505,8 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
             );
         $cursor = $qb->execute();
         $data = $cursor->fetch();
+        $cursor->closeCursor();
+
         if (!$data) {
             return false;
         } else {
@@ -466,8 +535,11 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
             ->where(
                 $qb->expr()->eq("path", $qb->createNamedParameter($path))
             );
+
         $cursor = $qb->execute();
         $data = $cursor->fetch();
+        $cursor->closeCursor();
+
         if (!$data) {
             return false;
         }
@@ -480,17 +552,21 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
             ->andWhere(
                 $qb->expr()->eq("item_source", $qb->createNamedParameter($id))
             );
+
         $cursor = $qb->execute();
         $data = $cursor->fetch();
+        $cursor->closeCursor();
+
         if (!$data) {
             return false;
         }
+
         try {
             $share = $this->createShareObject($data);
         } catch (InvalidShare $e) {
             throw new ShareNotFound();
         }
-        $cursor->closeCursor();
+
         return $share;
     }
 
@@ -500,25 +576,30 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
     public function getShareByOpaqueId($opaqueId)
     {
         $qb = $this->dbConnection->getQueryBuilder();
-        $c = $qb->select("is_external")
+        $cursor = $qb->select("is_external")
             ->from("sciencemesh_shares")
             ->where(
                 $qb->expr()->eq("opaque_id", $qb->createNamedParameter($opaqueId))
             )
             ->execute();
-        $data = $c->fetch();
+        $data = $cursor->fetch();
+        $cursor->closeCursor();
+
         if (!$data) {
             return false;
         }
+
         $external = $data["is_external"];
-        $c = $qb->select("*")
+        $cursor = $qb->select("*")
             ->from("sciencemesh_shares", "sms")
             ->innerJoin("sms", $external ? "share_external" : "share", "s", $qb->expr()->eq("sms.foreignId", "s.id"))
             ->where(
                 $qb->expr()->eq("sms.opaque_id", $qb->createNamedParameter($opaqueId))
             )
             ->execute();
-        $data = $c->fetch();
+        $data = $cursor->fetch();
+        $cursor->closeCursor();
+
         if (!$data) {
             return false;
         }
@@ -542,6 +623,8 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
             )
             ->execute();
         $data = $cursor->fetch();
+        $cursor->closeCursor();
+
         if (!$data) {
             $qb->insert("sciencemesh_users")
                 ->setValue("idp", $qb->createNamedParameter($idp))
@@ -829,8 +912,10 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
             ->from("sciencemesh_ocm_sent_shares")
             ->where($qbt->expr()->eq("share_internal_id", $qbt->createNamedParameter($shareId)));
         $cursor = $qbt->execute();
+        $data = $cursor->fetch();
+        $cursor->closeCursor();
 
-        return $cursor->fetch() ?? null;
+        return $data;
     }
 
     /**
@@ -888,8 +973,10 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
             ->from("sciencemesh_ocm_received_shares")
             ->where($qbt->expr()->eq("share_external_id", $qbt->createNamedParameter($shareId)));
         $cursor = $qbt->execute();
+        $data = $cursor->fetch();
+        $cursor->closeCursor();
 
-        return $cursor->fetch() ?? null;
+        return $data;
     }
 
     /**

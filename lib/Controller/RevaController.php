@@ -455,6 +455,7 @@ class RevaController extends Controller
         return $payload;
     }
 
+    // TODO: @Mahdi Move to utils.
     private function getDomainFromURL($url)
     {
         // converts https://revaowncloud1.docker/ to revaowncloud1.docker
@@ -1423,13 +1424,28 @@ class RevaController extends Controller
         // maybe it would be subject to change in future but for now it is good to check these
         // instead of blindly assuming they're same.
         if ($userId !== $payloadUserId || $userId !== $creatorOpaqueId || $payloadUserId !== $creatorOpaqueId) {
-            return new JSONResponse("creator->opaqueId, userId and userId from the payload are mismatched.", Http::STATUS_UNPROCESSABLE_ENTITY);
+            return new JSONResponse(
+                "creator->opaqueId, userId and userId from the payload are mismatched.",
+                Http::STATUS_UNPROCESSABLE_ENTITY
+            );
         }
 
-        // don't allow ScienceMesh shares if source and target server are the same
+        // don't allow ScienceMesh shares if source and target server are the same.
+        // this means users with the same reva iop cannot share with each other via sciencemesh and
+        // should use their native efss capabilities to do so.
         // see: https://github.com/sciencemesh/nc-sciencemesh/issues/57
         if ($ownerIdp === $granteeIdp) {
-            return new JSONResponse("Not allowed to create a federated share with the same user.", Http::STATUS_UNPROCESSABLE_ENTITY);
+            $message = "Not allowed to create a ScienceMesh share for a user on the same server %s as sender %s.";
+            $this->logger->debug(
+                sprintf(
+                    $message, $ownerIdp, $granteeIdp
+                ),
+                ["app" => "sciencemesh"]
+            );
+            return new JSONResponse(
+                "Not allowed to create a ScienceMesh share for a user on the same server %s as sender %s.",
+                Http::STATUS_UNPROCESSABLE_ENTITY
+            );
         }
 
         if (!isset($params["accessMethods"])) {
@@ -1466,7 +1482,6 @@ class RevaController extends Controller
         // prepare data for adding to the native efss table.
         $share = $this->shareManager->newShare();
         $share->setNode($node);
-        $this->lock($share->getNode());
 
         $share->setShareType(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH);
         $share->setSharedWith($granteeOpaqueId . "@" . $granteeIdp);
@@ -1495,7 +1510,7 @@ class RevaController extends Controller
                 sprintf(
                     $message, $share->getNode()->getName(), $share->getSharedWith()
                 ),
-                ["app" => "ScienceMesh"]
+                ["app" => "sciencemesh"]
             );
             return new JSONResponse($message_t, Http::STATUS_CONFLICT);
         }
@@ -1507,6 +1522,8 @@ class RevaController extends Controller
             $this->logger->debug($message, ['app' => 'ScienceMesh']);
             return new JSONResponse($message_t, Http::STATUS_UNPROCESSABLE_ENTITY);
         }
+
+        $this->lock($share->getNode());
 
         // prepare share data for ocm
         $share = $this->shareProvider->createNativeEfssScienceMeshShare($share);
