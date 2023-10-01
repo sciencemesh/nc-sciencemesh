@@ -225,37 +225,39 @@ class RevaController extends Controller
      */
     public function Authenticate($userId): JSONResponse
     {
-        error_log("Authenticate");
+        error_log("Authenticate: " . $userId);
+
         if ($this->userManager->userExists($userId)) {
             $this->init($userId);
+
+            $userId = $this->request->getParam("clientID");
+            $password = $this->request->getParam("clientSecret");
+            // Try e.g.:
+            // curl -v -H 'Content-Type:application/json' -d'{"clientID":"einstein",clientSecret":"relativity"}' http://einstein:relativity@localhost/index.php/apps/sciencemesh/~einstein/api/auth/Authenticate
+
+            // see: https://github.com/cs3org/reva/issues/2356
+            if ($password == $this->config->getRevaLoopbackSecret()) {
+                // NOTE: @Mahdi, usually everything goes in this branch.
+                $user = $this->userManager->get($userId);
+            } else {
+                $user = $this->userManager->checkPassword($userId, $password);
+            }
+
         } else {
             $share = $this->shareProvider->getSentShareByToken($userId);
-            if ($share) {
-                $sharedWith = explode("@", $share->getSharedWith());
-                $result = [
-                    "user" => $this->formatFederatedUser($sharedWith[0], $sharedWith[1]),
-                    "scopes" => [],
-                ];
-                return new JSONResponse($result, Http::STATUS_OK);
-            } else {
-                return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
-            }
-        }
-
-        $userId = $this->request->getParam("clientID");
-        $password = $this->request->getParam("clientSecret");
-
-        // Try e.g.:
-        // curl -v -H 'Content-Type:application/json' -d'{"clientID":"einstein",clientSecret":"relativity"}' http://einstein:relativity@localhost/index.php/apps/sciencemesh/~einstein/api/auth/Authenticate
-
-        // see: https://github.com/cs3org/reva/issues/2356
-        if ($password == $this->config->getRevaLoopbackSecret()) {
+            $userId = $share->getSharedBy();
             $user = $this->userManager->get($userId);
-        } else {
-            $user = $this->userManager->checkPassword($userId, $password);
         }
+
         if ($user) {
-            // FIXME this hardcoded value represents {"resource_id":{"storage_id":"storage-id","opaque_id":"opaque-id"},"path":"some/file/path.txt"} and is not needed
+            // FIXME: @Mahdi this hardcoded value represents the json below and is not needed.
+            // {
+            //  "resource_id": {
+            //    "storage_id": "storage-id",
+            //    "opaque_id": "opaque-id"
+            //  },
+            //  "path": "some/file/path.txt"
+            // }
             $result = [
                 "user" => $this->formatUser($user),
                 "scopes" => [
@@ -268,10 +270,11 @@ class RevaController extends Controller
                     ],
                 ],
             ];
+
             return new JSONResponse($result, Http::STATUS_OK);
         }
 
-        return new JSONResponse("Username / password not recognized", 401);
+        return new JSONResponse("Username / password not recognized", Http::STATUS_UNAUTHORIZED);
     }
 
     /**
@@ -463,28 +466,12 @@ class RevaController extends Controller
         return str_ireplace("www.", "", parse_url($url, PHP_URL_HOST));
     }
 
-    private function formatFederatedUser($username, $remote): array
-    {
-        return [
-            "id" => [
-                "idp" => $remote,
-                "opaque_id" => $username,
-            ],
-            // FIXME: this comes in the OCM share payload
-            "display_name" => $username,
-            "username" => $username,
-            // FIXME: @Giuseppe this comes in the OCM share payload
-            // FIXME: @Mahdi No, Email is not coming from OCM share payload
-            "email" => "unknown@unknown",
-            "type" => 6,
-        ];
-    }
-
+    // TODO: @Mahdi Move to utils.
     private function formatUser($user): array
     {
         return [
             "id" => [
-                "idp" => $this->getDomainFromURL($this->config->getIopUrl()),
+                "idp" => $this->config->getIopIdp(),
                 "opaque_id" => $user->getUID(),
             ],
             "display_name" => $user->getDisplayName(),
