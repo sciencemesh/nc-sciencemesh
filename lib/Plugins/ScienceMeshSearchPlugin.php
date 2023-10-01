@@ -46,6 +46,8 @@ class ScienceMeshSearchPlugin
 
     /** @var string */
     private string $userId = '';
+
+    /** @var RevaHttpClient */
     private RevaHttpClient $revaHttpClient;
 
     /**
