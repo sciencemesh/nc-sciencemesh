@@ -40,6 +40,8 @@
         <admin>OCA\ScienceMesh\Sections\SciencemeshSettingsAdmin</admin>
     </settings-sections>
 
+    <use-migrations>true</use-migrations>
+
     <navigations>
         <navigation>
             <name>ScienceMesh</name>

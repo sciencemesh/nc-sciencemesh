@@ -21,18 +21,18 @@ use RangeException;
  */
 function random_str(
     int    $length = 64,
-    string $keyspace = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    string $keyspace = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 ): string
 {
     if ($length < 1) {
         throw new RangeException("Length must be a positive integer");
     }
     $pieces = [];
-    $max = mb_strlen($keyspace, '8bit') - 1;
+    $max = mb_strlen($keyspace, "8bit") - 1;
     for ($i = 0; $i < $length; ++$i) {
         $pieces [] = $keyspace[random_int(0, $max)];
     }
-    return implode('', $pieces);
+    return implode("", $pieces);
 }
 
 /**
@@ -54,32 +54,40 @@ class ServerConfig
 
     public function getApiKey()
     {
-        return $this->config->getAppValue('sciencemesh', 'apiKey');
+        return $this->config->getAppValue("sciencemesh", "apiKey");
     }
 
     public function getSiteName()
     {
-        return $this->config->getAppValue('sciencemesh', 'siteName');
+        return $this->config->getAppValue("sciencemesh", "siteName");
     }
 
     public function getSiteUrl()
     {
-        return $this->config->getAppValue('sciencemesh', 'siteUrl');
+        return $this->config->getAppValue("sciencemesh", "siteUrl");
     }
 
     public function getSiteId()
     {
-        return $this->config->getAppValue('sciencemesh', 'siteId');
+        return $this->config->getAppValue("sciencemesh", "siteId");
     }
 
     public function getCountry()
     {
-        return $this->config->getAppValue('sciencemesh', 'country');
+        return $this->config->getAppValue("sciencemesh", "country");
     }
 
     public function getIopUrl(): string
     {
-        return rtrim($this->config->getAppValue('sciencemesh', 'iopUrl'), '/') . '/';
+        return rtrim($this->config->getAppValue("sciencemesh", "iopUrl"), "/") . "/";
+    }
+
+    public function getIopIdp(): string
+    {
+        // TODO: @Mahdi use function from utils.
+        // converts https://revaowncloud1.docker/ to revaowncloud1.docker
+        // NOTE: do not use it on anything without http(s) in the start, it would return null.
+        return str_ireplace("www.", "", parse_url($this->getIopUrl(), PHP_URL_HOST));
     }
 
     /**
@@ -87,10 +95,10 @@ class ServerConfig
      */
     public function getRevaLoopbackSecret()
     {
-        $ret = $this->config->getAppValue('sciencemesh', 'revaLoopbackSecret');
+        $ret = $this->config->getAppValue("sciencemesh", "revaLoopbackSecret");
         if (!$ret) {
             $ret = random_str(32);
-            $this->config->setAppValue('sciencemesh', 'revaLoopbackSecret', $ret);
+            $this->config->setAppValue("sciencemesh", "revaLoopbackSecret", $ret);
         }
         return $ret;
     }
@@ -100,76 +108,76 @@ class ServerConfig
      */
     public function getRevaSharedSecret()
     {
-        $ret = $this->config->getAppValue('sciencemesh', 'revaSharedSecret');
+        $ret = $this->config->getAppValue("sciencemesh", "revaSharedSecret");
         if (!$ret) {
             $ret = random_str(32);
-            $this->config->setAppValue('sciencemesh', 'revaSharedSecret', $ret);
+            $this->config->setAppValue("sciencemesh", "revaSharedSecret", $ret);
         }
         return $ret;
     }
 
     public function setRevaSharedSecret($sharedSecret)
     {
-        $this->config->setAppValue('sciencemesh', 'revaSharedSecret', $sharedSecret);
+        $this->config->setAppValue("sciencemesh", "revaSharedSecret", $sharedSecret);
     }
 
     public function getNumUsers()
     {
-        return $this->config->getAppValue('sciencemesh', 'numUsers');
+        return $this->config->getAppValue("sciencemesh", "numUsers");
     }
 
     public function getNumFiles()
     {
-        return $this->config->getAppValue('sciencemesh', 'numFiles');
+        return $this->config->getAppValue("sciencemesh", "numFiles");
     }
 
     public function getNumStorage()
     {
-        return $this->config->getAppValue('sciencemesh', 'numStorage');
+        return $this->config->getAppValue("sciencemesh", "numStorage");
     }
 
     public function setApiKey($apiKey)
     {
-        $this->config->setAppValue('sciencemesh', 'apiKey', $apiKey);
+        $this->config->setAppValue("sciencemesh", "apiKey", $apiKey);
     }
 
     public function setSiteName($siteName)
     {
-        $this->config->setAppValue('sciencemesh', 'siteName', $siteName);
+        $this->config->setAppValue("sciencemesh", "siteName", $siteName);
     }
 
     public function setSiteUrl($siteUrl)
     {
-        $this->config->setAppValue('sciencemesh', 'siteUrl', $siteUrl);
+        $this->config->setAppValue("sciencemesh", "siteUrl", $siteUrl);
     }
 
     public function setSiteId($siteId)
     {
-        $this->config->setAppValue('sciencemesh', 'siteId', $siteId);
+        $this->config->setAppValue("sciencemesh", "siteId", $siteId);
     }
 
     public function setCountry($country)
     {
-        $this->config->setAppValue('sciencemesh', 'country', $country);
+        $this->config->setAppValue("sciencemesh", "country", $country);
     }
 
     public function setIopUrl($iopUrl)
     {
-        $this->config->setAppValue('sciencemesh', 'iopUrl', $iopUrl);
+        $this->config->setAppValue("sciencemesh", "iopUrl", $iopUrl);
     }
 
     public function setNumUsers($numUsers)
     {
-        $this->config->setAppValue('sciencemesh', 'numUsers', $numUsers);
+        $this->config->setAppValue("sciencemesh", "numUsers", $numUsers);
     }
 
     public function setNumFiles($numFiles)
     {
-        $this->config->setAppValue('sciencemesh', 'numFiles', $numFiles);
+        $this->config->setAppValue("sciencemesh", "numFiles", $numFiles);
     }
 
     public function setNumStorage($numStorage)
     {
-        $this->config->setAppValue('sciencemesh', 'numStorage', $numStorage);
+        $this->config->setAppValue("sciencemesh", "numStorage", $numStorage);
     }
 }

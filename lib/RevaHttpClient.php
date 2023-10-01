@@ -158,6 +158,7 @@ class RevaHttpClient
             throw new Exception("Missing type", 400);
         }
         if (!isset($params['role'])) {
+            // TODO: @Mahdi why is thi hard coded? is it related to share permissions?
             $params['role'] = 'viewer';
         }
         if (!isset($params['recipientUsername'])) {
