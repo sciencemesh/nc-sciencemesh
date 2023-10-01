@@ -1,8 +1,22 @@
 ### Creating a share
 
+
+
 ## Sender
 
-Search for contacts, click on contact to create a share. this step appends postfix for sm shares to distinguish them 
+Search for contacts, it goes through the search plugin and finds all the contacts you have made.
+
+example output:
+```json
+{
+  "display_name": "marie",
+  "idp": "revaowncloud2.docker",
+  "user_id": "marie",
+  "mail": ""
+}
+```
+
+click on contact to create a share. this step appends postfix for sm shares to distinguish them 
 from regular federated shares.
 
 Call share provider `create`, this is called by share manager, share manager calls share provider factory which has
