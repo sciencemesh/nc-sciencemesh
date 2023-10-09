@@ -282,17 +282,18 @@ class OcmController extends Controller
         }
 
         // TODO: @Mahdi update this comment to point at the Reva structure  mappings for this json.
+        // TODO on the `protocols`, need to implement:
+        // if $ocmShareProtocols["webapp"]["uri_template"] == nil, then do not include "webapp"
+        // if $ocmShareProtocols["transfer"]["source_uri"] == nil, then do not include "transfer"
+        // if $ocmShareProtocols["webdav"]["uri"] == nil, then we have a problem
         // produces JSON that maps to reva
         $payload = [
             // use OCM name, if null use efss share native name, if null fall back to "unknown"
             "name" => $ocmShareData["name"] ?? ($share->getName() ?? "unknown"),
-            "token" => $token ?? "unknown",
-            // TODO: @Mahdi what permissions is the correct one? share permissions has different value than the share->node permissions.
-            // maybe use the ocmData for this one? needs testing for different scenarios to see which is the best/correct one.
-            "permissions" => $share->getNode()->getPermissions() ?? 0,
+            "token" => $token,
             "id" => [
                 // https://github.com/cs3org/go-cs3apis/blob/d297419/cs3/sharing/ocm/v1beta1/resources.pb.go#L423
-                "opaque_id" => $shareId ?? "unknown",
+                "opaque_id" => $shareId,
             ],
             "resource_id" => [
                 "opaque_id" => $opaqueId,
@@ -324,26 +325,19 @@ class OcmController extends Controller
             "mtime" => [
                 "seconds" => isset($ocmShareData["mtime"]) ? (int)$ocmShareData["ctime"] : ($share->getShareTime()->getTimestamp() ?? 0)
             ],
-            "access_methods" => [
+            "protocols" => [
                 "transfer" => [
-                    "source_uri" => $ocmShareProtocols["transfer"]["source_uri"] ?? "unknown",
-                    // TODO: @Mahdi this feels redundant, already included in top-level token and webdav shared_secret.
-                    "shared_secret" => $ocmShareProtocols["transfer"]["shared_secret"] ?? "unknown",
-                    // TODO: @Mahdi should the default value be an integer?
-                    "size" => $ocmShareProtocols["transfer"]["size"] ?? "unknown",
+                    "source_uri" => $ocmShareProtocols["transfer"]["source_uri"],
+                    "size" => $ocmShareProtocols["transfer"]["size"] ?? 0,
                 ],
                 "webapp" => [
-                    "uri_template" => $ocmShareProtocols["webapp"]["uri_template"] ?? "unknown",
-                    "view_mode" => $ocmShareProtocols["webapp"]["view_mode"] ?? "unknown",
+                    "uri_template" => $ocmShareProtocols["webapp"]["uri_template"],
+                    "view_mode" => $ocmShareProtocols["webapp"]["view_mode"],
                 ],
                 "webdav" => [
-                    // TODO: @Mahdi it is better to have sharedSecret and permissions in this part of code.
-                    "uri" => $ocmShareProtocols["webdav"]["uri"] ?? "unknown",
-                    // TODO: @Mahdi it is interesting this function accepts token as argument! is token different that the share secret?
-                    // why do we have to pass token while the share object already has the information about token?
-                    // $share->getToken();
-                    "shared_secret" => $ocmShareProtocols["webdav"]["shared_secret"] ?? "unknown",
-                    "permissions" => $ocmShareProtocols["webdav"]["permissions"] ?? "unknown",
+                    "uri" => $ocmShareProtocols["webdav"]["uri"],
+                    // these are the share "OCS" permissions (integer)
+                    "permissions" => $share->getPermissions() ?? 0, // is $ocmShareProtocols["webdav"]["permissions"] an int?
                 ],
             ]
         ];
