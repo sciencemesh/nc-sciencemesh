@@ -14,10 +14,11 @@ namespace OCA\ScienceMesh\Controller;
 use Exception;
 use OC\Config;
 use OCA\ScienceMesh\ServerConfig;
+use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
+use OCA\ScienceMesh\Utils\Utils;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\Files\IRootFolder;
 use OCP\Files\NotPermittedException;
 use OCP\IConfig;
 use OCP\IL10N;
@@ -39,23 +40,28 @@ class UserController extends Controller
     /** @var IUserManager */
     private IUserManager $userManager;
 
+    /** @var Utils */
+    private Utils $utils;
+
     /**
      * User Controller.
      *
      * @param string $appName
      * @param IRequest $request
-     * @param IUserManager $userManager
      * @param IConfig $config
      * @param IL10N $l10n
      * @param ILogger $logger
+     * @param IUserManager $userManager
+     * @param ScienceMeshShareProvider $shareProvider
      */
     public function __construct(
-        string       $appName,
-        IRequest     $request,
-        IConfig      $config,
-        IL10N        $l10n,
-        ILogger      $logger,
-        IUserManager $userManager
+        string                   $appName,
+        IRequest                 $request,
+        IConfig                  $config,
+        IL10N                    $l10n,
+        ILogger                  $logger,
+        IUserManager             $userManager,
+        ScienceMeshShareProvider $shareProvider
     )
     {
         parent::__construct($appName, $request);
@@ -66,35 +72,7 @@ class UserController extends Controller
         $this->l = $l10n;
         $this->logger = $logger;
         $this->userManager = $userManager;
-    }
-
-    /**
-     * @throws NotPermittedException
-     * @throws Exception
-     */
-    private function checkRevadAuth()
-    {
-        error_log("checkRevadAuth");
-        $authHeader = $this->request->getHeader("X-Reva-Secret");
-
-        if ($authHeader != $this->config->getRevaSharedSecret()) {
-            throw new NotPermittedException("Please set an http request header 'X-Reva-Secret: <your_shared_secret>'!");
-        }
-    }
-
-    // TODO: @Mahdi Move to utils.
-    private function formatUser($user): array
-    {
-        return [
-            "id" => [
-                "idp" => $this->config->getIopIdp(),
-                "opaque_id" => $user->getUID(),
-            ],
-            "display_name" => $user->getDisplayName(),
-            "username" => $user->getUID(),
-            "email" => $user->getEmailAddress(),
-            "type" => 1,
-        ];
+        $this->utils = new Utils($l10n, $logger, $shareProvider);
     }
 
     /**
@@ -104,16 +82,17 @@ class UserController extends Controller
      * @NoCSRFRequired
      * @NoSameSiteCookieRequired
      * @throws NotPermittedException
+     * @throws Exception
      */
     public function getUser($dummy): JSONResponse
     {
-        $this->checkRevadAuth();
+        $this->utils->checkRevadAuth($this->request, $this->config->getRevaSharedSecret());
 
         $userToCheck = $this->request->getParam("opaque_id");
 
         if ($this->userManager->userExists($userToCheck)) {
             $user = $this->userManager->get($userToCheck);
-            $response = $this->formatUser($user);
+            $response = $this->utils->formatUser($user, $this->config->getIopIdp());
             return new JSONResponse($response, Http::STATUS_OK);
         }
 
@@ -128,10 +107,11 @@ class UserController extends Controller
      * @NoSameSiteCookieRequired
      *
      * @throws NotPermittedException
+     * @throws Exception
      */
     public function getUserByClaim($dummy): JSONResponse
     {
-        $this->checkRevadAuth();
+        $this->utils->checkRevadAuth($this->request, $this->config->getRevaSharedSecret());
 
         $userToCheck = $this->request->getParam("value");
 
@@ -143,7 +123,7 @@ class UserController extends Controller
 
         if ($this->userManager->userExists($userToCheck)) {
             $user = $this->userManager->get($userToCheck);
-            $response = $this->formatUser($user);
+            $response = $this->utils->formatUser($user, $this->config->getIopIdp());
             return new JSONResponse($response, Http::STATUS_OK);
         }
 
