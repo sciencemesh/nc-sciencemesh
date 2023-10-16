@@ -20,12 +20,25 @@ use OCP\Contacts\IManager;
 use OCP\IConfig;
 use OCP\IUserSession;
 use OCP\Util\UserSearch;
+use function count;
 use function explode;
+use function in_array;
 use function is_array;
+use function min;
+use function rtrim;
+use function str_replace;
+use function strlen;
+use function strpos;
 use function strtolower;
+use function substr;
 use function substr_count;
 
-class ScienceMeshSearchPlugin
+/**
+ * Compatibility search plugin for
+ * ScienceMesh + OpenCloudMesh + FederatedGroups combination.
+ *
+ */
+class SmFgOcmSearchPlugin
 {
     protected bool $shareeEnumeration;
 
@@ -51,6 +64,11 @@ class ScienceMeshSearchPlugin
     private RevaHttpClient $revaHttpClient;
 
     /**
+     * @var mixed
+     */
+    private $result;
+
+    /**
      * @throws Exception
      */
     public function __construct(
@@ -71,18 +89,16 @@ class ScienceMeshSearchPlugin
         $this->revaHttpClient = new RevaHttpClient($this->config);
     }
 
+    /**
+     * @throws Exception
+     */
     public function search($search): array
     {
-        $result = json_decode($this->revaHttpClient->findAcceptedUsers($this->userId), true);
-        if (!isset($result)) {
-            return [];
-        }
-        $users = $result;
-        error_log("Found " . count($users) . " users");
-
         $result = [];
+
+        $users = json_decode($this->revaHttpClient->findAcceptedUsers($this->userId), true);
+
         foreach ($users as $user) {
-            $serverUrl = parse_url($user['idp']);
             $domain = (str_starts_with($user['idp'], "http") ? parse_url($user['idp'])["host"] : $user['idp']);
             $result[] = [
                 'label' => $user['display_name'] . " (" . $domain . ")",
@@ -95,6 +111,14 @@ class ScienceMeshSearchPlugin
 
         $otherResults = [];
 
+        // copied from https://github.com/owncloud/core/blob/v10.11.0/apps/files_sharing/lib/Controller/ShareesController.php#L385-L503
+        // just doubling up every result so it appears once with share type Share::SHARE_TYPE_REMOTE
+        // and once with share type Share::SHARE_TYPE_REMOTE_GROUP
+
+        // Fetch remote search properties from app config
+        /**
+         * @var array $searchProperties
+         */
         $searchProperties = explode(',', $this->config->getAppValue('dav', 'remote_search_properties', 'CLOUD,FN'));
         // Search in contacts
         $matchMode = $this->config->getSystemValue('accounts.enable_medial_search', true) === true
@@ -194,6 +218,7 @@ class ScienceMeshSearchPlugin
 
         if (!$foundRemoteById && substr_count($search, '@') >= 1
             && $this->offset === 0 && $this->userSearch->isSearchable($search)
+
             // if an exact local user is found, only keep the remote entry if
             // its domain does not match the trusted domains
             // (if it does, it is a user whose local login domain matches the ownCloud
@@ -208,8 +233,111 @@ class ScienceMeshSearchPlugin
                     'shareWith' => $search,
                 ],
             ];
+            $otherResults[] = [
+                'label' => $search,
+                'value' => [
+                    'shareType' => Constants::SHARE_TYPE_REMOTE_GROUP,
+                    'shareWith' => $search,
+                ],
+            ];
         }
 
-        return array_merge($result, $otherResults);
+        $result = array_merge($result, $otherResults);
+
+        if (count($this->result) > 0)
+            return $result;
+        return [];
+    }
+
+    /**
+     * Checks whether the given target's domain part matches one of the server's
+     * trusted domain entries
+     *
+     * @param string $target target
+     * @return true if one match was found, false otherwise
+     */
+    protected function isInstanceDomain(string $target): bool
+    {
+        if (strpos($target, '/') !== false) {
+            // not a proper email-like format with domain name
+            return false;
+        }
+        $parts = explode('@', $target);
+        if (count($parts) === 1) {
+            // no "@" sign
+            return false;
+        }
+        $domainName = $parts[count($parts) - 1];
+        $trustedDomains = $this->config->getSystemValue('trusted_domains', []);
+
+        return in_array($domainName, $trustedDomains, true);
+    }
+
+    /**
+     * split user and remote from federated cloud id
+     *
+     * @param string $address federated share address
+     * @return array [user, remoteURL]
+     * @throws Exception
+     */
+    private function splitUserRemote(string $address): array
+    {
+        if (strpos($address, '@') === false) {
+            throw new Exception('Invalid Federated Cloud ID');
+        }
+
+        // Find the first character that is not allowed in usernames
+        $id = str_replace('\\', '/', $address);
+        $posSlash = strpos($id, '/');
+        $posColon = strpos($id, ':');
+
+        if ($posSlash === false && $posColon === false) {
+            $invalidPos = strlen($id);
+        } elseif ($posSlash === false) {
+            $invalidPos = $posColon;
+        } elseif ($posColon === false) {
+            $invalidPos = $posSlash;
+        } else {
+            $invalidPos = min($posSlash, $posColon);
+        }
+
+        // Find the last @ before $invalidPos
+        $pos = $lastAtPos = 0;
+        while ($lastAtPos !== false && $lastAtPos <= $invalidPos) {
+            $pos = $lastAtPos;
+            $lastAtPos = strpos($id, '@', $pos + 1);
+        }
+
+        if ($pos !== false) {
+            $user = substr($id, 0, $pos);
+            $remote = substr($id, $pos + 1);
+            $remote = $this->fixRemoteURL($remote);
+            if (!empty($user) && !empty($remote)) {
+                return [$user, $remote];
+            }
+        }
+
+        throw new Exception('Invalid Federated Cloud ID');
+    }
+
+    /**
+     * Strips away a potential file names and trailing slashes:
+     * - http://localhost
+     * - http://localhost/
+     * - http://localhost/index.php
+     * - http://localhost/index.php/s/{shareToken}
+     *
+     * all return: http://localhost
+     *
+     * @param string $remote
+     * @return string
+     */
+    protected function fixRemoteURL(string $remote): string
+    {
+        $remote = str_replace('\\', '/', $remote);
+        if ($fileNamePosition = strpos($remote, '/index.php')) {
+            $remote = substr($remote, 0, $fileNamePosition);
+        }
+        return rtrim($remote, '/');
     }
 }
