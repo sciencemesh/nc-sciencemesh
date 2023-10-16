@@ -16,12 +16,13 @@ use OC\Config;
 use OC\Files\View;
 use OCA\DAV\TrashBin\TrashBinManager;
 use OCA\ScienceMesh\ServerConfig;
+use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
+use OCA\ScienceMesh\Utils\Utils;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\StreamResponse;
-use OCP\Files\FileInfo;
 use OCP\Files\Folder;
 use OCP\Files\InvalidPathException;
 use OCP\Files\IRootFolder;
@@ -36,10 +37,6 @@ use OCP\IUserManager;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 
 define("RESTRICT_TO_SCIENCEMESH_FOLDER", false);
-define("EFSS_PREFIX", (RESTRICT_TO_SCIENCEMESH_FOLDER ? "sciencemesh/" : ""));
-
-// See https://github.com/pondersource/sciencemesh-php/issues/96#issuecomment-1298656896
-define("REVA_PREFIX", "/home/");
 
 class StorageController extends Controller
 {
@@ -67,6 +64,9 @@ class StorageController extends Controller
     /** @var ILogger */
     private ILogger $logger;
 
+    /** @var Utils */
+    private Utils $utils;
+
     /**
      * Storage Controller.
      *
@@ -78,16 +78,18 @@ class StorageController extends Controller
      * @param TrashBinManager $trashManager
      * @param IL10N $l10n
      * @param ILogger $logger
+     * @param ScienceMeshShareProvider $shareProvider
      */
     public function __construct(
-        string          $appName,
-        IRootFolder     $rootFolder,
-        IRequest        $request,
-        IUserManager    $userManager,
-        IConfig         $config,
-        TrashBinManager $trashManager,
-        IL10N           $l10n,
-        ILogger         $logger
+        string                   $appName,
+        IRootFolder              $rootFolder,
+        IRequest                 $request,
+        IUserManager             $userManager,
+        IConfig                  $config,
+        TrashBinManager          $trashManager,
+        IL10N                    $l10n,
+        ILogger                  $logger,
+        ScienceMeshShareProvider $shareProvider
     )
     {
         parent::__construct($appName, $request);
@@ -100,6 +102,7 @@ class StorageController extends Controller
         $this->trashManager = $trashManager;
         $this->l = $l10n;
         $this->logger = $logger;
+        $this->utils = new Utils($l10n, $logger, $shareProvider);
     }
 
     /**
@@ -110,7 +113,7 @@ class StorageController extends Controller
     {
         error_log("RevaController init for user '$userId'");
         $this->userId = $userId;
-        $this->checkRevadAuth();
+        $this->utils->checkRevadAuth($this->request, $this->config->getRevaSharedSecret());
         if ($userId) {
             error_log("root folder absolute path '" . $this->rootFolder->getPath() . "'");
             if ($this->rootFolder->nodeExists($userId)) {
@@ -120,136 +123,6 @@ class StorageController extends Controller
                 throw new Exception("Home folder not found for user '$userId', have they logged in through the ownCloud web interface yet?");
             }
         }
-    }
-
-    /**
-     * @throws NotPermittedException
-     * @throws Exception
-     */
-    private function checkRevadAuth()
-    {
-        error_log("checkRevadAuth");
-        $authHeader = $this->request->getHeader('X-Reva-Secret');
-
-        if ($authHeader != $this->config->getRevaSharedSecret()) {
-            throw new NotPermittedException('Please set an http request header "X-Reva-Secret: <your_shared_secret>"!');
-        }
-    }
-
-    private function efssFullPathToRelativePath($efssFullPath)
-    {
-
-        $ret = $this->removePrefix($efssFullPath, $this->userFolder->getPath());
-        error_log("efssFullPathToRelativePath: Interpreting $efssFullPath as $ret");
-        return $ret;
-    }
-
-    private function efssPathToRevaPath($efssPath): string
-    {
-        $ret = REVA_PREFIX . $this->removePrefix($efssPath, EFSS_PREFIX);
-        error_log("efssPathToRevaPath: Interpreting $efssPath as $ret");
-        return $ret;
-    }
-
-    private function revaPathToEfssPath($revaPath): string
-    {
-        if ("$revaPath/" == REVA_PREFIX) {
-            error_log("revaPathToEfssPath: Interpreting special case $revaPath as ''");
-            return '';
-        }
-        $ret = EFSS_PREFIX . $this->removePrefix($revaPath, REVA_PREFIX);
-        error_log("revaPathToEfssPath: Interpreting $revaPath as $ret");
-        return $ret;
-    }
-
-    private function revaPathFromOpaqueId($opaqueId)
-    {
-        return $this->removePrefix($opaqueId, "fileid-");
-    }
-
-    private function removePrefix($string, $prefix)
-    {
-        // first check if string is actually prefixed or not.
-        $len = strlen($prefix);
-        if (substr($string, 0, $len) === $prefix) {
-            $ret = substr($string, $len);
-        } else {
-            $ret = $string;
-        }
-
-        return $ret;
-    }
-
-    private function getChecksum(Node $node, $checksumType = 4): string
-    {
-        $checksumTypes = array(
-            1 => "UNSET:",
-            2 => "ADLER32:",
-            3 => "MD5:",
-            4 => "SHA1:",
-        );
-
-        // checksum is in db table oc_filecache.
-        // folders do not have checksum
-        $checksums = explode(" ", $node->getFileInfo()->getChecksum());
-
-        foreach ($checksums as $checksum) {
-
-            // NOTE: that the use of !== false is deliberate (neither != false nor === true will return the desired result);
-            // strpos() returns either the offset at which the needle string begins in the haystack string, or the boolean
-            // false if the needle isn't found. Since 0 is a valid offset and 0 is "false", we can't use simpler constructs
-            //  like !strpos($a, 'are').
-            if (strpos($checksum, $checksumTypes[$checksumType]) !== false) {
-                return substr($checksum, strlen($checksumTypes[$checksumType]));
-            }
-        }
-
-        return "";
-    }
-
-    /**
-     * @throws InvalidPathException
-     * @throws NotFoundException
-     */
-    private function nodeToCS3ResourceInfo(Node $node): array
-    {
-        $isDirectory = ($node->getType() === FileInfo::TYPE_FOLDER);
-        $efssPath = substr($node->getPath(), strlen($this->userFolder->getPath()) + 1);
-        $revaPath = $this->efssPathToRevaPath($efssPath);
-
-        $payload = [
-            "type" => ($isDirectory ? 2 : 1),
-            "id" => [
-                "opaque_id" => "fileid-" . $revaPath,
-            ],
-            "checksum" => [
-                // checksum algorithms:
-                // 1 UNSET
-                // 2 ADLER32
-                // 3 MD5
-                // 4 SHA1
-
-                // NOTE: folders do not have checksum, their type should be unset.
-                "type" => $isDirectory ? 1 : 4,
-                "sum" => $this->getChecksum($node, $isDirectory ? 1 : 4),
-            ],
-            "etag" => $node->getEtag(),
-            "mime_type" => ($isDirectory ? "folder" : $node->getMimetype()),
-            "mtime" => [
-                "seconds" => $node->getMTime(),
-            ],
-            "path" => $revaPath,
-            "permissions" => $node->getPermissions(),
-            "size" => $node->getSize(),
-            "owner" => [
-                "opaque_id" => $this->userId,
-                "idp" => $this->config->getIopIdp(),
-            ]
-        ];
-
-        error_log("nodeToCS3ResourceInfo " . var_export($payload, true));
-
-        return $payload;
     }
 
     /**
@@ -269,7 +142,7 @@ class StorageController extends Controller
             return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
         }
 
-        $path = $this->revaPathToEfssPath($this->request->getParam("path"));
+        $path = $this->utils->revaPathToEfssPath($this->request->getParam("path"));
         // FIXME: Expected a param with a grant to add here;
 
         return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
@@ -293,7 +166,7 @@ class StorageController extends Controller
         }
 
         $urlDecodedPath = urldecode($this->request->getParam("path"));
-        $path = $this->revaPathToEfssPath($urlDecodedPath);
+        $path = $this->utils->revaPathToEfssPath($urlDecodedPath);
 
         try {
             $this->userFolder->newFolder($path);
@@ -325,7 +198,10 @@ class StorageController extends Controller
                 try {
                     $this->userFolder->newFolder("sciencemesh"); // Create the Sciencemesh directory for storage if it doesn't exist.
                 } catch (NotPermittedException $e) {
-                    return new JSONResponse(["error" => "Create home failed. Resource Path not founD"], Http::STATUS_INTERNAL_SERVER_ERROR);
+                    return new JSONResponse(
+                        ["error" => "Create home failed. Resource Path not found"],
+                        Http::STATUS_INTERNAL_SERVER_ERROR
+                    );
                 }
                 return new JSONResponse("CREATED", Http::STATUS_CREATED);
             }
@@ -349,7 +225,7 @@ class StorageController extends Controller
         } else {
             return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
         }
-        $path = $this->revaPathToEfssPath($this->request->getParam("path"));
+        $path = $this->utils->revaPathToEfssPath($this->request->getParam("path"));
         return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
     }
 
@@ -426,7 +302,7 @@ class StorageController extends Controller
             return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
         }
 
-        $path = $this->revaPathToEfssPath($this->request->getParam("path"));
+        $path = $this->utils->revaPathToEfssPath($this->request->getParam("path"));
 
         try {
             $node = $this->userFolder->get($path);
@@ -455,7 +331,7 @@ class StorageController extends Controller
 
         error_log("Download path: $path");
 
-        $efssPath = $this->removePrefix($path, "home/");
+        $efssPath = $this->utils->removePrefix($path, "home/");
         error_log("Download efss path: $efssPath");
 
         if ($this->userFolder->nodeExists($efssPath)) {
@@ -543,7 +419,7 @@ class StorageController extends Controller
             //  },
             //  "mdKeys": null
             // }
-            $revaPath = $this->revaPathFromOpaqueId($ref["resource_id"]["opaque_id"]);
+            $revaPath = $this->utils->revaPathFromOpaqueId($ref["resource_id"]["opaque_id"]);
         } else {
             return new JSONResponse("ref not understood!", Http::STATUS_BAD_REQUEST);
         }
@@ -552,19 +428,24 @@ class StorageController extends Controller
         // for example this converts "we%20have%20space" to "we have space"
         $revaPathDecoded = urldecode($revaPath);
 
-        $path = $this->revaPathToEfssPath($revaPathDecoded);
+        $path = $this->utils->revaPathToEfssPath($revaPathDecoded);
         error_log("Looking for EFSS path '$path' in user folder; reva path '$revaPathDecoded' ");
 
         // apparently nodeExists requires relative path to the user folder:
         // see https://github.com/owncloud/core/blob/b7bcbdd9edabf7d639b4bb42c4fb87862ddf4a80/lib/private/Files/Node/Folder.php#L45-L55;
         // another string manipulation is necessary to extract relative path from full path.
-        $relativePath = $this->efssFullPathToRelativePath($path);
+        $relativePath = $this->utils->efssFullPathToRelativePath($path, $this->userFolder->getPath());
 
         $success = $this->userFolder->nodeExists($relativePath);
         if ($success) {
             error_log("File found");
             $node = $this->userFolder->get($relativePath);
-            $resourceInfo = $this->nodeToCS3ResourceInfo($node);
+            $resourceInfo = $this->utils->nodeToCS3ResourceInfo(
+                $node,
+                $this->userFolder->getPath(),
+                $this->userId,
+                $this->config->getIopIdp()
+            );
             return new JSONResponse($resourceInfo, Http::STATUS_OK);
         }
 
@@ -609,7 +490,7 @@ class StorageController extends Controller
     public function initiateUpload($userId): JSONResponse
     {
         $ref = $this->request->getParam("ref");
-        $path = $this->revaPathToEfssPath(($ref["path"] ?? ""));
+        $path = $this->utils->revaPathToEfssPath(($ref["path"] ?? ""));
 
         if ($this->userManager->userExists($userId)) {
             $this->init($userId);
@@ -646,7 +527,7 @@ class StorageController extends Controller
         // this path is url coded, we need to decode it
         // for example this converts "we%20have%20space" to "we have space"
         $pathDecoded = urldecode(($ref["path"] ?? ""));
-        $path = $this->revaPathToEfssPath($pathDecoded);
+        $path = $this->utils->revaPathToEfssPath($pathDecoded);
         $success = $this->userFolder->nodeExists($path);
         error_log("ListFolder: $path");
 
@@ -659,7 +540,12 @@ class StorageController extends Controller
         $node = $this->userFolder->get($path);
         $nodes = $node->getDirectoryListing();
         $resourceInfos = array_map(function (Node $node) {
-            return $this->nodeToCS3ResourceInfo($node);
+            return $this->utils->nodeToCS3ResourceInfo(
+                $node,
+                $this->userFolder->getPath(),
+                $this->userId,
+                $this->config->getIopIdp()
+            );
         }, $nodes);
 
         return new JSONResponse($resourceInfos, Http::STATUS_OK);
@@ -681,7 +567,7 @@ class StorageController extends Controller
             return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
         }
 
-        $path = $this->revaPathToEfssPath($this->request->getParam("path"));
+        $path = $this->utils->revaPathToEfssPath($this->request->getParam("path"));
 
         return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
     }
@@ -708,7 +594,7 @@ class StorageController extends Controller
 
         foreach ($trashItems as $node) {
             if (preg_match("/^sciencemesh/", $node->getOriginalLocation())) {
-                $path = $this->efssPathToRevaPath($node->getOriginalLocation());
+                $path = $this->utils->efssPathToRevaPath($node->getOriginalLocation());
                 $result = [
                     [
                         "opaque" => [
@@ -749,7 +635,7 @@ class StorageController extends Controller
             return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
         }
 
-        $path = $this->revaPathToEfssPath($this->request->getParam("path"));
+        $path = $this->utils->revaPathToEfssPath($this->request->getParam("path"));
 
         return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
     }
@@ -772,7 +658,7 @@ class StorageController extends Controller
             return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
         }
 
-        $path = $this->revaPathToEfssPath($this->request->getParam("path"));
+        $path = $this->utils->revaPathToEfssPath($this->request->getParam("path"));
         // FIXME: Expected a grant to remove here;
 
         return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
@@ -804,7 +690,7 @@ class StorageController extends Controller
                 // unique key string, see:
                 // https://github.com/cs3org/cs3apis/blob/6eab4643f5113a54f4ce4cd8cb462685d0cdd2ef/cs3/storage/provider/v1beta1/resources.proto#L318
 
-                if ($this->revaPathToEfssPath($key) == $node->getOriginalLocation()) {
+                if ($this->utils->revaPathToEfssPath($key) == $node->getOriginalLocation()) {
                     $this->trashManager->restoreItem($node);
                     return new JSONResponse("OK", Http::STATUS_OK);
                 }
@@ -830,7 +716,7 @@ class StorageController extends Controller
             return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
         }
 
-        $path = $this->revaPathToEfssPath($this->request->getParam("path"));
+        $path = $this->utils->revaPathToEfssPath($this->request->getParam("path"));
         // FIXME: Expected a revision param here;
 
         return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
@@ -852,7 +738,7 @@ class StorageController extends Controller
             return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
         }
 
-        $path = $this->revaPathToEfssPath($this->request->getParam("path"));
+        $path = $this->utils->revaPathToEfssPath($this->request->getParam("path"));
         $metadata = $this->request->getParam("metadata");
 
         // FIXME: this needs to be implemented for real, merging the incoming metadata with the existing ones.
@@ -876,7 +762,7 @@ class StorageController extends Controller
             return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
         }
 
-        $path = $this->revaPathToEfssPath($this->request->getParam("path"));
+        $path = $this->utils->revaPathToEfssPath($this->request->getParam("path"));
 
         // FIXME: this needs to be implemented for real
         return new JSONResponse("I'm cheating", Http::STATUS_OK);
@@ -898,7 +784,7 @@ class StorageController extends Controller
             return new JSONResponse("User not found", Http::STATUS_FORBIDDEN);
         }
 
-        $path = $this->revaPathToEfssPath($this->request->getParam("path"));
+        $path = $this->utils->revaPathToEfssPath($this->request->getParam("path"));
 
         // FIXME: Expected a parameter with the grant(s)
         return new JSONResponse("Not implemented", Http::STATUS_NOT_IMPLEMENTED);
@@ -925,7 +811,7 @@ class StorageController extends Controller
             }
 
             $contents = file_get_contents('php://input');
-            $efssPath = $this->revaPathToEfssPath($revaPath);
+            $efssPath = $this->utils->revaPathToEfssPath($revaPath);
 
             error_log("Uploading! reva path: $revaPath");
             error_log("Uploading! efss path $efssPath");

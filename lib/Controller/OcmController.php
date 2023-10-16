@@ -14,9 +14,11 @@ namespace OCA\ScienceMesh\Controller;
 use DateTime;
 use Exception;
 use OC\Config;
+use OC\HintException;
 use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 use OCA\ScienceMesh\ServerConfig;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
+use OCA\ScienceMesh\Utils\Utils;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
@@ -25,7 +27,6 @@ use OCP\Constants;
 use OCP\Files\Folder;
 use OCP\Files\InvalidPathException;
 use OCP\Files\IRootFolder;
-use OCP\Files\Node;
 use OCP\Files\NotFoundException;
 use OCP\Files\NotPermittedException;
 use OCP\IConfig;
@@ -33,18 +34,9 @@ use OCP\IL10N;
 use OCP\ILogger;
 use OCP\IRequest;
 use OCP\IUserManager;
-use OCP\Lock\ILockingProvider;
-use OCP\Lock\LockedException;
 use OCP\Share\Exceptions\IllegalIDChangeException;
 use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IManager;
-use OCP\Share\IShare;
-
-define("RESTRICT_TO_SCIENCEMESH_FOLDER", false);
-define("EFSS_PREFIX", (RESTRICT_TO_SCIENCEMESH_FOLDER ? "sciencemesh/" : ""));
-
-// See https://github.com/pondersource/sciencemesh-php/issues/96#issuecomment-1298656896
-define("REVA_PREFIX", "/home/");
 
 class OcmController extends Controller
 {
@@ -60,9 +52,6 @@ class OcmController extends Controller
     /** @var IManager */
     private IManager $shareManager;
 
-    /** @var ScienceMeshShareProvider */
-    private ScienceMeshShareProvider $shareProvider;
-
     /** @var Folder */
     private Folder $userFolder;
 
@@ -71,6 +60,12 @@ class OcmController extends Controller
 
     /** @var ILogger */
     private ILogger $logger;
+
+    /** @var Utils */
+    private Utils $utils;
+
+    /** @var ScienceMeshShareProvider */
+    private ScienceMeshShareProvider $shareProvider;
 
     /**
      * Open Cloud Mesh (OCM) Controller.
@@ -108,6 +103,7 @@ class OcmController extends Controller
         $this->l = $l10n;
         $this->logger = $logger;
         $this->shareProvider = $shareProvider;
+        $this->utils = new Utils($l10n, $logger, $shareProvider);
     }
 
     /**
@@ -117,7 +113,7 @@ class OcmController extends Controller
     private function init($userId)
     {
         error_log("RevaController init for user '$userId'");
-        $this->checkRevadAuth();
+        $this->utils->checkRevadAuth($this->request, $this->config->getRevaSharedSecret());
         if ($userId) {
             error_log("root folder absolute path '" . $this->rootFolder->getPath() . "'");
             if ($this->rootFolder->nodeExists($userId)) {
@@ -127,230 +123,6 @@ class OcmController extends Controller
                 throw new Exception("Home folder not found for user '$userId', have they logged in through the ownCloud web interface yet?");
             }
         }
-    }
-
-    // TODO: @Mahdi Move to utils.
-
-    /**
-     * @throws NotPermittedException
-     * @throws Exception
-     */
-    private function checkRevadAuth()
-    {
-        error_log("checkRevadAuth");
-        $authHeader = $this->request->getHeader('X-Reva-Secret');
-
-        if ($authHeader != $this->config->getRevaSharedSecret()) {
-            throw new NotPermittedException('Please set an http request header "X-Reva-Secret: <your_shared_secret>"!');
-        }
-    }
-
-    // TODO: @Mahdi Move to utils.
-    private function revaPathToEfssPath($revaPath): string
-    {
-        if ("$revaPath/" == REVA_PREFIX) {
-            error_log("revaPathToEfssPath: Interpreting special case $revaPath as ''");
-            return '';
-        }
-        $ret = EFSS_PREFIX . $this->removePrefix($revaPath, REVA_PREFIX);
-        error_log("revaPathToEfssPath: Interpreting $revaPath as $ret");
-        return $ret;
-    }
-
-    // TODO: @Mahdi Move to utils.
-    private function revaPathFromOpaqueId($opaqueId)
-    {
-        return $this->removePrefix($opaqueId, "fileid-");
-    }
-
-    // TODO: @Mahdi Move to utils.
-    private function removePrefix($string, $prefix)
-    {
-        // first check if string is actually prefixed or not.
-        $len = strlen($prefix);
-        if (substr($string, 0, $len) === $prefix) {
-            $ret = substr($string, $len);
-        } else {
-            $ret = $string;
-        }
-
-        return $ret;
-    }
-
-    // TODO: @Mahdi Move to utils.
-    private function getPermissionsCode(array $permissions): int
-    {
-        $permissionsCode = 0;
-        if (!empty($permissions["get_path"]) || !empty($permissions["get_quota"]) || !empty($permissions["initiate_file_download"]) || !empty($permissions["initiate_file_upload"]) || !empty($permissions["stat"])) {
-            $permissionsCode += Constants::PERMISSION_READ;
-        }
-        if (!empty($permissions["create_container"]) || !empty($permissions["move"]) || !empty($permissions["add_grant"]) || !empty($permissions["restore_file_version"]) || !empty($permissions["restore_recycle_item"])) {
-            $permissionsCode += Constants::PERMISSION_CREATE;
-        }
-        if (!empty($permissions["move"]) || !empty($permissions["delete"]) || !empty($permissions["remove_grant"])) {
-            $permissionsCode += Constants::PERMISSION_DELETE;
-        }
-        if (!empty($permissions["list_grants"]) || !empty($permissions["list_file_versions"]) || !empty($permissions["list_recycle"])) {
-            $permissionsCode += Constants::PERMISSION_SHARE;
-        }
-        if (!empty($permissions["update_grant"])) {
-            $permissionsCode += Constants::PERMISSION_UPDATE;
-        }
-        return $permissionsCode;
-    }
-
-    // TODO: @Mahdi Move to utils.
-
-    /**
-     * @param Node $node
-     * @return void
-     *
-     * @throws LockedException
-     */
-    private function lock(Node $node)
-    {
-        $node->lock(ILockingProvider::LOCK_SHARED);
-    }
-
-    // TODO: @Mahdi Move to utils.
-    // For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
-    // see:
-    // https://github.com/cs3org/cs3apis/blob/cfd1ad29fdf00c79c2a321de7b1a60d0725fe4e8/cs3/sharing/ocm/v1beta1/resources.proto#L160
-    /**
-     * @throws NotFoundException
-     * @throws InvalidPathException
-     */
-    private function shareInfoToCs3Share(IShare $share, string $direction, $token = ""): array
-    {
-        $shareId = $share->getId();
-
-        // TODO @Mahdi use enums!
-        if ($direction === "sent") {
-            $ocmShareData = $this->shareProvider->getSentOcmShareFromSciencemeshTable($shareId);
-            $ocmShareProtocols = $this->shareProvider->getSentOcmShareProtocolsFromSciencemeshTable($ocmShareData["id"]);
-        } elseif ($direction === "received") {
-            $ocmShareData = $this->shareProvider->getReceivedOcmShareFromSciencemeshTable($shareId);
-            $ocmShareProtocols = $this->shareProvider->getReceivedOcmShareProtocolsFromSciencemeshTable($ocmShareData["id"]);
-        }
-
-        // use ocm payload stored in sciencemesh table. if it fails, use native efss share data.
-        // in case of total failure use "unknown".
-
-        // this one is obvious right?
-        if (isset($ocmShareData["share_with"])) {
-            $granteeParts = explode("@", $ocmShareData["share_with"]);
-        } else {
-            $granteeParts = explode("@", $share->getSharedWith());
-        }
-
-        if (count($granteeParts) != 2) {
-            $granteeParts = ["unknown", "unknown"];
-        }
-
-        // the original share owner (who owns the path that is shared)
-        if (isset($ocmShareData["owner"])) {
-            $ownerParts = explode("@", $ocmShareData["owner"]);
-        } else {
-            $ownerParts = explode("@", $share->getShareOwner());
-        }
-
-        if (count($granteeParts) != 2) {
-            $ownerParts = ["unknown", "unknown"];
-        }
-
-        // NOTE: @Mahdi initiator/creator/sharedBy etc., whatever other names it has! means the share sharer!
-        // you can be owner and sharer, you can be someone who is re-sharing, in this case you are sharer but not owner
-        if (isset($ocmShareData["initiator"])) {
-            $creatorParts = explode("@", $ocmShareData["initiator"]);
-        } else {
-            $creatorParts = explode("@", $share->getSharedBy());
-        }
-
-        if (count($granteeParts) != 2) {
-            $creatorParts = ["unknown", "unknown"];
-        }
-
-        try {
-            $filePath = $share->getNode()->getPath();
-            // @Mahdi why is this hardcoded?
-            // @Giuseppe this should be something that doesn't change when file is moved!
-            $opaqueId = "fileid-" . $filePath;
-        } catch (NotFoundException $e) {
-            // @Mahdi why not just return status bad request or status not found?
-            // @Michiel sometimes you want to translate share object even if file doesn't exist.
-            $opaqueId = "unknown";
-        }
-
-        // TODO: @Mahdi update this comment to point at the Reva structure  mappings for this json.
-        // produces JSON that maps to reva
-        $payload = [
-            // use OCM name, if null use efss share native name, if null fall back to "unknown"
-            "name" => $ocmShareData["name"] ?? ($share->getName() ?? "unknown"),
-            "token" => $token ?? "unknown",
-            // TODO: @Mahdi what permissions is the correct one? share permissions has different value than the share->node permissions.
-            // maybe use the ocmData for this one? needs testing for different scenarios to see which is the best/correct one.
-            "permissions" => $share->getNode()->getPermissions() ?? 0,
-            "id" => [
-                // https://github.com/cs3org/go-cs3apis/blob/d297419/cs3/sharing/ocm/v1beta1/resources.pb.go#L423
-                "opaque_id" => $shareId ?? "unknown",
-            ],
-            "resource_id" => [
-                "opaque_id" => $opaqueId,
-            ],
-            // these three have been already handled and don't need "unknown" default values.
-            "grantee" => [
-                "id" => [
-                    "opaque_id" => $granteeParts[0],
-                    "idp" => $granteeParts[1],
-                ],
-            ],
-            "owner" => [
-                "id" => [
-                    "opaque_id" => $ownerParts[0],
-                    "idp" => $ownerParts[1],
-                ],
-            ],
-            "creator" => [
-                "id" => [
-                    "opaque_id" => $creatorParts[0],
-                    "idp" => $creatorParts[1],
-                ],
-            ],
-            // NOTE: make sure seconds type is int, otherwise Reva gives:
-            // error="json: cannot unmarshal string into Go struct field Timestamp.ctime.seconds of type uint64"
-            "ctime" => [
-                "seconds" => isset($ocmShareData["ctime"]) ? (int)$ocmShareData["ctime"] : ($share->getShareTime()->getTimestamp() ?? 0)
-            ],
-            "mtime" => [
-                "seconds" => isset($ocmShareData["mtime"]) ? (int)$ocmShareData["ctime"] : ($share->getShareTime()->getTimestamp() ?? 0)
-            ],
-            "access_methods" => [
-                "transfer" => [
-                    "source_uri" => $ocmShareProtocols["transfer"]["source_uri"] ?? "unknown",
-                    // TODO: @Mahdi this feels redundant, already included in top-level token and webdav shared_secret.
-                    "shared_secret" => $ocmShareProtocols["transfer"]["shared_secret"] ?? "unknown",
-                    // TODO: @Mahdi should the default value be an integer?
-                    "size" => $ocmShareProtocols["transfer"]["size"] ?? "unknown",
-                ],
-                "webapp" => [
-                    "uri_template" => $ocmShareProtocols["webapp"]["uri_template"] ?? "unknown",
-                    "view_mode" => $ocmShareProtocols["webapp"]["view_mode"] ?? "unknown",
-                ],
-                "webdav" => [
-                    // TODO: @Mahdi it is better to have sharedSecret and permissions in this part of code.
-                    "uri" => $ocmShareProtocols["webdav"]["uri"] ?? "unknown",
-                    // TODO: @Mahdi it is interesting this function accepts token as argument! is token different that the share secret?
-                    // why do we have to pass token while the share object already has the information about token?
-                    // $share->getToken();
-                    "shared_secret" => $ocmShareProtocols["webdav"]["shared_secret"] ?? "unknown",
-                    "permissions" => $ocmShareProtocols["webdav"]["permissions"] ?? "unknown",
-                ],
-            ]
-        ];
-
-        error_log("shareInfoToCs3Share " . var_export($payload, true));
-
-        return $payload;
     }
 
     /**
@@ -460,7 +232,7 @@ class OcmController extends Controller
         }
 
         // convert permissions from array to integer.
-        $integerPermissions = $this->getPermissionsCode($ocmProtocolWebdav["permissions"]["permissions"]);
+        $integerPermissions = $this->utils->getPermissionsCode($ocmProtocolWebdav["permissions"]["permissions"]);
         $ocmProtocolWebdav["permissions"] = $integerPermissions;
 
         $sharedSecret = $ocmProtocolWebdav["sharedSecret"];
@@ -577,8 +349,8 @@ class OcmController extends Controller
 
         // chained path conversions to verify this file exists in our server.
         // "fileid-/home/test" -> "/home/test" -> "/test"
-        $revaPath = $this->revaPathFromOpaqueId($resourceId);
-        $efssPath = $this->revaPathToEfssPath($revaPath);
+        $revaPath = $this->utils->revaPathFromOpaqueId($resourceId);
+        $efssPath = $this->utils->revaPathToEfssPath($revaPath);
 
         try {
             $node = $this->userFolder->get($efssPath);
@@ -677,7 +449,7 @@ class OcmController extends Controller
         }
 
         // convert permissions from array to integer.
-        $permissions = $this->getPermissionsCode($ocmProtocolWebdav["permissions"]);
+        $permissions = $this->utils->getPermissionsCode($ocmProtocolWebdav["permissions"]);
 
         // prepare data for adding to the native efss table.
         $share = $this->shareManager->newShare();
@@ -723,7 +495,7 @@ class OcmController extends Controller
             return new JSONResponse($message_t, Http::STATUS_UNPROCESSABLE_ENTITY);
         }
 
-        $this->lock($share->getNode());
+        $this->utils->lock($share->getNode());
 
         // prepare share data for ocm
         $share = $this->shareProvider->createNativeEfssScienceMeshShare($share);
@@ -779,7 +551,7 @@ class OcmController extends Controller
 
         try {
             $share = $this->shareProvider->getReceivedShareByToken($opaqueId);
-            $response = $this->shareInfoToCs3Share($share, "received", $opaqueId);
+            $response = $this->utils->shareInfoToCs3Share($share, "received", $opaqueId);
             $response["state"] = 2;
             return new JSONResponse($response, Http::STATUS_OK);
         } catch (Exception $e) {
@@ -813,7 +585,7 @@ class OcmController extends Controller
         $share = $this->shareProvider->getSentShareByName($userId, $name);
 
         if ($share) {
-            $response = $this->shareInfoToCs3Share($share, "sent");
+            $response = $this->utils->shareInfoToCs3Share($share, "sent");
             return new JSONResponse($response, Http::STATUS_OK);
         }
 
@@ -828,11 +600,7 @@ class OcmController extends Controller
      * @param $userId
      * @return JSONResponse
      *
-     * @throws InvalidPathException
-     * @throws NotFoundException
      * @throws NotPermittedException
-     * @throws ShareNotFound
-     * @throws IllegalIDChangeException
      */
     public function getSentShareByToken($userId): JSONResponse
     {
@@ -847,18 +615,30 @@ class OcmController extends Controller
             }
         }
 
+        // TODO: @Mahdi check for being null?
         $token = $this->request->getParam("Spec")["Token"];
         error_log("GetSentShareByToken: " . var_export($this->request->getParam("Spec"), true));
 
-        // TODO: @Mahdi handle in try catch block and send back correct responses.
-        $share = $this->shareProvider->getSentShareByToken($token);
-
-        if ($share) {
-            $response = $this->shareInfoToCs3Share($share, "sent", $token);
-            return new JSONResponse($response, Http::STATUS_OK);
+        try {
+            $share = $this->shareProvider->getSentShareByToken($token);
+        } catch (ShareNotFound|IllegalIDChangeException $e) {
+            // TODO: @Mahdi log it.
+            return new JSONResponse(
+                ["error" => "GetSentShareByToken failed! because: $e"],
+                Http::STATUS_BAD_REQUEST
+            );
         }
 
-        return new JSONResponse(["error" => "GetSentShare failed"], Http::STATUS_BAD_REQUEST);
+        try {
+            $response = $this->utils->shareInfoToCs3Share($share, "sent", $token);
+            return new JSONResponse($response, Http::STATUS_OK);
+        } catch (NotFoundException|InvalidPathException $e) {
+            // TODO: @Mahdi log it.
+            return new JSONResponse(
+                ["error" => "GetSentShareByToken failed! because: $e"],
+                Http::STATUS_BAD_REQUEST
+            );
+        }
     }
 
     /**
@@ -886,7 +666,7 @@ class OcmController extends Controller
 
         if ($shares) {
             foreach ($shares as $share) {
-                $response = $this->shareInfoToCs3Share($share, "received");
+                $response = $this->utils->shareInfoToCs3Share($share, "received");
                 $responses[] = [
                     "share" => $response,
                     "state" => 2
@@ -924,7 +704,7 @@ class OcmController extends Controller
 
         if ($shares) {
             foreach ($shares as $share) {
-                $responses[] = $this->shareInfoToCs3Share($share, "sent");
+                $responses[] = $this->utils->shareInfoToCs3Share($share, "sent");
             }
         }
         return new JSONResponse($responses, Http::STATUS_OK);
@@ -987,13 +767,13 @@ class OcmController extends Controller
 
         $resourceId = $this->request->getParam("received_share")["share"]["resource_id"];
         $permissions = $this->request->getParam("received_share")["share"]["permissions"];
-        $permissionsCode = $this->getPermissionsCode($permissions);
+        $permissionsCode = $this->utils->getPermissionsCode($permissions);
 
         try {
             $share = $this->shareProvider->getReceivedShareByToken($resourceId);
             $share->setPermissions($permissionsCode);
             $shareUpdate = $this->shareProvider->UpdateReceivedShare($share);
-            $response = $this->shareInfoToCs3Share($shareUpdate, "received", $resourceId);
+            $response = $this->utils->shareInfoToCs3Share($shareUpdate, "received", $resourceId);
             $response["state"] = 2;
             return new JSONResponse($response, Http::STATUS_OK);
         } catch (Exception $e) {
@@ -1011,6 +791,7 @@ class OcmController extends Controller
      * @throws InvalidPathException
      * @throws NotFoundException
      * @throws NotPermittedException
+     * @throws ShareNotFound|HintException
      */
     public function updateSentShare($userId): JSONResponse
     {
@@ -1023,7 +804,7 @@ class OcmController extends Controller
 
         $opaqueId = $this->request->getParam("ref")["Spec"]["Id"]["opaque_id"];
         $permissions = $this->request->getParam("p")["permissions"];
-        $permissionsCode = $this->getPermissionsCode($permissions);
+        $permissionsCode = $this->utils->getPermissionsCode($permissions);
         $name = $this->getNameByOpaqueId($opaqueId);
         if (!($share = $this->shareProvider->getSentShareByName($userId, $name))) {
             return new JSONResponse(["error" => "UpdateSentShare failed"], Http::STATUS_INTERNAL_SERVER_ERROR);
@@ -1031,7 +812,7 @@ class OcmController extends Controller
 
         $share->setPermissions($permissionsCode);
         $shareUpdated = $this->shareProvider->update($share);
-        $response = $this->shareInfoToCs3Share($shareUpdated, "sent");
+        $response = $this->utils->shareInfoToCs3Share($shareUpdated, "sent");
         return new JSONResponse($response, Http::STATUS_OK);
     }
 }
