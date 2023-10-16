@@ -25,10 +25,10 @@ use OCP\IServerContainer;
 use OCP\Share\IProviderFactory;
 
 /**
- * Class SmAndFgProviderFactory
+ * Class SmFgOcmShareProviderFactory
  *
  */
-class SmAndFgProviderFactory implements IProviderFactory
+class SmFgOcmShareProviderFactory implements IProviderFactory
 {
     /** @var IServerContainer */
     private IServerContainer $serverContainer;
