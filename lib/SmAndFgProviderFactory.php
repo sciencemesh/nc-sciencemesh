@@ -6,8 +6,6 @@
  * @license MIT
  * @copyright Sciencemesh 2020 - 2023
  *
- * @author Navid Shokri <navid.pdp11@gmail.org>
- * @author Michiel De Jong <michiel@pondersource.com>
  * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.ir>
  */
 
@@ -17,6 +15,9 @@ use Exception;
 use OC\Share\Constants;
 use OC\Share20\DefaultShareProvider;
 use OC\Share20\Exception\ProviderException;
+use OCA\FederatedGroups\AppInfo\Application;
+use OCA\FederatedGroups\MixedGroupShareProvider;
+use OCA\FederatedGroups\SRAMFederatedGroupShareProvider;
 use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
 use OCP\AppFramework\QueryException;
@@ -24,17 +25,22 @@ use OCP\IServerContainer;
 use OCP\Share\IProviderFactory;
 
 /**
- * Class ScienceMeshProviderFactory
+ * Class SmAndFgProviderFactory
  *
- * @package OCA\ScienceMesh
  */
-class ScienceMeshProviderFactory implements IProviderFactory
+class SmAndFgProviderFactory implements IProviderFactory
 {
     /** @var IServerContainer */
     private IServerContainer $serverContainer;
 
     /** @var ?DefaultShareProvider */
     private ?DefaultShareProvider $defaultShareProvider = null;
+
+    /** @var ?SRAMFederatedGroupShareProvider */
+    private ?SRAMFederatedGroupShareProvider $federatedGroupShareProvider = null;
+
+    /** @var ?MixedGroupShareProvider */
+    private ?MixedGroupShareProvider $mixedGroupShareProvider = null;
 
     /** @var ?ScienceMeshShareProvider */
     private ?ScienceMeshShareProvider $scienceMeshShareProvider = null;
@@ -55,7 +61,9 @@ class ScienceMeshProviderFactory implements IProviderFactory
     {
         return [
             $this->defaultShareProvider(),
-            $this->scienceMeshShareProvider()
+            $this->mixedGroupShareProvider(),
+            $this->scienceMeshShareProvider(),
+            $this->federatedGroupShareProvider()
         ];
     }
 
@@ -90,7 +98,7 @@ class ScienceMeshProviderFactory implements IProviderFactory
              * Check if the app is enabled
              */
             $appManager = $this->serverContainer->getAppManager();
-            if (!$appManager->isEnabledForUser('sciencemesh')) {
+            if (!$appManager->isEnabledForUser("sciencemesh")) {
                 // TODO: @Mahdi what if sciencemesh is disabled and federatedfilesharing is enabled?
                 // we are overriding the base share provider, so if sciencemesh is disabled all
                 // federated share capability will be disabled.
@@ -104,20 +112,51 @@ class ScienceMeshProviderFactory implements IProviderFactory
     }
 
     /**
+     * Create the federated share provider for OCM to groups
+     *
+     * @return SRAMFederatedGroupShareProvider
+     */
+    protected function federatedGroupShareProvider(): SRAMFederatedGroupShareProvider
+    {
+        if ($this->federatedGroupShareProvider === null) {
+            $app = new Application();
+            $this->federatedGroupShareProvider = $app->getSRAMFederatedGroupShareProvider();
+        }
+        return $this->federatedGroupShareProvider;
+    }
+
+    /**
+     * Create the mixed group share provider for OCM to groups
+     *
+     * @return MixedGroupShareProvider
+     */
+    protected function mixedGroupShareProvider(): MixedGroupShareProvider
+    {
+        if ($this->mixedGroupShareProvider === null) {
+            $this->mixedGroupShareProvider = Application::getMixedGroupShareProvider();
+        }
+        return $this->mixedGroupShareProvider;
+    }
+
+    /**
      * @inheritdoc
      * @throws QueryException
      */
     public function getProvider($id)
     {
         $provider = null;
-        if ($id === 'ocinternal') {
-            $provider = $this->defaultShareProvider();
-        } elseif ($id === 'ocFederatedSharing' || $id === 'sciencemesh') {
+
+        if ($id === "ocinternal" || $id === "ocMixFederatedSharing") {
+            $provider = $this->mixedGroupShareProvider();
+        } elseif ($id === "ocFederatedSharing" || $id === "sciencemesh") {
             $provider = $this->scienceMeshShareProvider();
+        } elseif ($id === "ocGroupFederatedSharing") {
+            $provider = $this->federatedGroupShareProvider();
         }
 
+
         if ($provider === null) {
-            throw new ProviderException('No provider with id ' . $id . ' found.');
+            throw new ProviderException("No provider with id " . $id . " found.");
         }
 
         return $provider;
@@ -129,15 +168,22 @@ class ScienceMeshProviderFactory implements IProviderFactory
      */
     public function getProviderForType($shareType)
     {
-        // TODO: @Mahdi possible conflict with rd-sram as Constants::SHARE_TYPE_GROUP is not handled by sciencemesh.
-        if ($shareType === Constants::SHARE_TYPE_REMOTE) {
+        $provider = null;
+
+        if ($shareType === Constants::SHARE_TYPE_USER ||
+            $shareType === Constants::SHARE_TYPE_LINK ||
+            $shareType === Constants::SHARE_TYPE_GUEST ||
+            $shareType === Constants::SHARE_TYPE_CONTACT ||
+            $shareType === Constants::SHARE_TYPE_GROUP) {
+            $provider = $this->mixedGroupShareProvider();
+        } elseif ($shareType === Constants::SHARE_TYPE_REMOTE) {
             $provider = $this->scienceMeshShareProvider();
-        } else {
-            $provider = $this->defaultShareProvider();
+        } elseif ($shareType === Constants::SHARE_TYPE_REMOTE_GROUP) {
+            $provider = $this->federatedGroupShareProvider();
         }
 
         if ($provider === null) {
-            throw new ProviderException('No share provider for share type ' . $shareType);
+            throw new ProviderException("No share provider for share type " . $shareType);
         }
 
         return $provider;
