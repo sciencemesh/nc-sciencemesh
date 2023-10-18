@@ -244,7 +244,7 @@ class SmFgOcmSearchPlugin
 
         $result = array_merge($result, $otherResults);
 
-        if (count($this->result) > 0)
+        if (count($result) > 0)
             return $result;
         return [];
     }
