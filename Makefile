@@ -83,9 +83,9 @@ ifeq (, $(composer))
 	mkdir -p $(build_tools_directory)
 	curl -sS https://getcomposer.org/installer | php
 	mv composer.phar $(build_tools_directory)
-	php $(build_tools_directory)/composer.phar install --prefer-dist
+	php $(build_tools_directory)/composer.phar install --prefer-dist --no-interaction --quiet
 else
-	composer install --prefer-dist
+	composer install --prefer-dist --no-interaction --quiet
 endif
 #	-git apply --directory=vendor/phpunit/php-code-coverage phpunit.patch
 # Installs npm dependencies
