@@ -1,5 +1,3 @@
-# This repository will eventually be moved to [this](https://github.com/sciencemesh/nc-sciencemesh) link.
-
 # ScienceMesh
 
 Place this app in **/var/www/html/apps/**
