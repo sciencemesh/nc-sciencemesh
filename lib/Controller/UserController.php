@@ -1,12 +1,12 @@
 <?php
 /**
- * ownCloud - sciencemesh
+ * ownCloud - ScienceMesh
  *
  * This file is licensed under the MIT License. See the LICENCE file.
  * @license MIT
- * @copyright Sciencemesh 2020 - 2023
+ * @copyright ScienceMesh 2020 - 2024
  *
- * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.ir>
+ * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.io>
  */
 
 namespace OCA\ScienceMesh\Controller;
@@ -14,8 +14,7 @@ namespace OCA\ScienceMesh\Controller;
 use Exception;
 use OC\Config;
 use OCA\ScienceMesh\ServerConfig;
-use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
-use OCA\ScienceMesh\Utils\SmShareProvider;
+use OCA\ScienceMesh\Utils\StaticMethods;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -40,8 +39,8 @@ class UserController extends Controller
     /** @var IUserManager */
     private IUserManager $userManager;
 
-    /** @var SmShareProvider */
-    private SmShareProvider $utils;
+    /** @var StaticMethods */
+    private StaticMethods $utils;
 
     /**
      * User Controller.
@@ -52,16 +51,14 @@ class UserController extends Controller
      * @param IL10N $l10n
      * @param ILogger $logger
      * @param IUserManager $userManager
-     * @param ScienceMeshShareProvider $shareProvider
      */
     public function __construct(
-        string                   $appName,
-        IRequest                 $request,
-        IConfig                  $config,
-        IL10N                    $l10n,
-        ILogger                  $logger,
-        IUserManager             $userManager,
-        ScienceMeshShareProvider $shareProvider
+        string       $appName,
+        IRequest     $request,
+        IConfig      $config,
+        IL10N        $l10n,
+        ILogger      $logger,
+        IUserManager $userManager
     )
     {
         parent::__construct($appName, $request);
@@ -72,7 +69,7 @@ class UserController extends Controller
         $this->l = $l10n;
         $this->logger = $logger;
         $this->userManager = $userManager;
-        $this->utils = new SmShareProvider($l10n, $logger, $shareProvider);
+        $this->utils = new StaticMethods($l10n, $logger);
     }
 
     /**

@@ -1,13 +1,13 @@
 <?php
 
 /**
- * ownCloud - sciencemesh
+ * ownCloud - ScienceMesh
  *
  * This file is licensed under the MIT License. See the LICENCE file.
  * @license MIT
- * @copyright Sciencemesh 2020 - 2023
+ * @copyright ScienceMesh 2020 - 2023
  *
- * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.ir>
+ * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.io>
  */
 
 namespace OCA\ScienceMesh\Utils;
@@ -20,6 +20,7 @@ use OCP\Files\InvalidPathException;
 use OCP\Files\Node;
 use OCP\Files\NotFoundException;
 use OCP\Files\NotPermittedException;
+use OCP\IConfig;
 use OCP\IL10N;
 use OCP\ILogger;
 use OCP\IRequest;
@@ -45,7 +46,7 @@ const EFSS_PREFIX = (RESTRICT_TO_SCIENCEMESH_FOLDER ? "sciencemesh/" : "");
 const REVA_PREFIX = "/home/";
 
 
-class SmShareProvider
+class StaticMethods
 {
     /** @var IL10N */
     private IL10N $l;
@@ -53,25 +54,19 @@ class SmShareProvider
     /** @var ILogger */
     private ILogger $logger;
 
-    /** @var ScienceMeshShareProvider */
-    private ScienceMeshShareProvider $shareProvider;
-
     /**
-     * Utils class.
+     * StaticMethods class.
      *
      * @param IL10N $l10n
      * @param ILogger $logger
-     * @param ScienceMeshShareProvider $shareProvider
      */
     public function __construct(
-        IL10N                    $l10n,
-        ILogger                  $logger,
-        ScienceMeshShareProvider $shareProvider
+        IL10N   $l10n,
+        ILogger $logger
     )
     {
         $this->l = $l10n;
         $this->logger = $logger;
-        $this->shareProvider = $shareProvider;
     }
 
     public function removePrefix($string, $prefix)
@@ -91,7 +86,7 @@ class SmShareProvider
     {
         if ("$revaPath/" == REVA_PREFIX) {
             error_log("revaPathToEfssPath: Interpreting special case $revaPath as ''");
-            return '';
+            return "";
         }
         $ret = EFSS_PREFIX . $this->removePrefix($revaPath, REVA_PREFIX);
         error_log("revaPathToEfssPath: Interpreting $revaPath as $ret");
@@ -234,6 +229,20 @@ class SmShareProvider
         return $payload;
     }
 
+    public function formatUser(IUser $user, string $idp): array
+    {
+        return [
+            "id" => [
+                "idp" => $idp,
+                "opaque_id" => $user->getUID(),
+            ],
+            "display_name" => $user->getDisplayName(),
+            "username" => $user->getUID(),
+            "email" => $user->getEmailAddress(),
+            "type" => 1,
+        ];
+    }
+
     // For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
     // see:
     // https://github.com/cs3org/cs3apis/blob/cfd1ad29fdf00c79c2a321de7b1a60d0725fe4e8/cs3/sharing/ocm/v1beta1/resources.proto#L160
@@ -241,17 +250,22 @@ class SmShareProvider
      * @throws NotFoundException
      * @throws InvalidPathException
      */
-    public function shareInfoToCs3Share(IShare $share, string $direction, string $token = ""): array
+    public function shareInfoToCs3Share(
+        ScienceMeshShareProvider $shareProvider,
+        IShare                   $share,
+        string                   $direction,
+        string                   $token = ""
+    ): array
     {
         $shareId = $share->getId();
 
         // TODO @Mahdi use enums!
         if ($direction === "sent") {
-            $ocmShareData = $this->shareProvider->getSentOcmShareFromSciencemeshTable($shareId);
-            $ocmShareProtocols = $this->shareProvider->getSentOcmShareProtocolsFromSciencemeshTable($ocmShareData["id"]);
+            $ocmShareData = $shareProvider->getSentOcmShareFromSciencemeshTable($shareId);
+            $ocmShareProtocols = $shareProvider->getSentOcmShareProtocolsFromSciencemeshTable($ocmShareData["id"]);
         } elseif ($direction === "received") {
-            $ocmShareData = $this->shareProvider->getReceivedOcmShareFromSciencemeshTable($shareId);
-            $ocmShareProtocols = $this->shareProvider->getReceivedOcmShareProtocolsFromSciencemeshTable($ocmShareData["id"]);
+            $ocmShareData = $shareProvider->getReceivedOcmShareFromSciencemeshTable($shareId);
+            $ocmShareProtocols = $shareProvider->getReceivedOcmShareProtocolsFromSciencemeshTable($ocmShareData["id"]);
         }
 
         // use ocm payload stored in sciencemesh table. if it fails, use native efss share data.
@@ -374,20 +388,6 @@ class SmShareProvider
         return $payload;
     }
 
-    public function formatUser(IUser $user, string $idp): array
-    {
-        return [
-            "id" => [
-                "idp" => $idp,
-                "opaque_id" => $user->getUID(),
-            ],
-            "display_name" => $user->getDisplayName(),
-            "username" => $user->getUID(),
-            "email" => $user->getEmailAddress(),
-            "type" => 1,
-        ];
-    }
-
     /**
      * Checks whether the given target's domain part matches one of the server's
      * trusted domain entries
@@ -395,19 +395,19 @@ class SmShareProvider
      * @param string $target target
      * @return true if one match was found, false otherwise
      */
-    public function isInstanceDomain(string $target): bool
+    public function isInstanceDomain(string $target, IConfig $config): bool
     {
-        if (strpos($target, '/') !== false) {
+        if (strpos($target, "/") !== false) {
             // not a proper email-like format with domain name
             return false;
         }
-        $parts = explode('@', $target);
+        $parts = explode("@", $target);
         if (count($parts) === 1) {
             // no "@" sign
             return false;
         }
         $domainName = $parts[count($parts) - 1];
-        $trustedDomains = $this->config->getSystemValue('trusted_domains', []);
+        $trustedDomains = $config->getSystemValue("trusted_domains", []);
 
         return in_array($domainName, $trustedDomains, true);
     }
@@ -421,14 +421,14 @@ class SmShareProvider
      */
     public function splitUserRemote(string $address): array
     {
-        if (strpos($address, '@') === false) {
+        if (strpos($address, "@") === false) {
             throw new Exception('Invalid Federated Cloud ID');
         }
 
         // Find the first character that is not allowed in usernames
-        $id = str_replace('\\', '/', $address);
-        $posSlash = strpos($id, '/');
-        $posColon = strpos($id, ':');
+        $id = str_replace("\\", "/", $address);
+        $posSlash = strpos($id, "/");
+        $posColon = strpos($id, ":");
 
         if ($posSlash === false && $posColon === false) {
             $invalidPos = strlen($id);
@@ -444,7 +444,7 @@ class SmShareProvider
         $pos = $lastAtPos = 0;
         while ($lastAtPos !== false && $lastAtPos <= $invalidPos) {
             $pos = $lastAtPos;
-            $lastAtPos = strpos($id, '@', $pos + 1);
+            $lastAtPos = strpos($id, "@", $pos + 1);
         }
 
         if ($pos !== false) {
@@ -456,7 +456,7 @@ class SmShareProvider
             }
         }
 
-        throw new Exception('Invalid Federated Cloud ID');
+        throw new Exception("Invalid Federated Cloud ID");
     }
 
     /**
@@ -473,10 +473,10 @@ class SmShareProvider
      */
     protected function fixRemoteURL(string $remote): string
     {
-        $remote = str_replace('\\', '/', $remote);
-        if ($fileNamePosition = strpos($remote, '/index.php')) {
+        $remote = str_replace("\\", "/", $remote);
+        if ($fileNamePosition = strpos($remote, "/index.php")) {
             $remote = substr($remote, 0, $fileNamePosition);
         }
-        return rtrim($remote, '/');
+        return rtrim($remote, "/");
     }
 }

@@ -1,13 +1,13 @@
 <?php
 /**
- * ownCloud - sciencemesh
+ * ownCloud - ScienceMesh
  *
  * This file is licensed under the MIT License. See the LICENCE file.
  * @license MIT
- * @copyright Sciencemesh 2020 - 2023
+ * @copyright ScienceMesh 2020 - 2024
  *
  * @author Michiel De Jong <michiel@pondersource.com>
- * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.ir>
+ * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.io>
  */
 
 namespace OCA\ScienceMesh\Plugins;
@@ -16,8 +16,7 @@ use Exception;
 use OC\Share\Constants;
 use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 use OCA\ScienceMesh\RevaHttpClient;
-use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
-use OCA\ScienceMesh\Utils\SmShareProvider;
+use OCA\ScienceMesh\Utils\StaticMethods;
 use OCP\Contacts\IManager;
 use OCP\IConfig;
 use OCP\IL10N;
@@ -66,8 +65,8 @@ class SmFgOcmSearchPlugin
     /** @var ILogger */
     private ILogger $logger;
 
-    /** @var SmShareProvider */
-    private SmShareProvider $utils;
+    /** @var StaticMethods */
+    private StaticMethods $utils;
 
     /**
      * @var mixed
@@ -78,13 +77,12 @@ class SmFgOcmSearchPlugin
      * @throws Exception
      */
     public function __construct(
-        IManager                 $contactsManager,
-        IConfig                  $config,
-        IUserSession             $userSession,
-        UserSearch               $userSearch,
-        IL10N                    $l10n,
-        ILogger                  $logger,
-        ScienceMeshShareProvider $shareProvider
+        IManager     $contactsManager,
+        IConfig      $config,
+        IUserSession $userSession,
+        UserSearch   $userSearch,
+        IL10N        $l10n,
+        ILogger      $logger
     )
     {
         $this->config = $config;
@@ -98,7 +96,7 @@ class SmFgOcmSearchPlugin
         $this->revaHttpClient = new RevaHttpClient($this->config);
         $this->l = $l10n;
         $this->logger = $logger;
-        $this->utils = new SmShareProvider($l10n, $logger, $shareProvider);
+        $this->utils = new StaticMethods($l10n, $logger);
     }
 
     /**
@@ -236,7 +234,7 @@ class SmFgOcmSearchPlugin
             // (if it does, it is a user whose local login domain matches the ownCloud
             // instance domain)
             && (empty($this->result['exact']['users'])
-                || !$this->utils->isInstanceDomain($search))
+                || !$this->utils->isInstanceDomain($search, $this->config))
         ) {
             $otherResults[] = [
                 'label' => $search,

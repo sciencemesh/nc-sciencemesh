@@ -1,12 +1,12 @@
 <?php
 /**
- * ownCloud - sciencemesh
+ * ownCloud - ScienceMesh
  *
  * This file is licensed under the MIT License. See the LICENCE file.
  * @license MIT
- * @copyright Sciencemesh 2020 - 2023
+ * @copyright ScienceMesh 2020 - 2024
  *
- * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.ir>
+ * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.io>
  */
 
 namespace OCA\ScienceMesh\Controller;
@@ -16,8 +16,7 @@ use OC\Config;
 use OC\Files\View;
 use OCA\DAV\TrashBin\TrashBinManager;
 use OCA\ScienceMesh\ServerConfig;
-use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
-use OCA\ScienceMesh\Utils\SmShareProvider;
+use OCA\ScienceMesh\Utils\StaticMethods;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
@@ -64,8 +63,8 @@ class StorageController extends Controller
     /** @var ILogger */
     private ILogger $logger;
 
-    /** @var SmShareProvider */
-    private SmShareProvider $utils;
+    /** @var StaticMethods */
+    private StaticMethods $utils;
 
     /**
      * Storage Controller.
@@ -78,18 +77,16 @@ class StorageController extends Controller
      * @param TrashBinManager $trashManager
      * @param IL10N $l10n
      * @param ILogger $logger
-     * @param ScienceMeshShareProvider $shareProvider
      */
     public function __construct(
-        string                   $appName,
-        IRootFolder              $rootFolder,
-        IRequest                 $request,
-        IUserManager             $userManager,
-        IConfig                  $config,
-        TrashBinManager          $trashManager,
-        IL10N                    $l10n,
-        ILogger                  $logger,
-        ScienceMeshShareProvider $shareProvider
+        string          $appName,
+        IRootFolder     $rootFolder,
+        IRequest        $request,
+        IUserManager    $userManager,
+        IConfig         $config,
+        TrashBinManager $trashManager,
+        IL10N           $l10n,
+        ILogger         $logger
     )
     {
         parent::__construct($appName, $request);
@@ -102,7 +99,7 @@ class StorageController extends Controller
         $this->trashManager = $trashManager;
         $this->l = $l10n;
         $this->logger = $logger;
-        $this->utils = new SmShareProvider($l10n, $logger, $shareProvider);
+        $this->utils = new StaticMethods($l10n, $logger);
     }
 
     /**

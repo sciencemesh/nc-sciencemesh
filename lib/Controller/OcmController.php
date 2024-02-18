@@ -1,12 +1,12 @@
 <?php
 /**
- * ownCloud - sciencemesh
+ * ownCloud - ScienceMesh
  *
  * This file is licensed under the MIT License. See the LICENCE file.
  * @license MIT
- * @copyright Sciencemesh 2020 - 2023
+ * @copyright ScienceMesh 2020 - 2024
  *
- * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.ir>
+ * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.io>
  */
 
 namespace OCA\ScienceMesh\Controller;
@@ -18,7 +18,7 @@ use OC\HintException;
 use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 use OCA\ScienceMesh\ServerConfig;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
-use OCA\ScienceMesh\Utils\SmShareProvider;
+use OCA\ScienceMesh\Utils\StaticMethods;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
@@ -61,8 +61,8 @@ class OcmController extends Controller
     /** @var ILogger */
     private ILogger $logger;
 
-    /** @var SmShareProvider */
-    private SmShareProvider $utils;
+    /** @var StaticMethods */
+    private StaticMethods $utils;
 
     /** @var ScienceMeshShareProvider */
     private ScienceMeshShareProvider $shareProvider;
@@ -103,7 +103,7 @@ class OcmController extends Controller
         $this->l = $l10n;
         $this->logger = $logger;
         $this->shareProvider = $shareProvider;
-        $this->utils = new SmShareProvider($l10n, $logger, $shareProvider);
+        $this->utils = new StaticMethods($l10n, $logger);
     }
 
     /**
@@ -551,7 +551,7 @@ class OcmController extends Controller
 
         try {
             $share = $this->shareProvider->getReceivedShareByToken($opaqueId);
-            $response = $this->utils->shareInfoToCs3Share($share, "received", $opaqueId);
+            $response = $this->utils->shareInfoToCs3Share($this->shareProvider, $share, "received", $opaqueId);
             $response["state"] = 2;
             return new JSONResponse($response, Http::STATUS_OK);
         } catch (Exception $e) {
@@ -585,7 +585,7 @@ class OcmController extends Controller
         $share = $this->shareProvider->getSentShareByName($userId, $name);
 
         if ($share) {
-            $response = $this->utils->shareInfoToCs3Share($share, "sent");
+            $response = $this->utils->shareInfoToCs3Share($this->shareProvider, $share, "sent");
             return new JSONResponse($response, Http::STATUS_OK);
         }
 
@@ -630,7 +630,7 @@ class OcmController extends Controller
         }
 
         try {
-            $response = $this->utils->shareInfoToCs3Share($share, "sent", $token);
+            $response = $this->utils->shareInfoToCs3Share($this->shareProvider, $share, "sent", $token);
             return new JSONResponse($response, Http::STATUS_OK);
         } catch (NotFoundException|InvalidPathException $e) {
             // TODO: @Mahdi log it.
@@ -666,7 +666,7 @@ class OcmController extends Controller
 
         if ($shares) {
             foreach ($shares as $share) {
-                $response = $this->utils->shareInfoToCs3Share($share, "received");
+                $response = $this->utils->shareInfoToCs3Share($this->shareProvider, $share, "received");
                 $responses[] = [
                     "share" => $response,
                     "state" => 2
@@ -704,7 +704,7 @@ class OcmController extends Controller
 
         if ($shares) {
             foreach ($shares as $share) {
-                $responses[] = $this->utils->shareInfoToCs3Share($share, "sent");
+                $responses[] = $this->utils->shareInfoToCs3Share($this->shareProvider, $share, "sent");
             }
         }
         return new JSONResponse($responses, Http::STATUS_OK);
@@ -773,7 +773,12 @@ class OcmController extends Controller
             $share = $this->shareProvider->getReceivedShareByToken($resourceId);
             $share->setPermissions($permissionsCode);
             $shareUpdate = $this->shareProvider->UpdateReceivedShare($share);
-            $response = $this->utils->shareInfoToCs3Share($shareUpdate, "received", $resourceId);
+            $response = $this->utils->shareInfoToCs3Share(
+                $this->shareProvider,
+                $shareUpdate,
+                "received",
+                $resourceId
+            );
             $response["state"] = 2;
             return new JSONResponse($response, Http::STATUS_OK);
         } catch (Exception $e) {
@@ -812,7 +817,7 @@ class OcmController extends Controller
 
         $share->setPermissions($permissionsCode);
         $shareUpdated = $this->shareProvider->update($share);
-        $response = $this->utils->shareInfoToCs3Share($shareUpdated, "sent");
+        $response = $this->utils->shareInfoToCs3Share($this->shareProvider, $shareUpdated, "sent");
         return new JSONResponse($response, Http::STATUS_OK);
     }
 }

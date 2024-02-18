@@ -1,12 +1,12 @@
 <?php
 /**
- * ownCloud - sciencemesh
+ * ownCloud - ScienceMesh
  *
  * This file is licensed under the MIT License. See the LICENCE file.
  * @license MIT
- * @copyright Sciencemesh 2020 - 2023
+ * @copyright ScienceMesh 2020 - 2024
  *
- * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.ir>
+ * @author Mohammad Mahdi Baghbani Pourvahid <mahdi-baghbani@azadehafzar.io>
  */
 
 namespace OCA\ScienceMesh\Controller;
@@ -16,7 +16,7 @@ use Exception;
 use OC\Config;
 use OCA\ScienceMesh\ServerConfig;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
-use OCA\ScienceMesh\Utils\SmShareProvider;
+use OCA\ScienceMesh\Utils\StaticMethods;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -45,8 +45,8 @@ class AuthController extends Controller
     /** @var IUserManager */
     private IUserManager $userManager;
 
-    /** @var SmShareProvider */
-    private SmShareProvider $utils;
+    /** @var StaticMethods */
+    private StaticMethods $utils;
 
     /** @var ScienceMeshShareProvider */
     private ScienceMeshShareProvider $shareProvider;
@@ -83,7 +83,7 @@ class AuthController extends Controller
         $this->logger = $logger;
         $this->userManager = $userManager;
         $this->shareProvider = $shareProvider;
-        $this->utils = new SmShareProvider($l10n, $logger, $shareProvider);
+        $this->utils = new StaticMethods($l10n, $logger);
     }
 
     /**
