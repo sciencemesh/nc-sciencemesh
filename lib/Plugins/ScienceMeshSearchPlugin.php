@@ -16,8 +16,12 @@ use Exception;
 use OC\Share\Constants;
 use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 use OCA\ScienceMesh\RevaHttpClient;
+use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
+use OCA\ScienceMesh\Utils\Utils;
 use OCP\Contacts\IManager;
 use OCP\IConfig;
+use OCP\IL10N;
+use OCP\ILogger;
 use OCP\IUserSession;
 use OCP\Util\UserSearch;
 use function explode;
@@ -50,14 +54,26 @@ class ScienceMeshSearchPlugin
     /** @var RevaHttpClient */
     private RevaHttpClient $revaHttpClient;
 
+    /** @var IL10N */
+    private IL10N $l;
+
+    /** @var ILogger */
+    private ILogger $logger;
+
+    /** @var Utils */
+    private Utils $utils;
+
     /**
      * @throws Exception
      */
     public function __construct(
-        IManager     $contactsManager,
-        IConfig      $config,
-        IUserSession $userSession,
-        UserSearch   $userSearch
+        IManager                 $contactsManager,
+        IConfig                  $config,
+        IUserSession             $userSession,
+        UserSearch               $userSearch,
+        IL10N                    $l10n,
+        ILogger                  $logger,
+        ScienceMeshShareProvider $shareProvider
     )
     {
         $this->config = $config;
@@ -69,8 +85,14 @@ class ScienceMeshSearchPlugin
         }
         $this->shareeEnumeration = $this->config->getAppValue('core', 'shareapi_allow_share_dialog_user_enumeration', 'yes') === 'yes';
         $this->revaHttpClient = new RevaHttpClient($this->config);
+        $this->l = $l10n;
+        $this->logger = $logger;
+        $this->utils = new Utils($l10n, $logger, $shareProvider);
     }
 
+    /**
+     * @throws Exception
+     */
     public function search($search): array
     {
         $result = json_decode($this->revaHttpClient->findAcceptedUsers($this->userId), true);
@@ -125,7 +147,7 @@ class ScienceMeshSearchPlugin
 
             $lowerSearch = strtolower($search);
             foreach ($cloudIds as $cloudId) {
-                list(, $serverUrl) = $this->splitUserRemote($cloudId);
+                list(, $serverUrl) = $this->utils->splitUserRemote($cloudId);
 
                 if (strtolower($cloudId) === $lowerSearch) {
                     $foundRemoteById = true;
@@ -198,7 +220,7 @@ class ScienceMeshSearchPlugin
             // (if it does, it is a user whose local login domain matches the ownCloud
             // instance domain)
             && (empty($this->result['exact']['users'])
-                || !$this->isInstanceDomain($search))
+                || !$this->utils->isInstanceDomain($search))
         ) {
             $otherResults[] = [
                 'label' => $search,
@@ -209,98 +231,10 @@ class ScienceMeshSearchPlugin
             ];
         }
 
-        return array_merge($result, $otherResults);
-    }
+        $result = array_merge($result, $otherResults);
 
-    /**
-     * Checks whether the given target's domain part matches one of the server's
-     * trusted domain entries
-     *
-     * @param string $target target
-     * @return true if one match was found, false otherwise
-     */
-    protected function isInstanceDomain(string $target): bool
-    {
-        if (strpos($target, '/') !== false) {
-            // not a proper email-like format with domain name
-            return false;
-        }
-        $parts = explode('@', $target);
-        if (count($parts) === 1) {
-            // no "@" sign
-            return false;
-        }
-        $domainName = $parts[count($parts) - 1];
-        $trustedDomains = $this->config->getSystemValue('trusted_domains', []);
-
-        return in_array($domainName, $trustedDomains, true);
-    }
-
-    /**
-     * split user and remote from federated cloud id
-     *
-     * @param string $address federated share address
-     * @return array [user, remoteURL]
-     * @throws Exception
-     */
-    private function splitUserRemote(string $address): array
-    {
-        if (strpos($address, '@') === false) {
-            throw new Exception('Invalid Federated Cloud ID');
-        }
-
-        // Find the first character that is not allowed in usernames
-        $id = str_replace('\\', '/', $address);
-        $posSlash = strpos($id, '/');
-        $posColon = strpos($id, ':');
-
-        if ($posSlash === false && $posColon === false) {
-            $invalidPos = strlen($id);
-        } elseif ($posSlash === false) {
-            $invalidPos = $posColon;
-        } elseif ($posColon === false) {
-            $invalidPos = $posSlash;
-        } else {
-            $invalidPos = min($posSlash, $posColon);
-        }
-
-        // Find the last @ before $invalidPos
-        $pos = $lastAtPos = 0;
-        while ($lastAtPos !== false && $lastAtPos <= $invalidPos) {
-            $pos = $lastAtPos;
-            $lastAtPos = strpos($id, '@', $pos + 1);
-        }
-
-        if ($pos !== false) {
-            $user = substr($id, 0, $pos);
-            $remote = substr($id, $pos + 1);
-            $remote = $this->fixRemoteURL($remote);
-            if (!empty($user) && !empty($remote)) {
-                return [$user, $remote];
-            }
-        }
-
-        throw new Exception('Invalid Federated Cloud ID');
-    }
-
-    /**
-     * Strips away a potential file names and trailing slashes:
-     * - http://localhost
-     * - http://localhost/
-     * - http://localhost/index.php
-     * - http://localhost/index.php/s/{shareToken}
-     *
-     * all return: http://localhost
-     *
-     * @param string $remote
-     * @return string
-     */
-    protected function fixRemoteURL(string $remote): string
-    {
-        $remote = str_replace('\\', '/', $remote);
-        if ($fileNamePosition = strpos($remote, '/index.php')) {
-            $remote = substr($remote, 0, $fileNamePosition);
-        }
-        return rtrim($remote, '/');
+        if (count($result) > 0)
+            return $result;
+        return [];
     }
 }
