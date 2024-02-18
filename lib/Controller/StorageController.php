@@ -17,7 +17,7 @@ use OC\Files\View;
 use OCA\DAV\TrashBin\TrashBinManager;
 use OCA\ScienceMesh\ServerConfig;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
-use OCA\ScienceMesh\Utils\Utils;
+use OCA\ScienceMesh\Utils\UtilsSmShareProvider;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
@@ -64,8 +64,8 @@ class StorageController extends Controller
     /** @var ILogger */
     private ILogger $logger;
 
-    /** @var Utils */
-    private Utils $utils;
+    /** @var UtilsSmShareProvider */
+    private UtilsSmShareProvider $utils;
 
     /**
      * Storage Controller.
@@ -102,7 +102,7 @@ class StorageController extends Controller
         $this->trashManager = $trashManager;
         $this->l = $l10n;
         $this->logger = $logger;
-        $this->utils = new Utils($l10n, $logger, $shareProvider);
+        $this->utils = new UtilsSmShareProvider($l10n, $logger, $shareProvider);
     }
 
     /**

@@ -17,7 +17,7 @@ use OC\Share\Constants;
 use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 use OCA\ScienceMesh\RevaHttpClient;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
-use OCA\ScienceMesh\Utils\Utils;
+use OCA\ScienceMesh\Utils\UtilsSmShareProvider;
 use OCP\Contacts\IManager;
 use OCP\IConfig;
 use OCP\IL10N;
@@ -60,8 +60,8 @@ class ScienceMeshSearchPlugin
     /** @var ILogger */
     private ILogger $logger;
 
-    /** @var Utils */
-    private Utils $utils;
+    /** @var UtilsSmShareProvider */
+    private UtilsSmShareProvider $utils;
 
     /**
      * @throws Exception
@@ -87,7 +87,7 @@ class ScienceMeshSearchPlugin
         $this->revaHttpClient = new RevaHttpClient($this->config);
         $this->l = $l10n;
         $this->logger = $logger;
-        $this->utils = new Utils($l10n, $logger, $shareProvider);
+        $this->utils = new UtilsSmShareProvider($l10n, $logger, $shareProvider);
     }
 
     /**
