@@ -18,7 +18,7 @@ use OC\HintException;
 use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 use OCA\ScienceMesh\ServerConfig;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
-use OCA\ScienceMesh\Utils\UtilsSmShareProvider;
+use OCA\ScienceMesh\Utils\SmShareProvider;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
@@ -61,8 +61,8 @@ class OcmController extends Controller
     /** @var ILogger */
     private ILogger $logger;
 
-    /** @var UtilsSmShareProvider */
-    private UtilsSmShareProvider $utils;
+    /** @var SmShareProvider */
+    private SmShareProvider $utils;
 
     /** @var ScienceMeshShareProvider */
     private ScienceMeshShareProvider $shareProvider;
@@ -103,7 +103,7 @@ class OcmController extends Controller
         $this->l = $l10n;
         $this->logger = $logger;
         $this->shareProvider = $shareProvider;
-        $this->utils = new UtilsSmShareProvider($l10n, $logger, $shareProvider);
+        $this->utils = new SmShareProvider($l10n, $logger, $shareProvider);
     }
 
     /**

@@ -45,7 +45,7 @@ const EFSS_PREFIX = (RESTRICT_TO_SCIENCEMESH_FOLDER ? "sciencemesh/" : "");
 const REVA_PREFIX = "/home/";
 
 
-class UtilsSmShareProvider
+class SmShareProvider
 {
     /** @var IL10N */
     private IL10N $l;

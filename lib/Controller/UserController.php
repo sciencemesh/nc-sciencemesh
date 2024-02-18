@@ -15,7 +15,7 @@ use Exception;
 use OC\Config;
 use OCA\ScienceMesh\ServerConfig;
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
-use OCA\ScienceMesh\Utils\UtilsSmShareProvider;
+use OCA\ScienceMesh\Utils\SmShareProvider;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -40,8 +40,8 @@ class UserController extends Controller
     /** @var IUserManager */
     private IUserManager $userManager;
 
-    /** @var UtilsSmShareProvider */
-    private UtilsSmShareProvider $utils;
+    /** @var SmShareProvider */
+    private SmShareProvider $utils;
 
     /**
      * User Controller.
@@ -72,7 +72,7 @@ class UserController extends Controller
         $this->l = $l10n;
         $this->logger = $logger;
         $this->userManager = $userManager;
-        $this->utils = new UtilsSmShareProvider($l10n, $logger, $shareProvider);
+        $this->utils = new SmShareProvider($l10n, $logger, $shareProvider);
     }
 
     /**
