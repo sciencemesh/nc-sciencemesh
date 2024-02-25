@@ -422,7 +422,7 @@ class StaticMethods
     public function splitUserRemote(string $address): array
     {
         if (strpos($address, "@") === false) {
-            throw new Exception('Invalid Federated Cloud ID');
+            throw new Exception("Invalid Federated Cloud ID");
         }
 
         // Find the first character that is not allowed in usernames
@@ -478,5 +478,19 @@ class StaticMethods
             $remote = substr($remote, 0, $fileNamePosition);
         }
         return rtrim($remote, "/");
+    }
+
+    public function splitUserAndHost(string $username, string $split_char = "@"): array
+    {
+        // it should split username@host into an array of 2 element
+        // representing array[0] = username, array[1] = host
+        // requirement:
+        // handle usernames with multiple @ in them.
+        // example: MahdiBaghbani@pondersource@sciencemesh.org
+        // username: MahdiBaghbani@pondersource
+        // host: sciencemesh.org
+        $parts = explode($split_char, $username);
+        $last = array_pop($parts);
+        return array(implode($split_char, $parts), $last);
     }
 }

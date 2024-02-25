@@ -25,6 +25,7 @@ use OCA\FederatedFileSharing\TokenHandler;
 use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 use OCA\ScienceMesh\RevaHttpClient;
 use OCA\ScienceMesh\ServerConfig;
+use OCA\ScienceMesh\Utils\StaticMethods;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\IConfig;
@@ -53,6 +54,9 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
 
     /** @var RevaHttpClient */
     protected RevaHttpClient $revaHttpClient;
+
+    /** @var StaticMethods */
+    private StaticMethods $utils;
 
     /**
      * ScienceMeshShareProvider constructor.
@@ -97,6 +101,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
 
         $this->serverConfig = new ServerConfig($config);
         $this->revaHttpClient = new RevaHttpClient($config);
+        $this->utils = new StaticMethods($l10n, $logger);
         $this->supportedShareType[] = ScienceMeshApp::SHARE_TYPE_SCIENCEMESH;
     }
 
@@ -155,19 +160,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
             $sourcePath = $prefix . "home/" . implode("/", array_slice($pathParts, $sourceOffset)) . $suffix;
             $targetPath = $prefix . implode("/", array_slice($pathParts, $targetOffset)) . $suffix;
 
-            // TODO: @Mahdi make a function for below operation. it is used in a lot placed, but incorrectly.
-            // TODO: @Mahdi Move to utils.
-            // it should split username@host into an array of 2 element
-            // representing array[0] = username, array[1] = host
-            // requirement:
-            // handle usernames with multiple @ in them.
-            // example: MahdiBaghbani@pondersource@sciencemesh.org
-            // username: MahdiBaghbani@pondersource
-            // host: sciencemesh.org
-            $split_point = "@";
-            $parts = explode($split_point, $shareWith);
-            $last = array_pop($parts);
-            $shareWithParts = array(implode($split_point, $parts), $last);
+            $shareWithParts = $this->utils->splitUserAndHost($shareWith);
 
             // don't allow ScienceMesh shares if source and target server are the same.
             // this means users with the same reva iop cannot share with each other via sciencemesh and
