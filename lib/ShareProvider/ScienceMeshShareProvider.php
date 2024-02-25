@@ -24,8 +24,10 @@ use OCA\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\TokenHandler;
 use OCA\ScienceMesh\AppInfo\ScienceMeshApp;
 use OCA\ScienceMesh\RevaHttpClient;
-use OCP\Constants;
+use OCA\ScienceMesh\ServerConfig;
+use OCA\ScienceMesh\Utils\StaticMethods;
 use OCP\Files\IRootFolder;
+use OCP\Files\NotFoundException;
 use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\IL10N;
@@ -44,11 +46,17 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 class ScienceMeshShareProvider extends FederatedShareProviderCopy
 {
 
-    /** @var RevaHttpClient */
-    protected RevaHttpClient $revaHttpClient;
+    /** @var ServerConfig */
+    private ServerConfig $serverConfig;
 
     /** @var array */
     protected array $supportedShareType;
+
+    /** @var RevaHttpClient */
+    protected RevaHttpClient $revaHttpClient;
+
+    /** @var StaticMethods */
+    private StaticMethods $utils;
 
     /**
      * ScienceMeshShareProvider constructor.
@@ -91,8 +99,10 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
             $userManager
         );
 
-        $this->supportedShareType[] = ScienceMeshApp::SHARE_TYPE_SCIENCEMESH;
+        $this->serverConfig = new ServerConfig($config);
         $this->revaHttpClient = new RevaHttpClient($config);
+        $this->utils = new StaticMethods($l10n, $logger);
+        $this->supportedShareType[] = ScienceMeshApp::SHARE_TYPE_SCIENCEMESH;
     }
 
     /**
@@ -108,119 +118,10 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
     }
 
     /**
-     * Share a path
+     * Share a path.
      *
-     * @param IShare $share
-     * @return IShare The share object
-     * @throws ShareNotFound
-     * @throws Exception
-     */
-    public function createInternal(IShare $share): IShare
-    {
-        error_log("SMSP: createInternal");
-        $shareWith = $share->getSharedWith();
-
-        error_log("shareWith $shareWith");
-
-        error_log("checking if already shared " . $share->getNode()->getName());
-        /*
-         * Check if file is not already shared with the remote user
-         */
-        $alreadyShared = $this->getSharedWith($shareWith, $share->getShareType(), $share->getNode(), 1, 0);
-        if (!empty($alreadyShared)) {
-            $message = 'Sharing %1$s failed, because this item is already shared with %2$s';
-            $message_t = $this->l->t('Sharing %1$s failed, because this item is already shared with user %2$s', [$share->getNode()->getName(), $shareWith]);
-            $this->logger->debug(sprintf($message, $share->getNode()->getName(), $shareWith), ['app' => 'ScienceMesh']);
-            throw new Exception($message_t);
-        }
-
-
-        // FIXME: don't allow ScienceMesh shares if source and target server are the same
-        // ScienceMesh shares always have read permissions
-        if (($share->getPermissions() & Constants::PERMISSION_READ) === 0) {
-            $message = 'ScienceMesh shares require read permissions';
-            $message_t = $this->l->t('ScienceMesh shares require read permissions');
-            $this->logger->debug($message, ['app' => 'ScienceMesh']);
-            throw new Exception($message_t);
-        }
-
-        $share->setSharedWith($shareWith);
-        $shareId = $this->createScienceMeshShare($share);
-
-        $data = $this->getRawShare($shareId);
-        return $this->createShareObject($data);
-    }
-
-    /**
-     * create sciencemesh share and inform the recipient
-     *
-     * @param IShare $share
-     * @return int
-     * @throws Exception
-     */
-    protected function createScienceMeshShare(IShare $share): int
-    {
-        return $this->addSentShareToDB(
-            $share->getNodeId(),
-            $share->getNodeType(),
-            $share->getSharedWith(),
-            $share->getSharedBy(),
-            $share->getShareOwner(),
-            $share->getPermissions(),
-            $share->getToken(),
-            $share->getShareType()
-        );
-    }
-
-    /**
-     * add share to the database and return the ID
-     *
-     * @param int $itemSource
-     * @param string $itemType
-     * @param string $shareWith
-     * @param string $sharedBy
-     * @param string $uidOwner
-     * @param int $permissions
-     * @param string $token
-     * @param int $shareType
-     * @return int
-     */
-    protected function addSentShareToDB(
-        int    $itemSource,
-        string $itemType,
-        string $shareWith,
-        string $sharedBy,
-        string $uidOwner,
-        int    $permissions,
-        string $token,
-        int    $shareType
-    ): int
-    {
-        $qb = $this->dbConnection->getQueryBuilder();
-        $qb->insert('share')
-            ->setValue('share_type', $qb->createNamedParameter($shareType))
-            ->setValue('item_type', $qb->createNamedParameter($itemType))
-            ->setValue('item_source', $qb->createNamedParameter($itemSource))
-            ->setValue('file_source', $qb->createNamedParameter($itemSource))
-            ->setValue('share_with', $qb->createNamedParameter($shareWith))
-            ->setValue('uid_owner', $qb->createNamedParameter($uidOwner))
-            ->setValue('uid_initiator', $qb->createNamedParameter($sharedBy))
-            ->setValue('permissions', $qb->createNamedParameter($permissions))
-            ->setValue('token', $qb->createNamedParameter($token))
-            ->setValue('stime', $qb->createNamedParameter(time()));
-
-        /*
-         * Added to fix https://github.com/owncloud/core/issues/22215
-         * Can be removed once we get rid of ajax/share.php
-         */
-        $qb->setValue('file_target', $qb->createNamedParameter(''));
-
-        $qb->execute();
-        return $qb->getLastInsertId();
-    }
-
-    /**
-     * Share a path
+     * This method is being called by:
+     * https://github.com/owncloud/core/blob/e95e978f452787e55515ac3e43763e4adcf87d14/lib/private/Share20/Manager.php#L832C3-L832C3
      *
      * @param IShare $share
      * @return IShare The share object
@@ -232,17 +133,21 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
         $node = $share->getNode();
         $shareWith = $share->getSharedWith();
 
-        // This is the routing flag for sending a share.
+        // this is the routing flag for sending a share.
         // if the recipient of the share is a sciencemesh contact,
         // the search plugin will mark it by a postfix.
         $isSciencemeshUser = $this->stringEndsWith($shareWith, ScienceMeshApp::SCIENCEMESH_POSTFIX);
 
-        // Based on the flag, the share will be sent through sciencemesh or regular share provider.
+        // based on the flag, the share will be sent through sciencemesh or regular share provider.
         if ($isSciencemeshUser) {
             // remove the postfix flag from the string.
             $shareWith = str_replace(ScienceMeshApp::SCIENCEMESH_POSTFIX, "", $shareWith);
 
+            error_log("create: node path: " . $node->getPath());
+            // node path: /einstein/files/test
+            // path parts: ["einstein", "files", "test"]
             $pathParts = explode("/", $node->getPath());
+            // sender: einstein
             $sender = $pathParts[1];
             $sourceOffset = 3;
             $targetOffset = 3;
@@ -250,32 +155,74 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
             $suffix = ($node->getType() == "dir" ? "/" : "");
 
             // "home" is reva's default work space name, prepending that in the source path:
+            // source path: /test/
+            // target path: /home/test/
             $sourcePath = $prefix . "home/" . implode("/", array_slice($pathParts, $sourceOffset)) . $suffix;
             $targetPath = $prefix . implode("/", array_slice($pathParts, $targetOffset)) . $suffix;
 
-            // TODO: make a function for below operation. it is used in a lot placed, but incorrectly.
-            // it should split username@host into an array of 2 element
-            // representing array[0] = username, array[1] = host
-            // requirement:
-            // handle usernames with multiple @ in them.
-            // example: MahdiBaghbani@pondersource@sciencemesh.org
-            // username: MahdiBaghbani@pondersource
-            // host: sciencemesh.org
-            $split_point = '@';
-            $parts = explode($split_point, $shareWith);
-            $last = array_pop($parts);
-            $shareWithParts = array(implode($split_point, $parts), $last);
+            $shareWithParts = $this->utils->splitUserAndHost($shareWith);
+
+            // don't allow ScienceMesh shares if source and target server are the same.
+            // this means users with the same reva iop cannot share with each other via sciencemesh and
+            // should use their native efss capabilities to do so.
+            // see: https://github.com/sciencemesh/nc-sciencemesh/issues/57
+            if ($this->serverConfig->getIopIdp() === $shareWithParts[1]) {
+                $message = "Not allowed to create a ScienceMesh share for a user on the same server %s as sender.";
+                $message_t = $this->l->t(
+                    "Not allowed to create a ScienceMesh share for a user on the same server %s as sender.",
+                    [$shareWithParts[1]]
+                );
+                $this->logger->debug(
+                    sprintf(
+                        $message, $shareWithParts[1]
+                    ),
+                    ["app" => "sciencemesh"]
+                );
+                throw new Exception($message_t);
+            }
+
+            // check if file is not already shared with the remote user.
+            $alreadyShared = $this->getSharedWith(
+                $shareWith,
+                $share->getShareType(),
+                $share->getNode(),
+                1,
+                0
+            );
+
+            if (!empty($alreadyShared)) {
+                $message = "Sharing %s failed, because this item is already shared with %s";
+                $message_t = $this->l->t(
+                    "Sharing %s failed, because this item is already shared with %s",
+                    [$share->getNode()->getName(), $share->getSharedWith()]
+                );
+                $this->logger->debug(
+                    sprintf(
+                        $message, $share->getNode()->getName(), $share->getSharedWith()
+                    ),
+                    ["app" => "sciencemesh"]
+                );
+                throw new Exception($message_t);
+            }
 
             $response = $this->revaHttpClient->createShare($sender, [
-                'sourcePath' => $sourcePath,
-                'targetPath' => $targetPath,
-                'type' => $node->getType(),
-                'recipientUsername' => $shareWithParts[0],
-                'recipientHost' => $shareWithParts[1]
+                "sourcePath" => $sourcePath,
+                "targetPath" => $targetPath,
+                "type" => $node->getType(),
+                "recipientUsername" => $shareWithParts[0],
+                "recipientHost" => $shareWithParts[1]
             ]);
 
-            if (!isset($response) || !isset($response->share) || !isset($response->share->owner) || !isset($response->share->owner->idp)) {
-                throw new Exception("Unexpected response from reva");
+            if (!isset($response->share->owner->idp)) {
+                $message = "Unexpected response from Reva, response share owner idp doesn't exist.";
+                $message_t = $this->l->t(
+                    "Unexpected response from Reva, response share owner idp doesn't exist.",
+                );
+                $this->logger->error(
+                    $message,
+                    ["app" => "sciencemesh"]
+                );
+                throw new Exception($message_t);
             }
 
             $share->setId("will-set-this-later");
@@ -287,6 +234,27 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
 
         return $share;
     }
+
+    /**
+     * Share a path via ScienceMesh.
+     *
+     * @param IShare $share
+     * @return IShare The share object
+     * @throws NotFoundException
+     * @throws ShareNotFound
+     * @throws InvalidShare
+     * @throws IllegalIDChangeException
+     */
+    public function createNativeEfssScienceMeshShare(IShare $share): IShare
+    {
+        // this adds share to native efss table in the database.
+        $shareId = $this->addSentOcmShareToEfssTable($share);
+
+        $data = $this->getRawShare($shareId);
+        return $this->createShareObject($data);
+    }
+
+    // TODO: @Mahdi Move to utils.
 
     /**
      * Check if a given string ends with a substring.
@@ -316,9 +284,9 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
          * We allow updating the permissions of sciencemesh shares
          */
         $qb = $this->dbConnection->getQueryBuilder();
-        $qb->update('share_external')
-            ->where($qb->expr()->eq('id', $qb->createNamedParameter($share->getId())))
-            ->set('owner', $qb->createNamedParameter($share->getShareOwner()))
+        $qb->update("share_external")
+            ->where($qb->expr()->eq("id", $qb->createNamedParameter($share->getId())))
+            ->set("owner", $qb->createNamedParameter($share->getShareOwner()))
             ->execute();
         return $share;
     }
@@ -333,14 +301,16 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
     public function getReceivedShareByToken(string $token)
     {
         $qb = $this->dbConnection->getQueryBuilder();
-        $cursor = $qb->select('*')
-            ->from('share_external')
-            ->where($qb->expr()->eq('share_type', $qb->createNamedParameter(14)))
-            ->andWhere($qb->expr()->eq('share_token', $qb->createNamedParameter($token)))
+        $cursor = $qb->select("*")
+            ->from("share_external")
+            ->where($qb->expr()->eq("share_type", $qb->createNamedParameter(14)))
+            ->andWhere($qb->expr()->eq("share_token", $qb->createNamedParameter($token)))
             ->execute();
         $data = $cursor->fetch();
+        $cursor->closeCursor();
+
         if ($data === false) {
-            throw new ShareNotFound('Share not found', $this->l->t('Could not find share'));
+            throw new ShareNotFound("Share not found", $this->l->t("Could not find share"));
         }
         return $this->createExternalShareObject($data);
     }
@@ -355,12 +325,12 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
     protected function createExternalShareObject(array $data)
     {
         $share = new Share($this->rootFolder, $this->userManager);
-        $share->setId((int)$data['id'])
-            ->setShareType((int)$data['share_type'])
-            ->setShareOwner($data['owner'])
-            ->setSharedBy($data['owner'])
-            ->setToken($data['share_token'])
-            ->setSharedWith($data['user']);
+        $share->setId((int)$data["id"])
+            ->setShareType((int)$data["share_type"])
+            ->setShareOwner($data["owner"])
+            ->setSharedBy($data["owner"])
+            ->setToken($data["share_token"])
+            ->setSharedWith($data["user"]);
         $share->setProviderId($this->identifier());
 
         return $share;
@@ -373,7 +343,7 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
      */
     public function identifier(): string
     {
-        return 'sciencemesh';
+        return "sciencemesh";
     }
 
     /**
@@ -386,22 +356,27 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
     public function getSentShareByToken(string $token): IShare
     {
         error_log("share provider getSentShareByToken '$token'");
+
         $qb = $this->dbConnection->getQueryBuilder();
-        $cursor = $qb->select('*')
-            ->from('share')
-            ->where($qb->expr()->eq('token', $qb->createNamedParameter($token)))
+        $cursor = $qb->select("*")
+            ->from("share")
+            ->where($qb->expr()->eq("token", $qb->createNamedParameter($token)))
             ->execute();
         $data = $cursor->fetch();
+        $cursor->closeCursor();
+
         if ($data === false) {
             error_log("sent share not found by token '$token'");
-            throw new ShareNotFound('Share not found', $this->l->t('Could not find share'));
+            throw new ShareNotFound("Share not found", $this->l->t("Could not find share"));
         }
+
         try {
             $share = $this->createShareObject($data);
         } catch (InvalidShare $e) {
             error_log("sent share found invalid by token '$token'");
-            throw new ShareNotFound('Share not found', $this->l->t('Could not find share'));
+            throw new ShareNotFound("Share not found", $this->l->t("Could not find share"));
         }
+
         error_log("found sent share " . $data["id"] . " by token '$token'");
         return $share;
     }
@@ -410,15 +385,15 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
     {
         $qb = $this->dbConnection->getQueryBuilder();
 
-        $qb->select('*')
-            ->from('share')
+        $qb->select("*")
+            ->from("share")
             ->where(
-                $qb->expr()->eq('share_type', $qb->createNamedParameter(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH))
+                $qb->expr()->eq("share_type", $qb->createNamedParameter(ScienceMeshApp::SHARE_TYPE_SCIENCEMESH))
             )
             ->andWhere(
                 $qb->expr()->orX(
-                    $qb->expr()->eq('uid_initiator', $qb->createNamedParameter($userId)),
-                    $qb->expr()->eq('uid_owner', $qb->createNamedParameter($userId))
+                    $qb->expr()->eq("uid_initiator", $qb->createNamedParameter($userId)),
+                    $qb->expr()->eq("uid_owner", $qb->createNamedParameter($userId))
                 )
             );
 
@@ -438,10 +413,10 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
     public function getReceivedShares($userId): iterable
     {
         $qb = $this->dbConnection->getQueryBuilder();
-        $qb->select('*')
-            ->from('share_external')
+        $qb->select("*")
+            ->from("share_external")
             ->where(
-                $qb->expr()->eq('user', $qb->createNamedParameter($userId))
+                $qb->expr()->eq("user", $qb->createNamedParameter($userId))
             );
         $cursor = $qb->execute();
         while ($data = $cursor->fetch()) {
@@ -459,34 +434,38 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
     public function deleteSentShareByName($userId, $name): bool
     {
         $qb = $this->dbConnection->getQueryBuilder();
-        $qb->select('fileid')
-            ->from('filecache')
+        $qb->select("fileid")
+            ->from("filecache")
             ->where(
-                $qb->expr()->eq('name', $qb->createNamedParameter($name))
+                $qb->expr()->eq("name", $qb->createNamedParameter($name))
             );
         $cursor = $qb->execute();
         $data = $cursor->fetch();
+        $cursor->closeCursor();
+
         if (!$data) {
             return false;
         }
-        $id = $data['fileid'];
-        $isShare = $qb->select('*')
-            ->from('share')
+
+
+        $id = $data["fileid"];
+        $isShare = $qb->select("*")
+            ->from("share")
             ->where(
-                $qb->expr()->eq('uid_owner', $qb->createNamedParameter($userId))
+                $qb->expr()->eq("uid_owner", $qb->createNamedParameter($userId))
             )
             ->andWhere(
-                $qb->expr()->eq('item_source', $qb->createNamedParameter($id))
+                $qb->expr()->eq("item_source", $qb->createNamedParameter($id))
             )
             ->execute()
             ->fetch();
         if ($isShare) {
-            $qb->delete('share')
+            $qb->delete("share")
                 ->where(
-                    $qb->expr()->eq('uid_owner', $qb->createNamedParameter($userId))
+                    $qb->expr()->eq("uid_owner", $qb->createNamedParameter($userId))
                 )
                 ->andWhere(
-                    $qb->expr()->eq('item_source', $qb->createNamedParameter($id))
+                    $qb->expr()->eq("item_source", $qb->createNamedParameter($id))
                 );
             $qb->execute();
             return true;
@@ -509,25 +488,27 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
     public function deleteReceivedShareByOpaqueId($userId, $opaqueId): bool
     {
         $qb = $this->dbConnection->getQueryBuilder();
-        $qb->select('*')
-            ->from('share_external')
+        $qb->select("*")
+            ->from("share_external")
             ->where(
-                $qb->expr()->eq('user', $qb->createNamedParameter($userId))
+                $qb->expr()->eq("user", $qb->createNamedParameter($userId))
             )
             ->andWhere(
-                $qb->expr()->eq('share_token', $qb->createNamedParameter($opaqueId))
+                $qb->expr()->eq("share_token", $qb->createNamedParameter($opaqueId))
             );
         $cursor = $qb->execute();
         $data = $cursor->fetch();
+        $cursor->closeCursor();
+
         if (!$data) {
             return false;
         } else {
-            $qb->delete('share_external')
+            $qb->delete("share_external")
                 ->where(
-                    $qb->expr()->eq('user', $qb->createNamedParameter($userId))
+                    $qb->expr()->eq("user", $qb->createNamedParameter($userId))
                 )
                 ->andWhere(
-                    $qb->expr()->eq('share_token', $qb->createNamedParameter($opaqueId))
+                    $qb->expr()->eq("share_token", $qb->createNamedParameter($opaqueId))
                 );
             $qb->execute();
             return true;
@@ -542,36 +523,43 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
     {
         $qb = $this->dbConnection->getQueryBuilder();
 
-        $qb->select('fileid')
-            ->from('filecache')
+        $qb->select("fileid")
+            ->from("filecache")
             ->where(
-                $qb->expr()->eq('path', $qb->createNamedParameter($path))
+                $qb->expr()->eq("path", $qb->createNamedParameter($path))
             );
+
         $cursor = $qb->execute();
         $data = $cursor->fetch();
+        $cursor->closeCursor();
+
         if (!$data) {
             return false;
         }
-        $id = $data['fileid'];
-        $qb->select('*')
-            ->from('share')
+        $id = $data["fileid"];
+        $qb->select("*")
+            ->from("share")
             ->where(
-                $qb->expr()->eq('uid_owner', $qb->createNamedParameter($userId))
+                $qb->expr()->eq("uid_owner", $qb->createNamedParameter($userId))
             )
             ->andWhere(
-                $qb->expr()->eq('item_source', $qb->createNamedParameter($id))
+                $qb->expr()->eq("item_source", $qb->createNamedParameter($id))
             );
+
         $cursor = $qb->execute();
         $data = $cursor->fetch();
+        $cursor->closeCursor();
+
         if (!$data) {
             return false;
         }
+
         try {
             $share = $this->createShareObject($data);
         } catch (InvalidShare $e) {
             throw new ShareNotFound();
         }
-        $cursor->closeCursor();
+
         return $share;
     }
 
@@ -581,30 +569,35 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
     public function getShareByOpaqueId($opaqueId)
     {
         $qb = $this->dbConnection->getQueryBuilder();
-        $c = $qb->select('is_external')
-            ->from('sciencemesh_shares')
+        $cursor = $qb->select("is_external")
+            ->from("sciencemesh_shares")
             ->where(
-                $qb->expr()->eq('opaque_id', $qb->createNamedParameter($opaqueId))
+                $qb->expr()->eq("opaque_id", $qb->createNamedParameter($opaqueId))
             )
             ->execute();
-        $data = $c->fetch();
-        if (!$data) {
-            return false;
-        }
-        $external = $data['is_external'];
-        $c = $qb->select('*')
-            ->from('sciencemesh_shares', 'sms')
-            ->innerJoin('sms', $external ? 'share_external' : 'share', 's', $qb->expr()->eq('sms.foreignId', 's.id'))
-            ->where(
-                $qb->expr()->eq('sms.opaque_id', $qb->createNamedParameter($opaqueId))
-            )
-            ->execute();
-        $data = $c->fetch();
+        $data = $cursor->fetch();
+        $cursor->closeCursor();
+
         if (!$data) {
             return false;
         }
 
-        return $external ? $this->createScienceMeshExternalShare($data) : $this->createScienceMeshShare($data);
+        $external = $data["is_external"];
+        $cursor = $qb->select("*")
+            ->from("sciencemesh_shares", "sms")
+            ->innerJoin("sms", $external ? "share_external" : "share", "s", $qb->expr()->eq("sms.foreignId", "s.id"))
+            ->where(
+                $qb->expr()->eq("sms.opaque_id", $qb->createNamedParameter($opaqueId))
+            )
+            ->execute();
+        $data = $cursor->fetch();
+        $cursor->closeCursor();
+
+        if (!$data) {
+            return false;
+        }
+
+        return $external ? $this->createScienceMeshExternalShare($data) : $this->addSentOcmShareToEfssTable($data);
     }
 
     public function addScienceMeshUser($user)
@@ -613,25 +606,27 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
         $opaqueId = $user->getOpaqueId();
         $type = $user->getType();
         $qb = $this->dbConnection->getQueryBuilder();
-        $cursor = $qb->select('*')
-            ->from('sciencemesh_users')
+        $cursor = $qb->select("*")
+            ->from("sciencemesh_users")
             ->where(
-                $qb->expr()->eq('idp', $qb->createNamedParameter($idp))
+                $qb->expr()->eq("idp", $qb->createNamedParameter($idp))
             )
             ->andWhere(
-                $qb->expr()->eq('opaque_id', $qb->createNamedParameter($opaqueId))
+                $qb->expr()->eq("opaque_id", $qb->createNamedParameter($opaqueId))
             )
             ->execute();
         $data = $cursor->fetch();
+        $cursor->closeCursor();
+
         if (!$data) {
-            $qb->insert('sciencemesh_users')
-                ->setValue('idp', $qb->createNamedParameter($idp))
-                ->setValue('opaque_id', $qb->createNamedParameter($opaqueId))
-                ->setValue('type', $qb->createNamedParameter($type))
+            $qb->insert("sciencemesh_users")
+                ->setValue("idp", $qb->createNamedParameter($idp))
+                ->setValue("opaque_id", $qb->createNamedParameter($opaqueId))
+                ->setValue("type", $qb->createNamedParameter($type))
                 ->execute();
             return $qb->getLastInsertId();
         } else {
-            return $data['id'];
+            return $data["id"];
         }
     }
 
@@ -640,55 +635,384 @@ class ScienceMeshShareProvider extends FederatedShareProviderCopy
      */
     public function addScienceMeshShare($scienceMeshData, $shareData): int
     {
-        if ($scienceMeshData['is_external']) {
-            return $this->addReceivedShareToDB($shareData);
+        if ($scienceMeshData["is_external"]) {
+            return $this->addReceivedOcmShareToEfssTable($shareData);
         } else {
-            return $this->createScienceMeshShare($shareData);
+            return $this->addSentOcmShareToEfssTable($shareData);
         }
     }
 
     /**
-     * add share to the database and return the ID
+     * add sent ScienceMesh share to the native efss table and return the ID.
      *
-     * @param $shareData
+     * @param IShare $share
      * @return int
+     * @throws NotFoundException
      */
-    public function addReceivedShareToDB($shareData): int
+    protected function addSentOcmShareToEfssTable(IShare $share): int
     {
-        $mountpoint = "{{TemporaryMountPointName#" . $shareData["name"] . "}}";
-        $mountpoint_hash = md5($mountpoint);
-        $qbt = $this->dbConnection->getQueryBuilder();
-        $qbt->select('*')
-            ->from('share_external')
-            ->where($qbt->expr()->eq('user', $qbt->createNamedParameter($shareData["user"])))
-            ->andWhere($qbt->expr()->eq('mountpoint_hash', $qbt->createNamedParameter($mountpoint_hash)));
-        $cursor = $qbt->execute();
-        if ($data = $cursor->fetch()) {
-            return $data['id'];
-        }
+        $shareType = $share->getShareType();
+        $itemType = $share->getNodeType();
+        $itemSource = $share->getNodeId();
+        $shareWith = $share->getSharedWith();
+        $owner = $share->getShareOwner();
+        $sharedBy = $share->getSharedBy();
+        $permissions = $share->getPermissions();
+        $token = $share->getToken();
+        $shareTime = $share->getShareTime()->getTimestamp();
 
-        if (!str_starts_with(strtolower($shareData["remote"]), 'http://') && !str_starts_with(strtolower($shareData["remote"]), 'https://')) {
-            $shareData["remote"] = "https://" . $shareData["remote"];
-        }
-
-        // 0 => pending, 1 => accepted, 2 => rejected
-        $accepted = 0; //pending
         $qb = $this->dbConnection->getQueryBuilder();
-        $qb->insert('share_external')
-            ->setValue('remote', $qb->createNamedParameter($shareData["remote"]))
-            ->setValue('remote_id', $qb->createNamedParameter(trim($shareData["remote_id"], '"')))
-            ->setValue('share_token', $qb->createNamedParameter($shareData["share_token"]))
-            ->setValue('password', $qb->createNamedParameter($shareData["password"]))
-            ->setValue('name', $qb->createNamedParameter($shareData["name"]))
-            ->setValue('owner', $qb->createNamedParameter($shareData["owner"]))
-            ->setValue('user', $qb->createNamedParameter($shareData["user"]))
-            ->setValue('mountpoint', $qb->createNamedParameter($mountpoint))
-            ->setValue('mountpoint_hash', $qb->createNamedParameter($mountpoint_hash))
-            ->setValue('accepted', $qb->createNamedParameter($accepted));
+        $qb->insert("share")
+            ->setValue("share_type", $qb->createNamedParameter($shareType))
+            ->setValue("item_type", $qb->createNamedParameter($itemType))
+            ->setValue("item_source", $qb->createNamedParameter($itemSource))
+            ->setValue("file_source", $qb->createNamedParameter($itemSource))
+            ->setValue("share_with", $qb->createNamedParameter($shareWith))
+            ->setValue("uid_owner", $qb->createNamedParameter($owner))
+            ->setValue("uid_initiator", $qb->createNamedParameter($sharedBy))
+            ->setValue("permissions", $qb->createNamedParameter($permissions))
+            ->setValue("token", $qb->createNamedParameter($token))
+            ->setValue("stime", $qb->createNamedParameter($shareTime));
+
+        /*
+         * Added to fix https://github.com/owncloud/core/issues/22215
+         * Can be removed once we get rid of ajax/share.php
+         */
+        $qb->setValue("file_target", $qb->createNamedParameter(""));
+
         $qb->execute();
         return $qb->getLastInsertId();
     }
 
+
+    /**
+     * add sent ScienceMesh share to the ScienceMesh table and return the ID
+     *
+     * @param $shareData
+     * @return int
+     */
+    public function addSentOcmShareToSciencemeshTable($shareData): int
+    {
+        // check if the share already exists in the database.
+        $qbt = $this->dbConnection->getQueryBuilder();
+        $qbt->select("*")
+            ->from("sciencemesh_ocm_sent_shares")
+            ->where($qbt->expr()->eq("share_internal_id", $qbt->createNamedParameter($shareData["share_internal_id"])));
+        $cursor = $qbt->execute();
+        $data = $cursor->fetch();
+        $cursor->closeCursor();
+
+        // return id if share already exists.
+        if ($data) {
+            return $data["id"];
+        }
+
+        // add ocm share to sciencemesh_ocm_sent_shares table.
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->insert("sciencemesh_ocm_sent_shares")
+            ->setValue("share_internal_id", $qb->createNamedParameter($shareData["share_internal_id"]))
+            ->setValue("name", $qb->createNamedParameter($shareData["name"]))
+            ->setValue("share_with", $qb->createNamedParameter($shareData["share_with"]))
+            ->setValue("owner", $qb->createNamedParameter($shareData["owner"]))
+            ->setValue("initiator", $qb->createNamedParameter($shareData["initiator"]))
+            ->setValue("ctime", $qb->createNamedParameter($shareData["ctime"]))
+            ->setValue("ctime", $qb->createNamedParameter($shareData["ctime"]))
+            ->setValue("mtime", $qb->createNamedParameter($shareData["mtime"]))
+            ->setValue("expiration", $qb->createNamedParameter($shareData["expiration"]));
+        $qb->execute();
+
+        $id = $qb->getLastInsertId();
+
+        // add protocols to their tables.
+        $transfer = $shareData["transfer"] ?? null;
+
+        if (isset($transfer["sourceUri"]) && $transfer["sharedSecret"] && $transfer["size"]) {
+            $qb = $this->dbConnection->getQueryBuilder();
+            $qb->insert("sciencemesh_ocm_sent_share_protocol_transfer")
+                ->setValue("ocm_sent_share_id", $qb->createNamedParameter($id))
+                ->setValue("source_uri", $qb->createNamedParameter($transfer["sourceUri"]))
+                ->setValue("shared_secret", $qb->createNamedParameter($transfer["sharedSecret"]))
+                ->setValue("size", $qb->createNamedParameter($transfer["size"]));
+            $qb->execute();
+        }
+
+        $webapp = $shareData["webapp"] ?? null;
+
+        if (isset($webapp["uriTemplate"]) && $webapp["viewMode"]) {
+            $qb = $this->dbConnection->getQueryBuilder();
+            $qb->insert("sciencemesh_ocm_sent_share_protocol_webapp")
+                ->setValue("ocm_sent_share_id", $qb->createNamedParameter($id))
+                ->setValue("uri_template", $qb->createNamedParameter($webapp["uriTemplate"]))
+                ->setValue("view_mode", $qb->createNamedParameter($webapp["viewMode"]));
+            $qb->execute();
+        }
+
+        $webdav = $shareData["webdav"] ?? null;
+
+        if (isset($webdav["uri"]) && $webdav["sharedSecret"] && $webdav["permissions"]) {
+            $qb = $this->dbConnection->getQueryBuilder();
+            $qb->insert("sciencemesh_ocm_sent_share_protocol_webdav")
+                ->setValue("ocm_sent_share_id", $qb->createNamedParameter($id))
+                ->setValue("uri", $qb->createNamedParameter($webdav["uri"]))
+                ->setValue("shared_secret", $qb->createNamedParameter($webdav["sharedSecret"]))
+                ->setValue("permissions", $qb->createNamedParameter($webdav["permissions"]));
+            $qb->execute();
+        }
+
+        return $id;
+    }
+
+    /**
+     * add received ScienceMesh share to the native efss table and return the ID.
+     *
+     * @param $shareData
+     * @return int
+     */
+    public function addReceivedOcmShareToEfssTable($shareData): int
+    {
+        // calculate the mount point has of the share.
+        $mountPoint = "{{TemporaryMountPointName#" . $shareData["name"] . "}}";
+        $mountPointHash = md5($mountPoint);
+
+        // check if the share already exists in the database.
+        $qbt = $this->dbConnection->getQueryBuilder();
+        $qbt->select("*")
+            ->from("share_external")
+            ->where($qbt->expr()->eq("user", $qbt->createNamedParameter($shareData["user"])))
+            ->andWhere($qbt->expr()->eq("mountpoint_hash", $qbt->createNamedParameter($mountPointHash)));
+        $cursor = $qbt->execute();
+        $data = $cursor->fetch();
+        $cursor->closeCursor();
+
+        // return id if share already exists.
+        if ($data) {
+            return $data["id"];
+        }
+
+        // NOTE: @Mahdi I don't like this approach.
+        // prefix remote with https if it doesn't start with http or https.
+        if (!str_starts_with(strtolower($shareData["remote"]), "http://") && !str_starts_with(strtolower($shareData["remote"]), "https://")) {
+            $shareData["remote"] = "https://" . $shareData["remote"];
+        }
+
+        // TODO: @Mahdi maybe use enums? for better readability.
+        // 0 => pending, 1 => accepted, 2 => rejected
+        $accepted = 0;
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->insert("share_external")
+            ->setValue("remote", $qb->createNamedParameter($shareData["remote"]))
+            ->setValue("remote_id", $qb->createNamedParameter(trim($shareData["remote_id"], '"')))
+            ->setValue("share_token", $qb->createNamedParameter($shareData["share_token"]))
+            ->setValue("password", $qb->createNamedParameter($shareData["password"]))
+            ->setValue("name", $qb->createNamedParameter($shareData["name"]))
+            ->setValue("owner", $qb->createNamedParameter($shareData["owner"]))
+            ->setValue("user", $qb->createNamedParameter($shareData["user"]))
+            ->setValue("mountpoint", $qb->createNamedParameter($mountPoint))
+            ->setValue("mountpoint_hash", $qb->createNamedParameter($mountPointHash))
+            ->setValue("accepted", $qb->createNamedParameter($accepted));
+        $qb->execute();
+        return $qb->getLastInsertId();
+    }
+
+    /**
+     * add received ScienceMesh share to the ScienceMesh table and return the ID
+     *
+     * @param $shareData
+     * @return int
+     */
+    public function addReceivedOcmShareToSciencemeshTable($shareData): int
+    {
+        // check if the share already exists in the database.
+        $qbt = $this->dbConnection->getQueryBuilder();
+        $qbt->select("*")
+            ->from("sciencemesh_ocm_received_shares")
+            ->where($qbt->expr()->eq("share_external_id", $qbt->createNamedParameter($shareData["share_external_id"])));
+        $cursor = $qbt->execute();
+        $data = $cursor->fetch();
+        $cursor->closeCursor();
+
+        // return id if share already exists.
+        if ($data) {
+            return $data["id"];
+        }
+
+        // add ocm share to sciencemesh_ocm_received_shares table.
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->insert("sciencemesh_ocm_received_shares")
+            ->setValue("share_external_id", $qb->createNamedParameter($shareData["share_external_id"]))
+            ->setValue("name", $qb->createNamedParameter($shareData["name"]))
+            ->setValue("share_with", $qb->createNamedParameter($shareData["share_with"]))
+            ->setValue("owner", $qb->createNamedParameter($shareData["owner"]))
+            ->setValue("initiator", $qb->createNamedParameter($shareData["initiator"]))
+            ->setValue("ctime", $qb->createNamedParameter($shareData["ctime"]))
+            ->setValue("ctime", $qb->createNamedParameter($shareData["ctime"]))
+            ->setValue("mtime", $qb->createNamedParameter($shareData["mtime"]))
+            ->setValue("expiration", $qb->createNamedParameter($shareData["expiration"]))
+            ->setValue("remote_share_id", $qb->createNamedParameter($shareData["remote_share_id"]));
+        $qb->execute();
+
+        $id = $qb->getLastInsertId();
+
+        // add protocols to their tables.
+        $transfer = $shareData["transfer"] ?? null;
+
+        if (isset($transfer["sourceUri"]) && $transfer["sharedSecret"] && $transfer["size"]) {
+            $qb = $this->dbConnection->getQueryBuilder();
+            $qb->insert("sciencemesh_ocm_received_share_protocol_transfer")
+                ->setValue("ocm_received_share_id", $qb->createNamedParameter($id))
+                ->setValue("source_uri", $qb->createNamedParameter($transfer["sourceUri"]))
+                ->setValue("shared_secret", $qb->createNamedParameter($transfer["sharedSecret"]))
+                ->setValue("size", $qb->createNamedParameter($transfer["size"]));
+            $qb->execute();
+        }
+
+        $webapp = $shareData["webapp"] ?? null;
+
+        if (isset($webapp["uriTemplate"]) && isset($webapp["viewMode"])) {
+            $qb = $this->dbConnection->getQueryBuilder();
+            $qb->insert("sciencemesh_ocm_received_share_protocol_webapp")
+                ->setValue("ocm_received_share_id", $qb->createNamedParameter($id))
+                ->setValue("uri_template", $qb->createNamedParameter($webapp["uriTemplate"]))
+                ->setValue("view_mode", $qb->createNamedParameter($webapp["viewMode"]));
+            $qb->execute();
+        }
+
+        $webdav = $shareData["webdav"] ?? null;
+
+        if (isset($webdav["uri"]) && $webdav["sharedSecret"] && $webdav["permissions"]) {
+            $qb = $this->dbConnection->getQueryBuilder();
+            $qb->insert("sciencemesh_ocm_received_share_protocol_webdav")
+                ->setValue("ocm_received_share_id", $qb->createNamedParameter($id))
+                ->setValue("uri", $qb->createNamedParameter($webdav["uri"]))
+                ->setValue("shared_secret", $qb->createNamedParameter($webdav["sharedSecret"]))
+                ->setValue("permissions", $qb->createNamedParameter($webdav["permissions"]));
+            $qb->execute();
+        }
+
+        return $id;
+    }
+
+    /**
+     * get all the data about the sent OCM share from ScienceMesh table.
+     *
+     * @param $shareId
+     * @return array|null
+     */
+    public function getSentOcmShareFromSciencemeshTable($shareId): ?array
+    {
+        $qbt = $this->dbConnection->getQueryBuilder();
+        $qbt->select("*")
+            ->from("sciencemesh_ocm_sent_shares")
+            ->where($qbt->expr()->eq("share_internal_id", $qbt->createNamedParameter($shareId)));
+        $cursor = $qbt->execute();
+        $data = $cursor->fetch();
+        $cursor->closeCursor();
+
+        return $data;
+    }
+
+    /**
+     * get all the protocols of the sent OCM share from ScienceMesh table.
+     *
+     * @param $ocmShareId
+     * @return array|null
+     */
+    public function getSentOcmShareProtocolsFromSciencemeshTable($ocmShareId): ?array
+    {
+        $qbt = $this->dbConnection->getQueryBuilder();
+        $qbt->select("*")
+            ->from("sciencemesh_ocm_sent_share_protocol_transfer")
+            ->where($qbt->expr()->eq("ocm_sent_share_id", $qbt->createNamedParameter($ocmShareId)));
+        $cursor = $qbt->execute();
+
+        $protocolTransfer = $cursor->fetch() ?? null;
+        $cursor->closeCursor();
+
+        $qbt = $this->dbConnection->getQueryBuilder();
+        $qbt->select("*")
+            ->from("sciencemesh_ocm_sent_share_protocol_webapp")
+            ->where($qbt->expr()->eq("ocm_sent_share_id", $qbt->createNamedParameter($ocmShareId)));
+        $cursor = $qbt->execute();
+
+        $protocolWebApp = $cursor->fetch() ?? null;
+        $cursor->closeCursor();
+
+        $qbt = $this->dbConnection->getQueryBuilder();
+        $qbt->select("*")
+            ->from("sciencemesh_ocm_sent_share_protocol_webdav")
+            ->where($qbt->expr()->eq("ocm_sent_share_id", $qbt->createNamedParameter($ocmShareId)));
+        $cursor = $qbt->execute();
+
+        $protocolWebDav = $cursor->fetch() ?? null;
+        $cursor->closeCursor();
+
+        return [
+            "transfer" => $protocolTransfer,
+            "webapp" => $protocolWebApp,
+            "webdav" => $protocolWebDav,
+        ];
+    }
+
+    /**
+     * get all the data about the received OCM share from ScienceMesh table.
+     *
+     * @param $shareId
+     * @return array|null
+     */
+    public function getReceivedOcmShareFromSciencemeshTable($shareId): ?array
+    {
+        $qbt = $this->dbConnection->getQueryBuilder();
+        $qbt->select("*")
+            ->from("sciencemesh_ocm_received_shares")
+            ->where($qbt->expr()->eq("share_external_id", $qbt->createNamedParameter($shareId)));
+        $cursor = $qbt->execute();
+        $data = $cursor->fetch();
+        $cursor->closeCursor();
+
+        return $data;
+    }
+
+    /**
+     * get all the protocols of the received OCM share from ScienceMesh table.
+     *
+     * @param $ocmShareId
+     * @return array|null
+     */
+    public function getReceivedOcmShareProtocolsFromSciencemeshTable($ocmShareId): ?array
+    {
+        $qbt = $this->dbConnection->getQueryBuilder();
+        $qbt->select("*")
+            ->from("sciencemesh_ocm_received_share_protocol_transfer")
+            ->where($qbt->expr()->eq("ocm_received_share_id", $qbt->createNamedParameter($ocmShareId)));
+        $cursor = $qbt->execute();
+
+        $protocolTransfer = $cursor->fetch() ?? null;
+        $cursor->closeCursor();
+
+        $qbt = $this->dbConnection->getQueryBuilder();
+        $qbt->select("*")
+            ->from("sciencemesh_ocm_received_share_protocol_webapp")
+            ->where($qbt->expr()->eq("ocm_received_share_id", $qbt->createNamedParameter($ocmShareId)));
+        $cursor = $qbt->execute();
+
+        $protocolWebApp = $cursor->fetch() ?? null;
+        $cursor->closeCursor();
+
+        $qbt = $this->dbConnection->getQueryBuilder();
+        $qbt->select("*")
+            ->from("sciencemesh_ocm_received_share_protocol_webdav")
+            ->where($qbt->expr()->eq("ocm_received_share_id", $qbt->createNamedParameter($ocmShareId)));
+        $cursor = $qbt->execute();
+
+        $protocolWebDav = $cursor->fetch() ?? null;
+        $cursor->closeCursor();
+
+        return [
+            "transfer" => $protocolTransfer,
+            "webapp" => $protocolWebApp,
+            "webdav" => $protocolWebDav,
+        ];
+    }
 
     protected function revokeShare(IShare $share, bool $isOwner)
     {

@@ -23,12 +23,18 @@ use OCP\IL10N;
 use OCP\ILogger;
 use OCP\IUserSession;
 use OCP\Util\UserSearch;
+use function count;
 use function explode;
 use function is_array;
 use function strtolower;
 use function substr_count;
 
-class ScienceMeshSearchPlugin
+/**
+ * Compatibility search plugin for
+ * ScienceMesh + OpenCloudMesh + FederatedGroups combination.
+ *
+ */
+class SmFgOcmSearchPlugin
 {
     protected bool $shareeEnumeration;
 
@@ -63,6 +69,11 @@ class ScienceMeshSearchPlugin
     private StaticMethods $utils;
 
     /**
+     * @var mixed
+     */
+    private $result;
+
+    /**
      * @throws Exception
      */
     public function __construct(
@@ -93,14 +104,10 @@ class ScienceMeshSearchPlugin
      */
     public function search($search): array
     {
-        $result = json_decode($this->revaHttpClient->findAcceptedUsers($this->userId), true);
-        if (!isset($result)) {
-            return [];
-        }
-        $users = $result;
-        error_log("Found " . count($users) . " users");
-
         $result = [];
+
+        $users = json_decode($this->revaHttpClient->findAcceptedUsers($this->userId), true);
+
         foreach ($users as $user) {
             $domain = (str_starts_with($user['idp'], "http") ? parse_url($user['idp'])["host"] : $user['idp']);
             $result[] = [
@@ -114,6 +121,14 @@ class ScienceMeshSearchPlugin
 
         $otherResults = [];
 
+        // copied from https://github.com/owncloud/core/blob/v10.11.0/apps/files_sharing/lib/Controller/ShareesController.php#L385-L503
+        // just doubling up every result, so it appears once with share type Share::SHARE_TYPE_REMOTE
+        // and once with share type Share::SHARE_TYPE_REMOTE_GROUP
+
+        // Fetch remote search properties from app config
+        /**
+         * @var array $searchProperties
+         */
         $searchProperties = explode(',', $this->config->getAppValue('dav', 'remote_search_properties', 'CLOUD,FN'));
         // Search in contacts
         $matchMode = $this->config->getSystemValue('accounts.enable_medial_search', true) === true
@@ -213,6 +228,7 @@ class ScienceMeshSearchPlugin
 
         if (!$foundRemoteById && substr_count($search, '@') >= 1
             && $this->offset === 0 && $this->userSearch->isSearchable($search)
+
             // if an exact local user is found, only keep the remote entry if
             // its domain does not match the trusted domains
             // (if it does, it is a user whose local login domain matches the ownCloud
@@ -224,6 +240,13 @@ class ScienceMeshSearchPlugin
                 'label' => $search,
                 'value' => [
                     'shareType' => Constants::SHARE_TYPE_REMOTE,
+                    'shareWith' => $search,
+                ],
+            ];
+            $otherResults[] = [
+                'label' => $search,
+                'value' => [
+                    'shareType' => Constants::SHARE_TYPE_REMOTE_GROUP,
                     'shareWith' => $search,
                 ],
             ];
