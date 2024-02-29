@@ -9,7 +9,7 @@
     <description>Connect your ownCloud-10 instance to your Reva instance and the Science Mesh</description>
 
     <licence>AGPL</licence>
-    <version>0.5.2</version>
+    <version>0.6.0</version>
 
     <website>https://sciencemesh.io</website>
     <bugs>https://github.com/sciencemesh/nc-sciencemesh/issues</bugs>
