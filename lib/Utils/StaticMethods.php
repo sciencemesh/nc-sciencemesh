@@ -246,10 +246,6 @@ class StaticMethods
     // For ListReceivedShares, GetReceivedShare and UpdateReceivedShare we need to include "state:2"
     // see:
     // https://github.com/cs3org/cs3apis/blob/cfd1ad29fdf00c79c2a321de7b1a60d0725fe4e8/cs3/sharing/ocm/v1beta1/resources.proto#L160
-    /**
-     * @throws NotFoundException
-     * @throws InvalidPathException
-     */
     public function shareInfoToCs3Share(
         ScienceMeshShareProvider $shareProvider,
         IShare                   $share,
@@ -259,7 +255,7 @@ class StaticMethods
     {
         $shareId = $share->getId();
 
-        // TODO @Mahdi use enums!
+        // TODO @Mahdi: use enums!
         if ($direction === "sent") {
             $ocmShareData = $shareProvider->getSentOcmShareFromSciencemeshTable($shareId);
             $ocmShareProtocols = $shareProvider->getSentOcmShareProtocolsFromSciencemeshTable($ocmShareData["id"]);
@@ -273,9 +269,9 @@ class StaticMethods
 
         // this one is obvious right?
         if (isset($ocmShareData["share_with"])) {
-            $granteeParts = explode("@", $ocmShareData["share_with"]);
+            $granteeParts = $this->splitUserAndHost($ocmShareData["share_with"]);
         } else {
-            $granteeParts = explode("@", $share->getSharedWith());
+            $granteeParts = $this->splitUserAndHost($share->getSharedWith());
         }
 
         if (count($granteeParts) != 2) {
@@ -284,9 +280,9 @@ class StaticMethods
 
         // the original share owner (who owns the path that is shared)
         if (isset($ocmShareData["owner"])) {
-            $ownerParts = explode("@", $ocmShareData["owner"]);
+            $ownerParts = $this->splitUserAndHost($ocmShareData["owner"]);
         } else {
-            $ownerParts = explode("@", $share->getShareOwner());
+            $ownerParts = $this->splitUserAndHost($share->getShareOwner());
         }
 
         if (count($granteeParts) != 2) {
@@ -296,9 +292,9 @@ class StaticMethods
         // NOTE: @Mahdi initiator/creator/sharedBy etc., whatever other names it has! means the share sharer!
         // you can be owner and sharer, you can be someone who is re-sharing, in this case you are sharer but not owner
         if (isset($ocmShareData["initiator"])) {
-            $creatorParts = explode("@", $ocmShareData["initiator"]);
+            $creatorParts = $this->splitUserAndHost($ocmShareData["initiator"]);
         } else {
-            $creatorParts = explode("@", $share->getSharedBy());
+            $creatorParts = $this->splitUserAndHost($share->getSharedBy());
         }
 
         if (count($granteeParts) != 2) {
@@ -316,23 +312,20 @@ class StaticMethods
             $opaqueId = "unknown";
         }
 
-        // TODO: @Mahdi update this comment to point at the Reva structure  mappings for this json.
-        // produces JSON that maps to reva
+        // TODO: @Mahdi update this comment to point at the Reva structure mappings for this json.
+        // produces JSON that maps to Reva.
         $payload = [
             // use OCM name, if null use efss share native name, if null fall back to "unknown"
             "name" => $ocmShareData["name"] ?? ($share->getName() ?? "unknown"),
-            "token" => $token ?? "unknown",
-            // TODO: @Mahdi what permissions is the correct one? share permissions has different value than the share->node permissions.
-            // maybe use the ocmData for this one? needs testing for different scenarios to see which is the best/correct one.
-            "permissions" => $share->getNode()->getPermissions() ?? 0,
+            "token" => $token,
             "id" => [
                 // https://github.com/cs3org/go-cs3apis/blob/d297419/cs3/sharing/ocm/v1beta1/resources.pb.go#L423
-                "opaque_id" => $shareId ?? "unknown",
+                "opaque_id" => $shareId,
             ],
             "resource_id" => [
                 "opaque_id" => $opaqueId,
             ],
-            // these three have been already handled and don't need "unknown" default values.
+            // these three have already been handled and don't need "unknown" default values.
             "grantee" => [
                 "id" => [
                     "opaque_id" => $granteeParts[0],
@@ -354,34 +347,42 @@ class StaticMethods
             // NOTE: make sure seconds type is int, otherwise Reva gives:
             // error="json: cannot unmarshal string into Go struct field Timestamp.ctime.seconds of type uint64"
             "ctime" => [
-                "seconds" => isset($ocmShareData["ctime"]) ? (int)$ocmShareData["ctime"] : ($share->getShareTime()->getTimestamp() ?? 0)
+                "seconds" => isset($ocmShareData["ctime"]) ?
+                    (int)$ocmShareData["ctime"] :
+                    ($share->getShareTime()->getTimestamp() ?? 0),
             ],
             "mtime" => [
-                "seconds" => isset($ocmShareData["mtime"]) ? (int)$ocmShareData["ctime"] : ($share->getShareTime()->getTimestamp() ?? 0)
+                "seconds" => isset($ocmShareData["mtime"]) ?
+                    (int)$ocmShareData["ctime"] :
+                    ($share->getShareTime()->getTimestamp() ?? 0),
             ],
-            "access_methods" => [
-                "transfer" => [
-                    "source_uri" => $ocmShareProtocols["transfer"]["source_uri"] ?? "unknown",
-                    // TODO: @Mahdi this feels redundant, already included in top-level token and webdav shared_secret.
-                    "shared_secret" => $ocmShareProtocols["transfer"]["shared_secret"] ?? "unknown",
-                    // TODO: @Mahdi should the default value be an integer?
-                    "size" => $ocmShareProtocols["transfer"]["size"] ?? "unknown",
-                ],
-                "webapp" => [
-                    "uri_template" => $ocmShareProtocols["webapp"]["uri_template"] ?? "unknown",
-                    "view_mode" => $ocmShareProtocols["webapp"]["view_mode"] ?? "unknown",
-                ],
+            "protocols" => [
+                // TODO @Mahdi: if $ocmShareProtocols["webdav"]["uri"] == null, then we have a problem, raise an exception.
                 "webdav" => [
-                    // TODO: @Mahdi it is better to have sharedSecret and permissions in this part of code.
-                    "uri" => $ocmShareProtocols["webdav"]["uri"] ?? "unknown",
-                    // TODO: @Mahdi it is interesting this function accepts token as argument! is token different that the share secret?
-                    // why do we have to pass token while the share object already has the information about token?
-                    // $share->getToken();
-                    "shared_secret" => $ocmShareProtocols["webdav"]["shared_secret"] ?? "unknown",
-                    "permissions" => $ocmShareProtocols["webdav"]["permissions"] ?? "unknown",
+                    // TODO @Mahdi: $ocmShareProtocols is probably undefined!
+                    // why? because you need to use enums instead of $direction === "sent" or $direction === "received"
+                    "uri" => $ocmShareProtocols["webdav"]["uri"],
+                    // these are the share "OCS" permissions (integer)
+                    "permissions" => $share->getPermissions() ?? 0,
                 ],
             ]
         ];
+
+        // if $ocmShareProtocols["transfer"]["source_uri"] != null, then include "transfer".
+        if (isset($ocmShareProtocols["transfer"]["source_uri"])) {
+            $payload["protocols"]["transfer"] = [
+                "source_uri" => $ocmShareProtocols["transfer"]["source_uri"],
+                "size" => $ocmShareProtocols["transfer"]["size"] ?? 0,
+            ];
+        }
+
+        // if $ocmShareProtocols["webapp"]["uri_template"] != null, then include "webapp"
+        if (isset($ocmShareProtocols["webapp"]["uri_template"])) {
+            $payload["protocols"]["webapp"] = [
+                "uri_template" => $ocmShareProtocols["webapp"]["uri_template"],
+                "view_mode" => $ocmShareProtocols["webapp"]["view_mode"],
+            ];
+        }
 
         error_log("shareInfoToCs3Share " . var_export($payload, true));
 
