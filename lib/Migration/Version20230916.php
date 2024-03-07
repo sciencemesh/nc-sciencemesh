@@ -139,6 +139,13 @@ class Version20230916 extends SimpleMigrationStep
 		if (!$schema->hasTable("{$prefix}sm_ocm_rx_sh_pro_tx")) {
 			$table = $schema->createTable("{$prefix}sm_ocm_rx_sh_pro_tx");
 
+			$table->addColumn("id", "bigint", [
+				"autoincrement" => true,
+				"unsigned" => true,
+				"notnull" => true,
+				"length" => 11,
+			]);
+
 			$table->addColumn("ocm_received_share_id", "bigint", [
 				"unsigned" => true,
 				"notnull" => true,
@@ -165,11 +172,20 @@ class Version20230916 extends SimpleMigrationStep
 				["ocm_received_share_id"],
 				"sm_ocm_rx_share_id_tx_idx"
 			);
+
+			$table->setPrimaryKey(["id"]);
 		}
 
 		// ocm_protocol_webapp table.
 		if (!$schema->hasTable("{$prefix}sm_ocm_rx_sh_pro_wa")) {
 			$table = $schema->createTable("{$prefix}sm_ocm_rx_sh_pro_wa");
+
+			$table->addColumn("id", "bigint", [
+				"autoincrement" => true,
+				"unsigned" => true,
+				"notnull" => true,
+				"length" => 11,
+			]);
 
 			$table->addColumn("ocm_received_share_id", "bigint", [
 				"unsigned" => true,
@@ -192,11 +208,20 @@ class Version20230916 extends SimpleMigrationStep
 				["ocm_received_share_id"],
 				"sm_ocm_rx_share_id_app_idx"
 			);
+
+			$table->setPrimaryKey(["id"]);
 		}
 
 		// ocm_protocol_webdav table.
 		if (!$schema->hasTable("{$prefix}sm_ocm_rx_sh_pro_wd")) {
 			$table = $schema->createTable("{$prefix}sm_ocm_rx_sh_pro_wd");
+
+			$table->addColumn("id", "bigint", [
+				"autoincrement" => true,
+				"unsigned" => true,
+				"notnull" => true,
+				"length" => 11,
+			]);
 
 			$table->addColumn("ocm_received_share_id", "bigint", [
 				"unsigned" => true,
@@ -224,6 +249,8 @@ class Version20230916 extends SimpleMigrationStep
 				["ocm_received_share_id"],
 				"sm_ocm_rx_share_id_dav_idx"
 			);
+
+			$table->setPrimaryKey(["id"]);
 		}
 
 		return $schema;
