@@ -22,6 +22,8 @@
  *
  */
 
+declare(strict_types=1);
+
 namespace OCA\ScienceMesh\Utils;
 
 use OCA\ScienceMesh\ShareProvider\ScienceMeshShareProvider;
